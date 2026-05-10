@@ -1,7 +1,7 @@
 {
   "name": "@dathra/transformer",
   "description": "dathra transformer package",
-  "version": "0.0.13",
+  "version": "0.0.18",
   "private": false,
   "publishConfig": {
     "access": "public",

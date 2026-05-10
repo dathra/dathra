@@ -2,7 +2,7 @@
   "name": "@dathra/reactivity",
   "description": "dathra reactivity package",
   "type": "module",
-  "version": "0.0.13",
+  "version": "0.0.18",
   "private": false,
   "publishConfig": {
     "access": "public",

@@ -2,7 +2,7 @@
   "name": "@dathra/components",
   "description": "Web Components high-level API for Dathra framework",
   "type": "module",
-  "version": "0.0.13",
+  "version": "0.0.18",
   "private": false,
   "publishConfig": {
     "access": "public",
