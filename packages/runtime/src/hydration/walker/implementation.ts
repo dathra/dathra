@@ -10,7 +10,7 @@
 /**
  * Marker types for hydration.
  */
-const enum HydrationMarkerType {
+enum HydrationMarkerType {
   Text = "t",
   Insert = "i",
   Block = "b",

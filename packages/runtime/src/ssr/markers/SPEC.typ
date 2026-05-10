@@ -25,7 +25,7 @@ SSR 出力に挿入するマーカー文字列を生成する。Hydration 時に
 
     *MarkerType enum*:
     ```typescript
-    const enum MarkerType {
+    enum MarkerType {
       Text = "t",
       Insert = "i",
       Block = "b",

@@ -13,6 +13,6 @@ catalog:
   oxfmt: 0.41.0
   oxlint: 1.51.0
   oxlint-tsgolint: 0.16.0
-  tsdown: 0.16.8
+  tsdown: 0.22.0
   typescript: 6.0.3
   vitest: 4.0.4

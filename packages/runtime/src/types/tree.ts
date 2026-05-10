@@ -42,7 +42,7 @@ type Tree = TreeNode | TextContent | Placeholder;
  * 1 = SVG
  * 2 = MathML
  */
-const enum Namespace {
+enum Namespace {
   HTML = 0,
   SVG = 1,
   MathML = 2,
