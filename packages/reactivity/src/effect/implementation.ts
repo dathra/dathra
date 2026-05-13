@@ -9,6 +9,7 @@ import {
   enterRun,
   exitRun,
   link,
+  ReactiveFlags,
   setActiveSub,
   unsetActiveSub,
 } from "../internal/system";
@@ -54,11 +55,13 @@ function effect(fn: () => void): EffectCleanup {
   }
   // Run fn directly for the initial execution (no previous cleanups to flush)
   const prev = setCurrentEffectCleanups(effectCleanups);
+  effectNode.flags |= ReactiveFlags.RecursedCheck;
   try {
     enterRun();
     fn();
   } finally {
     exitRun();
+    effectNode.flags &= ~ReactiveFlags.RecursedCheck;
     setCurrentEffectCleanups(prev);
     unsetActiveSub(prevSub);
   }
