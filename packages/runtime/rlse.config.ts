@@ -1,8 +1,13 @@
-import { defineConfig } from "@takuma-ru/rlse";
+import { defineConfig, presets } from "rlse.ts";
 
-export default defineConfig({
-  name: "@dathomir/runtime",
-  buildCmd: "pnpm build",
-  gitUserName: "github-actions[bot]",
-  gitUserEmail: "41898282+github-actions[bot]@users.noreply.github.com",
-});
+export default defineConfig(
+  presets.npmRelease({
+    resolvePackage: { name: "@dathomir/runtime" },
+    calculateNextSemver: { level: "patch" },
+    runCommand: "pnpm build",
+    configureGitUser: {
+      name: "github-actions[bot]",
+      email: "41898282+github-actions[bot]@users.noreply.github.com",
+    },
+  }),
+);

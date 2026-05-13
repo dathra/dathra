@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@dathomir/config": "workspace:*",
-    "@takuma-ru/rlse": "catalog:",
+    "rlse.ts": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "vite": "^6.3.4",
