@@ -57,6 +57,6 @@
     "vitest": "catalog:"
   },
   "dependencies": {
-    "alien-signals": "^3.0.0"
+    "alien-signals": "^3.2.0"
   }
 }

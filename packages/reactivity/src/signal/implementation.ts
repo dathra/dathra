@@ -10,6 +10,7 @@ import {
   flush,
   getActiveSub,
   getBatchDepth,
+  isRunning,
   link,
   propagate,
   shallowPropagate,
@@ -26,7 +27,7 @@ function signalOper<T>(node: SignalNode<T>, ...value: [] | [T]): T | void {
       node.flags = ReactiveFlags.Mutable | ReactiveFlags.Dirty;
       const subs = node.subs;
       if (subs !== undefined) {
-        propagate(subs);
+        propagate(subs, isRunning());
         if (getBatchDepth() === 0) {
           flush();
         }
