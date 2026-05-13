@@ -6,6 +6,8 @@ import { createEffectNode } from "../internal/helpers";
 import { setCurrentEffectCleanups } from "../internal/state";
 import {
   effectCleanup,
+  enterRun,
+  exitRun,
   link,
   setActiveSub,
   unsetActiveSub,
@@ -53,8 +55,10 @@ function effect(fn: () => void): EffectCleanup {
   // Run fn directly for the initial execution (no previous cleanups to flush)
   const prev = setCurrentEffectCleanups(effectCleanups);
   try {
+    enterRun();
     fn();
   } finally {
+    exitRun();
     setCurrentEffectCleanups(prev);
     unsetActiveSub(prevSub);
   }
