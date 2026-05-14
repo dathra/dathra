@@ -27,7 +27,7 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Playwright browsers
-        run: pnpm --filter @dathomir/runtime exec playwright install --with-deps chromium
+        run: pnpm --filter @dathra/runtime exec playwright install --with-deps chromium
 
       - name: Run package tests
         run: pnpm build && pnpm test

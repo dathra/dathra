@@ -1,4 +1,4 @@
-import { defineComponent } from "@dathomir/components";
+import { defineComponent } from "@dathra/components";
 
 import type {
   AsyncStoreProbe,

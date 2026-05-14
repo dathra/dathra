@@ -241,13 +241,13 @@ Web Components を中核とする構成へ移行する。
   ],
   [
     - React/Vue 等から使っても、WC 単体で Hydration が完結する
-    - Dathomir アプリでは全体 `hydrate()` による一括最適化も可能
+    - Dathra アプリでは全体 `hydrate()` による一括最適化も可能
     - 冪等性の保証が必須（WeakMap で管理）
     - WC ごとに Hydration ロジックを持つため、コードが分散する
   ],
   alternatives: [
     1. *アプリ全体の `hydrate()` が一括管理*: 外部 FW から使う場合に機能しない
-    2. *完全に分離（WC は独自実装）*: Dathomir の恩恵が Shadow 内に及ばない
+    2. *完全に分離（WC は独自実装）*: Dathra の恩恵が Shadow 内に及ばない
   ],
   references: (),
 )
@@ -588,7 +588,7 @@ Web Components を中核とする構成へ移行する。
     - 型安全: TypeScript で構造を厳密に検証可能
     - 拡張性: Compiler が構造を完全に理解し、高度な最適化が可能
     - デバッグ容易性: 構造が明確で可視化しやすい
-    - 独自性: Dathomir の特徴として打ち出せる（先進的アプローチ）
+    - 独自性: Dathra の特徴として打ち出せる（先進的アプローチ）
     - Compiler 制御: 静的/動的の完全な分離、特殊化が容易
 
     *欠点*:
@@ -619,7 +619,7 @@ Web Components を中核とする構成へ移行する。
     *内部専用（破壊変更 OK）* を採用する。
 
     - v1.0 までは IR（構造化配列形式）の破壊的変更を許容
-    - `@dathomir/transformer` と `@dathomir/runtime` のバージョンを厳密に紐付け（peerDependencies）
+    - `@dathra/transformer` と `@dathra/runtime` のバージョンを厳密に紐付け（peerDependencies）
     - ユーザーは手書きしない（Transformer が生成）ため、影響は限定的
   ],
   [
@@ -1030,7 +1030,7 @@ Web Components を中核とする構成へ移行する。
   [
     - TC39 Signals 仕様との整合性
     - alien-signals がデフォルトで `.value` を推奨
-    - Dathomir の独自性として *TC39 準拠* を打ち出す
+    - Dathra の独自性として *TC39 準拠* を打ち出す
     - 型安全性が高い（getter/setter として明確）
     - Vue 3 Composition API とも整合性がある
   ],
@@ -1147,7 +1147,7 @@ Web Components を中核とする構成へ移行する。
     *手動リフレクション*（v1.0 では自動サポートなし）を採用する。
 
     - Web Components 標準の `observedAttributes` + `attributeChangedCallback` を使用
-    - Dathomir は自動リフレクションを提供しない
+    - Dathra は自動リフレクションを提供しない
     - ユーザーが必要に応じて `setAttr` / `setProp` で手動管理
 
     ```javascript
@@ -1249,9 +1249,9 @@ Web Components を中核とする構成へ移行する。
 
     ```javascript
     // Plugin 実装
-    export function dathomir() \{
+    export function dathra() \{
       return \{
-        name: 'dathomir',
+        name: 'dathra',
         transform(code, id, options) \{
           const environment = options?.environment || this.environment;
 
@@ -1319,7 +1319,7 @@ Web Components を中核とする構成へ移行する。
   ],
   alternatives: [
     1. *クラスデコレータ方式*: Stage 3 Decorators 依存。バンドルサイズ増加。v2 で検討可能。
-    2. *`DathomirElement` 基底クラス*: クラス継承が冗長。Transformer 出力として不適。
+    2. *`DathraElement` 基底クラス*: クラス継承が冗長。Transformer 出力として不適。
     3. *マクロ方式*: Transformer でコンパイル時に完全展開。柔軟だが実装コストが高い。
   ],
   references: (
@@ -1460,7 +1460,7 @@ Web Components を中核とする構成へ移行する。
 
     *Step 3*: ユーザーが module augmentation で登録
     ```typescript
-    declare module '@dathomir/core/jsx-runtime' \{
+    declare module '@dathra/core/jsx-runtime' \{
       namespace JSX \{
         interface IntrinsicElements \{
           'my-counter': ComponentElement<typeof Counter>;

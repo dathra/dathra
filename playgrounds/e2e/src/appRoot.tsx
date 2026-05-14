@@ -1,5 +1,5 @@
-import { defineComponent } from "@dathomir/components";
-import { bindStoreToHost } from "@dathomir/components/internal";
+import { defineComponent } from "@dathra/components";
+import { bindStoreToHost } from "@dathra/components/internal";
 
 import { App } from "./App";
 import type { FixtureRoutePath } from "./routes";

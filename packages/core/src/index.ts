@@ -28,4 +28,4 @@ export * from "@/store/index";
 export * from "@/shared/index";
 
 // Web Components
-export * from "@dathomir/components";
+export * from "@dathra/components";

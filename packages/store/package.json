@@ -1,7 +1,7 @@
 {
-  "name": "@dathomir/store",
-  "description": "dathomir atom store package",
-  "version": "0.0.9",
+  "name": "@dathra/store",
+  "description": "dathra atom store package",
+  "version": "0.0.19",
   "private": false,
   "publishConfig": {
     "access": "public",
@@ -12,16 +12,16 @@
   "license": "MPL-2.0",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:dathomir-js/dathomir.git"
+    "url": "git+ssh://git@github.com:dathra/dathra.git"
   },
   "bugs": {
-    "url": "https://github.com/dathomir-js/dathomir/issues",
-    "email": "dathomir@takumaru.dev"
+    "url": "https://github.com/dathra/dathra/issues",
+    "email": "dathra@takumaru.dev"
   },
-  "homepage": "https://github.com/dathomir-js/dathomir#readme",
+  "homepage": "https://github.com/dathra/dathra#readme",
   "author": "takuma-ru <takuma-ru@takumaru.dev> (https://github.com/takuma-ru/)",
   "keywords": [
-    "dathomir",
+    "dathra",
     "framework",
     "frontend",
     "javascript",
@@ -59,7 +59,7 @@
   "scripts": {
     "dev": "tsdown --watch",
     "build": "tsdown",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "lint": "oxlint",
     "lint:type-aware": "oxlint --type-aware",
     "fmt": "oxfmt --ignore-path ../../.gitignore --write .",
@@ -68,13 +68,13 @@
     "release": "rlse"
   },
   "devDependencies": {
-    "@dathomir/config": "workspace:*",
+    "@dathra/config": "workspace:*",
     "rlse.ts": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "vitest": "catalog:"
   },
   "dependencies": {
-    "@dathomir/reactivity": "workspace:*"
+    "@dathra/reactivity": "workspace:*"
   }
 }

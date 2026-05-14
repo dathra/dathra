@@ -1,6 +1,5 @@
-import { clearGlobalStyles } from "@dathomir/components";
-import { bindStoreToHost } from "@dathomir/components/internal";
-import { hydrateIslands } from "@dathomir/runtime/hydration";
+import { bindStoreToHost, clearGlobalStyles } from "@dathra/components";
+import { hydrate } from "@dathra/core/hydration";
 
 import { createDemoStore } from "./demoStore";
 
@@ -25,6 +24,6 @@ bindPlaygroundRootStore();
 
 void import("./SSRAppRoot").then(() => {
   queueMicrotask(() => {
-    hydrateIslands(document);
+    hydrate(document);
   });
 });

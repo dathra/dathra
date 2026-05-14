@@ -1,20 +1,20 @@
-# @dathomir/runtime
+# @dathra/runtime
 
-Low-level DOM runtime for Dathomir. Handles CSR (client-side rendering), SSR (server-side rendering), and hydration through separate entry points.
+Low-level DOM runtime for Dathra. Handles CSR (client-side rendering), SSR (server-side rendering), and hydration through separate entry points.
 
 ## Install
 
 ```bash
-npm install @dathomir/runtime
+npm install @dathra/runtime
 ```
 
 ## Entry Points
 
-| Import                        | Description                                                       |
-| ----------------------------- | ----------------------------------------------------------------- |
-| `@dathomir/runtime`           | CSR — DOM generation, navigation, updates, events, reconciliation |
-| `@dathomir/runtime/ssr`       | SSR — Render structured arrays to HTML strings                    |
-| `@dathomir/runtime/hydration` | Hydration — Attach reactivity to SSR-rendered DOM                 |
+| Import                      | Description                                                       |
+| --------------------------- | ----------------------------------------------------------------- |
+| `@dathra/runtime`           | CSR — DOM generation, navigation, updates, events, reconciliation |
+| `@dathra/runtime/ssr`       | SSR — Render structured arrays to HTML strings                    |
+| `@dathra/runtime/hydration` | Hydration — Attach reactivity to SSR-rendered DOM                 |
 
 ## CSR API
 
@@ -31,8 +31,8 @@ import {
   insert,
   event,
   reconcile,
-} from "@dathomir/runtime";
-import { templateEffect, createRoot, onCleanup } from "@dathomir/reactivity";
+} from "@dathra/runtime";
+import { templateEffect, createRoot, onCleanup } from "@dathra/reactivity";
 ```
 
 ### `fromTree(tree, ns)`
@@ -124,7 +124,7 @@ import {
   serializeState,
   createMarker,
   MarkerType,
-} from "@dathomir/runtime/ssr";
+} from "@dathra/runtime/ssr";
 ```
 
 ### `renderToString(tree, state, dynamicValues)`
@@ -151,7 +151,7 @@ import {
   hydrateRoot,
   createHydrationContext,
   isHydrated,
-} from "@dathomir/runtime/hydration";
+} from "@dathra/runtime/hydration";
 ```
 
 ### `hydrate(shadowRoot, setup)`

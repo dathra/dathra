@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COLOCATED_CLIENT_STRATEGIES } from "@dathomir/shared";
+import { COLOCATED_CLIENT_STRATEGIES } from "@dathra/shared";
 import { transform } from "../index";
 
 describe("transform", () => {
@@ -76,7 +76,7 @@ describe("transform", () => {
     const result = transform(code);
 
     expect(result.code).toContain("import");
-    expect(result.code).toContain("@dathomir/runtime");
+    expect(result.code).toContain("@dathra/runtime");
     expect(result.code).toContain("fromTree");
   });
 
@@ -209,15 +209,15 @@ describe("transform", () => {
 
   it("should insert runtime imports after existing import declarations", () => {
     const code = `
-      import { signal } from "@dathomir/reactivity";
+      import { signal } from "@dathra/reactivity";
       const element = <div>Hello</div>;
     `;
 
     const result = transform(code);
 
     // Runtime imports should appear after the existing import
-    const importIndex = result.code.indexOf("@dathomir/reactivity");
-    const runtimeIndex = result.code.indexOf("@dathomir/runtime");
+    const importIndex = result.code.indexOf("@dathra/reactivity");
+    const runtimeIndex = result.code.indexOf("@dathra/runtime");
     expect(importIndex).toBeGreaterThanOrEqual(0);
     expect(runtimeIndex).toBeGreaterThanOrEqual(0);
     // Both imports should be present
@@ -617,7 +617,7 @@ describe("transform", () => {
 
     it("should support known imported transparent thunk wrappers around JSX", () => {
       const code = `
-        import { withStore } from "@dathomir/core";
+        import { withStore } from "@dathra/core";
         const store = createStore();
         const WrappedCard = defineComponent(
           "wrapped-card",
@@ -636,7 +636,7 @@ describe("transform", () => {
 
     it("should support aliased known imported transparent thunk wrappers", () => {
       const code = `
-        import { withStore as bindStore } from "@dathomir/store";
+        import { withStore as bindStore } from "@dathra/store";
         const store = createStore();
         const WrappedCard = defineComponent(
           "wrapped-card",
@@ -655,7 +655,7 @@ describe("transform", () => {
 
     it("should support SSRAppRoot-shaped transparent wrappers around root component elements with function props", () => {
       const code = `
-        import { withStore } from "@dathomir/core";
+        import { withStore } from "@dathra/core";
         const PlaygroundShell = (props) => <main>{props.renderPage()}</main>;
         const OverviewPage = () => <section>overview</section>;
         const RuntimePage = () => <section>runtime</section>;
@@ -909,7 +909,7 @@ describe("transform", () => {
       const code = `
         import { countAtom } from "./demoStore";
         const SSRStoreCounter = defineComponent(
-          "dathomir-ssr-store-counter",
+          "dathra-ssr-store-counter",
           ({ props, store }) => {
             const count = store.ref(countAtom);
             const mode = typeof document === "undefined" ? "SSR" : "CSR";
@@ -1861,7 +1861,7 @@ describe("transform", () => {
 
     it("should handle imported transparent thunk wrapper with non-thunk last argument", () => {
       const code = `
-        import { withStore } from "@dathomir/core";
+        import { withStore } from "@dathra/core";
         const NonThunkImportCard = defineComponent(
           "non-thunk-import-card",
           ({ props }) => withStore(store, props.renderFn.value),
@@ -2189,7 +2189,7 @@ describe("transform", () => {
 
     it("should cover resolveTopLevelHelperNode thunk wrapper with null frame (line 738)", () => {
       const code = `
-        import { withStore } from "@dathomir/core";
+        import { withStore } from "@dathra/core";
         const NullFrameCard = defineComponent(
           "null-frame-card",
           () => withStore(store, () => { console.log("side-effect"); }),
@@ -2735,7 +2735,7 @@ describe("transform", () => {
       `;
 
       expect(() => transform(code)).toThrow(
-        "[dathomir] load:onClick component-target colocated handlers cannot capture local bindings: bump, localCount",
+        "[dathra] load:onClick component-target colocated handlers cannot capture local bindings: bump, localCount",
       );
     });
 
@@ -2763,7 +2763,7 @@ describe("transform", () => {
       `;
 
       expect(() => transform(code)).toThrow(
-        "[dathomir] interaction:onFocus is not supported on component targets because the child host cannot observe that event without an explicit host re-emit",
+        "[dathra] interaction:onFocus is not supported on component targets because the child host cannot observe that event without an explicit host re-emit",
       );
     });
 
@@ -4051,7 +4051,7 @@ describe("transform", () => {
 
     it("should handle imported transparent thunk wrapper (withStore) in SSR mode when wrapped in arrow", () => {
       const code = `
-        import { withStore } from "@dathomir/core";
+        import { withStore } from "@dathra/core";
         const StoreCard = defineComponent(
           "store-card",
           ({ props }) => withStore(myStore, () => <div>{props.label.value}</div>),
@@ -4067,7 +4067,7 @@ describe("transform", () => {
 
     it("should produce no metadata for bare withStore() call as direct component arg", () => {
       const code = `
-        import { withStore } from "@dathomir/core";
+        import { withStore } from "@dathra/core";
         const StoreCard = defineComponent(
           "store-card",
           withStore(myStore, () => <div>store content</div>),
@@ -5189,7 +5189,7 @@ describe("transform", () => {
 
     it("should resolve aliased imported transparent thunk wrapper", () => {
       const code = `
-        import { withStore as useStore } from "@dathomir/store";
+        import { withStore as useStore } from "@dathra/store";
         const AliasCard = defineComponent(
           "alias-card",
           ({ props }) => useStore(myStore, () => <div>{props.x.value}</div>),
@@ -5209,7 +5209,7 @@ describe("transform", () => {
         );
       `;
       const result = transform(code, { mode: "csr" });
-      // Not from @dathomir/core or @dathomir/store
+      // Not from @dathra/core or @dathra/store
       expect(result.code).toContain('unsupportedReason: "opaque-helper-call"');
     });
   });
@@ -6011,7 +6011,7 @@ describe("transform", () => {
   describe("SSR mode + colocated directive output", () => {
     it("should produce SSR planFactory for supported component with load:onClick", () => {
       const code = `
-        import { defineComponent, signal } from "@dathomir/core";
+        import { defineComponent, signal } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => {
           const count = signal(0);
           return (
@@ -6030,7 +6030,7 @@ describe("transform", () => {
 
     it("should produce SSR planFactory for supported component with interaction:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => {
           return <div><button interaction:onClick={() => alert("hi")}>Alert</button></div>;
         });
@@ -6043,7 +6043,7 @@ describe("transform", () => {
 
     it("should produce SSR planFactory for supported component with visible:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => {
           return <div><button visible:onClick={() => doStuff()}>Visible</button></div>;
         });
@@ -6055,7 +6055,7 @@ describe("transform", () => {
 
     it("should produce SSR planFactory for supported component with idle:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => {
           return <div><button idle:onClick={() => doStuff()}>Idle</button></div>;
         });
@@ -6067,7 +6067,7 @@ describe("transform", () => {
 
     it("should include colocated metadata attributes in SSR output for load:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => {
           return <div><button load:onClick={() => go()}>Go</button></div>;
         });
@@ -6080,7 +6080,7 @@ describe("transform", () => {
 
     it("should remove colocated syntax and keep click binding in SSR planFactory", () => {
       const code = `
-        import { defineComponent, signal } from "@dathomir/core";
+        import { defineComponent, signal } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => {
           const count = signal(0);
           return (
@@ -6099,7 +6099,7 @@ describe("transform", () => {
 
     it("should throw in SSR mode for unsupported (try/catch) + colocated combination", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => {
           try {
             return <div><button load:onClick={() => go()}>Go</button></div>;
@@ -6117,7 +6117,7 @@ describe("transform", () => {
   describe("client:interaction event type variants", () => {
     it("should handle client:interaction with mouseenter event type", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => (
           <div><Widget client:interaction="mouseenter" /></div>
         ));
@@ -6129,7 +6129,7 @@ describe("transform", () => {
 
     it("should handle client:interaction with focus event type", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => (
           <div><Widget client:interaction="focus" /></div>
         ));
@@ -6141,7 +6141,7 @@ describe("transform", () => {
 
     it("should handle client:interaction with pointerdown event type", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => (
           <div><Widget client:interaction="pointerdown" /></div>
         ));
@@ -6153,7 +6153,7 @@ describe("transform", () => {
 
     it("should default bare client:interaction to click", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => (
           <div><Widget client:interaction /></div>
         ));
@@ -6165,7 +6165,7 @@ describe("transform", () => {
 
     it("should handle client:interaction event type in SSR mode", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => (
           <div><Widget client:interaction="mouseover" /></div>
         ));
@@ -6188,7 +6188,7 @@ describe("transform", () => {
   describe("Colocated directive + nested islands combination", () => {
     it("should support colocated directive alongside nested island child", () => {
       const code = `
-        import { defineComponent, signal } from "@dathomir/core";
+        import { defineComponent, signal } from "@dathra/core";
         const Parent = defineComponent("x-parent", () => {
           const count = signal(0);
           return (
@@ -6208,7 +6208,7 @@ describe("transform", () => {
 
     it("should track nested boundary even with colocated directive present", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Parent = defineComponent("x-parent", () => (
           <div>
             <button load:onClick={() => doThing()}>Do</button>
@@ -6227,7 +6227,7 @@ describe("transform", () => {
 
     it("should support colocated directive + nested island in SSR mode", () => {
       const code = `
-        import { defineComponent, signal } from "@dathomir/core";
+        import { defineComponent, signal } from "@dathra/core";
         const Parent = defineComponent("x-parent", () => {
           const count = signal(0);
           return (
@@ -6252,7 +6252,7 @@ describe("transform", () => {
       // The standalone JSX equivalent (line ~2308) DOES trigger the mixing
       // guard because the outer tree walk recognises capitalized tags.
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", () => (
           <Panel client:load>
             <button load:onClick={() => go()}>Go</button>
@@ -6266,7 +6266,7 @@ describe("transform", () => {
 
     it("should support multiple colocated directives with same strategy alongside nested island", () => {
       const code = `
-        import { defineComponent, signal } from "@dathomir/core";
+        import { defineComponent, signal } from "@dathra/core";
         const Parent = defineComponent("x-parent", () => {
           const a = signal(0);
           const b = signal(0);
@@ -6539,7 +6539,7 @@ describe("transform", () => {
   describe("Unsupported hydration + colocated directive combination guard", () => {
     it("should throw when runtime-branching (try/catch) component has load:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", (props) => {
           try {
             return <div><button load:onClick={() => console.log("click")}>Click</button></div>;
@@ -6555,7 +6555,7 @@ describe("transform", () => {
 
     it("should throw when imperative-dom-query component has interaction:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", (props, { host }) => {
           const el = host.shadowRoot.querySelector(".foo");
           return <div><button interaction:onClick={() => console.log("click")}>Click</button></div>;
@@ -6568,7 +6568,7 @@ describe("transform", () => {
 
     it("should throw when opaque-helper-call component has visible:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         import { unknownHelper } from "./helpers";
         const Comp = defineComponent("x-comp", (props) => {
           return unknownHelper(() => <div><button visible:onClick={() => console.log("click")}>Click</button></div>);
@@ -6581,7 +6581,7 @@ describe("transform", () => {
 
     it("should throw when unsupported-component-body (loop) has idle:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", (props) => {
           for (let i = 0; i < 3; i++) {}
           return <div><button idle:onClick={() => console.log("click")}>Click</button></div>;
@@ -6594,7 +6594,7 @@ describe("transform", () => {
 
     it("should throw when unsupported-component-body (async) has load:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", async (props) => {
           return <div><button load:onClick={() => console.log("click")}>Click</button></div>;
         });
@@ -6606,7 +6606,7 @@ describe("transform", () => {
 
     it("should throw when node-identity-reuse component has load:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", (props) => {
           const el = document.createElement("div");
           return <div><button load:onClick={() => console.log("click")}>Click</button></div>;
@@ -6619,7 +6619,7 @@ describe("transform", () => {
 
     it("should throw when non-normalizable-spread component has interaction:onClick", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", (props) => {
           const base = { a: 1 };
           return <div {...{...base, b: 2}}><button interaction:onClick={() => console.log("click")}>Click</button></div>;
@@ -6632,7 +6632,7 @@ describe("transform", () => {
 
     it("should NOT throw when unsupported component has NO colocated directive", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", (props) => {
           try {
             return <div>A</div>;
@@ -6648,7 +6648,7 @@ describe("transform", () => {
 
     it("should throw in SSR mode when unsupported (try/catch) + colocated combine", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", (props) => {
           try {
             return <div><button load:onClick={() => console.log("click")}>Click</button></div>;
@@ -6664,7 +6664,7 @@ describe("transform", () => {
 
     it("should throw when colocated directive is deeply nested in unsupported (try/catch) component", () => {
       const code = `
-        import { defineComponent } from "@dathomir/core";
+        import { defineComponent } from "@dathra/core";
         const Comp = defineComponent("x-comp", (props) => {
           try {
             return <div><section><button load:onClick={() => console.log("deep")}>Deep</button></section></div>;
@@ -6681,7 +6681,7 @@ describe("transform", () => {
     for (const strategy of COLOCATED_CLIENT_STRATEGIES) {
       it(`should throw for ${strategy}:onClick in unsupported (try/catch) component`, () => {
         const code = `
-          import { defineComponent } from "@dathomir/core";
+          import { defineComponent } from "@dathra/core";
           const Comp = defineComponent("x-comp", (props) => {
             try {
               return <div><button ${strategy}:onClick={() => {}}>${strategy}</button></div>;

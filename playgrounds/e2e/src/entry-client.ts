@@ -1,5 +1,5 @@
-import { clearGlobalStyles } from "@dathomir/components";
-import { hydrateIslands } from "@dathomir/runtime/hydration";
+import { clearGlobalStyles } from "@dathra/components";
+import { hydrateIslands } from "@dathra/runtime/hydration";
 
 clearGlobalStyles();
 

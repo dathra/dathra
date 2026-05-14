@@ -1,6 +1,6 @@
-# @dathomir/components
+# @dathra/components
 
-Web Components high-level API for Dathomir framework.
+Web Components high-level API for Dathra framework.
 
 ## Features
 
@@ -10,16 +10,16 @@ Web Components high-level API for Dathomir framework.
 ## Installation
 
 ```bash
-pnpm add @dathomir/components @dathomir/reactivity
+pnpm add @dathra/components @dathra/reactivity
 ```
 
-Note: Usually you'll install `@dathomir/core` which includes this package.
+Note: Usually you'll install `@dathra/core` which includes this package.
 
 ## Usage
 
 ```typescript
-import { defineComponent, css } from '@dathomir/components';
-import { signal } from '@dathomir/reactivity';
+import { defineComponent, css } from '@dathra/components';
+import { signal } from '@dathra/reactivity';
 
 const styles = css`
   button {
@@ -84,7 +84,7 @@ To enable SSR with Declarative Shadow DOM, simply import the auto-setup module:
 
 ```typescript
 // entry-server.tsx
-import "@dathomir/components/ssr"; // Auto-enables DSD rendering
+import "@dathra/components/ssr"; // Auto-enables DSD rendering
 import { App } from "./App";
 
 export function render(): string {
@@ -92,7 +92,7 @@ export function render(): string {
 }
 ```
 
-The `@dathomir/components/ssr` import automatically configures the SSR renderer to generate `<template shadowrootmode="open">` for all registered Web Components. No additional setup required!
+The `@dathra/components/ssr` import automatically configures the SSR renderer to generate `<template shadowrootmode="open">` for all registered Web Components. No additional setup required!
 
 ## License
 

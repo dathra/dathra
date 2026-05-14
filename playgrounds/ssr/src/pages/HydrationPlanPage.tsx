@@ -1,5 +1,5 @@
-import { css, defineComponent } from "@dathomir/components";
-import { onCleanup, signal } from "@dathomir/core";
+import { css, defineComponent } from "@dathra/components";
+import { onCleanup, signal } from "@dathra/core";
 
 const pageStyles = css`
   :host {

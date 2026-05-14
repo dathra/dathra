@@ -19,6 +19,8 @@
       component: FunctionComponent<S>,
       options?: ComponentOptions<S>,
     ): DefinedComponent<S>
+
+    function bindStoreToHost(host: HTMLElement, store: AtomStore): void
     ```
 
     *主要型*:
@@ -129,6 +131,7 @@
     - JSX runtime が生成した subtree 内の custom element に対しても current store boundary が伝播する
     - `attribute: false` の prop は属性監視せず、property setter 経由でのみ更新する
     - `connectedCallback` では host に bind 済みの store を解決し、`createRoot` スコープ内で関数コンポーネントを実行する
+    - 関数コンポーネントが `string` を返す場合、`defineComponent` は文字列を text node として扱わず、runtime の DOM 構築 API へ委譲して Shadow DOM に挿入する。返す文字列は **信頼できるソースからのみ渡すこと** — `innerHTML` 経由でパースされるため、平文テキストを表示したい場合は `Document` または `Text` node を返すこと
     - `connectedCallback` と `hydrate` へ渡す context には、host の island metadata を正規化した read-only `client` context を含める。`interaction` strategy で `data-dh-island-value` が欠ける場合は canonical default `click` を補完する
     - `connectedCallback` では local `styles` と `adoptGlobalStyles()` で登録済みの global style を合成し、`adoptedStyleSheets` へ反映する
     - host-level `data-dh-island*` metadata はその custom element host の hydration boundary を定義し、同じ host setup が生成した subtree 全体は strategy 発火までその boundary に従う
@@ -143,7 +146,9 @@
     - DSD に SSR `<style>` が存在し、CSR で `adoptedStyleSheets` を適用する場合は `<style>` を除去して重複適用を避ける
     - `disconnectedCallback` では `dispose` により cleanup を実行する
     - SSR では `getCssText()`、`registerComponent()`、`ensureComponentRenderer()` を用いて SSR 情報を登録する
+    - browser implementation path へ入る条件は `window` 単独ではなく、`document` / `HTMLElement` / `customElements` の capability で判定する
     - 属性から Signal への型変換は `String` / `Number` / `Boolean` / カスタム関数の規則に従い、初期化時と属性変更時で同じ coercion 規則を使う。`Number` では `null` を `Number(null)` にせずデフォルト値へフォールバックする
+    - `bindStoreToHost()` は SSR markup の client entry など、store boundary を public API 経由で host に紐付けるために公開する
   ],
 )
 
@@ -203,6 +208,36 @@
   [
     - Node.js / Edge ランタイムで機能する
     - SSR ではプレースホルダークラス返却で十分になる
+  ],
+)
+
+#adr(
+  header("browser 実装 path は custom element capability で判定する", Status.Accepted, "2026-04-23"),
+  [
+    `defineComponent` が実際に必要とするのは server かどうかそのものではなく、browser custom element 実装を安全に有効化できるかどうかである。`window` だけを見ると shim / partial DOM / test runtime で誤判定しやすい。
+  ],
+  [
+    `defineComponent` と JSX helper の runtime branch は `document` / `HTMLElement` / `customElements` を満たすときだけ browser implementation path に入る。満たさない場合は SSR registration / placeholder path を使う。
+  ],
+  [
+    - `window` 単独より意図に近い capability probe になる
+    - partial DOM runtime で unsafe な custom element path を避けられる
+    - SSR registration と JSX helper の branch 条件を揃えやすい
+  ],
+)
+
+#adr(
+  header("JSX helper は define-time の runtime decision に固定する", Status.Accepted, "2026-04-29"),
+  [
+    capability が非同期 polyfill などで後から変化すると、`defineComponent` が SSR registration / placeholder path を選んだ後に JSX helper だけが browser path へ切り替わる可能性がある。その場合、custom element が登録されていない tag の `HTMLElement` を生成し、upgrade / lifecycle / hydration が実行されない。
+  ],
+  [
+    JSX helper は `defineComponent` 呼び出し時に決定した runtime decision を保持し、呼び出しごとに capability を再判定しない。browser path を選んだ definition は browser JSX element を生成し、server path を選んだ definition は capability が後から増えても DSD 文字列を返す。
+  ],
+  [
+    - `defineComponent` と JSX helper の runtime path が常に一致する
+    - 後から追加された partial DOM / customElements polyfill による未登録 custom element 生成を避けられる
+    - runtime capability が変わる環境では、必要な polyfill を読み込んだ後に `defineComponent` を呼ぶ責務が明確になる
   ],
 )
 
@@ -402,7 +437,7 @@
     outer island の subtree 内でも、優先度や trigger が異なる interactive UI を独立して起動したい。boundary を host 単位に限定したまま nested islands を正式に扱えれば、SSR shell を維持しつつ局所的な interactivity を段階的に解放できる。
   ],
   [
-    descendant custom element host が独立した canonical `data-dh-island*` metadata を持つ場合、Dathomir はそれを outer host とは別の explicit nested island boundary として扱う。nested boundary は nearest ancestor island host の subtree 内に存在してもよく、runtime scheduler は outer/inner をそれぞれ独立に schedule できるようにする。
+    descendant custom element host が独立した canonical `data-dh-island*` metadata を持つ場合、Dathra はそれを outer host とは別の explicit nested island boundary として扱う。nested boundary は nearest ancestor island host の subtree 内に存在してもよく、runtime scheduler は outer/inner をそれぞれ独立に schedule できるようにする。
   ],
   [
     - author は eager child / deferred parent のような構成を explicit host 分割で表現できる
@@ -516,12 +551,12 @@
     `withStore()` の boundary を custom element instance まで運ぶ仕組みは必要だが、利用者に public API として公開すると mental model が複雑になる。
   ],
   [
-    current store の捕捉と host への binding は `@dathomir/components` 内部実装に閉じ込め、公開 API には含めない。
+    current store の捕捉と host への binding は `@dathra/components` 内部実装に閉じ込め、公開 API には含めない。
   ],
   [
     - 利用者は `withStore()` と `ctx.store` だけを理解すればよい
     - host-to-store binding の実装を将来変更しやすい
-    - `@dathomir/store` は atom/store/boundary の public API に集中できる
+    - `@dathra/store` は atom/store/boundary の public API に集中できる
   ],
 )
 

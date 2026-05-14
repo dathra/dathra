@@ -1,9 +1,9 @@
 /**
- * Dathomir counter component with reactive state.
+ * Dathra counter component with reactive state.
  */
 
-import { defineComponent } from "@dathomir/components";
-import { signal } from "@dathomir/reactivity";
+import { defineComponent } from "@dathra/components";
+import { signal } from "@dathra/reactivity";
 
 export const MyCounter = defineComponent(
   "my-counter",

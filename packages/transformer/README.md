@@ -1,19 +1,19 @@
-# @dathomir/transformer
+# @dathra/transformer
 
-JSX transformer that converts JSX into Dathomir runtime calls using structured arrays. Supports both CSR and SSR output modes.
+JSX transformer that converts JSX into Dathra runtime calls using structured arrays. Supports both CSR and SSR output modes.
 
 ## Install
 
 ```bash
-npm install @dathomir/transformer
+npm install @dathra/transformer
 ```
 
-> **Note:** This package is typically used indirectly via `@dathomir/plugin`. Direct usage is for custom build tool integrations.
+> **Note:** This package is typically used indirectly via `@dathra/plugin`. Direct usage is for custom build tool integrations.
 
 ## Usage
 
 ```ts
-import { transform } from "@dathomir/transformer";
+import { transform } from "@dathra/transformer";
 
 const result = transform(code, {
   mode: "csr", // "csr" | "ssr"
@@ -45,7 +45,7 @@ import {
   setText,
   event,
   templateEffect,
-} from "@dathomir/runtime";
+} from "@dathra/runtime";
 
 const _t1 = fromTree(
   [["button", { class: "btn" }, "Count: ", ["{text}", null]]],
@@ -61,7 +61,7 @@ templateEffect(() => setText(_text, count.value));
 **Output (SSR):**
 
 ```js
-import { renderToString } from "@dathomir/runtime";
+import { renderToString } from "@dathra/runtime";
 
 renderToString(
   [["button", { class: "btn" }, "Count:", ["{text}", null]]],
@@ -72,12 +72,12 @@ renderToString(
 
 ## Options
 
-| Option          | Type             | Default               | Description                             |
-| --------------- | ---------------- | --------------------- | --------------------------------------- |
-| `mode`          | `"csr" \| "ssr"` | `"csr"`               | Rendering mode                          |
-| `sourceMap`     | `boolean`        | `false`               | Generate source map                     |
-| `filename`      | `string`         | —                     | File name for source maps               |
-| `runtimeModule` | `string`         | `"@dathomir/runtime"` | Module to import runtime functions from |
+| Option          | Type             | Default             | Description                             |
+| --------------- | ---------------- | ------------------- | --------------------------------------- |
+| `mode`          | `"csr" \| "ssr"` | `"csr"`             | Rendering mode                          |
+| `sourceMap`     | `boolean`        | `false`             | Generate source map                     |
+| `filename`      | `string`         | —                   | File name for source maps               |
+| `runtimeModule` | `string`         | `"@dathra/runtime"` | Module to import runtime functions from |
 
 ## License
 

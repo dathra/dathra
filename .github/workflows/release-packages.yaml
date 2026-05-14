@@ -31,8 +31,6 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -41,16 +39,13 @@ jobs:
           ref: main
 
       - name: Set up Node.js
-        uses: jdx/mise-action@v3
+        uses: jdx/mise-action@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           install_args: "node pnpm"
           cache: true
 
-      - uses: pnpm/action-setup@v4
-
-      - name: Setup .npmrc
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+      - uses: pnpm/action-setup@v5
 
       - name: Install dependencies
         run: pnpm i --frozen-lockfile
@@ -74,9 +69,22 @@ jobs:
 
       - name: Release dependent packages
         run: |
-          for pkg in reactivity transformer runtime plugin components core; do
+          for pkg in reactivity store transformer runtime plugin components core; do
             pnpm p:${pkg} release --level fix --release-version ${{ steps.get-version.outputs.package-version }} -k create-release-branch,build
           done
+
+      - name: Format release changes
+        run: pnpm fmt
+
+      - name: Commit formatted release changes
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "style: format release changes"
+          git push
 
       - name: Create Pull Request
         run: |
@@ -89,7 +97,7 @@ jobs:
 
       - name: Create GitHub Release
         id: create-release
-        uses: release-drafter/release-drafter@v6
+        uses: release-drafter/release-drafter@v7
         with:
           version: ${{ steps.get-version.outputs.package-version }}
           prerelease: ${{ contains(steps.get-version.outputs.package-version, '-beta') }}

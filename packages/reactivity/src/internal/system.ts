@@ -15,6 +15,7 @@ import type { BaseNode, ComputedNode, SignalNode, WatcherNode } from "./nodes";
 const QUEUED_FLAG = 1 << 6;
 
 let cycle = 0;
+let runDepth = 0;
 let batchDepth = 0;
 let notifyIndex = 0;
 let queuedEffectsLength = 0;
@@ -42,6 +43,18 @@ function getCycle(): number {
 
 function incrementCycle(): void {
   ++cycle;
+}
+
+function enterRun(): void {
+  ++runDepth;
+}
+
+function exitRun(): void {
+  --runDepth;
+}
+
+function isRunning(): boolean {
+  return runDepth > 0;
 }
 
 function startBatch(): void {
@@ -138,10 +151,12 @@ function runWatcher(node: WatcherNode, flags: number): void {
       ReactiveFlags.RecursedCheck;
     const prevSub = setActiveSub(node);
     try {
+      enterRun();
       if (node.kind === "effect") {
         node.fn();
       }
     } finally {
+      exitRun();
       unsetActiveSub(prevSub);
       node.flags &= ~ReactiveFlags.RecursedCheck;
       purgeDeps(node);
@@ -167,12 +182,14 @@ function updateComputed<T>(computed: ComputedNode<T>): boolean {
   const prevSub = setActiveSub(computed);
   let succeeded = false;
   try {
+    enterRun();
     const oldValue = computed.value;
     const newValue = computed.getter(oldValue) as T;
     computed.value = newValue;
     succeeded = true;
     return !Object.is(oldValue, newValue);
   } finally {
+    exitRun();
     unsetActiveSub(prevSub);
     computed.flags &= ~ReactiveFlags.RecursedCheck;
     if (succeeded) {
@@ -213,11 +230,14 @@ export {
   checkDirty,
   effectCleanup,
   endBatch,
+  enterRun,
+  exitRun,
   flush,
   getActiveSub,
   getBatchDepth,
   getCycle,
   incrementCycle,
+  isRunning,
   link,
   propagate,
   purgeDeps,

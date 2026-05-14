@@ -1,7 +1,7 @@
 /**
  * Web Components test using defineComponent
  */
-import { css, defineComponent, signal } from "@dathomir/core";
+import { css, defineComponent, signal } from "@dathra/core";
 
 // Create a styled counter Web Component
 const counterStyles = css`
@@ -67,7 +67,7 @@ const counterStyles = css`
 
 // Define the Web Component
 defineComponent(
-  "dathomir-counter",
+  "dathra-counter",
   ({ initial }) => {
     const count = signal(initial.value);
 
@@ -115,12 +115,12 @@ const greetingStyles = css`
 `;
 
 defineComponent(
-  "dathomir-greeting",
+  "dathra-greeting",
   ({ name }) => {
     return (
       <div>
         <h3>Hello, {name.value}!</h3>
-        <p>This is a custom Web Component created with Dathomir.</p>
+        <p>This is a custom Web Component created with Dathra.</p>
       </div>
     );
   },
@@ -130,6 +130,4 @@ defineComponent(
   },
 );
 
-console.log(
-  "✅ Web Components registered: dathomir-counter, dathomir-greeting",
-);
+console.log("✅ Web Components registered: dathra-counter, dathra-greeting");

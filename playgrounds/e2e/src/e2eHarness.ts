@@ -23,7 +23,7 @@ type HarnessState = {
 };
 
 declare global {
-  var __dathomirPlaygroundE2EHarness: HarnessState | undefined;
+  var __dathraPlaygroundE2EHarness: HarnessState | undefined;
 }
 
 function appendPreviewLog(
@@ -172,7 +172,7 @@ async function startHarness(): Promise<Harness> {
 }
 
 async function disposeHarness(): Promise<void> {
-  const state = globalThis.__dathomirPlaygroundE2EHarness;
+  const state = globalThis.__dathraPlaygroundE2EHarness;
   if (state === undefined) {
     return;
   }
@@ -188,7 +188,7 @@ async function disposeHarness(): Promise<void> {
       await harness.browser.close();
       await stopPreviewServer(harness.previewProcess);
     } finally {
-      globalThis.__dathomirPlaygroundE2EHarness = undefined;
+      globalThis.__dathraPlaygroundE2EHarness = undefined;
     }
   })();
 
@@ -196,7 +196,7 @@ async function disposeHarness(): Promise<void> {
 }
 
 function registerHarnessCleanup(): void {
-  const state = globalThis.__dathomirPlaygroundE2EHarness;
+  const state = globalThis.__dathraPlaygroundE2EHarness;
   if (state === undefined || state.cleanupRegistered) {
     return;
   }
@@ -208,8 +208,8 @@ function registerHarnessCleanup(): void {
 }
 
 async function acquireHarness(): Promise<void> {
-  if (globalThis.__dathomirPlaygroundE2EHarness === undefined) {
-    globalThis.__dathomirPlaygroundE2EHarness = {
+  if (globalThis.__dathraPlaygroundE2EHarness === undefined) {
+    globalThis.__dathraPlaygroundE2EHarness = {
       refs: 0,
       promise: startHarness(),
       cleanupRegistered: false,
@@ -217,12 +217,12 @@ async function acquireHarness(): Promise<void> {
   }
 
   registerHarnessCleanup();
-  globalThis.__dathomirPlaygroundE2EHarness.refs += 1;
-  await globalThis.__dathomirPlaygroundE2EHarness.promise;
+  globalThis.__dathraPlaygroundE2EHarness.refs += 1;
+  await globalThis.__dathraPlaygroundE2EHarness.promise;
 }
 
 async function releaseHarness(): Promise<void> {
-  const state = globalThis.__dathomirPlaygroundE2EHarness;
+  const state = globalThis.__dathraPlaygroundE2EHarness;
   if (state === undefined) {
     return;
   }
@@ -236,7 +236,7 @@ async function releaseHarness(): Promise<void> {
 }
 
 async function getHarness(): Promise<Harness> {
-  const state = globalThis.__dathomirPlaygroundE2EHarness;
+  const state = globalThis.__dathraPlaygroundE2EHarness;
   if (state === undefined) {
     throw new Error("[playground/e2e] Harness was not acquired before use");
   }

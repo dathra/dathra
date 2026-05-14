@@ -1,14 +1,20 @@
-import { transform } from "@dathomir/transformer";
+import { transform } from "@dathra/transformer";
 import fs from "node:fs";
+import type { IncomingHttpHeaders } from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createUnplugin, type UnpluginContext } from "unplugin";
-import type { TransformResult, Plugin as VitePlugin } from "vite";
+import type {
+  TransformResult,
+  Plugin as VitePlugin,
+  UserConfig,
+  ViteDevServer,
+} from "vite";
 
 /**
- * Plugin options for the Dathomir plugin.
+ * Plugin options shared by every runtime mode.
  */
-interface PluginOptions {
+interface PluginCommonOptions {
   /**
    * File extensions to include (default: ['.tsx', '.jsx']).
    */
@@ -20,14 +26,56 @@ interface PluginOptions {
   exclude?: string[];
 
   /**
-   * Module to import runtime functions from (default: '@dathomir/core').
+   * Module to import runtime functions from (default: '@dathra/core').
    */
   runtimeModule?: string;
+}
 
-  /**
-   * Force a specific mode (overrides automatic detection).
-   */
-  mode?: "csr" | "ssr";
+/**
+ * Plugin options for the Dathra plugin.
+ */
+type PluginOptions = PluginCommonOptions &
+  (
+    | {
+        /** Force SSR mode and allow Vite dev SSR rendering options. */
+        mode: "ssr";
+
+        /** Configure Vite dev SSR HTML rendering. */
+        ssr?: false | PluginSsrOptions;
+      }
+    | {
+        /** Force CSR mode, or omit it to use environment-based detection. */
+        mode?: "csr";
+
+        /** SSR rendering options are only valid with mode: "ssr". */
+        ssr?: false;
+      }
+  );
+
+interface PluginSsrContext {
+  request: Request;
+  requestId: string;
+  url: string;
+}
+
+type PluginSsrRenderResult =
+  | string
+  | Response
+  | {
+      html: string;
+      statusCode?: number;
+      headers?: HeadersInit;
+    };
+
+interface PluginSsrOptions {
+  /** SSR module entry passed to Vite's ssrLoadModule(). */
+  entry: string;
+
+  /** HTML placeholder replaced with the rendered app HTML. */
+  outlet?: string;
+
+  /** Export name to call from the SSR module. Defaults to `render`, then default. */
+  renderExport?: string;
 }
 
 /**
@@ -106,6 +154,11 @@ type PluginTransformOutput = {
 };
 
 type TsconfigPaths = Record<string, string[]>;
+
+type SsrRenderModule = Record<string, unknown> & {
+  default?: unknown;
+  render?: unknown;
+};
 
 const tsconfigPathCache = new Map<string, TsconfigPaths | null>();
 const require = createRequire(import.meta.url);
@@ -314,6 +367,240 @@ function resolveLocalSourceAlias(
   return null;
 }
 
+function createRequestId(requestUrl: URL): string {
+  return (
+    requestUrl.searchParams.get("requestId") ??
+    `dathra-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+  );
+}
+
+function shouldHandleSsrPath(pathname: string): boolean {
+  if (pathname.startsWith("/@") || pathname.startsWith("/node_modules/")) {
+    return false;
+  }
+
+  if (pathname === "/index.html") {
+    return true;
+  }
+
+  return path.extname(pathname) === "";
+}
+
+function acceptsHtml(headers: IncomingHttpHeaders): boolean {
+  const acceptHeader = headers.accept;
+  const accept = Array.isArray(acceptHeader)
+    ? acceptHeader.join(",")
+    : (acceptHeader ?? "");
+
+  return (
+    accept === "" || accept.includes("text/html") || accept.includes("*/*")
+  );
+}
+
+function isHtmlContentType(headers: Partial<Record<string, string>>): boolean {
+  const contentType = headers["content-type"];
+  return contentType === undefined || contentType.includes("text/html");
+}
+
+function getSsrRenderFunction(
+  ssrModule: SsrRenderModule,
+  exportName: string,
+):
+  | ((
+      context: PluginSsrContext,
+    ) => PluginSsrRenderResult | Promise<PluginSsrRenderResult>)
+  | null {
+  const candidate = ssrModule[exportName] ?? ssrModule.default;
+  return typeof candidate === "function"
+    ? (candidate as (
+        context: PluginSsrContext,
+      ) => PluginSsrRenderResult | Promise<PluginSsrRenderResult>)
+    : null;
+}
+
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+function createRequest(req: {
+  method?: string;
+  url?: string;
+  headers: IncomingHttpHeaders;
+}): Request {
+  const rawHeaders = req.headers as Record<
+    string,
+    string | string[] | undefined
+  >;
+  const host = rawHeaders.host ?? "localhost";
+  const normalizedHost = Array.isArray(host) ? host[0] : host;
+  const requestUrl = new URL(req.url ?? "/", `http://${normalizedHost}`);
+  const headers = new Headers();
+  for (const [name, value] of Object.entries(rawHeaders)) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        headers.append(name, item);
+      }
+      continue;
+    }
+    if (value !== undefined) {
+      headers.set(name, value);
+    }
+  }
+
+  return new Request(requestUrl, {
+    method: req.method ?? "GET",
+    headers,
+  });
+}
+
+function headersToRecord(
+  headers: HeadersInit | undefined,
+): Partial<Record<string, string>> {
+  if (headers === undefined) {
+    return {};
+  }
+
+  return Object.fromEntries(new Headers(headers).entries());
+}
+
+async function normalizeSsrRenderResult(
+  result: PluginSsrRenderResult,
+): Promise<{
+  body: string;
+  statusCode: number;
+  headers: Partial<Record<string, string>>;
+  template: boolean;
+}> {
+  if (typeof result === "string") {
+    return { body: result, statusCode: 200, headers: {}, template: true };
+  }
+
+  if (result instanceof Response) {
+    const headers = headersToRecord(result.headers);
+    return {
+      body: await result.text(),
+      statusCode: result.status,
+      headers,
+      template: isHtmlContentType(headers),
+    };
+  }
+
+  return {
+    body: result.html,
+    statusCode: result.statusCode ?? 200,
+    headers: headersToRecord(result.headers),
+    template: true,
+  };
+}
+
+async function handleSsrDevRequest(
+  vite: ViteDevServer,
+  ssrOptions: PluginSsrOptions,
+  outlet: string,
+  renderExport: string,
+  req: {
+    method?: string;
+    url?: string;
+    headers: IncomingHttpHeaders;
+  },
+  res: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    writeHead: any;
+    end: (body?: string) => void;
+  },
+  next: (error?: unknown) => void,
+): Promise<void> {
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    next();
+    return;
+  }
+
+  const requestUrl = new URL(req.url ?? "/", "http://localhost");
+  if (!shouldHandleSsrPath(requestUrl.pathname)) {
+    next();
+    return;
+  }
+
+  const request = createRequest(req);
+  const context: PluginSsrContext = {
+    request,
+    requestId: createRequestId(requestUrl),
+    url: `${requestUrl.pathname}${requestUrl.search}`,
+  };
+
+  try {
+    const ssrModule = (await vite.ssrLoadModule(
+      ssrOptions.entry,
+    )) as SsrRenderModule;
+    const render = getSsrRenderFunction(ssrModule, renderExport);
+    if (render === null) {
+      throw new Error(
+        `[dathra] SSR module does not export a ${renderExport}() or default render function`,
+      );
+    }
+
+    const result = await normalizeSsrRenderResult(await render(context));
+    if (!result.template) {
+      res.writeHead(result.statusCode, {
+        ...result.headers,
+        "X-Dathra-Request-Id": context.requestId,
+      });
+      res.end(req.method === "HEAD" ? "" : result.body);
+      return;
+    }
+
+    if (!acceptsHtml(req.headers)) {
+      next();
+      return;
+    }
+
+    if (req.method === "HEAD") {
+      res.writeHead(result.statusCode, {
+        "Content-Type": "text/html",
+        ...result.headers,
+        "X-Dathra-Request-Id": context.requestId,
+      });
+      res.end("");
+      return;
+    }
+
+    let template = fs.readFileSync(
+      path.resolve(vite.config.root, "index.html"),
+      "utf-8",
+    );
+    template = await vite.transformIndexHtml(requestUrl.pathname, template);
+    const html = template.replace(outlet, result.body);
+
+    res.writeHead(result.statusCode, {
+      "Content-Type": "text/html",
+      ...result.headers,
+      "X-Dathra-Request-Id": context.requestId,
+    });
+    res.end(html);
+  } catch (error) {
+    vite.ssrFixStacktrace(error as Error);
+    next(error);
+  }
+}
+
+function configureSsrDevServer(
+  vite: ViteDevServer,
+  ssrOptions: PluginSsrOptions,
+): void {
+  const outlet = ssrOptions.outlet ?? "<!--ssr-outlet-->";
+  const renderExport = ssrOptions.renderExport ?? "render";
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises -- connect middleware returns void but processes async
+  vite.middlewares.use(async (req, res, next) => {
+    await handleSsrDevRequest(
+      vite,
+      ssrOptions,
+      outlet,
+      renderExport,
+      req,
+      res,
+      next,
+    );
+  });
+}
+
 /**
  * Core transform function shared by all plugins.
  */
@@ -335,7 +622,7 @@ function doTransform(
       mode,
       sourceMap: true,
       filename: id,
-      runtimeModule: options.runtimeModule ?? "@dathomir/core",
+      runtimeModule: options.runtimeModule ?? "@dathra/core",
     });
 
     const map = parseSourceMap(result.map);
@@ -350,20 +637,41 @@ function doTransform(
         };
   } catch (error) {
     if (error instanceof Error) {
-      error.message = `[dathomir] Error transforming ${id}: ${error.message}`;
+      error.message = `[dathra] Error transforming ${id}: ${error.message}`;
     }
     throw error;
   }
 }
 
 /**
- * Create the Dathomir Vite plugin with proper SSR detection.
+ * Create the Dathra Vite plugin with proper SSR detection.
  * Vite's transform hook receives ssr option directly.
  */
 function createVitePlugin(options: PluginOptions = {}): VitePlugin {
   return {
-    name: "dathomir",
+    name: "dathra",
     enforce: "pre",
+
+    config(config: UserConfig): UserConfig {
+      if (config.esbuild === false) {
+        return { esbuild: false };
+      }
+
+      return {
+        esbuild: {
+          ...(typeof config.esbuild === "object" ? config.esbuild : {}),
+          jsx: "preserve",
+        },
+      };
+    },
+
+    configureServer(vite: ViteDevServer) {
+      if (options.ssr === undefined || options.ssr === false) {
+        return;
+      }
+
+      configureSsrDevServer(vite, options.ssr);
+    },
 
     resolveId(source: string, importer?: string) {
       if (importer === undefined) {
@@ -387,11 +695,11 @@ function createVitePlugin(options: PluginOptions = {}): VitePlugin {
 }
 
 /**
- * Create the Dathomir unplugin factory for non-Vite bundlers.
+ * Create the Dathra unplugin factory for non-Vite bundlers.
  */
 const unpluginFactory = createUnplugin((options: PluginOptions = {}) => {
   return {
-    name: "dathomir",
+    name: "dathra",
 
     transformInclude(id: string) {
       return shouldTransform(id, options);
@@ -406,36 +714,36 @@ const unpluginFactory = createUnplugin((options: PluginOptions = {}) => {
 });
 
 /**
- * Universal dathomir plugin (unplugin factory).
+ * Universal dathra plugin (unplugin factory).
  */
-const dathomir = unpluginFactory;
+const dathra = unpluginFactory;
 
 /**
- * Vite plugin for Dathomir with proper SSR detection.
+ * Vite plugin for Dathra with proper SSR detection.
  */
-const dathomirVitePlugin = createVitePlugin;
+const dathraVitePlugin = createVitePlugin;
 
 /**
- * Webpack plugin for Dathomir.
+ * Webpack plugin for Dathra.
  */
-const dathomirWebpackPlugin = dathomir.webpack;
+const dathraWebpackPlugin = dathra.webpack;
 
 /**
- * Rollup plugin for Dathomir.
+ * Rollup plugin for Dathra.
  */
-const dathomirRollupPlugin = dathomir.rollup;
+const dathraRollupPlugin = dathra.rollup;
 
 /**
- * esbuild plugin for Dathomir.
+ * esbuild plugin for Dathra.
  */
-const dathomirEsbuildPlugin = dathomir.esbuild;
+const dathraEsbuildPlugin = dathra.esbuild;
 
 export {
-  dathomir,
-  dathomirEsbuildPlugin,
-  dathomirRollupPlugin,
-  dathomirVitePlugin,
-  dathomirWebpackPlugin,
+  dathra,
+  dathraEsbuildPlugin,
+  dathraRollupPlugin,
+  dathraVitePlugin,
+  dathraWebpackPlugin,
 };
 export type { PluginOptions };
-export default dathomir;
+export default dathra;

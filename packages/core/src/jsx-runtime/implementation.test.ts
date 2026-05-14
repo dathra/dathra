@@ -1,4 +1,4 @@
-import { createRoot, signal } from "@dathomir/reactivity";
+import { createRoot, signal } from "@dathra/reactivity";
 import { describe, expect, it, vi } from "vitest";
 
 import { atom, createAtomStore, defineComponent, withStore } from "../index";

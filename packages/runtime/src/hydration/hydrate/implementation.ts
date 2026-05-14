@@ -12,7 +12,7 @@ import {
   createRoot,
   templateEffect,
   type RootDispose,
-} from "@dathomir/reactivity";
+} from "@dathra/reactivity";
 import {
   CLIENT_EVENT_METADATA_ATTRIBUTE,
   CLIENT_STRATEGY_METADATA_ATTRIBUTE,
@@ -22,13 +22,13 @@ import {
   ISLAND_VALUE_METADATA_ATTRIBUTE,
   type ISLAND_STRATEGIES,
   isIslandStrategyName,
-} from "@dathomir/shared";
+} from "@dathra/shared";
 import {
   type AtomStore,
   type AtomStoreSnapshot,
   type PrimitiveAtom,
   withStore,
-} from "@dathomir/store";
+} from "@dathra/store";
 
 import { setAttr } from "@/dom/attr/implementation";
 import { insert } from "@/dom/insertion/implementation";
@@ -59,8 +59,8 @@ type ClientActionFactory = (
 ) => EventListener;
 const clientActionRegistry = new Map<string, ClientActionFactory>();
 
-const HYDRATE_ISLANDS_HOOK = Symbol("dathomir.hydrateIslandsHook");
-const HYDRATE_ISLANDS_STATUS = Symbol("dathomir.hydrateIslandsStatus");
+const HYDRATE_ISLANDS_HOOK = Symbol("dathra.hydrateIslandsHook");
+const HYDRATE_ISLANDS_STATUS = Symbol("dathra.hydrateIslandsStatus");
 
 type IslandsStrategyName = (typeof ISLAND_STRATEGIES)[number];
 type HydrateIslandsStatus = "idle" | "hydrated";
@@ -256,7 +256,7 @@ class HydrationMismatchError extends Error {
     }
     const detailStr =
       detailLines.length > 0 ? `\n${detailLines.join("\n")}` : "";
-    super(`[dathomir] Hydration mismatch: ${message}${detailStr}`);
+    super(`[dathra] Hydration mismatch: ${message}${detailStr}`);
     this.name = "HydrationMismatchError";
     this.markerId = details?.markerId ?? null;
     this.markerType = details?.markerType ?? null;
@@ -296,9 +296,7 @@ function handleMismatch(
   if (typeof __DEV__ !== "undefined" && __DEV__) {
     throw new HydrationMismatchError(message, details);
   }
-  console.warn(
-    `[dathomir] Hydration mismatch: ${message}. Falling back to CSR.`,
-  );
+  console.warn(`[dathra] Hydration mismatch: ${message}. Falling back to CSR.`);
   return false;
 }
 
@@ -980,13 +978,13 @@ function hydrateRootWithContext(
     options.storeSnapshotSchema !== undefined &&
     options.store === undefined
   ) {
-    throw new Error("[dathomir] storeSnapshotSchema requires a store");
+    throw new Error("[dathra] storeSnapshotSchema requires a store");
   }
 
   // Check closed shadow root
   if (root.mode === "closed") {
     if (typeof __DEV__ !== "undefined" && __DEV__) {
-      console.warn("[dathomir] Cannot hydrate closed ShadowRoot");
+      console.warn("[dathra] Cannot hydrate closed ShadowRoot");
     }
     return null;
   }

@@ -2,7 +2,7 @@ import { defineConfig, presets } from "rlse.ts";
 
 export default defineConfig(
   presets.npmRelease({
-    resolvePackage: { name: "@dathomir/store" },
+    resolvePackage: { name: "@dathra/store" },
     calculateNextSemver: { level: "patch" },
     runCommand: "pnpm build",
     configureGitUser: {

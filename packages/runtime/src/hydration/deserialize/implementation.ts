@@ -43,7 +43,7 @@ function parseStateScript(container: Element | ShadowRoot): StateObject | null {
   } catch (err) {
     if (typeof __DEV__ !== "undefined" && __DEV__) {
       console.error(
-        `[dathomir] Failed to parse state script. ` +
+        `[dathra] Failed to parse state script. ` +
           `Ensure the serialized state is valid devalue format.`,
         err,
       );
@@ -77,7 +77,7 @@ function parseStoreScript(container: Element | ShadowRoot): StateObject | null {
   } catch (err) {
     if (typeof __DEV__ !== "undefined" && __DEV__) {
       console.error(
-        `[dathomir] Failed to parse store script. ` +
+        `[dathra] Failed to parse store script. ` +
           `Ensure the serialized store snapshot is valid devalue format.`,
         err,
       );

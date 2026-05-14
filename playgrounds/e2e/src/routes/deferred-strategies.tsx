@@ -1,5 +1,5 @@
-import { defineComponent } from "@dathomir/components";
-import { onCleanup } from "@dathomir/core";
+import { defineComponent } from "@dathra/components";
+import { onCleanup } from "@dathra/core";
 
 import { pageStyles } from "../routeStyles";
 

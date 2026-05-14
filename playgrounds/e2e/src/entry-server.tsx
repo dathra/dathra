@@ -1,6 +1,6 @@
-import { clearGlobalStyles } from "@dathomir/components";
-import { renderDSD } from "@dathomir/components/ssr";
-import { withStore } from "@dathomir/core";
+import { clearGlobalStyles } from "@dathra/components";
+import { renderDSD } from "@dathra/components/ssr";
+import { withStore } from "@dathra/core";
 
 import {
   collectCurrentStoreProbe,

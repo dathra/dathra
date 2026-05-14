@@ -20,9 +20,9 @@ export {
   setText,
   // DOM spread
   spread,
-} from "@dathomir/runtime";
+} from "@dathra/runtime";
 
-export { createRoot, onCleanup, templateEffect } from "@dathomir/reactivity";
+export { createRoot, onCleanup, templateEffect } from "@dathra/reactivity";
 
 export type {
   // Tree types
@@ -36,13 +36,13 @@ export type {
   Tree,
   TreeNode,
   // Component types
-  dathomirElement,
-  dathomirJSX,
-  dathomirNode,
-  dathomirSpreadChildren,
-} from "@dathomir/runtime";
+  dathraElement,
+  dathraJSX,
+  dathraNode,
+  dathraSpreadChildren,
+} from "@dathra/runtime";
 
-export type { Owner, RootDispose } from "@dathomir/reactivity";
+export type { Owner, RootDispose } from "@dathra/reactivity";
 
 export {
   MarkerType,
@@ -55,14 +55,14 @@ export {
   renderToString,
   renderTree,
   serializeState,
-} from "@dathomir/runtime/ssr";
+} from "@dathra/runtime/ssr";
 
 export type {
   RenderContext,
   RenderOptions,
   SerializableValue,
   StateObject,
-} from "@dathomir/runtime/ssr";
+} from "@dathra/runtime/ssr";
 
 export {
   HydrationMismatchError,
@@ -76,6 +76,6 @@ export {
   hydrateRoot,
   isHydrated,
   parseStateScript,
-} from "@dathomir/runtime/hydration";
+} from "@dathra/runtime/hydration";
 
-export type { HydrationContext, MarkerInfo } from "@dathomir/runtime/hydration";
+export type { HydrationContext, MarkerInfo } from "@dathra/runtime/hydration";

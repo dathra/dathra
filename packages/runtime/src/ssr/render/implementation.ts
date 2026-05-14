@@ -12,8 +12,8 @@ import {
   type AtomStoreSnapshot,
   type PrimitiveAtom,
   withStore,
-} from "@dathomir/store";
-import { getCurrentStore } from "@dathomir/store/internal";
+} from "@dathra/store";
+import { getCurrentStore } from "@dathra/store/internal";
 
 import {
   MarkerType,
@@ -180,7 +180,7 @@ function assertStoreSnapshotOptions(options: RenderOptions): void {
     options.storeSnapshotSchema !== undefined &&
     options.store === undefined
   ) {
-    throw new Error("[dathomir] storeSnapshotSchema requires a store");
+    throw new Error("[dathra] storeSnapshotSchema requires a store");
   }
 }
 

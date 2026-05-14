@@ -34,7 +34,7 @@ describe("atom", () => {
 
   describe("Type identity", () => {
     it("marks primitive atoms with kind 'primitive'", () => {
-      const nameAtom = atom("name", "dathomir");
+      const nameAtom = atom("name", "dathra");
 
       expect(nameAtom.kind).toBe("primitive");
     });

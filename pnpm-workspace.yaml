@@ -5,6 +5,7 @@ packages:
 
 catalog:
   rlse.ts: 0.0.4
+  "@typescript/native-preview": beta
   "@types/node": 24.2.0
   "@vitest/browser-playwright": 4.0.4
   "@vitest/coverage-v8": 4.0.4
@@ -12,6 +13,6 @@ catalog:
   oxfmt: 0.41.0
   oxlint: 1.51.0
   oxlint-tsgolint: 0.16.0
-  tsdown: 0.16.8
+  tsdown: 0.22.0
   typescript: 6.0.3
   vitest: 4.0.4

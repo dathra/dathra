@@ -15,7 +15,7 @@ function getCurrentStore(): AtomStore | undefined {
 /**
  * Evaluates `render` within an explicit store boundary.
  *
- * All Dathomir APIs that access the current store (component rendering,
+ * All Dathra APIs that access the current store (component rendering,
  * atom reads, SSR) will resolve `store` as the active store for the
  * duration of the `render` callback.
  *

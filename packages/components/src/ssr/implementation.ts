@@ -2,7 +2,7 @@
  * SSR DSD renderer for Web Components.
  *
  * Provides renderDSD/renderDSDContent for cross-framework SSR,
- * and auto-setup of ComponentRenderer for Dathomir SSR.
+ * and auto-setup of ComponentRenderer for Dathra SSR.
  * @module
  */
 
@@ -14,20 +14,20 @@ import type {
   PropsSchema,
 } from "@/defineComponent/implementation";
 import { getComponent } from "@/registry/implementation";
-import { signal } from "@dathomir/reactivity";
+import { signal } from "@dathra/reactivity";
 import {
   createStoreScript,
   type SerializableValue,
   setComponentRenderer,
-} from "@dathomir/runtime/ssr";
-import { serializeState } from "@dathomir/runtime/ssr";
+} from "@dathra/runtime/ssr";
+import { serializeState } from "@dathra/runtime/ssr";
 import type {
   AtomStore,
   AtomStoreSnapshot,
   PrimitiveAtom,
-} from "@dathomir/store";
-import { withStore } from "@dathomir/store";
-import { getCurrentStore } from "@dathomir/store/internal";
+} from "@dathra/store";
+import { withStore } from "@dathra/store";
+import { getCurrentStore } from "@dathra/store/internal";
 
 interface SSRStoreOptions {
   store?: AtomStore;
@@ -43,7 +43,7 @@ function assertStoreSnapshotOptions(options: SSRStoreOptions): void {
     options.storeSnapshotSchema !== undefined &&
     options.store === undefined
   ) {
-    throw new Error("[dathomir] storeSnapshotSchema requires a store");
+    throw new Error("[dathra] storeSnapshotSchema requires a store");
   }
 }
 
@@ -134,7 +134,7 @@ function renderComponentContent(
     get store() {
       if (resolvedStore === undefined) {
         throw new Error(
-          "[dathomir] SSR component context does not provide a store yet",
+          "[dathra] SSR component context does not provide a store yet",
         );
       }
       return resolvedStore;
@@ -243,7 +243,7 @@ function renderDSDContent(
   const content = renderComponentContent(tagName, attrs, options);
   if (content == null) {
     throw new Error(
-      `[dathomir] Component "${tagName}" is not registered. Call defineComponent() first.`,
+      `[dathra] Component "${tagName}" is not registered. Call defineComponent() first.`,
     );
   }
   return `<template shadowrootmode="open">${content}</template>`;
@@ -298,12 +298,12 @@ function renderDSD(
 }
 
 /**
- * Create a component renderer callback for Dathomir's renderToString.
+ * Create a component renderer callback for Dathra's renderToString.
  *
  * Uses the component registry to resolve custom element tags
  * and render their content with Declarative Shadow DOM.
  *
- * @internal This is primarily for internal use by Dathomir's SSR system.
+ * @internal This is primarily for internal use by Dathra's SSR system.
  * Most users should use `renderDSD` or `renderDSDContent` instead.
  *
  * @returns A function that takes (tagName, attrs) and returns DSD HTML or null.
@@ -319,7 +319,7 @@ function createComponentRenderer(): (
 let _rendererInitialized = false;
 
 /**
- * Ensure the global ComponentRenderer is set up for Dathomir SSR.
+ * Ensure the global ComponentRenderer is set up for Dathra SSR.
  * Called automatically by defineComponent in SSR mode.
  * Safe to call multiple times (idempotent).
  * @internal

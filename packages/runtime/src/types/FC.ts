@@ -4,7 +4,7 @@
  *
  * @example
  * ```tsx
- * import { type FC } from "@dathomir/runtime";
+ * import { type FC } from "@dathra/runtime";
  *
  * const Counter: FC<{ count: number }> = ({ count }) => {
  *   return <div>{count}</div>;

@@ -1,7 +1,7 @@
 /**
  * JSX Fragment component.
  */
-import { templateEffect } from "@dathomir/reactivity";
+import { templateEffect } from "@dathra/reactivity";
 
 type JSXChild =
   | Node

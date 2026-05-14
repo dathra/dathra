@@ -1,5 +1,5 @@
-import { defineComponent } from "@dathomir/components";
-import { signal } from "@dathomir/core";
+import { defineComponent } from "@dathra/components";
+import { signal } from "@dathra/core";
 
 import { pageStyles } from "../routeStyles";
 

@@ -176,18 +176,15 @@ import type { VarIntrinsicElements } from "@/types/IntrinsicElements/Var";
 import type { VideoIntrinsicElements } from "@/types/IntrinsicElements/Video";
 import type { WbrIntrinsicElements } from "@/types/IntrinsicElements/Wbr";
 
-type dathomirElement = Node;
+type dathraElement = Node;
 
-type dathomirPrimitive = string | number | boolean | null | undefined;
+type dathraPrimitive = string | number | boolean | null | undefined;
 
-type dathomirNode =
-  | dathomirElement
-  | dathomirPrimitive
-  | readonly dathomirNode[];
+type dathraNode = dathraElement | dathraPrimitive | readonly dathraNode[];
 
-type dathomirSpreadChildren = dathomirNode[];
+type dathraSpreadChildren = dathraNode[];
 
-type dathomirJSX = dathomirElement;
+type dathraJSX = dathraElement;
 
 export namespace JSX {
   export interface IntrinsicElements {
@@ -376,4 +373,4 @@ export namespace JSX {
   }
 }
 
-export { dathomirElement, dathomirJSX, dathomirNode, dathomirSpreadChildren };
+export { dathraElement, dathraJSX, dathraNode, dathraSpreadChildren };

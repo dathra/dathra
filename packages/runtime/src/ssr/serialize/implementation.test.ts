@@ -2,11 +2,7 @@
  * Tests for state serialization.
  */
 
-import {
-  atom,
-  createAtomStore,
-  defineAtomStoreSnapshot,
-} from "@dathomir/store";
+import { atom, createAtomStore, defineAtomStoreSnapshot } from "@dathra/store";
 import { describe, expect, it } from "vitest";
 
 import { deserializeState } from "@/hydration/deserialize/implementation";

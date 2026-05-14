@@ -1,12 +1,23 @@
-import type { AtomStore } from "@dathomir/store";
-import { getCurrentStore } from "@dathomir/store/internal";
+import type { AtomStore } from "@dathra/store";
+import { getCurrentStore } from "@dathra/store/internal";
 
-const STORE_BINDING = Symbol("dathomir.component.store");
+const STORE_BINDING = Symbol("dathra.component.store");
 
 type StoreBoundHost = HTMLElement & {
   [STORE_BINDING]?: AtomStore;
 };
 
+function canUseComponentDOMRuntime(): boolean {
+  return (
+    typeof globalThis.document !== "undefined" &&
+    typeof globalThis.HTMLElement !== "undefined" &&
+    typeof globalThis.customElements !== "undefined"
+  );
+}
+
+/**
+ * Bind an atom store to a component host before hydration or connection.
+ */
 function bindStoreToHost(host: HTMLElement, store: AtomStore): void {
   const boundHost = host as StoreBoundHost;
   if (boundHost[STORE_BINDING] === undefined) {
@@ -24,7 +35,7 @@ function captureCurrentStore(host: HTMLElement): void {
 function getStoreFromHost(host: HTMLElement): AtomStore {
   const store = (host as StoreBoundHost)[STORE_BINDING];
   if (store === undefined) {
-    throw new Error("[dathomir] No store bound to component host");
+    throw new Error("[dathra] No store bound to component host");
   }
   return store;
 }
@@ -63,6 +74,7 @@ function bindCurrentStoreToSubtree(root: Node): void {
 export {
   bindCurrentStoreToSubtree,
   bindStoreToHost,
+  canUseComponentDOMRuntime,
   captureCurrentStore,
   getStoreFromHost,
   peekStoreFromHost,

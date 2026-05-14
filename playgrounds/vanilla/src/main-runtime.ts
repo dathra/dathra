@@ -1,5 +1,5 @@
 /**
- * Dathomir Playground - Runtime API Demo
+ * Dathra Playground - Runtime API Demo
  *
  * This example demonstrates the runtime API directly without JSX transformation.
  * It showcases:
@@ -21,7 +21,7 @@ import {
   setText,
   signal,
   templateEffect,
-} from "@dathomir/core";
+} from "@dathra/core";
 
 // Create a root scope for cleanup management
 createRoot(() => {
@@ -38,7 +38,7 @@ createRoot(() => {
       [
         "div",
         { class: "counter" },
-        ["h1", {}, "Dathomir Counter (Runtime API)"],
+        ["h1", {}, "Dathra Counter (Runtime API)"],
         ["p", {}, "Count: ", ["{text}", null]],
         ["p", {}, "Doubled: ", ["{text}", null]],
         [
@@ -104,5 +104,5 @@ createRoot(() => {
   // Mount to DOM
   append(document.getElementById("app")!, div!);
 
-  console.log("Dathomir playground (Runtime API) initialized!");
+  console.log("Dathra playground (Runtime API) initialized!");
 });

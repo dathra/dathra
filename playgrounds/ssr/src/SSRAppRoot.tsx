@@ -1,6 +1,7 @@
-import { defineComponent } from "@dathomir/components";
+import { defineComponent } from "@dathra/components";
 
-import { getCurrentStore, withStore } from "@dathomir/core";
+import { getCurrentStore, withStore } from "@dathra/core";
+import { fromMarkup } from "@dathra/runtime";
 import { createDemoStore } from "./demoStore";
 import { PlaygroundShell } from "./PlaygroundShell";
 import { ALSPage } from "./pages/ALSPage";
@@ -12,7 +13,6 @@ import { IslandsRuntimePage } from "./pages/IslandsRuntimePage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { StoreBoundariesPage } from "./pages/StoreBoundariesPage";
 import type { PlaygroundRoutePath } from "./routes";
-import { getPlaygroundRouteOrDefault } from "./routes";
 
 type PlaygroundPageRenderProps = {
   requestStoreAppId: string;
@@ -87,19 +87,32 @@ function renderPlaygroundPageShell(props: {
   routePath: PlaygroundRoutePath;
   pagePayloadJson: string;
 }) {
-  const route = getPlaygroundRouteOrDefault(props.routePath);
-  const pageContent = renderResolvedPlaygroundPage(route.path, {
+  const pageContent = renderResolvedPlaygroundPage(props.routePath, {
     requestStoreAppId: props.requestStoreAppId,
     pagePayloadJson: props.pagePayloadJson,
   });
 
   return (
     <PlaygroundShell
-      routePath={route.path}
+      routePath={props.routePath}
       requestId={props.requestId}
       renderPage={() => pageContent}
     />
   );
+}
+
+function replaceShadowRootContent(
+  shadowRoot: ShadowRoot,
+  content: string | Node,
+): void {
+  shadowRoot.innerHTML = "";
+
+  if (typeof content === "string") {
+    shadowRoot.append(fromMarkup(content)());
+    return;
+  }
+
+  shadowRoot.append(content);
 }
 
 export const SSRAppRoot = defineComponent(
@@ -114,15 +127,14 @@ export const SSRAppRoot = defineComponent(
         theme: "light",
       });
     const routePath = props.routePath.value as PlaygroundRoutePath;
-    const route = getPlaygroundRouteOrDefault(routePath);
-    const pageContent = renderResolvedPlaygroundPage(route.path, {
+    const pageContent = renderResolvedPlaygroundPage(routePath, {
       requestStoreAppId: props.requestStoreAppId.value,
       pagePayloadJson: props.pagePayloadJson.value,
     });
 
     return withStore(store, () => (
       <PlaygroundShell
-        routePath={route.path}
+        routePath={routePath}
         requestId={props.requestId.value}
         renderPage={() => pageContent}
       />
@@ -140,8 +152,8 @@ export const SSRAppRoot = defineComponent(
         return;
       }
 
-      shadowRoot.innerHTML = "";
-      shadowRoot.append(
+      replaceShadowRootContent(
+        shadowRoot,
         withStore(store, () =>
           renderPlaygroundPageShell({
             requestId: props.requestId.value,
@@ -149,7 +161,7 @@ export const SSRAppRoot = defineComponent(
             routePath,
             pagePayloadJson: props.pagePayloadJson.value,
           }),
-        ),
+        ) as string | Node,
       );
     },
     props: {

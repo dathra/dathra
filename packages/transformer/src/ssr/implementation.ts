@@ -3,7 +3,7 @@
  *
  * Per SPEC.typ:
  * - Generates code that renders to HTML strings with markers
- * - Uses renderToString from @dathomir/runtime
+ * - Uses renderToString from @dathra/runtime
  * - Serializes Signal initial values
  *
  * Note: The main SSR transformation is handled in transform.ts

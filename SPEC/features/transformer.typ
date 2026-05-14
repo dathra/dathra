@@ -61,7 +61,7 @@
 
     *import 生成*:
     + 使用した Runtime 関数のみ import される
-    + `@dathomir/runtime` からインポート
+    + `@dathra/runtime` からインポート
     + 既存の import と重複しない
 
     *Fragment*:
@@ -298,8 +298,8 @@
     2. *既存 import*: 重複を避ける
   ],
   test_cases: [
-    + `\{fromTree, firstChild\}` → `import \{ fromTree, firstChild \} from '@dathomir/runtime'`
-    + SSR モード → `import \{ renderToString, ... \} from '@dathomir/runtime'`
+    + `\{fromTree, firstChild\}` → `import \{ fromTree, firstChild \} from '@dathra/runtime'`
+    + SSR モード → `import \{ renderToString, ... \} from '@dathra/runtime'`
     + 空セット → import 文なし
   ],
   impl_notes: [

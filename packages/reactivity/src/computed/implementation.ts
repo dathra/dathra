@@ -8,6 +8,8 @@ import { createComputedNode, withNoTracking } from "../internal/helpers";
 import type { ComputedNode } from "../internal/nodes";
 import {
   checkDirty,
+  enterRun,
+  exitRun,
   getActiveSub,
   link,
   setActiveSub,
@@ -40,9 +42,11 @@ function computedOper<T>(node: ComputedNode<T>): T {
     const prevSub = setActiveSub(node);
     let succeeded = false;
     try {
+      enterRun();
       node.value = node.getter(node.value) as T;
       succeeded = true;
     } finally {
+      exitRun();
       unsetActiveSub(prevSub);
       node.flags &= ~ReactiveFlags.RecursedCheck;
       if (!succeeded) {

@@ -1,4 +1,4 @@
-import { getCurrentStore, withStore } from "@dathomir/core";
+import { getCurrentStore, withStore } from "@dathra/core";
 
 import { countAtom, createDemoStore, nextTheme, themeAtom } from "../demoStore";
 

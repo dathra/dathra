@@ -1,4 +1,4 @@
-# Dathomir ロードマップメモ
+# Dathra ロードマップメモ
 
 この文書は repository 全体のロードマップを把握するための補助メモである。
 
@@ -12,7 +12,7 @@
 
 **DSD Islands Framework with Component-Level Edge Caching**
 
-目標は、Dathomir を以下の性質を持つ framework へ発展させること。
+目標は、Dathra を以下の性質を持つ framework へ発展させること。
 
 - Compiler-First
 - Fine-grained Reactivity

@@ -2,7 +2,7 @@ import { parseSync } from "oxc-parser";
 import { print } from "esrap";
 import ts from "esrap/languages/ts";
 import { walk } from "zimmerframe";
-import { ISLAND_METADATA_ATTRIBUTE } from "@dathomir/shared";
+import { ISLAND_METADATA_ATTRIBUTE } from "@dathra/shared";
 
 import {
   isCallExpression,
@@ -113,8 +113,8 @@ const KNOWN_IMPORTED_TRANSPARENT_THUNK_WRAPPERS = new Map<
   string,
   ReadonlySet<string>
 >([
-  ["@dathomir/core", new Set(["withStore"])],
-  ["@dathomir/store", new Set(["withStore"])],
+  ["@dathra/core", new Set(["withStore"])],
+  ["@dathra/store", new Set(["withStore"])],
 ]);
 
 /**
@@ -2574,7 +2574,7 @@ function assertNoUnsupportedColocatedCombination(
 ): void {
   if (containsColocatedDirective(componentArg)) {
     throw new Error(
-      `[dathomir] Colocated client directives (e.g. load:onClick) cannot be used in a component whose setup is unsupported for hydration plan generation (reason: ${unsupportedReason}). The component would fall back to a full rerender, losing SSR state captured by the handler. Simplify the setup function or remove the colocated directive.`,
+      `[dathra] Colocated client directives (e.g. load:onClick) cannot be used in a component whose setup is unsupported for hydration plan generation (reason: ${unsupportedReason}). The component would fall back to a full rerender, losing SSR state captured by the handler. Simplify the setup function or remove the colocated directive.`,
     );
   }
 }
@@ -2816,7 +2816,7 @@ function transform(
     mode = "csr",
     sourceMap = false,
     filename = "unknown.tsx",
-    runtimeModule = "@dathomir/runtime",
+    runtimeModule = "@dathra/runtime",
   } = options;
 
   const parsed = parseSync(filename, code, { sourceType: "module" });

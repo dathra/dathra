@@ -1,4 +1,4 @@
-import { signal } from "@dathomir/core";
+import { signal } from "@dathra/core";
 
 import type {
   AsyncStoreProbe,

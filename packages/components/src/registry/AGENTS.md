@@ -1,4 +1,4 @@
-# 📦 @dathomir/components • src/registry
+# 📦 @dathra/components • src/registry
 
 ## AI エージェント向けガイド
 

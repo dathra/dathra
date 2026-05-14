@@ -1,5 +1,5 @@
 /**
- * @dathomir/reactivity - Fine-grained reactivity system.
+ * @dathra/reactivity - Fine-grained reactivity system.
  *
  * Provides TC39 Signals-style reactive primitives built on alien-signals.
  * @module

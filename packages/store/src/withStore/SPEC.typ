@@ -24,7 +24,7 @@ root render と nested subtree の両方で同じ記法を使い、明示的な 
 
     *boundary semantics*:
     - `withStore(store, render)` は `render()` を同期的に評価する
-    - callback 内で生成された Dathomir subtree は `store` を継承する
+    - callback 内で生成された Dathra subtree は `store` を継承する
     - nested `withStore()` は内側の store を優先する
 
     *usage*:

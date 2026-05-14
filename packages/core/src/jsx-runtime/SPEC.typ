@@ -6,7 +6,7 @@
 
 == 目的
 
-JSX ランタイムの実装。`jsx`/`jsxs`/`Fragment` を提供し、Dathomir の JSX 変換出力が呼び出す関数群。
+JSX ランタイムの実装。`jsx`/`jsxs`/`Fragment` を提供し、Dathra の JSX 変換出力が呼び出す関数群。
 
 == 機能仕様
 

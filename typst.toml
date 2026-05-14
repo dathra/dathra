@@ -1,4 +1,4 @@
 [package]
 entrypoint = "SPEC/SPEC.typ"
-name = "dathomir"
+name = "dathra"
 version = "0.1.0"

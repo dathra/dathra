@@ -1,3 +1,3 @@
-import { config } from "@dathomir/config/templates/oxfmt.template.ts";
+import { config } from "@dathra/config/templates/oxfmt.template.ts";
 
 export default config;

@@ -1,7 +1,7 @@
 /**
  * css tagged template literal - creates CSSStyleSheet for adoptedStyleSheets.
  *
- * In SSR environments (no CSSStyleSheet), returns a DathomirStyleSheet
+ * In SSR environments (no CSSStyleSheet), returns a DathraStyleSheet
  * that carries the raw CSS text for DSD `<style>` injection.
  * @module
  */
@@ -10,7 +10,7 @@
  * Marker interface for SSR-compatible style sheets.
  * Carries raw CSS text for Declarative Shadow DOM output.
  */
-interface DathomirStyleSheet extends CSSStyleSheet {
+interface DathraStyleSheet extends CSSStyleSheet {
   /** Raw CSS text for SSR `<style>` injection. */
   __cssText: string;
 }
@@ -30,7 +30,7 @@ function readCssRulesText(sheet: CSSStyleSheet): string | undefined {
     const cssText = Array.from(sheet.cssRules, (rule) => rule.cssText).join(
       "\n",
     );
-    (sheet as DathomirStyleSheet).__cssText = cssText;
+    (sheet as DathraStyleSheet).__cssText = cssText;
     return cssText;
   } catch {
     return undefined;
@@ -48,7 +48,7 @@ function toStyleSheet(style: CSSStyleSheet | string): CSSStyleSheet {
 
   const sheet = new CSSStyleSheet();
   sheet.replaceSync(style);
-  (sheet as DathomirStyleSheet).__cssText = style;
+  (sheet as DathraStyleSheet).__cssText = style;
   return sheet;
 }
 
@@ -103,9 +103,9 @@ function applyGlobalStylesToTrackedRoots(): void {
     const localSheets =
       (
         root as ShadowRoot & {
-          __dathomirLocalSheets?: readonly CSSStyleSheet[];
+          __dathraLocalSheets?: readonly CSSStyleSheet[];
         }
-      ).__dathomirLocalSheets ?? [];
+      ).__dathraLocalSheets ?? [];
     root.adoptedStyleSheets = [...mergeStyleSheets(localSheets)];
   }
 }
@@ -140,18 +140,18 @@ function css(
   const sheet = new CSSStyleSheet();
   sheet.replaceSync(result);
   // Attach raw CSS text for DSD SSR output
-  (sheet as DathomirStyleSheet).__cssText = result;
+  (sheet as DathraStyleSheet).__cssText = result;
   return sheet;
 }
 
 /**
- * Extract raw CSS text from a CSSStyleSheet or DathomirStyleSheet.
+ * Extract raw CSS text from a CSSStyleSheet or DathraStyleSheet.
  * Returns undefined if the sheet has no attached text.
  */
 function getCssText(sheet: CSSStyleSheet | string): string | undefined {
   if (typeof sheet === "string") return sheet;
 
-  const cssText = (sheet as DathomirStyleSheet).__cssText;
+  const cssText = (sheet as DathraStyleSheet).__cssText;
   if (cssText !== undefined) {
     return cssText;
   }
@@ -196,8 +196,8 @@ function connectGlobalStyles(
   localSheets: readonly CSSStyleSheet[] = [],
 ): void {
   (
-    root as ShadowRoot & { __dathomirLocalSheets?: readonly CSSStyleSheet[] }
-  ).__dathomirLocalSheets = localSheets;
+    root as ShadowRoot & { __dathraLocalSheets?: readonly CSSStyleSheet[] }
+  ).__dathraLocalSheets = localSheets;
   trackedRoots.add(root);
   root.adoptedStyleSheets = [...mergeStyleSheets(localSheets)];
 }
@@ -219,9 +219,9 @@ function clearGlobalStyles(): void {
     const localSheets =
       (
         root as ShadowRoot & {
-          __dathomirLocalSheets?: readonly CSSStyleSheet[];
+          __dathraLocalSheets?: readonly CSSStyleSheet[];
         }
-      ).__dathomirLocalSheets ?? [];
+      ).__dathraLocalSheets ?? [];
     root.adoptedStyleSheets = [...localSheets];
   }
 
@@ -237,4 +237,4 @@ export {
   getCssText,
   getGlobalStyleCssTexts,
 };
-export type { DathomirStyleSheet };
+export type { DathraStyleSheet };

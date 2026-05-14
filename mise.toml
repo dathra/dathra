@@ -1,6 +1,6 @@
 experimental_monorepo_root = true
 
 [tools]
-node = "24.2.0"
+node = "24.15.0"
 "npm:@antfu/ni" = "latest"
 pnpm = "10.17.1"

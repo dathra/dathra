@@ -1,5 +1,5 @@
 // DOM generation
-export { fromTree } from "./dom/fromTree/implementation";
+export { fromMarkup, fromTree } from "./dom/fromTree/implementation";
 
 // DOM navigation
 export { firstChild, nextSibling } from "./dom/navigation/implementation";
@@ -26,10 +26,10 @@ export { event } from "./events/implementation";
 // JSX types
 export type {
   JSX as RuntimeJSX,
-  dathomirElement,
-  dathomirJSX,
-  dathomirNode,
-  dathomirSpreadChildren,
+  dathraElement,
+  dathraJSX,
+  dathraNode,
+  dathraSpreadChildren,
 } from "./types/JSX";
 
 // Component types
@@ -47,11 +47,11 @@ export {
   ISLAND_VALUE_METADATA_ATTRIBUTE,
   isColocatedClientStrategyName,
   isIslandStrategyName,
-} from "@dathomir/shared";
+} from "@dathra/shared";
 export type {
   ColocatedClientStrategyName,
   IslandStrategyName,
-} from "@dathomir/shared";
+} from "@dathra/shared";
 
 export {
   getClientAction,

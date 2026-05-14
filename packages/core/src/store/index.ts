@@ -1,1 +1,1 @@
-export * from "@dathomir/store";
+export * from "@dathra/store";

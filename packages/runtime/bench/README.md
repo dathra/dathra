@@ -1,6 +1,6 @@
 # Runtime Benchmarks
 
-このディレクトリには Dathomir runtime のパフォーマンステストが含まれています。
+このディレクトリには Dathra runtime のパフォーマンステストが含まれています。
 
 ## 現在のベンチマーク結果
 
@@ -74,7 +74,7 @@ Unkeyed リスト:
 
 ## 今後の課題（Phase 4+）
 
-- [ ] Dathomir を js-framework-benchmark に実装
+- [ ] Dathra を js-framework-benchmark に実装
 - [ ] 公式ベンチマーク結果を取得
 - [ ] 他フレームワークとの正確な比較
 - [ ] パフォーマンス改善の指標として活用
@@ -82,5 +82,5 @@ Unkeyed リスト:
 ## ベンチマーク実行
 
 ```bash
-pnpm --filter @dathomir/runtime bench
+pnpm --filter @dathra/runtime bench
 ```

@@ -8,7 +8,7 @@ import {
   effect,
   signal,
   templateEffect,
-} from "@dathomir/reactivity";
+} from "@dathra/reactivity";
 import { bench, describe } from "vitest";
 
 describe("signal - read/write", () => {

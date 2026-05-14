@@ -33,7 +33,7 @@ import {
 } from "@/transform/tree/implementation";
 
 /**
- * Namespace enum values matching @dathomir/runtime Namespace const enum.
+ * Namespace enum values matching @dathra/runtime Namespace const enum.
  * Duplicated here to avoid a runtime dependency from transformer.
  */
 type Namespace = 0 | 1 | 2;

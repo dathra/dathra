@@ -1,4 +1,4 @@
-/** @type {import('@dathomir/config/types/stryker/api/core').PartialStrykerOptions} */
+/** @type {import('@dathra/config/types/stryker/api/core').PartialStrykerOptions} */
 const config = {
   plugins: ["@stryker-mutator/vitest-runner"],
   testRunner: "vitest",

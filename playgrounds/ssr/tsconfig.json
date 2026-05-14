@@ -7,8 +7,8 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "jsx": "preserve",
-    "jsxImportSource": "@dathomir/core",
+    "jsxImportSource": "@dathra/core",
     "types": ["node"]
   },
-  "include": ["src/**/*", "server.ts"]
+  "include": ["src/**/*", "vite.config.ts"]
 }

@@ -1,4 +1,4 @@
-import { adoptGlobalStyles, css, defineComponent } from "@dathomir/components";
+import { adoptGlobalStyles, css, defineComponent } from "@dathra/components";
 
 const sharedTypographySheet = css`
   :host {

@@ -312,4 +312,25 @@ function fromTree(
   return factory;
 }
 
-export { fromTree };
+/**
+ * Create a DOM fragment factory from pre-rendered markup.
+ *
+ * @param markup - The markup string. **MUST be trusted or sanitized** — it is parsed via
+ *   `innerHTML` and can execute inline scripts, event handlers, or javascript: URLs
+ *   once the fragment is inserted into the document/shadow root.
+ * @param flags - Namespace flags (default HTML).
+ */
+function fromMarkup(
+  markup: string,
+  flags: Namespace = Namespace.HTML,
+): () => DocumentFragment {
+  const template = buildCompiledFragment({
+    kind: "compiled",
+    markup,
+    namespace: flags,
+  });
+
+  return () => template.cloneNode(true) as DocumentFragment;
+}
+
+export { fromMarkup, fromTree };

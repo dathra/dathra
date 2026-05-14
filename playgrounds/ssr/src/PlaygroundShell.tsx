@@ -1,5 +1,5 @@
 import {
-  getPlaygroundRouteOrDefault,
+  getPlaygroundRouteByPath,
   playgroundRoutes,
   type PlaygroundRoutePath,
 } from "./routes";
@@ -9,7 +9,7 @@ function PlaygroundShell(props: {
   requestId: string;
   renderPage: () => JSX.Element;
 }) {
-  const currentRoute = getPlaygroundRouteOrDefault(props.routePath);
+  const currentRoute = getPlaygroundRouteByPath(props.routePath);
   const renderMode =
     currentRoute.path === "/islands-runtime"
       ? "SSR shell + islands hydration"
@@ -20,7 +20,7 @@ function PlaygroundShell(props: {
   return (
     <main>
       <header class="page-hero">
-        <p class="eyebrow">Dathomir SSR Playground</p>
+        <p class="eyebrow">Dathra SSR Playground</p>
         <h1>{currentRoute.title}</h1>
         <p>{currentRoute.description}</p>
         <div class="hero-meta">

@@ -1,8 +1,4 @@
-import {
-  atom,
-  createAtomStore,
-  defineAtomStoreSnapshot,
-} from "@dathomir/store";
+import { atom, createAtomStore, defineAtomStoreSnapshot } from "@dathra/store";
 
 const countAtom = atom("fixture-count", 0);
 const themeAtom = atom("fixture-theme", "mint");

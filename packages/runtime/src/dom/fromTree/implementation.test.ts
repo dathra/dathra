@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fromTree } from "@/index";
+import { fromMarkup, fromTree } from "@/index";
 import type { Tree } from "@/types/tree";
 
 describe("fromTree", () => {
@@ -259,5 +259,18 @@ describe("fromTree", () => {
 
     expect(circle.namespaceURI).toBe("http://www.w3.org/2000/svg");
     expect(circle.getAttribute("cx")).toBe("50");
+  });
+
+  it("should create a fragment from markup", () => {
+    const factory = fromMarkup(
+      '<article><p data-testid="status">ready</p></article>',
+    );
+    const fragment = factory();
+    const article = fragment.firstChild as HTMLElement;
+
+    expect(article.tagName).toBe("ARTICLE");
+    expect(article.querySelector("[data-testid='status']")?.textContent).toBe(
+      "ready",
+    );
   });
 });

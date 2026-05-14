@@ -8,7 +8,7 @@ declare global {
   }
 }
 
-declare module "@dathomir/core/jsx-runtime" {
+declare module "@dathra/core/jsx-runtime" {
   namespace JSX {
     interface IntrinsicElements {
       "demo-counter-box": Record<string, unknown>;

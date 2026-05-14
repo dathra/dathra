@@ -6,7 +6,7 @@ export {
   onCleanup,
   signal,
   templateEffect,
-} from "@dathomir/reactivity";
+} from "@dathra/reactivity";
 
 export type {
   Computed,
@@ -15,4 +15,4 @@ export type {
   RootDispose,
   Signal,
   SignalUpdate,
-} from "@dathomir/reactivity";
+} from "@dathra/reactivity";

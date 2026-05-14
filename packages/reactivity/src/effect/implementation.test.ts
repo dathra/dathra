@@ -60,6 +60,23 @@ describe("effect", () => {
     expect(observed).toEqual([0, 2, 4]);
   });
 
+  it("does not re-enter the initial run when it writes to a dependency", () => {
+    const count = signal(0);
+    const log: string[] = [];
+
+    effect(() => {
+      const value = count.value;
+      log.push(`start:${value}`);
+      if (value < 2) {
+        count.set(value + 1);
+      }
+      log.push(`end:${value}`);
+    });
+
+    expect(log).toEqual(["start:0", "end:0"]);
+    expect(count.value).toBe(1);
+  });
+
   it("groups multiple signal updates into a single notification when batched", () => {
     const a = signal(0);
     const b = signal(0);

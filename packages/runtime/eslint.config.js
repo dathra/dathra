@@ -1,4 +1,4 @@
-import { eslint } from "@dathomir/config/templates/eslint.template.js";
+import { eslint } from "@dathra/config/templates/eslint.template.js";
 
 export default [
   ...eslint(),

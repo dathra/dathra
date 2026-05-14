@@ -1,8 +1,8 @@
-import { defineComponent } from "@dathomir/components";
+import { defineComponent } from "@dathra/components";
 import {
   HydrationMismatchError,
   hydrateWithPlan,
-} from "@dathomir/runtime/hydration";
+} from "@dathra/runtime/hydration";
 
 import { pageStyles } from "../routeStyles";
 

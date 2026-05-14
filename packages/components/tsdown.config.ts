@@ -1,4 +1,4 @@
-import { defineConfig } from "@dathomir/config/tsdown";
+import { defineConfig } from "@dathra/config/tsdown";
 
 export default defineConfig({
   entry: ["src/index.ts", "src/internal.ts", "src/ssr/index.ts"],

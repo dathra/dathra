@@ -1,4 +1,4 @@
-import { dathomirVitePlugin } from "@dathomir/plugin";
+import { dathraVitePlugin } from "@dathra/plugin";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { defineConfig } from "vite";
@@ -6,12 +6,12 @@ import { defineConfig } from "vite";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const workspacePackages = [
-  "@dathomir/core",
-  "@dathomir/components",
-  "@dathomir/runtime",
-  "@dathomir/store",
-  "@dathomir/reactivity",
-  "@dathomir/shared",
+  "@dathra/core",
+  "@dathra/components",
+  "@dathra/runtime",
+  "@dathra/store",
+  "@dathra/reactivity",
+  "@dathra/shared",
 ];
 
 function storeNodeInternalSwap() {
@@ -45,7 +45,7 @@ function storeNodeInternalSwap() {
 
 export default defineConfig({
   root: projectRoot,
-  plugins: [storeNodeInternalSwap(), dathomirVitePlugin()],
+  plugins: [storeNodeInternalSwap(), dathraVitePlugin()],
   optimizeDeps: {
     exclude: workspacePackages,
   },

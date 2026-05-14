@@ -2,12 +2,8 @@
  * Tests for Hydration functionality.
  */
 
-import { signal } from "@dathomir/reactivity";
-import {
-  atom,
-  createAtomStore,
-  defineAtomStoreSnapshot,
-} from "@dathomir/store";
+import { signal } from "@dathra/reactivity";
+import { atom, createAtomStore, defineAtomStoreSnapshot } from "@dathra/store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -82,7 +78,7 @@ describe("handleMismatch", () => {
 
     expect(handleMismatch("test error")).toBe(false);
     expect(warnSpy).toHaveBeenCalledWith(
-      "[dathomir] Hydration mismatch: test error. Falling back to CSR.",
+      "[dathra] Hydration mismatch: test error. Falling back to CSR.",
     );
   });
 });
@@ -527,7 +523,7 @@ describe("hydrateTextMarker", () => {
     };
 
     // hydrateTextMarker must run inside a createRoot for templateEffect
-    const { createRoot } = await import("@dathomir/reactivity");
+    const { createRoot } = await import("@dathra/reactivity");
     createRoot(() => {
       hydrateTextMarker(markerInfo, () => count.value);
     });

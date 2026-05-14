@@ -1,10 +1,10 @@
 /**
- * Dathomir Counter Component - JSX Example
+ * Dathra Counter Component - JSX Example
  *
  * This demonstrates JSX usage with automatic reactive binding.
  * {count.value} is automatically tracked via the transformer.
  */
-import { computed, signal, type FC } from "@dathomir/core";
+import { computed, signal, type FC } from "@dathra/core";
 
 export const Counter: FC = () => {
   const count = signal(0);
@@ -20,7 +20,7 @@ export const Counter: FC = () => {
 
   return (
     <div class="counter">
-      <h1>Dathomir Counter</h1>
+      <h1>Dathra Counter</h1>
       <p>Count: {count.value}</p>
       <p>Doubled: {doubled.value}</p>
       <div class="buttons">

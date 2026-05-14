@@ -1,7 +1,7 @@
 {
-  "name": "@dathomir/runtime",
-  "description": "dathomir runtime package",
-  "version": "0.0.11",
+  "name": "@dathra/runtime",
+  "description": "dathra runtime package",
+  "version": "0.0.19",
   "private": false,
   "publishConfig": {
     "access": "public",
@@ -12,16 +12,16 @@
   "license": "MPL-2.0",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:dathomir-js/dathomir.git"
+    "url": "git+ssh://git@github.com:dathra/dathra.git"
   },
   "bugs": {
-    "url": "https://github.com/dathomir-js/dathomir/issues",
-    "email": "dathomir@takumaru.dev"
+    "url": "https://github.com/dathra/dathra/issues",
+    "email": "dathra@takumaru.dev"
   },
-  "homepage": "https://github.com/dathomir-js/dathomir#readme",
+  "homepage": "https://github.com/dathra/dathra#readme",
   "author": "takuma-ru <takuma-ru@takumaru.dev> (https://github.com/takuma-ru/)",
   "keywords": [
-    "dathomir",
+    "dathra",
     "framework",
     "frontend",
     "javascript",
@@ -65,7 +65,7 @@
   "scripts": {
     "dev": "tsdown --watch",
     "build": "tsdown",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "lint": "oxlint && eslint .",
     "lint:type-aware": "oxlint --type-aware && eslint .",
     "fmt": "oxfmt --ignore-path ../../.gitignore --write .",
@@ -75,13 +75,13 @@
     "release": "rlse"
   },
   "dependencies": {
-    "@dathomir/reactivity": "workspace:*",
-    "@dathomir/shared": "workspace:*",
-    "@dathomir/store": "workspace:*",
+    "@dathra/reactivity": "workspace:*",
+    "@dathra/shared": "workspace:*",
+    "@dathra/store": "workspace:*",
     "devalue": "^5.6.2"
   },
   "devDependencies": {
-    "@dathomir/config": "workspace:*",
+    "@dathra/config": "workspace:*",
     "rlse.ts": "catalog:",
     "@types/node": "24.2.0",
     "@vitest/browser-playwright": "catalog:",

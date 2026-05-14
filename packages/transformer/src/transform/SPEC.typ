@@ -63,7 +63,7 @@
     7. 条件式、`.map()`、logical expression、JSX を含む一般式、`JSXSpreadChild` は `templateEffect` 経由の `insert()` として扱う。
   ],
   postconditions: [
-    - `@dathomir/runtime` から必要な import が自動生成される
+    - `@dathra/runtime` から必要な import が自動生成される
     - DOM ナビゲーションと動的更新コードが生成される
   ],
 )
@@ -201,7 +201,7 @@
     - colocated strategy 判定は canonical colocated strategy 一覧に従う
   ],
   impl_notes: [
-    - strategy 名と metadata key は `@dathomir/shared` の islands contract utility から参照する
+    - strategy 名と metadata key は `@dathra/shared` の islands contract utility から参照する
     - tree transform と jsx directive parsing が別々の string literal set を持たないようにする
   ],
 )
@@ -401,7 +401,7 @@
     - top-level local helper 内の `const` / `function` prelude が JSX return 前にある場合も、same-shape なら `planFactory` を生成できる
     - top-level local helper chain が複数段あっても、最終的に local helper chain が JSX に解決できるなら `planFactory` を生成できる
     - top-level local helper が transparent thunk wrapper (`return render()`) なら、zero-arg callback の return JSX / local helper chain を辿って `planFactory` を生成できる
-    - known imported transparent thunk wrapper (`@dathomir/core` / `@dathomir/store` の `withStore(store, () => <JSX />)` など) は opaque helper 扱いせず、zero-arg callback の return JSX / local helper chain を辿って `planFactory` を生成できる
+    - known imported transparent thunk wrapper (`@dathra/core` / `@dathra/store` の `withStore(store, () => <JSX />)` など) は opaque helper 扱いせず、zero-arg callback の return JSX / local helper chain を辿って `planFactory` を生成できる
     - imported transparent thunk wrapper の callback が root component element を返し、その props に local prelude を閉じ込めた function-valued prop (`renderPage={() => pageContent}` など) を含んでも `planFactory` を生成できる
     - helper param が destructuring pattern でも、call site の object/array argument をその pattern に安全に束縛できるなら `planFactory` を生成できる
     - helper chain 展開で setup param / helper param / helper-local prelude (`const` / `function`) の binding 名が衝突する場合、alpha-renaming で collision を避けた prelude を生成する
@@ -918,7 +918,7 @@
     - colocated directive を含まない unsupported component は従来通り `unsupportedReason` fallback で動作する
   ],
   errors: [
-    - `[dathomir] Colocated client directives (e.g. load:onClick) cannot be used in a component whose setup is unsupported for hydration plan generation (reason: <unsupportedReason>). The component would fall back to a full rerender, losing SSR state captured by the handler. Simplify the setup function or remove the colocated directive.`
+    - `[dathra] Colocated client directives (e.g. load:onClick) cannot be used in a component whose setup is unsupported for hydration plan generation (reason: <unsupportedReason>). The component would fall back to a full rerender, losing SSR state captured by the handler. Simplify the setup function or remove the colocated directive.`
   ],
 )
 

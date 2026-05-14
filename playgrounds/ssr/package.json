@@ -4,25 +4,23 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build:deps": "pnpm -r --filter @dathomir/shared --filter @dathomir/reactivity --filter @dathomir/store --filter @dathomir/runtime --filter @dathomir/components --filter @dathomir/core --filter @dathomir/transformer --filter @dathomir/plugin build",
-    "dev": "pnpm build:deps && tsx server.ts",
+    "build:deps": "pnpm -r --filter @dathra/shared --filter @dathra/reactivity --filter @dathra/store --filter @dathra/runtime --filter @dathra/components --filter @dathra/core --filter @dathra/transformer --filter @dathra/plugin build",
+    "dev": "pnpm build:deps && vite --host 0.0.0.0 --port 3090",
     "build:client": "vite build --outDir dist/client",
     "build:server": "vite build --outDir dist/server --ssr src/entry-server.tsx",
     "build": "pnpm build:deps && pnpm build:client && pnpm build:server",
-    "preview": "tsx server.ts --preview",
     "fmt": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --write \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\"",
     "fmt:check": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\""
   },
   "dependencies": {
-    "@dathomir/core": "workspace:*",
-    "@dathomir/components": "workspace:*",
-    "@dathomir/runtime": "workspace:*"
+    "@dathra/core": "workspace:*",
+    "@dathra/components": "workspace:*",
+    "@dathra/runtime": "workspace:*"
   },
   "devDependencies": {
-    "@dathomir/config": "workspace:*",
-    "@dathomir/plugin": "workspace:*",
+    "@dathra/config": "workspace:*",
+    "@dathra/plugin": "workspace:*",
     "@types/node": "catalog:",
-    "tsx": "^4.19.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.4"
   }

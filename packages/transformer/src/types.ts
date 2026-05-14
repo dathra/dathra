@@ -1,10 +1,10 @@
 import type {
   ColocatedClientStrategyName,
   IslandStrategyName,
-} from "@dathomir/shared";
+} from "@dathra/shared";
 
 /**
- * Transform options for the Dathomir transformer.
+ * Transform options for the Dathra transformer.
  */
 interface TransformOptions {
   /**
@@ -26,7 +26,7 @@ interface TransformOptions {
 
   /**
    * The module to import runtime functions from.
-   * Default: '@dathomir/runtime'
+   * Default: '@dathra/runtime'
    */
   runtimeModule?: string;
 }

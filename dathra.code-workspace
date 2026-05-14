@@ -29,35 +29,35 @@
       "path": "=== 📦 packages ===",
     },
     {
-      "name": "📦 @dathomir/components",
+      "name": "📦 @dathra/components",
       "path": "./packages/components",
     },
     {
-      "name": "📦 @dathomir/core",
+      "name": "📦 @dathra/core",
       "path": "./packages/core",
     },
     {
-      "name": "📦 @dathomir/plugin",
+      "name": "📦 @dathra/plugin",
       "path": "./packages/plugin",
     },
     {
-      "name": "📦 @dathomir/reactivity",
+      "name": "📦 @dathra/reactivity",
       "path": "./packages/reactivity",
     },
     {
-      "name": "📦 @dathomir/runtime",
+      "name": "📦 @dathra/runtime",
       "path": "./packages/runtime",
     },
     {
-      "name": "📦 @dathomir/shared",
+      "name": "📦 @dathra/shared",
       "path": "./packages/shared",
     },
     {
-      "name": "📦 @dathomir/store",
+      "name": "📦 @dathra/store",
       "path": "./packages/store",
     },
     {
-      "name": "📦 @dathomir/transformer",
+      "name": "📦 @dathra/transformer",
       "path": "./packages/transformer",
     },
     {
@@ -91,7 +91,7 @@
     "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.inlineSuggest.enabled": true,
     "github.copilot.nextEditSuggestions.enabled": true,
-    "js/ts.experimental.useTsgo": false,
+    "js/ts.experimental.useTsgo": true,
     "editor.codeActionsOnSave": {
       "source.fixAll.oxc": "explicit",
       "source.fixAll.eslint": "explicit",
@@ -114,11 +114,15 @@
         "file": "commit-message-instructions.md",
       },
     ],
-    "cSpell.words": ["dathomir", "opencode", "Unreactive"],
+    "cSpell.words": ["dathra", "opencode", "Unreactive"],
     "eslint.useFlatConfig": true,
     "typst.fontPaths": ["SPEC/fonts"],
     "json.schemaDownload.enable": true,
-    "js/ts.tsdk.path": "<root>/node_modules/typescript/lib",
+    "[javascript]": {
+      "editor.defaultFormatter": "oxc.oxc-vscode",
+    },
+    "typescript.native-preview.tsdk": "/config/node_modules/@typescript/native-preview",
+    // "js/ts.tsdk.path": "<root>/node_modules/typescript/lib",
   },
   "tasks": {
     "version": "2.0.0",

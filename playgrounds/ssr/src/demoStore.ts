@@ -1,4 +1,4 @@
-import { atom, createAtomStore } from "@dathomir/core";
+import { atom, createAtomStore } from "@dathra/core";
 
 type DemoTheme = "light" | "mint" | "amber" | "night";
 

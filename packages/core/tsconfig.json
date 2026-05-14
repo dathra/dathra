@@ -1,14 +1,14 @@
 {
-  "extends": "@dathomir/config/templates/tsconfig.template.json",
+  "extends": "@dathra/config/templates/tsconfig.template.json",
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "@dathomir/core": ["./src/jsx-runtime/index.ts"],
-      "@dathomir/core/jsx-runtime": ["./src/jsx-runtime/index.ts"],
-      "@dathomir/core/jsx-dev-runtime": ["./src/jsx-runtime/index.ts"],
+      "@dathra/core": ["./src/jsx-runtime/index.ts"],
+      "@dathra/core/jsx-runtime": ["./src/jsx-runtime/index.ts"],
+      "@dathra/core/jsx-dev-runtime": ["./src/jsx-runtime/index.ts"],
       "@/*": ["./src/*"]
     },
     "jsx": "react-jsx",
-    "jsxImportSource": "@dathomir/core"
+    "jsxImportSource": "@dathra/core"
   }
 }

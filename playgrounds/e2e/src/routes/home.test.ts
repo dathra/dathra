@@ -14,6 +14,6 @@ it("returns server-rendered home HTML", async () => {
   const { response, html } = await fetchHtml();
 
   expect(response.status).toBe(200);
-  expect(html).toContain("Dathomir E2E SSR Fixtures");
+  expect(html).toContain("Dathra E2E SSR Fixtures");
   expect(html).not.toContain("<!--ssr-outlet-->");
 });

@@ -1,7 +1,13 @@
 import { defineConfig } from "oxlint";
 
+const packageStructurePlugin = new URL(
+  "../plugins/package-structure.mts",
+  import.meta.url,
+).pathname;
+
 export const config = defineConfig({
   ignorePatterns: ["**/dist/**", "**/node_modules/**", "**/coverage/**"],
+  jsPlugins: [packageStructurePlugin],
   plugins: [
     "eslint",
     "typescript",
@@ -48,6 +54,12 @@ export const config = defineConfig({
     "vitest/no-focused-tests": "error",
     "vitest/no-disabled-tests": "error",
     "vitest/no-identical-title": "error",
+    "dathra-structure/feature-directory-files": [
+      "error",
+      {
+        excludePaths: ["src/internal", "src/types", "src/**/__screenshots__"],
+      },
+    ],
     "no-non-null-assertion": "warn",
     "no-throw-literal": "warn",
     "prefer-await-to-then": "warn",

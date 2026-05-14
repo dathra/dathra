@@ -1,53 +1,93 @@
-import { clearGlobalStyles } from "@dathomir/components";
-import { renderDSD } from "@dathomir/components/ssr";
+import { clearGlobalStyles } from "@dathra/components";
+import { defineSsrEntry, render as renderSSR } from "@dathra/core/ssr";
 
 import { SSRAppRoot } from "./SSRAppRoot";
+import { runParallelIsolationProbe } from "./alsDiagnostics";
 import { createDemoStore } from "./demoStore";
 import { createPagePayload } from "./pageServerData";
 import {
-  getPlaygroundRouteOrDefault,
+  getPlaygroundRoute,
+  normalizePlaygroundPath,
   type PlaygroundRoutePath,
 } from "./routes";
 
-type SSRRenderContext = {
-  requestId?: string;
-  routePath?: string;
-};
+function renderClientFallback(routePath: PlaygroundRoutePath): string {
+  return `<playground-ssr-app routePath="${routePath}"></playground-ssr-app>`;
+}
 
 /**
  * Render the application to HTML string for SSR.
  */
-export async function render(context: SSRRenderContext = {}): Promise<string> {
+const render = defineSsrEntry(async ({ request, requestId }) => {
+  const url = new URL(request.url);
+
+  if (url.pathname === "/api/als/parallel") {
+    return Response.json(await runParallelIsolationProbe(), {
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
   clearGlobalStyles();
 
-  const requestId = context.requestId ?? "page-request";
-  const routePath = getPlaygroundRouteOrDefault(context.routePath ?? "/")
-    .path as PlaygroundRoutePath;
-  const requestStore = createDemoStore({
-    appId: `playground-ssr-${routePath === "/" ? "overview" : routePath.slice(1)}-${requestId}`,
-    count: 3,
-    theme: "light",
-  });
-  const pagePayloadJson = await createPagePayload({
-    routePath,
-    requestId,
-    requestStore,
-  });
+  const route = getPlaygroundRoute(normalizePlaygroundPath(url.pathname));
+
+  if (route === undefined) {
+    return {
+      html: renderClientFallback("/"),
+      statusCode: 404,
+    };
+  }
+
+  const routePath = route.path as PlaygroundRoutePath;
 
   try {
-    return renderDSD(
-      SSRAppRoot,
-      {
-        requestId,
-        requestStoreAppId: requestStore.appId,
-        routePath,
-        pagePayloadJson,
-      },
-      { store: requestStore },
-    );
+    const requestStore = createDemoStore({
+      appId: `playground-ssr-${routePath === "/" ? "overview" : routePath.slice(1)}-${requestId}`,
+      count: 3,
+      theme: "light",
+    });
+    const pagePayloadJson = await createPagePayload({
+      routePath,
+      requestId,
+      requestStore,
+    });
+
+    return {
+      html: renderSSR(
+        SSRAppRoot,
+        {
+          requestId,
+          requestStoreAppId: requestStore.appId,
+          routePath,
+          pagePayloadJson,
+        },
+        { store: requestStore },
+      ),
+    };
+  } catch (error) {
+    console.error("[playground:ssr] Failed to render SSR route", error);
+    return {
+      html: renderClientFallback(routePath),
+      statusCode: 500,
+    };
   } finally {
     clearGlobalStyles();
   }
+});
+
+/**
+ * Render the application to HTML string for direct SSR calls.
+ */
+export async function renderRoute(
+  routePath: PlaygroundRoutePath,
+  context: { requestId?: string } = {},
+): Promise<string> {
+  const result = await render({
+    request: new Request(`http://localhost${routePath}`),
+    requestId: context.requestId ?? "page-request",
+    url: routePath,
+  });
+  return result.html;
 }
 
 export { render as default };

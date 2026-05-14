@@ -1,4 +1,4 @@
-# @dathomir/core
+# @dathra/core
 
 A lightweight JavaScript framework powered by fine-grained reactivity and direct DOM manipulation. Built on TC39 Signals (via [alien-signals](https://github.com/stackblitz/alien-signals)).
 
@@ -14,7 +14,7 @@ A lightweight JavaScript framework powered by fine-grained reactivity and direct
 ## Install
 
 ```bash
-npm install @dathomir/core @dathomir/plugin
+npm install @dathra/core @dathra/plugin
 ```
 
 ## Vite Setup
@@ -22,10 +22,10 @@ npm install @dathomir/core @dathomir/plugin
 ```ts
 // vite.config.ts
 import { defineConfig } from "vite";
-import { dathomir } from "@dathomir/plugin";
+import { dathra } from "@dathra/plugin";
 
 export default defineConfig({
-  plugins: [dathomir.vite()],
+  plugins: [dathra.vite()],
 });
 ```
 
@@ -34,7 +34,7 @@ export default defineConfig({
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "@dathomir/core"
+    "jsxImportSource": "@dathra/core"
   }
 }
 ```
@@ -49,7 +49,7 @@ import {
   batch,
   createRoot,
   onCleanup,
-} from "@dathomir/core";
+} from "@dathra/core";
 
 // Create a signal
 const count = signal(0);

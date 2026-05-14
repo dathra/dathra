@@ -6,7 +6,7 @@
 
 == 目的
 
-`css` タグ付きテンプレートリテラルを提供し、`CSSStyleSheet` を生成する。`defineComponent` の `styles` オプションで使用され、Shadow DOM の `adoptedStyleSheets` に適用される。SSR 環境では `CSSStyleSheet` API が存在しないため、生の CSS テキストを保持する `DathomirStyleSheet` オブジェクトを返す。
+`css` タグ付きテンプレートリテラルを提供し、`CSSStyleSheet` を生成する。`defineComponent` の `styles` オプションで使用され、Shadow DOM の `adoptedStyleSheets` に適用される。SSR 環境では `CSSStyleSheet` API が存在しないため、生の CSS テキストを保持する `DathraStyleSheet` オブジェクトを返す。
 
 == インターフェース仕様
 
@@ -32,7 +32,7 @@
 
     function clearGlobalStyles(): void
 
-    interface DathomirStyleSheet extends CSSStyleSheet {
+    interface DathraStyleSheet extends CSSStyleSheet {
       __cssText: string;
     }
     ```
@@ -45,8 +45,8 @@
     - `adoptGlobalStyles()` は module-scope registry へ style を登録する
     - `clearGlobalStyles()` は登録済み global style registry を空にする
     - global style は CSS テキストまたは sheet identity 単位で重複登録しない
-    - 登録済み global style は将来接続される Dathomir component にも適用される
-    - 既に接続済みの Dathomir component に対しても global style の追加を反映する
+    - 登録済み global style は将来接続される Dathra component にも適用される
+    - 既に接続済みの Dathra component に対しても global style の追加を反映する
   ],
 )
 

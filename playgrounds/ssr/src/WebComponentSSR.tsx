@@ -1,4 +1,4 @@
-import { css, defineComponent } from "@dathomir/components";
+import { css, defineComponent } from "@dathra/components";
 
 import { countAtom } from "./demoStore";
 
@@ -84,7 +84,7 @@ const counterStyles = css`
 `;
 
 export const SSRStoreCounter = defineComponent(
-  "dathomir-ssr-store-counter",
+  "dathra-ssr-store-counter",
   ({ props, store }) => {
     const count = store.ref(countAtom);
     const mode = typeof document === "undefined" ? "SSR" : "CSR";

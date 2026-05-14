@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build:deps": "pnpm -r --filter @dathomir/shared --filter @dathomir/reactivity --filter @dathomir/store --filter @dathomir/runtime --filter @dathomir/components --filter @dathomir/core --filter @dathomir/transformer --filter @dathomir/plugin build",
+    "build:deps": "pnpm -r --filter @dathra/shared --filter @dathra/reactivity --filter @dathra/store --filter @dathra/runtime --filter @dathra/components --filter @dathra/core --filter @dathra/transformer --filter @dathra/plugin build",
     "dev": "pnpm build:deps && tsx server.ts",
     "build:client": "vite build --outDir dist/client",
     "build:server": "vite build --outDir dist/server --ssr src/entry-server.tsx",
@@ -16,14 +16,14 @@
     "test:watch": "pnpm --dir ../.. exec vitest --config playgrounds/e2e/vitest.config.ts"
   },
   "dependencies": {
-    "@dathomir/components": "workspace:*",
-    "@dathomir/core": "workspace:*",
-    "@dathomir/runtime": "workspace:*",
-    "@dathomir/store": "workspace:*"
+    "@dathra/components": "workspace:*",
+    "@dathra/core": "workspace:*",
+    "@dathra/runtime": "workspace:*",
+    "@dathra/store": "workspace:*"
   },
   "devDependencies": {
-    "@dathomir/config": "workspace:*",
-    "@dathomir/plugin": "workspace:*",
+    "@dathra/config": "workspace:*",
+    "@dathra/plugin": "workspace:*",
     "@types/node": "catalog:",
     "playwright": "^1.56.1",
     "typescript": "catalog:",

@@ -7,24 +7,24 @@ export default defineConfig({
     __DEV__: true,
   },
   esbuild: {
-    // Transform JSX using the Dathomir jsx-runtime (same source as production)
+    // Transform JSX using the Dathra jsx-runtime (same source as production)
     jsx: "automatic",
-    jsxImportSource: "@dathomir/core",
+    jsxImportSource: "@dathra/core",
   },
   resolve: {
     alias: {
       "@/": resolve(__dirname, "src") + "/",
       "@": resolve(__dirname, "src"),
       // Map auto-imported JSX runtime paths to local src so no build step is needed
-      "@dathomir/core/jsx-runtime": resolve(
+      "@dathra/core/jsx-runtime": resolve(
         __dirname,
         "src/jsx-runtime/index.ts",
       ),
-      "@dathomir/core/jsx-dev-runtime": resolve(
+      "@dathra/core/jsx-dev-runtime": resolve(
         __dirname,
         "src/jsx-runtime/index.ts",
       ),
-      "@dathomir/components/internal": resolve(
+      "@dathra/components/internal": resolve(
         __dirname,
         "../components/src/internal.ts",
       ),

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { defineConfig } from "@dathomir/config/tsdown";
+import { defineConfig } from "@dathra/config/tsdown";
 
 const srcDir = path.resolve(import.meta.dirname, "src");
 

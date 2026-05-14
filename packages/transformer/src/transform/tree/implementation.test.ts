@@ -7,7 +7,7 @@ import {
   DEFAULT_INTERACTION_EVENT_TYPE,
   ISLAND_METADATA_ATTRIBUTE,
   ISLAND_VALUE_METADATA_ATTRIBUTE,
-} from "@dathomir/shared";
+} from "@dathra/shared";
 
 import { nId, nLit, type ESTNode } from "@/transform/ast/implementation";
 import { createInitialState } from "@/transform/state/implementation";

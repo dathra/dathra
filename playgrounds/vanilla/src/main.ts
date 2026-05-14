@@ -1,5 +1,5 @@
 /**
- * Dathomir Playground - JSX Example
+ * Dathra Playground - JSX Example
  *
  * This example uses JSX with the jsx-runtime.
  */
@@ -10,7 +10,7 @@ const app = document.getElementById("app");
 if (app) {
   const counterElement = Counter();
   app.appendChild(counterElement);
-  console.log("Dathomir playground initialized!");
+  console.log("Dathra playground initialized!");
 } else {
   console.error("App element not found");
 }

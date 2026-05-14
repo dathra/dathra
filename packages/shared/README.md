@@ -1,6 +1,6 @@
-# @dathomir/shared
+# @dathra/shared
 
-Internal shared utilities for Dathomir packages. Not intended for direct use.
+Internal shared utilities for Dathra packages. Not intended for direct use.
 
 ## Exports
 

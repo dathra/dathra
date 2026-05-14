@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   COLOCATED_CLIENT_STRATEGIES,
   DEFAULT_INTERACTION_EVENT_TYPE,
-} from "@dathomir/shared";
+} from "@dathra/shared";
 
 import { nId, nLit } from "@/transform/ast/implementation";
 

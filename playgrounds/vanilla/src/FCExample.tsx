@@ -1,7 +1,7 @@
 /**
  * Example components demonstrating FC and FCWithChildren types.
  */
-import { signal, type FC, type FCWithChildren } from "@dathomir/core";
+import { signal, type FC, type FCWithChildren } from "@dathra/core";
 
 /**
  * Simple greeting component without children.

@@ -4,7 +4,7 @@ import {
   type Computed,
   type Signal,
   type SignalUpdate,
-} from "@dathomir/reactivity";
+} from "@dathra/reactivity";
 
 import type {
   DerivedAtom,

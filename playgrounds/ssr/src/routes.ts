@@ -4,7 +4,7 @@ const playgroundRoutes = [
     label: "Overview",
     title: "SSR Playground Overview",
     description:
-      "Browse focused Dathomir SSR demos by feature instead of stacking every experiment onto one page.",
+      "Browse focused Dathra SSR demos by feature instead of stacking every experiment onto one page.",
   },
   {
     path: "/als",
@@ -46,7 +46,7 @@ const playgroundRoutes = [
     label: "Islands Runtime",
     title: "Hydration Strategy Engine",
     description:
-      "Shows runtime-side `hydrateIslands()` scheduling plus colocated `load:onClick`, `interaction:onClick`, `idle:onClick`, and `visible:onClick` demos.",
+      "Shows core `hydrate()` scheduling plus colocated `load:onClick`, `interaction:onClick`, `idle:onClick`, and `visible:onClick` demos.",
   },
   {
     path: "/hydration-plan",
@@ -59,6 +59,17 @@ const playgroundRoutes = [
 
 type PlaygroundRoute = (typeof playgroundRoutes)[number];
 type PlaygroundRoutePath = PlaygroundRoute["path"];
+
+const playgroundRouteByPath = {
+  "/": playgroundRoutes[0],
+  "/als": playgroundRoutes[1],
+  "/store-boundaries": playgroundRoutes[2],
+  "/component-ssr": playgroundRoutes[3],
+  "/global-styles": playgroundRoutes[4],
+  "/islands-directive": playgroundRoutes[5],
+  "/islands-runtime": playgroundRoutes[6],
+  "/hydration-plan": playgroundRoutes[7],
+} satisfies Record<PlaygroundRoutePath, PlaygroundRoute>;
 
 function normalizePlaygroundPath(pathname: string): string {
   if (pathname === "/index.html") {
@@ -78,13 +89,15 @@ function getPlaygroundRoute(pathname: string): PlaygroundRoute | undefined {
   return playgroundRoutes.find((route) => route.path === normalized);
 }
 
-function getPlaygroundRouteOrDefault(pathname: string): PlaygroundRoute {
-  return getPlaygroundRoute(pathname) ?? playgroundRoutes[0];
+function getPlaygroundRouteByPath(
+  pathname: PlaygroundRoutePath,
+): PlaygroundRoute {
+  return playgroundRouteByPath[pathname];
 }
 
 export {
   getPlaygroundRoute,
-  getPlaygroundRouteOrDefault,
+  getPlaygroundRouteByPath,
   normalizePlaygroundPath,
   playgroundRoutes,
 };

@@ -1,10 +1,10 @@
 /**
- * Dathomir Web Components server-side plugin
+ * Dathra Web Components server-side plugin
  * 
- * This plugin imports and registers Dathomir Web Components
+ * This plugin imports and registers Dathra Web Components
  * on the server side for SSR rendering.
  */
-import "@/lib/dathomir";
+import "@/lib/dathra";
 
 export default defineNuxtPlugin(() => {
   // Components are registered via side effects in the import above

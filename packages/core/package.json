@@ -1,7 +1,7 @@
 {
-  "name": "@dathomir/core",
-  "description": "dathomir package",
-  "version": "0.0.11",
+  "name": "@dathra/core",
+  "description": "dathra package",
+  "version": "0.0.19",
   "private": false,
   "publishConfig": {
     "access": "public",
@@ -12,16 +12,16 @@
   "license": "MPL-2.0",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:dathomir-js/dathomir.git"
+    "url": "git+ssh://git@github.com:dathra/dathra.git"
   },
   "bugs": {
-    "url": "https://github.com/dathomir-js/dathomir/issues",
-    "email": "dathomir@takumaru.dev"
+    "url": "https://github.com/dathra/dathra/issues",
+    "email": "dathra@takumaru.dev"
   },
-  "homepage": "https://github.com/dathomir-js/dathomir#readme",
+  "homepage": "https://github.com/dathra/dathra#readme",
   "author": "takuma-ru <takuma-ru@takumaru.dev> (https://github.com/takuma-ru/)",
   "keywords": [
-    "dathomir",
+    "dathra",
     "framework",
     "frontend",
     "javascript",
@@ -53,6 +53,16 @@
       "import": "./dist/runtime/index.mjs",
       "require": "./dist/runtime/index.cjs"
     },
+    "./ssr": {
+      "types": "./dist/ssr/index.d.mts",
+      "import": "./dist/ssr/index.mjs",
+      "require": "./dist/ssr/index.cjs"
+    },
+    "./hydration": {
+      "types": "./dist/hydration/index.d.mts",
+      "import": "./dist/hydration/index.mjs",
+      "require": "./dist/hydration/index.cjs"
+    },
     "./store": {
       "types": "./dist/store/index.d.mts",
       "import": "./dist/store/index.mjs",
@@ -70,7 +80,7 @@
   "scripts": {
     "dev": "tsdown --watch",
     "build": "tsdown",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "lint": "oxlint",
     "lint:type-aware": "oxlint --type-aware",
     "fmt": "oxfmt --ignore-path ../../.gitignore --write .",
@@ -80,7 +90,7 @@
     "release": "rlse"
   },
   "devDependencies": {
-    "@dathomir/config": "workspace:*",
+    "@dathra/config": "workspace:*",
     "rlse.ts": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
@@ -88,10 +98,10 @@
     "vitest": "catalog:"
   },
   "dependencies": {
-    "@dathomir/components": "workspace:*",
-    "@dathomir/reactivity": "workspace:*",
-    "@dathomir/runtime": "workspace:*",
-    "@dathomir/store": "workspace:*",
-    "@dathomir/shared": "workspace:*"
+    "@dathra/components": "workspace:*",
+    "@dathra/reactivity": "workspace:*",
+    "@dathra/runtime": "workspace:*",
+    "@dathra/store": "workspace:*",
+    "@dathra/shared": "workspace:*"
   }
 }

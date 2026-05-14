@@ -9,7 +9,7 @@ import {
   ISLAND_METADATA_ATTRIBUTE,
   ISLAND_VALUE_METADATA_ATTRIBUTE,
   type ColocatedClientStrategyName,
-} from "@dathomir/shared";
+} from "@dathra/shared";
 
 import {
   isCallExpression,
@@ -149,11 +149,11 @@ function collectBindingNames(pattern: ESTNode, names: Set<string>): void {
 
 function throwUnknownClientDirective(name: JSXAttribute["name"]): never {
   if (name.type !== "JSXNamespacedName") {
-    throw new Error("[dathomir] Unknown client:* directive");
+    throw new Error("[dathra] Unknown client:* directive");
   }
 
   throw new Error(
-    `[dathomir] Unknown client:* directive: client:${name.name.name}`,
+    `[dathra] Unknown client:* directive: client:${name.name.name}`,
   );
 }
 
@@ -531,7 +531,7 @@ function getReservedClientMetadataError(key: string): string | null {
     return null;
   }
 
-  return `[dathomir] ${key} is compiler-reserved metadata and cannot be authored directly`;
+  return `[dathra] ${key} is compiler-reserved metadata and cannot be authored directly`;
 }
 
 function assertNoHostIslandsMixing(
@@ -543,7 +543,7 @@ function assertNoHostIslandsMixing(
   }
 
   throw new Error(
-    "[dathomir] host-level client:* directives or data-dh-island metadata cannot be combined with colocated client directives in the same component render subtree",
+    "[dathra] host-level client:* directives or data-dh-island metadata cannot be combined with colocated client directives in the same component render subtree",
   );
 }
 
@@ -620,7 +620,7 @@ function buildComponentCall(
     if (directiveName !== null) {
       if (islandsDirective !== null) {
         throw new Error(
-          `[dathomir] Multiple client:* directives are not allowed on a single component: <${getTagName(opening.name)}>`,
+          `[dathra] Multiple client:* directives are not allowed on a single component: <${getTagName(opening.name)}>`,
         );
       }
 
@@ -641,13 +641,13 @@ function buildComponentCall(
         isJSXEmptyExpression(value.expression)
       ) {
         throw new Error(
-          `[dathomir] ${rawName} requires an inline handler expression`,
+          `[dathra] ${rawName} requires an inline handler expression`,
         );
       }
 
       if (UNSUPPORTED_COMPONENT_TARGET_EVENTS.has(colocatedDirective.event)) {
         throw new Error(
-          `[dathomir] ${rawName} is not supported on component targets because the child host cannot observe that event without an explicit host re-emit`,
+          `[dathra] ${rawName} is not supported on component targets because the child host cannot observe that event without an explicit host re-emit`,
         );
       }
 
@@ -665,7 +665,7 @@ function buildComponentCall(
         colocatedClientState.strategy !== colocatedDirective.strategy
       ) {
         throw new Error(
-          "[dathomir] Mixed colocated client strategies are not supported in one JSX root",
+          "[dathra] Mixed colocated client strategies are not supported in one JSX root",
         );
       }
       if (
@@ -674,7 +674,7 @@ function buildComponentCall(
         colocatedClientState.interactionEventType !== colocatedDirective.event
       ) {
         throw new Error(
-          "[dathomir] Mixed colocated interaction event types are not supported in one JSX root",
+          "[dathra] Mixed colocated interaction event types are not supported in one JSX root",
         );
       }
       colocatedClientState.strategy = colocatedDirective.strategy;
@@ -688,7 +688,7 @@ function buildComponentCall(
         colocatedDirectiveStrategy !== colocatedDirective.strategy
       ) {
         throw new Error(
-          "[dathomir] Mixed colocated client strategies are not supported in one JSX root",
+          "[dathra] Mixed colocated client strategies are not supported in one JSX root",
         );
       }
       if (
@@ -697,7 +697,7 @@ function buildComponentCall(
         colocatedInteractionEventType !== colocatedDirective.event
       ) {
         throw new Error(
-          "[dathomir] Mixed colocated interaction event types are not supported in one JSX root",
+          "[dathra] Mixed colocated interaction event types are not supported in one JSX root",
         );
       }
 
@@ -707,7 +707,7 @@ function buildComponentCall(
         state.currentSerializableBindings,
       );
       if ("error" in analysis) {
-        throw new Error(`[dathomir] ${rawName} ${analysis.error}`);
+        throw new Error(`[dathra] ${rawName} ${analysis.error}`);
       }
 
       colocatedDirectiveStrategy = colocatedDirective.strategy;
@@ -734,7 +734,7 @@ function buildComponentCall(
     const unsupportedColocatedDirectiveError =
       getUnsupportedColocatedDirectiveError(attr.name);
     if (unsupportedColocatedDirectiveError !== null) {
-      throw new Error(`[dathomir] ${unsupportedColocatedDirectiveError}`);
+      throw new Error(`[dathra] ${unsupportedColocatedDirectiveError}`);
     }
 
     if (isClientDirectiveNamespace(attr.name)) {
@@ -776,13 +776,13 @@ function buildComponentCall(
   if (islandsDirective !== null) {
     if (colocatedDirectiveStrategy !== null) {
       throw new Error(
-        "[dathomir] host-level client:* directives or data-dh-island metadata cannot be combined with colocated client directives in the same component render subtree",
+        "[dathra] host-level client:* directives or data-dh-island metadata cannot be combined with colocated client directives in the same component render subtree",
       );
     }
 
     if (hasExplicitReservedIslandMetadata) {
       throw new Error(
-        `[dathomir] client:* directives cannot be combined with explicit data-dh-island metadata on <${getTagName(opening.name)}>`,
+        `[dathra] client:* directives cannot be combined with explicit data-dh-island metadata on <${getTagName(opening.name)}>`,
       );
     }
 
@@ -800,7 +800,7 @@ function buildComponentCall(
   if (colocatedDirectiveStrategy !== null) {
     if (hasExplicitHostIslandMetadata) {
       throw new Error(
-        "[dathomir] host-level client:* directives or data-dh-island metadata cannot be combined with colocated client directives in the same component render subtree",
+        "[dathra] host-level client:* directives or data-dh-island metadata cannot be combined with colocated client directives in the same component render subtree",
       );
     }
 
@@ -1029,7 +1029,7 @@ function processAttributes(
 
     if (getIslandsDirectiveName(attr.name) !== null) {
       throw new Error(
-        "[dathomir] client:* directives are only supported on component elements",
+        "[dathra] client:* directives are only supported on component elements",
       );
     }
 
@@ -1041,7 +1041,7 @@ function processAttributes(
         shouldRejectColocatedDirectiveInNamespace(state.currentElementNamespace)
       ) {
         throw new Error(
-          `[dathomir] ${getRawAttributeNameForDiagnostics(attr.name)} is only supported on HTML elements`,
+          `[dathra] ${getRawAttributeNameForDiagnostics(attr.name)} is only supported on HTML elements`,
         );
       }
 
@@ -1051,7 +1051,7 @@ function processAttributes(
         isJSXEmptyExpression(value.expression)
       ) {
         throw new Error(
-          `[dathomir] ${rawName} requires an inline handler expression`,
+          `[dathra] ${rawName} requires an inline handler expression`,
         );
       }
 
@@ -1065,7 +1065,7 @@ function processAttributes(
         colocatedClientState.strategy !== colocatedClientDirective.strategy
       ) {
         throw new Error(
-          "[dathomir] Mixed colocated client strategies are not supported in one JSX root",
+          "[dathra] Mixed colocated client strategies are not supported in one JSX root",
         );
       }
 
@@ -1076,7 +1076,7 @@ function processAttributes(
           colocatedClientDirective.event
       ) {
         throw new Error(
-          "[dathomir] Mixed colocated interaction event types are not supported in one JSX root",
+          "[dathra] Mixed colocated interaction event types are not supported in one JSX root",
         );
       }
 
@@ -1114,7 +1114,7 @@ function processAttributes(
     const unsupportedColocatedDirectiveError =
       getUnsupportedColocatedDirectiveError(attr.name);
     if (unsupportedColocatedDirectiveError !== null) {
-      throw new Error(`[dathomir] ${unsupportedColocatedDirectiveError}`);
+      throw new Error(`[dathra] ${unsupportedColocatedDirectiveError}`);
     }
 
     if (isClientDirectiveNamespace(attr.name)) {

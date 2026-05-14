@@ -6,10 +6,7 @@ import { GlobalStylesPage } from "./pages/GlobalStylesPage";
 import { IslandsDirectivePage } from "./pages/IslandsDirectivePage";
 import { IslandsRuntimePage } from "./pages/IslandsRuntimePage";
 import { OverviewPage } from "./pages/OverviewPage";
-import {
-  getPlaygroundRouteOrDefault,
-  type PlaygroundRoutePath,
-} from "./routes";
+import type { PlaygroundRoutePath } from "./routes";
 
 function renderPlaygroundPage(props: {
   requestId: string;
@@ -17,11 +14,9 @@ function renderPlaygroundPage(props: {
   routePath: PlaygroundRoutePath;
   pagePayloadJson: string;
 }) {
-  const route = getPlaygroundRouteOrDefault(props.routePath);
-
   let pageContent: JSX.Element;
 
-  switch (route.path) {
+  switch (props.routePath) {
     case "/als":
       pageContent = (
         <ALSPage
@@ -61,7 +56,7 @@ function renderPlaygroundPage(props: {
 
   return (
     <PlaygroundShell
-      routePath={route.path}
+      routePath={props.routePath}
       requestId={props.requestId}
       renderPage={() => pageContent}
     />

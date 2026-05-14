@@ -11,11 +11,11 @@
     "fmt:check": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\""
   },
   "dependencies": {
-    "@dathomir/core": "workspace:*"
+    "@dathra/core": "workspace:*"
   },
   "devDependencies": {
-    "@dathomir/config": "workspace:*",
-    "@dathomir/plugin": "workspace:*",
+    "@dathra/config": "workspace:*",
+    "@dathra/plugin": "workspace:*",
     "typescript": "~5.8.3",
     "vite": "^6.3.4"
   }

@@ -1,4 +1,4 @@
-import { dathomirVitePlugin } from "@dathomir/plugin";
+import { dathraVitePlugin } from "@dathra/plugin";
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -7,7 +7,7 @@ export default defineNuxtConfig({
 
   vite: {
     plugins: [
-      dathomirVitePlugin(),
+      dathraVitePlugin(),
     ],
     esbuild: {
       jsx: "preserve",

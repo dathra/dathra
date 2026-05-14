@@ -1,6 +1,6 @@
-# @dathomir/store
+# @dathra/store
 
-Atom-based store layer for Dathomir.
+Atom-based store layer for Dathra.
 
 This package is currently in a specification-first scaffolding stage. The initial design centers on:
 

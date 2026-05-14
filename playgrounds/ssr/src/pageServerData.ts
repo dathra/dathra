@@ -1,4 +1,4 @@
-import { withStore } from "@dathomir/core";
+import { withStore } from "@dathra/core";
 
 import { collectCurrentStoreProbe } from "./alsDiagnostics";
 import { createDemoStore } from "./demoStore";
@@ -39,7 +39,7 @@ function createIslandsDirectivePayload(): string {
       title: "invalid client:media fails fast",
       mode: "csr",
       source: "const broken = <Counter client:media />;",
-      error: "[dathomir] client:media requires a string literal media query",
+      error: "[dathra] client:media requires a string literal media query",
     },
   ];
 

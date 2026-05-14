@@ -22,7 +22,7 @@ Hydration 時に SSR マーカー（コメントノード）を TreeWalker で�
 
     *型定義*:
     ```typescript
-    const enum HydrationMarkerType \{
+    enum HydrationMarkerType \{
       Text = "t",
       Insert = "i",
       Block = "b",

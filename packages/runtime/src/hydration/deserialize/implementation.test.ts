@@ -2,11 +2,7 @@
  * Tests for Hydration state deserialization.
  */
 
-import {
-  atom,
-  createAtomStore,
-  defineAtomStoreSnapshot,
-} from "@dathomir/store";
+import { atom, createAtomStore, defineAtomStoreSnapshot } from "@dathra/store";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {

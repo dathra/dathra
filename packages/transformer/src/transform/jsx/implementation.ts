@@ -3,7 +3,7 @@ import {
   DEFAULT_INTERACTION_EVENT_TYPE,
   type ISLAND_STRATEGIES,
   isColocatedClientStrategyName,
-} from "@dathomir/shared";
+} from "@dathra/shared";
 import {
   nId,
   nLit,
@@ -202,7 +202,7 @@ function normalizeIslandsDirectiveValue(
   value: JSXAttribute["value"],
 ): ESTNode | null {
   const invalidValueError = (message: string) => {
-    throw new Error(`[dathomir] ${message}`);
+    throw new Error(`[dathra] ${message}`);
   };
 
   if (value === null) {

@@ -5,7 +5,7 @@ export {
   css,
   getCssText,
 } from "@/css/implementation";
-export type { DathomirStyleSheet } from "@/css/implementation";
+export type { DathraStyleSheet } from "@/css/implementation";
 export { defineComponent } from "@/defineComponent/implementation";
 export type {
   ComponentClass,
@@ -27,6 +27,7 @@ export type {
   PropsSchema,
   PropType,
 } from "@/defineComponent/implementation";
+export { bindStoreToHost } from "@/defineComponent/internal";
 export {
   clearRegistry,
   getComponent,

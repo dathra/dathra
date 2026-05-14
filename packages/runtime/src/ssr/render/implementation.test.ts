@@ -7,7 +7,7 @@ import {
   createAtomStore,
   defineAtomStoreSnapshot,
   withStore,
-} from "@dathomir/store";
+} from "@dathra/store";
 import { describe, expect, it } from "vitest";
 
 import {

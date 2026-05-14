@@ -1,4 +1,4 @@
-import { css } from "@dathomir/components";
+import { css } from "@dathra/components";
 
 const pageStyles = css`
   :host {

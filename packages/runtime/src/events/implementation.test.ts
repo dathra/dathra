@@ -1,4 +1,4 @@
-import { createRoot } from "@dathomir/reactivity";
+import { createRoot } from "@dathra/reactivity";
 import { describe, expect, it, vi } from "vitest";
 
 import { event } from "@/index";

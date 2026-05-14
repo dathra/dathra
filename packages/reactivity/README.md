@@ -1,17 +1,17 @@
-# @dathomir/reactivity
+# @dathra/reactivity
 
 Fine-grained reactivity system built on [alien-signals](https://github.com/stackblitz/alien-signals). Provides TC39 Signals-style `signal` / `computed` / `effect` primitives.
 
 ## Install
 
 ```bash
-npm install @dathomir/reactivity
+npm install @dathra/reactivity
 ```
 
 ## Usage
 
 ```ts
-import { signal, computed, effect, batch } from "@dathomir/reactivity";
+import { signal, computed, effect, batch } from "@dathra/reactivity";
 
 const count = signal(0);
 const doubled = computed(() => count.value * 2);
@@ -41,7 +41,7 @@ Create a mutable reactive signal.
 ```ts
 const name = signal("world");
 console.log(name.value); // "world"
-name.set("dathomir"); // triggers dependents
+name.set("dathra"); // triggers dependents
 name.set((v) => v + "!"); // updater function
 name.peek(); // read without tracking
 ```

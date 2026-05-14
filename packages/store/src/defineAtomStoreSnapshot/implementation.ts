@@ -24,7 +24,7 @@ function assertPrimitiveAtomSchema(
   for (const [stableId, atom] of Object.entries(schema)) {
     if (atom.kind !== "primitive") {
       throw new Error(
-        `[dathomir] Snapshot schema entry "${stableId}" must reference a primitive atom`,
+        `[dathra] Snapshot schema entry "${stableId}" must reference a primitive atom`,
       );
     }
   }

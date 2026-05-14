@@ -24,10 +24,10 @@ jobs:
         run: pnpm lint
 
       - name: Run config lint
-        run: pnpm --filter @dathomir/config lint
+        run: pnpm --filter @dathra/config lint
 
       - name: Run workspace type-aware lint
         run: pnpm lint:type-aware
 
       - name: Run config type-aware lint
-        run: pnpm --filter @dathomir/config lint:type-aware
+        run: pnpm --filter @dathra/config lint:type-aware

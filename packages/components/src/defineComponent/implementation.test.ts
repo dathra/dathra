@@ -1,22 +1,27 @@
-import { onCleanup, signal, templateEffect } from "@dathomir/reactivity";
-import { atom, createAtomStore, withStore } from "@dathomir/store";
+import { onCleanup, signal, templateEffect } from "@dathra/reactivity";
+import { atom, createAtomStore, withStore } from "@dathra/store";
 
-import { bindStoreToHost, peekStoreFromHost } from "./internal";
+import {
+  bindStoreToHost,
+  canUseComponentDOMRuntime,
+  peekStoreFromHost,
+} from "./internal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   registerClientAction,
   HYDRATE_ISLANDS_HOOK,
   hydrateIslands,
   HYDRATE_ISLANDS_STATUS,
-} from "@dathomir/runtime/hydration";
+} from "@dathra/runtime/hydration";
 
+import { bindStoreToHost as publicBindStoreToHost } from "../index";
 import {
   adoptGlobalStyles,
   clearGlobalStyles,
   css,
 } from "../css/implementation";
 import { defineComponent } from "./implementation";
-import type { GenericHydrationPlan } from "@dathomir/runtime/hydration";
+import type { GenericHydrationPlan } from "@dathra/runtime/hydration";
 
 /**
  * Helper to wait for custom element upgrade and connectedCallback.
@@ -67,6 +72,25 @@ describe("defineComponent", () => {
     const div = el.shadowRoot!.querySelector("div");
     expect(div).not.toBeNull();
     expect(div!.textContent).toBe("content");
+
+    el.remove();
+  });
+
+  it("should build DOM from string setup output through the runtime", async () => {
+    const tag = uniqueTag();
+    defineComponent(tag, () => {
+      return '<section><p data-testid="status">ready</p></section>';
+    });
+
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await waitForMicrotask();
+
+    const section = el.shadowRoot!.querySelector("section");
+    expect(section).not.toBeNull();
+    expect(section!.querySelector("[data-testid='status']")?.textContent).toBe(
+      "ready",
+    );
 
     el.remove();
   });
@@ -556,6 +580,50 @@ describe("defineComponent", () => {
     expect(el.tagName.toLowerCase()).toBe(tag);
   });
 
+  it("should require custom element capabilities for the browser implementation path", () => {
+    const originalCustomElements = globalThis.customElements;
+
+    vi.stubGlobal("customElements", undefined);
+
+    try {
+      expect(canUseComponentDOMRuntime()).toBe(false);
+
+      const tag = uniqueTag();
+      const Comp = defineComponent(tag, () =>
+        document.createTextNode("test"),
+      ) as any;
+
+      expect(Comp.webComponent.__tagName__).toBe(tag);
+      expect(Comp.webComponent.__propsSchema__).toBeUndefined();
+    } finally {
+      vi.stubGlobal("customElements", originalCustomElements);
+    }
+  });
+
+  it("should keep JSX helper on the define-time server path", () => {
+    const originalCustomElements = globalThis.customElements;
+
+    vi.stubGlobal("customElements", undefined);
+
+    try {
+      const tag = uniqueTag();
+      const Comp = defineComponent(tag, () => "server-only", {
+        props: { id: { type: String } },
+      });
+
+      vi.stubGlobal("customElements", originalCustomElements);
+
+      const rendered = Comp({ id: "stable" }) as unknown;
+
+      expect(typeof rendered).toBe("string");
+      expect(rendered).toContain(`<${tag} id="stable">`);
+      expect(rendered).toContain("server-only");
+      expect(rendered).not.toBeInstanceOf(HTMLElement);
+    } finally {
+      vi.stubGlobal("customElements", originalCustomElements);
+    }
+  });
+
   it("should support JSX helper props and children", async () => {
     const tag = uniqueTag();
     const Comp = defineComponent(
@@ -841,6 +909,15 @@ describe("defineComponent", () => {
     expect(capturedStore).toBe(store);
 
     host.remove();
+  });
+
+  it("should expose store binding through the public components API", () => {
+    const host = document.createElement("public-store-host");
+    const store = createAtomStore({ appId: "public-store-binding" });
+
+    publicBindStoreToHost(host, store);
+
+    expect(peekStoreFromHost(host)).toBe(store);
   });
 
   it("should defer island hydration until hydrateIslands triggers the strategy", async () => {
@@ -1158,7 +1235,7 @@ describe("defineComponent", () => {
     await waitForMicrotask();
 
     expect(errorSpy).toHaveBeenCalledWith(
-      "[dathomir] colocated load:on* / interaction:on* / idle:on* / visible:on* cannot be combined with a hydrate option in the same component",
+      "[dathra] colocated load:on* / interaction:on* / idle:on* / visible:on* cannot be combined with a hydrate option in the same component",
     );
     expect(el.getAttribute("data-dh-island")).toBeNull();
 
@@ -1180,7 +1257,7 @@ describe("defineComponent", () => {
     await waitForMicrotask();
 
     expect(errorSpy).toHaveBeenCalledWith(
-      "[dathomir] host-level client:* directives or data-dh-island metadata cannot be combined with colocated client directives in the same component render subtree",
+      "[dathra] host-level client:* directives or data-dh-island metadata cannot be combined with colocated client directives in the same component render subtree",
     );
     expect(el.getAttribute("data-dh-island")).toBe("load");
 

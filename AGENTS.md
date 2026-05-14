@@ -136,5 +136,5 @@ packages/{package-name}/src/{api-name}/
 ├── playgrounds/
 │   └── *                # 各パッケージの動作確認用プレイグラウンド
 ├── .github/             # GitHub 関連の設定ファイル
-├── dathomir.code-workspace  # VSCode ワークスペース設定
+├── dathra.code-workspace  # VSCode ワークスペース設定
 ```

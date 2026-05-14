@@ -1,4 +1,4 @@
-import { effect } from "@dathomir/reactivity";
+import { effect } from "@dathra/reactivity";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -82,12 +82,12 @@ describe("createAtomStore", () => {
         appId: "app-1",
         values: [
           [countAtom, 42],
-          [nameAtom, "dathomir"],
+          [nameAtom, "dathra"],
         ],
       });
 
       expect(store.ref(countAtom).value).toBe(42);
-      expect(store.ref(nameAtom).value).toBe("dathomir");
+      expect(store.ref(nameAtom).value).toBe("dathra");
     });
 
     it("keeps the same atom definition isolated across different stores", () => {

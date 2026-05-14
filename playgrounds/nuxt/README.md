@@ -1,14 +1,14 @@
-# Dathomir × Nuxt 4 Playground
+# Dathra × Nuxt 4 Playground
 
-This playground demonstrates how to use Dathomir Web Components with Nuxt 4 SSR and Declarative Shadow DOM.
+This playground demonstrates how to use Dathra Web Components with Nuxt 4 SSR and Declarative Shadow DOM.
 
 ## Features
 
 - ✅ Nuxt 4 with full SSR support
-- ✅ Dathomir Web Components with TypeScript
+- ✅ Dathra Web Components with TypeScript
 - ✅ Declarative Shadow DOM rendering
 - ✅ Reactive state management with signals
-- ✅ JSX support via Dathomir transformer
+- ✅ JSX support via Dathra transformer
 
 ## Setup
 
@@ -30,12 +30,12 @@ pnpm run dev
 ### SSR Flow
 
 1. Components are defined with `defineComponent()` in `.tsx` files
-2. Dathomir Vite plugin transforms JSX to `renderToString()` calls in SSR mode
+2. Dathra Vite plugin transforms JSX to `renderToString()` calls in SSR mode
 3. Nuxt renders components on the server with Declarative Shadow DOM
 4. Client hydrates the components without re-rendering
 
 ## Key Files
 
-- `nuxt.config.ts` - Nuxt configuration with Dathomir plugin
-- `components/*.tsx` - Dathomir Web Components
+- `nuxt.config.ts` - Nuxt configuration with Dathra plugin
+- `components/*.tsx` - Dathra Web Components
 - `pages/index.vue` - Demo page using the components

@@ -16,7 +16,7 @@ describe("transform/runtimeImports", () => {
       body: [{ type: "ExpressionStatement", expression: nLit(1) }],
     };
 
-    addRuntimeImports(program, new Set(), "@dathomir/runtime");
+    addRuntimeImports(program, new Set(), "@dathra/runtime");
     expect(program.body).toHaveLength(1);
   });
 
@@ -26,7 +26,7 @@ describe("transform/runtimeImports", () => {
       body: [{ type: "ExpressionStatement", expression: nLit(1) }],
     };
 
-    addRuntimeImports(program, new Set(["fromTree"]), "@dathomir/runtime");
+    addRuntimeImports(program, new Set(["fromTree"]), "@dathra/runtime");
 
     expect(program.body[0]?.type).toBe("ImportDeclaration");
   });
@@ -44,7 +44,7 @@ describe("transform/runtimeImports", () => {
     addRuntimeImports(
       program,
       new Set(["fromTree", "setText"]),
-      "@dathomir/runtime",
+      "@dathra/runtime",
     );
 
     expect(program.body[2]?.type).toBe("ImportDeclaration");
@@ -52,7 +52,7 @@ describe("transform/runtimeImports", () => {
       source: { value: string };
       specifiers: unknown[];
     };
-    expect(decl.source.value).toBe("@dathomir/runtime");
+    expect(decl.source.value).toBe("@dathra/runtime");
     expect(decl.specifiers).toHaveLength(2);
   });
 
@@ -65,7 +65,7 @@ describe("transform/runtimeImports", () => {
     addRuntimeImports(
       program,
       new Set(["fromTree", "setText", "insert"]),
-      "@dathomir/runtime",
+      "@dathra/runtime",
     );
 
     const decl = program.body[0] as unknown as {

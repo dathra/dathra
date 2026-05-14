@@ -1,4 +1,4 @@
-import type { dathomirNode } from "@//types/JSX";
+import type { dathraNode } from "@//types/JSX";
 
 /**
  * Common event handler attributes (onXXX) for all HTML elements.
@@ -279,7 +279,7 @@ interface GlobalIntrinsicAttributes {
 
   // Children
   /** Children nodes */
-  children?: dathomirNode;
+  children?: dathraNode;
 }
 
 /**

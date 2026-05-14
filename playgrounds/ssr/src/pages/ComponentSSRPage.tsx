@@ -1,5 +1,5 @@
-import { renderDSD } from "@dathomir/components/ssr";
-import { signal } from "@dathomir/core";
+import { signal } from "@dathra/core";
+import { render as renderSSR } from "@dathra/core/ssr";
 
 import type { DemoTheme } from "../demoStore";
 import { nextTheme } from "../demoStore";
@@ -11,8 +11,8 @@ function ComponentSSRPage() {
   const playgroundCount = signal(7);
   const playgroundAccent = signal<DemoTheme>("mint");
   const ssrMarkup = isServer
-    ? renderDSD(SSRStoreCounter, {
-        headline: "renderDSD(SSRStoreCounter, ...) sample",
+    ? renderSSR(SSRStoreCounter, {
+        headline: "render(SSRStoreCounter, ...) sample",
         note: "This markup is generated on the server from the same return value used in JSX.",
         count: 12,
         accent: "amber",
@@ -68,7 +68,7 @@ function ComponentSSRPage() {
         <h2>SSR markup generated from the same value</h2>
         <p>
           The box below is produced by calling{" "}
-          <code>renderDSD(SSRStoreCounter, ...)</code>
+          <code>render(SSRStoreCounter, ...)</code>
           with the callable object returned by <code>defineComponent()</code>.
         </p>
         {isServer ? (

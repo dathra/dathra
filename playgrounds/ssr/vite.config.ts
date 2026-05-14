@@ -1,4 +1,4 @@
-import { dathomirVitePlugin } from "@dathomir/plugin";
+import { dathraVitePlugin } from "@dathra/plugin";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { defineConfig } from "vite";
@@ -6,55 +6,29 @@ import { defineConfig } from "vite";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const workspacePackages = [
-  "@dathomir/core",
-  "@dathomir/components",
-  "@dathomir/runtime",
-  "@dathomir/store",
-  "@dathomir/reactivity",
-  "@dathomir/shared",
+  "@dathra/core",
+  "@dathra/components",
+  "@dathra/runtime",
+  "@dathra/store",
+  "@dathra/reactivity",
+  "@dathra/shared",
 ];
-
-function storeNodeInternalSwap() {
-  const withStoreDir = path.resolve(
-    projectRoot,
-    "../../packages/store/src/withStore",
-  );
-  const storeSrcDir = path.resolve(projectRoot, "../../packages/store/src");
-
-  return {
-    name: "playground-store-node-internal-swap",
-    enforce: "pre" as const,
-    resolveId(source: string, importer?: string, options?: { ssr?: boolean }) {
-      if (!options?.ssr || importer === undefined) {
-        return;
-      }
-
-      const importerPath = importer.split("?")[0] ?? importer;
-      const importerDir = path.dirname(importerPath);
-
-      if (source === "./internal" && importerDir === withStoreDir) {
-        return path.join(withStoreDir, "internal.node.ts");
-      }
-
-      if (source === "./withStore/internal" && importerDir === storeSrcDir) {
-        return path.join(withStoreDir, "internal.node.ts");
-      }
-    },
-  };
-}
 
 export default defineConfig({
   root: projectRoot,
-  plugins: [storeNodeInternalSwap(), dathomirVitePlugin()],
+  plugins: [
+    dathraVitePlugin({
+      mode: "ssr",
+      ssr: {
+        entry: "/src/entry-server.tsx",
+      },
+    }),
+  ],
   optimizeDeps: {
     exclude: workspacePackages,
   },
   ssr: {
     noExternal: workspacePackages,
-  },
-  esbuild: {
-    // Disable esbuild JSX transform - let our plugin handle it
-    jsx: "preserve",
   },
   build: {
     rollupOptions: {

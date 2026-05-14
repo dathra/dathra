@@ -10,7 +10,7 @@
 /**
  * Marker types for dynamic content.
  */
-const enum MarkerType {
+enum MarkerType {
   /** Dynamic text node */
   Text = "t",
   /** Child insertion point */

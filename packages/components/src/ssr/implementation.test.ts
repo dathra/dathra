@@ -3,7 +3,7 @@ import {
   createAtomStore,
   defineAtomStoreSnapshot,
   withStore,
-} from "@dathomir/store";
+} from "@dathra/store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
@@ -20,7 +20,7 @@ import {
   renderDSD,
   renderDSDContent,
 } from "./implementation";
-import { renderToString } from "@dathomir/runtime/ssr";
+import { renderToString } from "@dathra/runtime/ssr";
 
 describe("ssr", () => {
   beforeEach(() => {

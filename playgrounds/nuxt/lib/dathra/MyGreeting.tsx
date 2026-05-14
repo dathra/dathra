@@ -1,8 +1,8 @@
 /**
- * Dathomir greeting component for Nuxt SSR.
+ * Dathra greeting component for Nuxt SSR.
  */
 
-import { defineComponent } from "@dathomir/components";
+import { defineComponent } from "@dathra/components";
 
 export const MyGreeting = defineComponent(
   "my-greeting",
@@ -26,7 +26,7 @@ export const MyGreeting = defineComponent(
           margin: "0",
           color: "#666"
         }}>
-          This content was rendered with <code>Dathomir</code> using Declarative Shadow DOM in Nuxt 4! 🚀
+          This content was rendered with <code>Dathra</code> using Declarative Shadow DOM in Nuxt 4! 🚀
         </p>
       </div>
     );

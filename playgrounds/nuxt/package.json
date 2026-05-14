@@ -10,15 +10,15 @@
     "preview": "nuxt preview"
   },
   "dependencies": {
-    "@dathomir/components": "workspace:*",
-    "@dathomir/core": "workspace:*",
-    "@dathomir/reactivity": "workspace:*",
-    "@dathomir/runtime": "workspace:*",
+    "@dathra/components": "workspace:*",
+    "@dathra/core": "workspace:*",
+    "@dathra/reactivity": "workspace:*",
+    "@dathra/runtime": "workspace:*",
     "nuxt": "^4.0.0",
     "vue": "^3.5.13"
   },
   "devDependencies": {
-    "@dathomir/plugin": "workspace:*",
+    "@dathra/plugin": "workspace:*",
     "@nuxt/devtools": "^3.1.1"
   }
 }

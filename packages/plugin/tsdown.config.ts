@@ -1,8 +1,13 @@
-import { defineConfig } from "@dathomir/config/tsdown";
+import { defineConfig } from "@dathra/config/tsdown";
 
 export default defineConfig({
   entry: ["src/index.ts"],
-  dts: true,
+  dts: {
+    oxc: false,
+  },
+  deps: {
+    neverBundle: ["vite"],
+  },
   outDir: "dist",
   clean: true,
   format: ["cjs", "esm"],

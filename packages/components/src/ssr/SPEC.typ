@@ -124,14 +124,14 @@ Declarative Shadow DOM を使った Web Components の SSR レンダリングを
 #adr(
   header("クロスフレームワーク対応", Status.Accepted, "2026-03-09"),
   [
-    Dathomir 以外の SSR 環境でも Web Components を利用できるようにする必要がある。
+    Dathra 以外の SSR 環境でも Web Components を利用できるようにする必要がある。
   ],
   [
     `renderDSD` と `renderDSDContent` を独立した API として提供する。
   ],
   [
     - React、Vue、Next.js などでも利用できる
-    - Dathomir の `renderToString` に依存しない
+    - Dathra の `renderToString` に依存しない
   ],
 )
 

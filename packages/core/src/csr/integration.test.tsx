@@ -19,7 +19,7 @@ function requireQuery<T extends Element>(
 // These tests verify that the CSR pipeline works end-to-end as a system,
 // written the way a developer would author components — in TSX.
 //
-// In production, the Dathomir transformer compiles TSX to optimized runtime
+// In production, the Dathra transformer compiles TSX to optimized runtime
 // calls (fromTree, setText, templateEffect, etc.). In this test environment,
 // the jsx-runtime handles JSX transformation directly, which is functionally
 // equivalent for integration testing purposes.

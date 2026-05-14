@@ -1,4 +1,4 @@
-import { onCleanup } from "@dathomir/reactivity";
+import { onCleanup } from "@dathra/reactivity";
 
 /**
  * Add an event listener to an element.
