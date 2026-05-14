@@ -70,11 +70,7 @@ jobs:
       - name: Release dependent packages
         run: |
           for pkg in reactivity store transformer runtime plugin components core; do
-            if [ "${{ github.event.inputs.pre }}" == "true" ]; then
-              pnpm p:${pkg} release --level ${{ github.event.inputs.level }} --pre
-            else
-              pnpm p:${pkg} release --level ${{ github.event.inputs.level }}
-            fi
+            pnpm p:${pkg} release --level fix --release-version ${{ steps.get-version.outputs.package-version }} -k create-release-branch,build
           done
 
       - name: Format release changes
