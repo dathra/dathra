@@ -31,7 +31,6 @@
   "packageManager": "pnpm@10.17.1",
   "devDependencies": {
     "@opencode-ai/plugin": "^1.2.19",
-    "rlse.ts": "catalog:",
     "typescript": "catalog:"
   }
 }

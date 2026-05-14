@@ -69,7 +69,7 @@
   },
   "devDependencies": {
     "@dathra/config": "workspace:*",
-    "rlse.ts": "catalog:",
+    "@takuma-ru/rlse": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "vitest": "catalog:"
