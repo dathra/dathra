@@ -1,5 +1,4 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { defineConfig, steps, z, type RlseContext, type RlseFlowStep } from "rlse.ts";
 
 const packages = [
@@ -79,10 +78,19 @@ const createReleasePullRequest = (): RlseFlowStep => ({
   },
 });
 
-const readSharedVersion = () => {
-  const packageJson = JSON.parse(readFileSync("packages/shared/package.json", "utf8")) as { version: string };
-  return packageJson.version;
-};
+const pushReleaseTag = (): RlseFlowStep => ({
+  name: "pushReleaseTag",
+  run: (context) => {
+    const tag = `v${nextVersion(context)}`;
+
+    if (context.dryRun) {
+      console.info(`[dry-run] Skip git push origin ${tag}`);
+      return;
+    }
+
+    execFileSync("git", ["push", "origin", tag], { cwd: context.cwd, stdio: "inherit" });
+  },
+});
 
 export default defineConfig({
   args: z.object({
@@ -105,14 +113,19 @@ export default defineConfig({
     }),
     ...packages.flatMap(packageReleaseSteps),
     steps.runCommand("pnpm build"),
-    ...packages.flatMap(packagePublishSteps),
     steps.runCommand("pnpm fmt"),
-    steps.stageFiles({ paths: () => ["packages"] }),
+    steps.stageFiles({ paths: () => ["."] }),
     steps.commit({ message: `Release packages`, skipIfNoChanges: true }),
+    steps.tag({
+      name: (context) => `v${nextVersion(context)}`,
+      message: (context) => `Release v${nextVersion(context)}`,
+    }),
     steps.push({ branch: releaseBranch, setUpstream: true }),
     createReleasePullRequest(),
+    ...packages.flatMap(packagePublishSteps),
+    pushReleaseTag(),
     steps.githubRelease({
-      tag: () => `v${readSharedVersion()}`,
+      tag: (context) => `v${nextVersion(context)}`,
       title: (context) => `Release v${nextVersion(context)}`,
       prerelease: args.pre,
     }),
