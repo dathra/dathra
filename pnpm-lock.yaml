@@ -50,6 +50,9 @@ importers:
       '@opencode-ai/plugin':
         specifier: ^1.2.19
         version: 1.2.19
+      rlse.ts:
+        specifier: 'catalog:'
+        version: 0.0.4
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
