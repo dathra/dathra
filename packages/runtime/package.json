@@ -82,12 +82,12 @@
   },
   "devDependencies": {
     "@dathra/config": "workspace:*",
-    "@takuma-ru/rlse": "catalog:",
     "@types/node": "24.2.0",
     "@vitest/browser-playwright": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "happy-dom": "^20.5.3",
     "playwright": "^1.56.1",
+    "rlse.ts": "catalog:",
     "vitest": "catalog:"
   }
 }

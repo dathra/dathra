@@ -91,10 +91,10 @@
   },
   "devDependencies": {
     "@dathra/config": "workspace:*",
-    "@takuma-ru/rlse": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "happy-dom": "^20.5.3",
+    "rlse.ts": "catalog:",
     "vitest": "catalog:"
   },
   "dependencies": {

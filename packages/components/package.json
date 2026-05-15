@@ -63,11 +63,11 @@
   },
   "devDependencies": {
     "@dathra/config": "workspace:*",
-    "@takuma-ru/rlse": "catalog:",
     "@types/node": "catalog:",
     "@vitest/browser-playwright": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "playwright": "^1.56.1",
+    "rlse.ts": "catalog:",
     "vitest": "catalog:"
   },
   "dependencies": {
