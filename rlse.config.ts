@@ -25,6 +25,7 @@ const releaseTag = (context: RlseContext) => `v${nextVersion(context)}`;
 const isPrereleaseVersion = (version: string) => version.includes("-");
 const packageJsonPath = (packageName: string) => `packages/${packageName.replace("@dathra/", "")}/package.json`;
 const releaseNotes = (version: string) => `Release ${version} for all public packages.`;
+const packageKey = (packageName: string) => packageName.replace("@", "").replaceAll("/", "-");
 
 const resolveReleaseBranch = (): RlseFlowStep => ({
   name: "resolveReleaseBranch",
@@ -39,7 +40,7 @@ const resolveReleaseBranch = (): RlseFlowStep => ({
 });
 
 const runPackageVersioning = (packageName: string): RlseFlowStep => ({
-  name: "runPackageVersioning",
+  name: `runPackageVersioning:${packageKey(packageName)}`,
   run: (context) => {
     const version = nextVersion(context);
     const args = ["--filter", packageName, "exec", "rlse", "--release-version", version, "--skip-publish"];
@@ -54,7 +55,7 @@ const runPackageVersioning = (packageName: string): RlseFlowStep => ({
 });
 
 const runPackagePublish = (packageName: string): RlseFlowStep => ({
-  name: "runPackagePublish",
+  name: `runPackagePublish:${packageKey(packageName)}`,
   run: (context) => {
     const version = nextVersion(context);
 
@@ -171,7 +172,7 @@ export default defineConfig({
       changes: (context) => [releaseNotes(nextVersion(context))],
     }),
     steps.stageFiles({ paths: releaseFiles }),
-    steps.commit({ message: "Release packages" }),
+    steps.commit({ message: ":rocket: release packages" }),
     pushReleaseBranch(),
     createReleasePullRequest(),
     steps.tag({

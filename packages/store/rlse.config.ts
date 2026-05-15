@@ -1,5 +1,7 @@
 import { defineConfig, steps, z, type RlseContext } from "rlse.ts";
 
+const packageName = "@dathra/store";
+
 export default defineConfig({
   args: z.object({
     level: z.enum(["patch", "minor", "major", "preup"]).default("patch"),
@@ -13,7 +15,7 @@ export default defineConfig({
       results.findStep("calculateNextSemver").nextVersion;
 
     return [
-      steps.resolvePackage({ name: "@dathra/store" }),
+      steps.resolvePackage({ name: packageName }),
       steps.resolvePublishedVersion({
         packageName: ({ results }) =>
           results.findStep("resolvePackage").packageName,
@@ -32,7 +34,7 @@ export default defineConfig({
           : { level: args.level, pre: args.pre }),
       }),
       ...(args.publishOnly
-        ? [steps.publishNpmPackage({ packageName: "@dathra/store" })]
+        ? [steps.publishNpmPackage({ packageName })]
         : [
             steps.writePackageVersion({
               packageJsonPath: ({ results }) =>
