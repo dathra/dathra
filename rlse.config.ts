@@ -19,25 +19,57 @@ const gitUser = {
 
 const nextVersion = ({ results }: RlseContext) => results.findStep("calculateNextSemver").nextVersion;
 const latestPackage = ({ results }: RlseContext) => results.findStep("resolvePackage");
+const resolvedReleaseBranch = ({ results }: RlseContext) => results.findStep("resolveReleaseBranch").branch;
 const releaseFiles = () => ["CHANGELOG.md", ...packages.map((packageName) => packageJsonPath(packageName))];
 const releaseTag = (context: RlseContext) => `v${nextVersion(context)}`;
-const releaseBranch = (context: RlseContext) => `release/packages-${releaseTag(context)}`;
 const isPrereleaseVersion = (version: string) => version.includes("-");
 const packageJsonPath = (packageName: string) => `packages/${packageName.replace("@dathra/", "")}/package.json`;
 const releaseNotes = (version: string) => `Release ${version} for all public packages.`;
 
-const runPackageRelease = (packageName: string): RlseFlowStep => ({
-  name: "runPackageRelease",
+const resolveReleaseBranch = (): RlseFlowStep => ({
+  name: "resolveReleaseBranch",
+  run: (context) => {
+    const runId = process.env.GITHUB_RUN_ID;
+    const runAttempt = process.env.GITHUB_RUN_ATTEMPT;
+    const uniqueSuffix = runId && runAttempt ? `gh${runId}-${runAttempt}` : `local${Date.now()}`;
+    const branch = `release/packages-${releaseTag(context)}-${uniqueSuffix}`;
+
+    return { branch, uniqueSuffix };
+  },
+});
+
+const runPackageVersioning = (packageName: string): RlseFlowStep => ({
+  name: "runPackageVersioning",
   run: (context) => {
     const version = nextVersion(context);
-    const args = ["--filter", packageName, "exec", "rlse", "--release-version", version];
+    const args = ["--filter", packageName, "exec", "rlse", "--release-version", version, "--skip-publish"];
 
     if (context.dryRun) {
-      args.push("--skip-publish", "--dry-run");
+      args.push("--dry-run");
     }
 
     execFileSync("pnpm", args, { cwd: context.cwd, stdio: "inherit" });
-    return { packageName, version, dryRun: context.dryRun };
+    return { packageName, version, dryRun: context.dryRun, publishSkipped: true };
+  },
+});
+
+const runPackagePublish = (packageName: string): RlseFlowStep => ({
+  name: "runPackagePublish",
+  run: (context) => {
+    const version = nextVersion(context);
+
+    if (context.dryRun) {
+      console.info(`[dry-run] Skip publishing ${packageName}@${version}`);
+      return { packageName, version, dryRun: true, published: false };
+    }
+
+    execFileSync(
+      "pnpm",
+      ["--filter", packageName, "exec", "rlse", "--release-version", version, "--publish-only"],
+      { cwd: context.cwd, stdio: "inherit" },
+    );
+
+    return { packageName, version, dryRun: false, published: true };
   },
 });
 
@@ -63,7 +95,7 @@ const createReleasePullRequest = (): RlseFlowStep => ({
         "--base",
         "main",
         "--head",
-        releaseBranch(context),
+        resolvedReleaseBranch(context),
         "--reviewer",
         "takuma-ru",
         "--label",
@@ -79,7 +111,7 @@ const createReleasePullRequest = (): RlseFlowStep => ({
 const pushReleaseBranch = (): RlseFlowStep => ({
   name: "pushReleaseBranch",
   run: (context) => {
-    const branch = releaseBranch(context);
+    const branch = resolvedReleaseBranch(context);
 
     if (context.dryRun) {
       console.info(`[dry-run] Skip git push --set-upstream origin ${branch}`);
@@ -104,6 +136,13 @@ const pushTag = (): RlseFlowStep => ({
     execFileSync("git", ["push", "origin", tag], { cwd: context.cwd, stdio: "inherit" });
     return { tag, dryRun: false, pushed: true };
   },
+  rollback: (context, result) => {
+    if (result.dryRun || !result.pushed) {
+      return;
+    }
+
+    execFileSync("git", ["push", "origin", `:refs/tags/${result.tag}`], { cwd: context.cwd, stdio: "inherit" });
+  },
 });
 
 export default defineConfig({
@@ -124,8 +163,9 @@ export default defineConfig({
       level: args.level,
       pre: args.pre,
     }),
-    steps.createReleaseBranch({ branch: releaseBranch }),
-    ...packages.map(runPackageRelease),
+    resolveReleaseBranch(),
+    steps.createReleaseBranch({ branch: resolvedReleaseBranch }),
+    ...packages.map(runPackageVersioning),
     steps.updateChangelog({
       version: nextVersion,
       changes: (context) => [releaseNotes(nextVersion(context))],
@@ -145,5 +185,6 @@ export default defineConfig({
       notes: (context) => releaseNotes(releaseTag(context)),
       prerelease: (context) => isPrereleaseVersion(nextVersion(context)),
     }),
+    ...packages.map(runPackagePublish),
   ],
 });
