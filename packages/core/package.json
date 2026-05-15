@@ -1,7 +1,7 @@
 {
   "name": "@dathra/core",
   "description": "dathra package",
-  "version": "0.0.19",
+  "version": "0.0.21",
   "private": false,
   "publishConfig": {
     "access": "public",
