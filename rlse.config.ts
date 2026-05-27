@@ -110,7 +110,7 @@ const runPackagePublishes = (): RlseFlowStep => ({
   name: "runPackagePublishes",
   run: async (context) => {
     const parallelStep = steps.parallel({
-      name: "runPackagePublishes",
+      name: "runPackagePublishes:parallel",
       concurrency: 4,
       tasks: packages.map((packageName) => runPackagePublish(packageName, context.dryRun)),
     });
