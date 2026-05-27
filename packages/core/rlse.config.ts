@@ -34,7 +34,7 @@ export default defineConfig({
           : { level: args.level, pre: args.pre }),
       }),
       ...(args.publishOnly
-        ? [steps.publishNpmPackage({ packageName })]
+        ? [steps.publishNpmPackage({ packageName, dryRunVersion: version })]
         : [
             steps.writePackageVersion({
               packageJsonPath: ({ results }) =>
