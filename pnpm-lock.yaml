@@ -31,8 +31,8 @@ catalogs:
       specifier: 0.16.0
       version: 0.16.0
     rlse.ts:
-      specifier: 0.0.4
-      version: 0.0.4
+      specifier: 0.0.6
+      version: 0.0.6
     tsdown:
       specifier: 0.22.0
       version: 0.22.0
@@ -52,7 +52,7 @@ importers:
         version: 1.2.19
       rlse.ts:
         specifier: 'catalog:'
-        version: 0.0.4
+        version: 0.0.6
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -140,7 +140,7 @@ importers:
         version: 1.56.1
       rlse.ts:
         specifier: 'catalog:'
-        version: 0.0.4
+        version: 0.0.6
       vitest:
         specifier: 'catalog:'
         version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
@@ -177,7 +177,7 @@ importers:
         version: 20.5.3
       rlse.ts:
         specifier: 'catalog:'
-        version: 0.0.4
+        version: 0.0.6
       vitest:
         specifier: 'catalog:'
         version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
@@ -211,7 +211,7 @@ importers:
         version: 4.0.4(@vitest/browser@4.0.4(vite@6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4))(vitest@4.0.4)
       rlse.ts:
         specifier: 'catalog:'
-        version: 0.0.4
+        version: 0.0.6
       vite:
         specifier: ^6.3.4
         version: 6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
@@ -236,7 +236,7 @@ importers:
         version: 4.0.4(@vitest/browser@4.0.4(vite@7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4))(vitest@4.0.4)
       rlse.ts:
         specifier: 'catalog:'
-        version: 0.0.4
+        version: 0.0.6
       vitest:
         specifier: 'catalog:'
         version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
@@ -276,7 +276,7 @@ importers:
         version: 1.56.1
       rlse.ts:
         specifier: 'catalog:'
-        version: 0.0.4
+        version: 0.0.6
       vitest:
         specifier: 'catalog:'
         version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
@@ -294,7 +294,7 @@ importers:
         version: 4.0.4(@vitest/browser@4.0.4(vite@7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4))(vitest@4.0.4)
       rlse.ts:
         specifier: 'catalog:'
-        version: 0.0.4
+        version: 0.0.6
       vitest:
         specifier: 'catalog:'
         version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
@@ -316,7 +316,7 @@ importers:
         version: 4.0.4(@vitest/browser@4.0.4(vite@7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4))(vitest@4.0.4)
       rlse.ts:
         specifier: 'catalog:'
-        version: 0.0.4
+        version: 0.0.6
       vitest:
         specifier: 'catalog:'
         version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
@@ -347,7 +347,7 @@ importers:
         version: 4.0.4(@vitest/browser@4.0.4(vite@7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4))(vitest@4.0.4)
       rlse.ts:
         specifier: 'catalog:'
-        version: 0.0.4
+        version: 0.0.6
       vitest:
         specifier: 'catalog:'
         version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
@@ -5286,8 +5286,8 @@ packages:
   rfdc@1.4.1:
     resolution: {integrity: sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA==}
 
-  rlse.ts@0.0.4:
-    resolution: {integrity: sha512-/Gt6+VQdosbZql+xPt2klkXcqOErw5EfoJEybwdo8PTAFdbaXoKMyGiLmw1LVhir2rMEHWI11DMf1alx8lc15Q==}
+  rlse.ts@0.0.6:
+    resolution: {integrity: sha512-m1Af6LpbJ0m1VOwgf6gi47DTqIZTF+6E1WCU55DsqL9D23Uga1F905UuvGQh/LFA2gIn2pk5E13EbZ5SiPzBKw==}
     hasBin: true
 
   rolldown-plugin-dts@0.25.0:
@@ -11389,7 +11389,7 @@ snapshots:
 
   rfdc@1.4.1: {}
 
-  rlse.ts@0.0.4:
+  rlse.ts@0.0.6:
     dependencies:
       commander: 12.1.0
       consola: 3.4.2
