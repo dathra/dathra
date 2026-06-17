@@ -115,6 +115,7 @@ interface ComponentContext<S extends PropsSchema = PropsSchema> {
   readonly props: Readonly<InferProps<S>>;
   readonly client: ComponentClientContext;
   readonly store: AtomStore;
+  readonly children: unknown;
 }
 
 interface ComponentClientContext {
@@ -640,11 +641,7 @@ function propsToSSRAttributes<S extends PropsSchema>(
   const attrs: Record<string, unknown> = {};
 
   for (const [key, rawValue] of Object.entries(props)) {
-    if (
-      key === "children" ||
-      isEventHandlerKey(key) ||
-      isIslandsDirectiveProp(key)
-    ) {
+    if (isEventHandlerKey(key) || isIslandsDirectiveProp(key)) {
       continue;
     }
 
@@ -981,9 +978,33 @@ function createClientDefinedComponent<S extends PropsSchema>(
         }
       }
 
+      const rawChildren = this.getAttribute("data-dh-children");
+      let children: unknown;
+      if (rawChildren !== null) {
+        try {
+          children = JSON.parse(rawChildren) as unknown;
+        } catch {
+          children = rawChildren;
+        }
+      } else if (this.childNodes.length > 0) {
+        const parts: string[] = [];
+        for (let i = 0; i < this.childNodes.length; i++) {
+          const node = this.childNodes[i]!;
+          if (
+            node.nodeType === Node.TEXT_NODE ||
+            node.nodeType === Node.ELEMENT_NODE
+          ) {
+            const text = node.textContent;
+            if (text !== null && text.length > 0) parts.push(text);
+          }
+        }
+        if (parts.length > 0) children = parts.join("");
+      }
+
       const ctx = {
         host: this,
         props: propSignals,
+        children,
         get client() {
           return createClientContext(this.host);
         },

@@ -320,7 +320,7 @@ function renderNode(node: Tree, ctx: RenderContext): string {
       const value = ctx.dynamicValues.get(id);
       const textContent =
         value != null ? escapeHtml(stringifyRenderableValue(value)) : "";
-      return createMarker(MarkerType.Text, id) + textContent;
+      return createMarker(MarkerType.Text, id) + textContent + "<!---->";
     }
 
     if (type === "{insert}") {

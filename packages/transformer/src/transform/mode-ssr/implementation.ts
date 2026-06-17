@@ -135,6 +135,7 @@ function transformJSXForSSRNode(
         state.runtimeImports.add("renderDynamicText");
         mergeStaticPart(parts, `<!--dh:t:${currentMarkerId}-->`);
         parts.push(nCall(nId("renderDynamicText"), [binding.expression]));
+        mergeStaticPart(parts, "<!---->");
         return;
       }
 

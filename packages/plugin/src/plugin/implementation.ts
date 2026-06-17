@@ -105,7 +105,7 @@ function shouldTransform(id: string, options: PluginOptions): boolean {
 /**
  * Detect SSR mode from environment.
  * Per SPEC.typ (ADR: SSR モード伝播):
- * Priority: options.mode → environment.name → options.ssr → default CSR
+ * Priority: environment.name → options.mode → options.ssr → default CSR
  *
  * Environment names:
  * - 'client': CSR mode
@@ -117,12 +117,7 @@ function detectMode(
   environmentName?: string,
   optionsSsr?: boolean,
 ): "csr" | "ssr" {
-  // User-specified mode takes highest priority
-  if (forcedMode !== undefined) {
-    return forcedMode;
-  }
-
-  // Vite Environment API (Vite 6+)
+  // Vite Environment API (Vite 6+) — highest priority per-file signal
   if (environmentName === "ssr" || environmentName === "edge") {
     return "ssr";
   }
@@ -130,7 +125,12 @@ function detectMode(
     return "csr";
   }
 
-  // Legacy options.ssr
+  // User-specified mode as fallback (when Environment API is unavailable)
+  if (forcedMode !== undefined) {
+    return forcedMode;
+  }
+
+  // Legacy per-file SSR flag (pre-Vite 6)
   if (optionsSsr === true) {
     return "ssr";
   }

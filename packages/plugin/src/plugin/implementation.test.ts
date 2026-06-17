@@ -678,13 +678,33 @@ describe("plugin", () => {
       );
     });
 
-    it("should use forced mode over SSR flag", () => {
+    it("should use forced mode as fallback when no environment signal", () => {
       const plugin = dathraVitePlugin({ mode: "ssr" });
       invokeViteTransform(plugin, "const x = <div />;", "component.tsx", {});
 
       expect(transform).toHaveBeenCalledWith(
         "const x = <div />;",
         expect.objectContaining({ mode: "ssr" }),
+      );
+    });
+
+    it("should prioritize environment name over forced mode", () => {
+      const plugin = dathraVitePlugin({ mode: "ssr" });
+      const context = {
+        environment: { name: "client" },
+      };
+
+      invokeViteTransform(
+        plugin,
+        "const x = <div />;",
+        "component.tsx",
+        {},
+        context,
+      );
+
+      expect(transform).toHaveBeenCalledWith(
+        "const x = <div />;",
+        expect.objectContaining({ mode: "csr" }),
       );
     });
 
