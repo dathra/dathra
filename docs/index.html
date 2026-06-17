@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dathra Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Intel+One+Mono:wght@300;400;500;700&display=swap"
+    rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    dathra-docs {
+      --page-bg: #fafcfb;
+      --panel-bg: rgba(255, 255, 255, 0.85);
+      --panel-border: rgba(28, 58, 47, 0.12);
+      --text: #173127;
+      --muted: #476257;
+      --accent: #1e6b55;
+      --code-bg: rgba(33, 71, 60, 0.07);
+      font-family: "Inter", "Iowan Old Style", "Palatino Linotype", "Georgia", serif;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    @media (max-width: 720px) {
+      dathra-docs {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app"><!--ssr-outlet--></div>
+  <script type="module" src="/src/entry-client.ts"></script>
+</body>
+
+</html>

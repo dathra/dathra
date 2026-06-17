@@ -2,6 +2,7 @@ packages:
   - packages/**
   - config
   - playgrounds/**
+  - docs
 
 catalog:
   "@typescript/native-preview": beta

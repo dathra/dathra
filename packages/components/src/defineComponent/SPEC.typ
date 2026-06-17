@@ -59,6 +59,7 @@
       readonly props: Readonly<InferProps<S>>;
       readonly client: ComponentClientContext;
       readonly store: AtomStore;
+      readonly children: unknown;
     }
 
     interface ComponentClientContext {

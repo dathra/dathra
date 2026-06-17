@@ -48,7 +48,7 @@ unplugin を使用して複数のバンドラーに対応し、JSX/TSX ファイ
   constraints: [
     - `include` に一致し `exclude` に一致しないファイルのみ変換する
     - デフォルトで `.tsx` と `.jsx` を対象とする
-    - モード判定の優先順位は `options.mode` → `environment.name` → `options.ssr` → CSR
+    - モード判定の優先順位は `environment.name` → `options.mode` → `options.ssr` → CSR
     - `@dathra/transformer` の `transform()` を呼び出し、`filename` と `runtimeModule` を渡す
     - transform 失敗時はファイルパスを付与したエラーとして再スローする
     - Vite plugin は importer から最も近い `tsconfig.json` の `compilerOptions.paths` を参照して path alias import を解決できる

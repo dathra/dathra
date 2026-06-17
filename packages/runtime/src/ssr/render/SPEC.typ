@@ -87,6 +87,7 @@
     - HTML エスケープは最小限の置換で実装（バンドルサイズ考慮）
     - プレースホルダーはマーカーに変換し、動的値があれば埋め込む
     - compiler-generated generic hydration plan を使う component では、SSR marker / stable node reference を hydration runtime と共有できるよう出力を安定化する
+    - 動的テキスト値の後には `<!---->` を挿入し、Hydration 時にブラウザが隣接テキストノードを結合してしまう問題を防止する
   ],
 )
 

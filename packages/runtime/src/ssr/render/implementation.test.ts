@@ -90,7 +90,7 @@ describe("SSR Render", () => {
     const tree: Tree[] = [["div", null, ["{text}", null]]];
     const dynamicValues = new Map<number, unknown>([[1, "Dynamic"]]);
     const html = renderTree(tree, { dynamicValues });
-    expect(html).toBe("<div><!--dh:t:1-->Dynamic</div>");
+    expect(html).toBe("<div><!--dh:t:1-->Dynamic<!----></div>");
   });
 
   it("renders insert placeholder with explicit end marker", () => {
@@ -120,7 +120,7 @@ describe("SSR Render", () => {
     ]);
     const html = renderTree(tree, { dynamicValues });
     expect(html).toBe(
-      "<div>Count: <!--dh:t:1-->5 Items: <!--dh:t:2-->10</div>",
+      "<div>Count: <!--dh:t:1-->5<!----> Items: <!--dh:t:2-->10<!----></div>",
     );
   });
 

@@ -1,0 +1,25 @@
+{
+  "name": "@playground/getting-started-check",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build:client": "BUILD_TARGET=client vite build --outDir dist/client",
+    "build:server": "BUILD_TARGET=server vite build --outDir dist/server --ssr src/entry-server.tsx",
+    "build": "pnpm build:client && pnpm build:server",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@dathra/core": "workspace:*",
+    "@dathra/components": "workspace:*",
+    "@dathra/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@dathra/config": "workspace:*",
+    "@dathra/plugin": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.4"
+  }
+}

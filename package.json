@@ -16,6 +16,7 @@
     "pg:e2e": "pnpm --filter @playground/e2e",
     "pg:vanilla": "pnpm --filter @playgrounds/vanilla",
     "pg:ssr": "pnpm --filter @playground/ssr",
+    "docs": "pnpm --filter @dathra/docs dev",
     "version": "printf '\\033[1;36m%-10s | %-10s | %-10s\\033[0m\\n' tool version which; printf '%-10s | %-10s | %-10s\\n' ---------- ---------- ----------; printf '%-10s | %-10s | %-10s\\n' '@antfu/ni' '' \"$(which ni)\"; printf '%-10s | %-10s | %-10s\\n' node \"$(node -v)\" \"$(which node)\"; printf '%-10s | %-10s | %-10s\\n' pnpm \"v$(pnpm -v)\" \"$(which pnpm)\"",
     "release:all": "nr p:shared release && nr p:reactivity release && nr p:store release && nr p:components release && nr p:runtime release && nr p:core release && nr p:transformer release && nr p:plugin release",
     "test:e2e": "pnpm --filter @playground/e2e test",

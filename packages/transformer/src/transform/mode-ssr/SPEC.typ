@@ -51,4 +51,7 @@
     - attr dynamic part が先に出現しても text / insert marker id 対応が崩れない
     - custom element を含む tree は `renderToString` fallback を使える
   ],
+  impl_notes: [
+    - 動的テキスト（`renderDynamicText`）呼び出しの直後に `<!---->` を static part として結合し、Hydration 時のテキストノード境界を確保する
+  ],
 )

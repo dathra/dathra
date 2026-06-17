@@ -126,6 +126,7 @@ function renderComponentContent(
   const ctx = {
     host: {} as HTMLElement,
     props: propSignals,
+    children: attrs.children,
     client: {
       strategy: null,
       value: null,
@@ -282,6 +283,17 @@ function renderDSD(
   // Build attribute string
   let attrStr = "";
   for (const [key, value] of Object.entries(attrs)) {
+    if (key === "children" && value !== undefined) {
+      let serialized: string;
+      try {
+        serialized = JSON.stringify(value);
+      } catch {
+        serialized = String(value);
+      }
+      attrStr += ` data-dh-children="${escapeAttr(serialized)}"`;
+      continue;
+    }
+
     if (value === null || value === undefined || value === false) {
       continue;
     }
