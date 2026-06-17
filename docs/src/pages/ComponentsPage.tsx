@@ -31,10 +31,10 @@ const MyCounter = defineComponent(
     props: {
       initial: { type: Number, default: 0 },
     },
-    styles: css\`
+    styles: [css\`
       :host { display: block; padding: 16px; }
       button { border-radius: 8px; }
-    \`,
+    \`],
   },
 );`}</DocCodeBlock>
       <p>

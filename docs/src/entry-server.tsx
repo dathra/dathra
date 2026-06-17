@@ -10,17 +10,18 @@ const render = defineSsrEntry(async ({ request }) => {
 
   const routePath = normalizeDocPath(url.pathname);
   const route = getDocRoute(routePath);
-  if (route === undefined) {
-    return {
-      html: renderSSR(
-        DocsAppRoot,
-        { routePath: "/", requestStoreAppId: "dathra-docs-404" },
-      ),
-      statusCode: 404,
-    };
-  }
 
   try {
+    if (route === undefined) {
+      return {
+        html: renderSSR(
+          DocsAppRoot,
+          { routePath: "/", requestStoreAppId: "dathra-docs-404" },
+        ),
+        statusCode: 404,
+      };
+    }
+
     return {
       html: renderSSR(
         DocsAppRoot,
