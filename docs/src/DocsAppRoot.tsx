@@ -36,10 +36,7 @@ const docPageRenderers = {
   "/plugin": () => <PluginPage />,
 } satisfies Record<string, (_props: DocPageProps) => JSX.Element>;
 
-function replaceShadowRootContent(
-  shadowRoot: ShadowRoot,
-  content: string | Node,
-): void {
+function replaceShadowRootContent(shadowRoot: ShadowRoot, content: string | Node): void {
   shadowRoot.innerHTML = "";
   if (typeof content === "string") {
     shadowRoot.append(fromMarkup(content)());
@@ -59,9 +56,12 @@ export const DocsAppRoot = defineComponent(
       });
     const routePath = props.routePath.value as DocRoutePath;
     const renderPage = docPageRenderers[routePath];
-    const pageContent = renderPage !== undefined
-      ? renderPage({ requestStoreAppId: props.requestStoreAppId.value })
-      : <OverviewPage />;
+    const pageContent =
+      renderPage !== undefined ? (
+        renderPage({ requestStoreAppId: props.requestStoreAppId.value })
+      ) : (
+        <OverviewPage />
+      );
 
     return withStore(store, () => (
       <DocsShell routePath={routePath} renderPage={() => pageContent} />
@@ -74,9 +74,12 @@ export const DocsAppRoot = defineComponent(
       if (shadowRoot === null) return;
 
       const renderPage = docPageRenderers[routePath];
-      const pageContent = renderPage !== undefined
-        ? renderPage({ requestStoreAppId: props.requestStoreAppId.value })
-        : <OverviewPage />;
+      const pageContent =
+        renderPage !== undefined ? (
+          renderPage({ requestStoreAppId: props.requestStoreAppId.value })
+        ) : (
+          <OverviewPage />
+        );
 
       replaceShadowRootContent(
         shadowRoot,

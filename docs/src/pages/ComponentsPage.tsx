@@ -5,9 +5,9 @@ function ComponentsPage() {
     <section>
       <h1>Web Components API</h1>
       <p>
-        Dathra provides <code>defineComponent()</code> to create custom elements
-        with encapsulated Shadow DOM, reactive prop signals, Declarative Shadow
-        DOM (DSD) for SSR, and island hydration support.
+        Dathra provides <code>defineComponent()</code> to create custom elements with encapsulated
+        Shadow DOM, reactive prop signals, Declarative Shadow DOM (DSD) for SSR, and island
+        hydration support.
       </p>
 
       <h2>defineComponent()</h2>
@@ -38,19 +38,17 @@ const MyCounter = defineComponent(
   },
 );`}</DocCodeBlock>
       <p>
-        <code>defineComponent</code> registers the custom element with the
-        browser via <code>customElements.define()</code>, creates a Shadow Root,
-        applies <code>adoptedStyleSheets</code>, and reflects attributes as
-        reactive signals.
+        <code>defineComponent</code> registers the custom element with the browser via{" "}
+        <code>customElements.define()</code>, creates a Shadow Root, applies{" "}
+        <code>adoptedStyleSheets</code>, and reflects attributes as reactive signals.
       </p>
 
       <h2>SSR with DSD</h2>
       <p>
-        When rendered on the server, Dathra generates Declarative Shadow DOM
-        markup — the Shadow Root content is serialized as a{" "}
-        <code>&lt;template shadowrootmode="open"&gt;</code> inside the custom
-        element. The browser recreates the Shadow DOM from the template without
-        any JavaScript.
+        When rendered on the server, Dathra generates Declarative Shadow DOM markup — the Shadow
+        Root content is serialized as a <code>&lt;template shadowrootmode="open"&gt;</code> inside
+        the custom element. The browser recreates the Shadow DOM from the template without any
+        JavaScript.
       </p>
       <DocCodeBlock language="ts">{`import { renderDSD } from "@dathra/components/ssr";
 
@@ -64,9 +62,8 @@ const html = renderDSD(MyCounter, { initial: 5 });
 
       <h2>Hydration</h2>
       <p>
-        When the DSD-rendered element upgrades on the client, the <code>hydrate</code>{" "}
-        option lets you replace the server-generated Shadow DOM content with a
-        reactive client-side tree:
+        When the DSD-rendered element upgrades on the client, the <code>hydrate</code> option lets
+        you replace the server-generated Shadow DOM content with a reactive client-side tree:
       </p>
       <DocCodeBlock language="tsx">{`const AppRoot = defineComponent(
   "app-root",
@@ -102,19 +99,17 @@ adoptGlobalStyles(theme);`}</DocCodeBlock>
 
       <h2>Nested Components & Tree-Shaking</h2>
       <p>
-        When a Web Component is used as a JSX tag inside another component's
-        template (e.g. <code>&lt;MobileNav /&gt;</code>), the SSR renderer
-        detects the hyphenated tag name and generates DSD for the nested
-        component automatically. The import must be a value reference in the
-        file, not a side-effect-only import, or the bundler may tree-shake the
-        component registration.
+        When a Web Component is used as a JSX tag inside another component's template (e.g.{" "}
+        <code>&lt;MobileNav /&gt;</code>), the SSR renderer detects the hyphenated tag name and
+        generates DSD for the nested component automatically. The import must be a value reference
+        in the file, not a side-effect-only import, or the bundler may tree-shake the component
+        registration.
       </p>
 
       <h2>Component Registration</h2>
       <p>
-        <code>defineComponent</code> internally calls{" "}
-        <code>registerComponent()</code> to register the component in the SSR
-        registry. You can query or clear the registry directly:
+        <code>defineComponent</code> internally calls <code>registerComponent()</code> to register
+        the component in the SSR registry. You can query or clear the registry directly:
       </p>
       <DocCodeBlock language="ts">{`import { hasComponent, getComponent, clearRegistry } from "@dathra/components";
 

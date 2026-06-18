@@ -23,14 +23,7 @@ function DocsShell({
               {docRoutes
                 .filter((r) => r.section === section)
                 .map((route) => (
-                  <a
-                    class={
-                      route.path === routePath
-                        ? "is-active"
-                        : undefined
-                    }
-                    href={route.path}
-                  >
+                  <a class={route.path === routePath ? "is-active" : undefined} href={route.path}>
                     {route.label}
                   </a>
                 ))}

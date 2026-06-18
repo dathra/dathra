@@ -1,19 +1,19 @@
 {
   "name": "@dathra/docs",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3080",
     "build:client": "vite build --outDir dist/client",
     "build:server": "vite build --outDir dist/server --ssr src/entry-server.tsx",
     "build": "pnpm build:client && pnpm build:server",
-    "fmt": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --write \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\"",
-    "fmt:check": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\""
+    "fmt": "oxfmt --ignore-path ../.gitignore --no-error-on-unmatched-pattern --write \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\"",
+    "fmt:check": "oxfmt --ignore-path ../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\""
   },
   "dependencies": {
-    "@dathra/core": "workspace:*",
     "@dathra/components": "workspace:*",
+    "@dathra/core": "workspace:*",
     "@dathra/runtime": "workspace:*"
   },
   "devDependencies": {

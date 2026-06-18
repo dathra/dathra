@@ -5,8 +5,8 @@ function StorePage() {
     <section>
       <h1>Atomic State Management</h1>
       <p>
-        <code>@dathra/store</code> provides a Recoil/Jotai-inspired atomic state
-        management system with store boundaries and AsyncLocalStorage support.
+        <code>@dathra/store</code> provides a Recoil/Jotai-inspired atomic state management system
+        with store boundaries and AsyncLocalStorage support.
       </p>
 
       <h2>atom()</h2>
@@ -48,8 +48,8 @@ const snapshot = defineAtomStoreSnapshot({
 
       <h2>Store Boundaries</h2>
       <p>
-        Different subtrees can share a store or have isolated store boundaries.
-        Useful for SSR where each request gets its own store context.
+        Different subtrees can share a store or have isolated store boundaries. Useful for SSR where
+        each request gets its own store context.
       </p>
     </section>
   );

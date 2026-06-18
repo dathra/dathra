@@ -6,10 +6,7 @@ clearGlobalStyles();
 
 const rootHost = document.querySelector("dathra-docs");
 if (rootHost instanceof HTMLElement) {
-  bindStoreToHost(
-    rootHost,
-    createDocsStore({ appId: "dathra-docs-client" }),
-  );
+  bindStoreToHost(rootHost, createDocsStore({ appId: "dathra-docs-client" }));
 }
 
 void import("./DocsAppRoot").then(() => {

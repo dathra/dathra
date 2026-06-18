@@ -14,30 +14,21 @@ const render = defineSsrEntry(async ({ request }) => {
   try {
     if (route === undefined) {
       return {
-        html: renderSSR(
-          DocsAppRoot,
-          { routePath: "/", requestStoreAppId: "dathra-docs-404" },
-        ),
+        html: renderSSR(DocsAppRoot, { routePath: "/", requestStoreAppId: "dathra-docs-404" }),
         statusCode: 404,
       };
     }
 
     return {
-      html: renderSSR(
-        DocsAppRoot,
-        {
-          routePath,
-          requestStoreAppId: `dathra-docs-${routePath === "/" ? "overview" : routePath.slice(1)}`,
-        },
-      ),
+      html: renderSSR(DocsAppRoot, {
+        routePath,
+        requestStoreAppId: `dathra-docs-${routePath === "/" ? "overview" : routePath.slice(1)}`,
+      }),
     };
   } catch (error) {
     console.error("[docs:ssr] Render error", error);
     return {
-      html: renderSSR(
-        DocsAppRoot,
-        { routePath: "/", requestStoreAppId: "dathra-docs-error" },
-      ),
+      html: renderSSR(DocsAppRoot, { routePath: "/", requestStoreAppId: "dathra-docs-error" }),
       statusCode: 500,
     };
   } finally {

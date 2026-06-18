@@ -175,8 +175,12 @@ const MobileNav = defineComponent(
   "dathra-mobile-nav",
   ({ props }) => {
     const menuOpen = signal(false);
-    const toggle = () => { menuOpen.set(!menuOpen.value); };
-    const close = () => { menuOpen.set(false); };
+    const toggle = () => {
+      menuOpen.set(!menuOpen.value);
+    };
+    const close = () => {
+      menuOpen.set(false);
+    };
     const routePath = props.routePath.value as DocRoutePath;
     const sections = [...new Set(docRoutes.map((r) => r.section))];
     const onLinkClick = (e: MouseEvent) => {
@@ -192,14 +196,8 @@ const MobileNav = defineComponent(
         >
           <span class="menu-icon" />
         </button>
-        <div
-          class={"backdrop" + (menuOpen.value ? " is-open" : "")}
-          onClick={close}
-        />
-        <aside
-          class={"sidebar" + (menuOpen.value ? " is-open" : "")}
-          onClick={onLinkClick}
-        >
+        <div class={"backdrop" + (menuOpen.value ? " is-open" : "")} onClick={close} />
+        <aside class={"sidebar" + (menuOpen.value ? " is-open" : "")} onClick={onLinkClick}>
           <h2>Dathra</h2>
           <p class="version">v0.0.21</p>
           <nav>
@@ -209,14 +207,7 @@ const MobileNav = defineComponent(
                 {docRoutes
                   .filter((r) => r.section === section)
                   .map((route) => (
-                    <a
-                      class={
-                        route.path === routePath
-                          ? "is-active"
-                          : undefined
-                      }
-                      href={route.path}
-                    >
+                    <a class={route.path === routePath ? "is-active" : undefined} href={route.path}>
                       {route.label}
                     </a>
                   ))}

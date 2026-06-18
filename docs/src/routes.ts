@@ -82,9 +82,10 @@ function getDocRouteByPath(pathname: DocRoutePath): DocRoute {
   return route;
 }
 
-const docRouteByPath = Object.fromEntries(
-  docRoutes.map((route) => [route.path, route]),
-) as Record<DocRoutePath, DocRoute>;
+const docRouteByPath = Object.fromEntries(docRoutes.map((route) => [route.path, route])) as Record<
+  DocRoutePath,
+  DocRoute
+>;
 
 function normalizeDocPath(pathname: string): string {
   if (pathname === "/index.html") return "/";
@@ -92,11 +93,5 @@ function normalizeDocPath(pathname: string): string {
   return pathname;
 }
 
-export {
-  docRouteByPath,
-  docRoutes,
-  getDocRoute,
-  getDocRouteByPath,
-  normalizeDocPath,
-};
+export { docRouteByPath, docRoutes, getDocRoute, getDocRouteByPath, normalizeDocPath };
 export type { DocRoute, DocRoutePath };
