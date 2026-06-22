@@ -16,6 +16,7 @@ import { StorePage } from "./pages/StorePage";
 import { SsrPage } from "./pages/SsrPage";
 import { TransformerPage } from "./pages/TransformerPage";
 import { PluginPage } from "./pages/PluginPage";
+import { ReferencePage } from "./pages/ReferencePage";
 import type { DocRoutePath } from "./routes";
 
 type DocPageProps = {
@@ -34,6 +35,19 @@ const docPageRenderers = {
   "/ssr": () => <SsrPage />,
   "/transformer": () => <TransformerPage />,
   "/plugin": () => <PluginPage />,
+  "/reference/reactivity": () => <ReferencePage referenceId="reactivity" />,
+  "/reference/components": () => <ReferencePage referenceId="components" />,
+  "/reference/components/ssr": () => <ReferencePage referenceId="components-ssr" />,
+  "/reference/components/internal": () => <ReferencePage referenceId="components-internal" />,
+  "/reference/runtime": () => <ReferencePage referenceId="runtime" />,
+  "/reference/runtime/ssr": () => <ReferencePage referenceId="runtime-ssr" />,
+  "/reference/runtime/hydration": () => <ReferencePage referenceId="runtime-hydration" />,
+  "/reference/store": () => <ReferencePage referenceId="store" />,
+  "/reference/store/internal": () => <ReferencePage referenceId="store-internal" />,
+  "/reference/plugin": () => <ReferencePage referenceId="plugin" />,
+  "/reference/transformer": () => <ReferencePage referenceId="transformer" />,
+  "/reference/core/ssr": () => <ReferencePage referenceId="core-ssr" />,
+  "/reference/core/hydration": () => <ReferencePage referenceId="core-hydration" />,
 } satisfies Record<string, (_props: DocPageProps) => JSX.Element>;
 
 function replaceShadowRootContent(shadowRoot: ShadowRoot, content: string | Node): void {

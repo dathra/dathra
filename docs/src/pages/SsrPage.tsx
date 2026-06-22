@@ -9,6 +9,11 @@ function SsrPage() {
         after the browser has parsed that DSD into real shadow roots. The server and client both use
         the same component definitions.
       </p>
+      <p>
+        For exact SSR and hydration signatures, see the{" "}
+        <a href="/reference/core/ssr">Core SSR API Reference</a> and{" "}
+        <a href="/reference/core/hydration">Core Hydration API Reference</a>.
+      </p>
 
       <h2>Server Entry</h2>
       <p>

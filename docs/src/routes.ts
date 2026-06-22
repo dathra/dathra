@@ -65,6 +65,84 @@ const docRoutes = [
     title: "Build Tool Plugin",
     section: "Advanced",
   },
+  {
+    path: "/reference/reactivity",
+    label: "Reactivity",
+    title: "Reactivity Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/components",
+    label: "Components",
+    title: "Components Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/components/ssr",
+    label: "Components SSR",
+    title: "Components SSR Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/components/internal",
+    label: "Components Internal",
+    title: "Components Internal Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/runtime",
+    label: "Runtime",
+    title: "Runtime Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/runtime/ssr",
+    label: "Runtime SSR",
+    title: "Runtime SSR Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/runtime/hydration",
+    label: "Runtime Hydration",
+    title: "Runtime Hydration Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/store",
+    label: "Store",
+    title: "Store Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/store/internal",
+    label: "Store Internal",
+    title: "Store Internal Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/plugin",
+    label: "Plugin",
+    title: "Plugin Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/transformer",
+    label: "Transformer",
+    title: "Transformer Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/core/ssr",
+    label: "Core SSR",
+    title: "Core SSR Reference",
+    section: "API Reference",
+  },
+  {
+    path: "/reference/core/hydration",
+    label: "Core Hydration",
+    title: "Core Hydration Reference",
+    section: "API Reference",
+  },
 ] as const;
 
 type DocRoute = (typeof docRoutes)[number];

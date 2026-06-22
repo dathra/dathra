@@ -8,6 +8,10 @@ function PluginPage() {
         <code>@dathra/plugin</code> provides build tool plugins via <code>unplugin</code>. It
         integrates Dathra's JSX transformer into your build pipeline.
       </p>
+      <p>
+        For exact plugin option signatures, see the{" "}
+        <a href="/reference/plugin">Plugin API Reference</a>.
+      </p>
 
       <h2>Vite</h2>
       <p>

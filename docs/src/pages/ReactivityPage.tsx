@@ -8,6 +8,10 @@ function ReactivityPage() {
         Dathra's reactivity system is built on <code>alien-signals</code> and follows the TC39
         Signals proposal. It provides fine-grained reactivity without a virtual DOM.
       </p>
+      <p>
+        For exact signatures and extension-oriented details, see the{" "}
+        <a href="/reference/reactivity">Reactivity API Reference</a>.
+      </p>
 
       <h2>signal()</h2>
       <p>Creates a reactive value that can be read and written:</p>

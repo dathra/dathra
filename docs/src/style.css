@@ -1,6 +1,7 @@
 :host {
   display: grid !important;
   grid-template-columns: 260px 1fr;
+  line-height: 1.5;
 }
 
 * {
@@ -174,5 +175,3 @@ li {
     padding: 24px 20px 60px;
   }
 }
-
-

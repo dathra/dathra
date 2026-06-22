@@ -8,6 +8,10 @@ function StorePage() {
         <code>@dathra/store</code> provides a Recoil/Jotai-inspired atomic state management system
         with store boundaries and AsyncLocalStorage support.
       </p>
+      <p>
+        For exact signatures and snapshot details, see the{" "}
+        <a href="/reference/store">Store API Reference</a>.
+      </p>
 
       <h2>atom()</h2>
       <p>Define atomic state units:</p>

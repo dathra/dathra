@@ -9,6 +9,10 @@ function ComponentsPage() {
         Shadow DOM, reactive prop signals, Declarative Shadow DOM (DSD) for SSR, and island
         hydration support.
       </p>
+      <p>
+        For exact signatures and extension-oriented details, see the{" "}
+        <a href="/reference/components">Components API Reference</a>.
+      </p>
 
       <h2>defineComponent()</h2>
       <p>Define a custom element with reactive props and scoped styles:</p>

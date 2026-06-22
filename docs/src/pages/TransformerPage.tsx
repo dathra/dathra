@@ -10,6 +10,10 @@ function TransformerPage() {
         <code>oxc-parser</code> for parsing, <code>zimmerframe</code> for AST walking, and{" "}
         <code>esrap</code> for code generation.
       </p>
+      <p>
+        Transformer APIs are for build-tool integrations and Dathra contributors. For exact
+        signatures, see the <a href="/reference/transformer">Transformer API Reference</a>.
+      </p>
 
       <h2>Usage</h2>
       <DocCodeBlock language="ts">{`import { transform } from "@dathra/transformer";
