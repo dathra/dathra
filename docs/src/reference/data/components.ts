@@ -60,29 +60,35 @@ const componentsReference: ReferenceDocument = {
       name: "defineComponent()",
       kind: "function",
       description: "Define and register a Dathra-backed custom element.",
-      signature: `declare const defineComponent: <TagName extends string, Schema extends PropsSchema = {}>(
-  tagName: TagName,
-  setup: FunctionComponent<Schema>,
-  options?: ComponentOptions<Schema>,
-) => ComponentClass<TagName, Schema>;`,
+      signature: `declare function defineComponent<const S extends PropsSchema = EmptyPropsSchema>(
+  tagName: string,
+  component: FunctionComponent<S>,
+  options?: ComponentOptions<S>,
+): DefinedComponent<S>;
+
+interface DefinedComponent<S extends PropsSchema = EmptyPropsSchema> extends ComponentMetadata<S> {
+  (props: JSXComponentProps<S> | null): Node;
+  readonly webComponent: ComponentConstructor<S>;
+  readonly jsx: JSXComponent<S>;
+}`,
       parameters: [
         {
           name: "tagName",
-          type: "TagName",
+          type: "string",
           description: "Custom element tag name. It must contain a hyphen.",
         },
         {
-          name: "setup",
-          type: "FunctionComponent<Schema>",
+          name: "component",
+          type: "FunctionComponent<S>",
           description: "Function that renders the component tree.",
         },
         {
           name: "options",
-          type: "ComponentOptions<Schema>",
+          type: "ComponentOptions<S>",
           description: "Optional props, styles, hydration metadata, and hooks.",
         },
       ],
-      returns: "A ComponentClass carrying Dathra component metadata.",
+      returns: "A DefinedComponent<S> callable JSX helper with .webComponent and .jsx helpers.",
       example: `import { css, defineComponent } from "@dathra/core";
 
 const Counter = defineComponent(
@@ -151,7 +157,7 @@ declare function clearRegistry(): void;`,
       name: "bindStoreToHost()",
       kind: "function",
       description: "Bind a store boundary to a component host for component subtree access.",
-      signature: "declare function bindStoreToHost(host: Node, store: AtomStore): void;",
+      signature: "declare function bindStoreToHost(host: HTMLElement, store: AtomStore): void;",
       notes: [
         "This is exported from @dathra/components root, but most application code should use withStore() instead.",
       ],
