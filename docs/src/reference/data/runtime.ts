@@ -6,10 +6,11 @@ const runtimeReference: ReferenceDocument = {
   packageName: "@dathra/runtime",
   exportPath: "@dathra/runtime",
   importPath: "@dathra/runtime",
-  preferredImport: "@dathra/core/runtime for app-level convenience imports",
+  preferredImport: "@dathra/core/runtime",
   level: "extension",
   audience: "Compiler output authors, runtime integrators, and Dathra contributors.",
-  description: "Low-level DOM, JSX runtime, reconciliation, event, and island metadata primitives.",
+  description:
+    "Low-level DOM, JSX runtime, reconciliation, event, and island metadata primitives. Application code should prefer the @dathra/core/runtime convenience path when it needs these exports.",
   declarationFile: "packages/runtime/dist/index.d.mts",
   exports: [
     {
@@ -146,10 +147,11 @@ const runtimeSsrReference: ReferenceDocument = {
   packageName: "@dathra/runtime",
   exportPath: "@dathra/runtime/ssr",
   importPath: "@dathra/runtime/ssr",
-  preferredImport: "@dathra/core/ssr for application SSR entries",
+  preferredImport: "@dathra/core/ssr",
   level: "extension",
   audience: "SSR renderer authors, transformer output authors, and Dathra contributors.",
-  description: "Low-level SSR rendering, marker, and state serialization APIs.",
+  description:
+    "Low-level SSR rendering, marker, and state serialization APIs. Application SSR entries should prefer @dathra/core/ssr.",
   declarationFile: "packages/runtime/dist/ssr/index.d.mts",
   exports: [
     {
@@ -232,11 +234,11 @@ const runtimeHydrationReference: ReferenceDocument = {
   packageName: "@dathra/runtime",
   exportPath: "@dathra/runtime/hydration",
   importPath: "@dathra/runtime/hydration",
-  preferredImport: "@dathra/core/hydration for application hydration",
+  preferredImport: "@dathra/core/hydration",
   level: "extension",
   audience: "Hydration strategy authors, island integrations, and Dathra contributors.",
   description:
-    "Low-level hydration, island scheduling, marker walking, and state deserialization APIs.",
+    "Low-level hydration, island scheduling, marker walking, and state deserialization APIs. Application hydration should prefer @dathra/core/hydration.",
   declarationFile: "packages/runtime/dist/hydration/index.d.mts",
   exports: [
     {

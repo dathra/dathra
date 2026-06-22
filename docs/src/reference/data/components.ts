@@ -171,10 +171,11 @@ const componentsSsrReference: ReferenceDocument = {
   packageName: "@dathra/components",
   exportPath: "@dathra/components/ssr",
   importPath: "@dathra/components/ssr",
-  preferredImport: "@dathra/core/ssr for application SSR entries",
+  preferredImport: "@dathra/core/ssr",
   level: "extension",
   audience: "SSR adapter authors, cross-framework integrators, and Dathra contributors.",
-  description: "Declarative Shadow DOM rendering helpers for registered Dathra components.",
+  description:
+    "Declarative Shadow DOM rendering helpers for registered Dathra components. Application SSR entries should prefer @dathra/core/ssr.",
   declarationFile: "packages/components/dist/ssr/index.d.mts",
   exports: [
     { label: "Functions", items: ["createComponentRenderer", "renderDSD", "renderDSDContent"] },
