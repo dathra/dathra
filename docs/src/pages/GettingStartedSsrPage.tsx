@@ -4,9 +4,16 @@ function GettingStartedSsrPage() {
   return (
     <section>
       <h1>Getting Started: SSR</h1>
+      <p>
+        SSR mode renders your root custom element on the server as Declarative Shadow DOM. The
+        client entry then imports the same component modules and hydrates the existing DOM instead
+        of replacing the whole document.
+      </p>
 
       <h2>Installation</h2>
-      <DocCodeBlock language="bash">pnpm add @dathra/core @dathra/components @dathra/runtime @dathra/plugin</DocCodeBlock>
+      <DocCodeBlock language="bash">
+        pnpm add @dathra/core @dathra/components @dathra/runtime @dathra/plugin
+      </DocCodeBlock>
 
       <h2>1. vite.config.ts</h2>
       <DocCodeBlock language="ts">{`import { dathraVitePlugin } from "@dathra/plugin";
@@ -107,11 +114,38 @@ void import("./AppRoot").then(() => {
 });`}</DocCodeBlock>
 
       <p>
-        In this flow, the server emits <code>{"<app-root>"}</code> with
-        Declarative Shadow DOM. The browser upgrades and hydrates the app root,
-        and nested components like <code>{"<my-counter>"}</code> come along as
-        part of the same tree.
+        In this flow, the server emits <code>{"<app-root>"}</code> with Declarative Shadow DOM. The
+        browser upgrades and hydrates the app root, and nested components like{" "}
+        <code>{"<my-counter>"}</code> come along as part of the same tree.
       </p>
+
+      <h2>Passing Request State</h2>
+      <p>
+        Pass route, locale, or other request-derived values as component attrs. This docs app uses
+        the same pattern for <code>routePath</code>:
+      </p>
+      <DocCodeBlock language="tsx">{`const handler = defineSsrEntry(async ({ request }) => {
+  const routePath = new URL(request.url).pathname;
+
+  return {
+    html: render(AppRoot, { routePath }),
+  };
+});`}</DocCodeBlock>
+
+      <h2>Common Mistakes</h2>
+      <ul>
+        <li>
+          Register the same component modules on both the server and the client. The server needs
+          them to render DSD; the client needs them to upgrade and hydrate custom elements.
+        </li>
+        <li>
+          Call <code>hydrate(document)</code> after client imports have resolved.
+        </li>
+        <li>
+          Keep request-specific state in the SSR entry or a per-request store; do not rely on module
+          globals for request data.
+        </li>
+      </ul>
     </section>
   );
 }

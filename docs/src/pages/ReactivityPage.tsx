@@ -5,9 +5,12 @@ function ReactivityPage() {
     <section>
       <h1>Reactivity — Signals</h1>
       <p>
-        Dathra's reactivity system is built on <code>alien-signals</code> and
-        follows the TC39 Signals proposal. It provides fine-grained reactivity
-        without a virtual DOM.
+        Dathra's reactivity system is built on <code>alien-signals</code> and follows the TC39
+        Signals proposal. It provides fine-grained reactivity without a virtual DOM.
+      </p>
+      <p>
+        For exact signatures and extension-oriented details, see the{" "}
+        <a href="/reference/reactivity">Reactivity API Reference</a>.
       </p>
 
       <h2>signal()</h2>
@@ -67,8 +70,8 @@ dispose(); // runs cleanup`}</DocCodeBlock>
 
       <h2>templateEffect()</h2>
       <p>
-        An effect optimized for template rendering — used internally by the DOM
-        runtime for efficient updates.
+        An effect optimized for template rendering — used internally by the DOM runtime for
+        efficient updates.
       </p>
     </section>
   );

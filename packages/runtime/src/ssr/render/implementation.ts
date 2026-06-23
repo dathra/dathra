@@ -351,9 +351,14 @@ function renderNode(node: Tree, ctx: RenderContext): string {
         store: activeStore,
       });
       if (dsdContent !== null) {
+        let lightDomHtml = "";
+        for (const child of children) {
+          lightDomHtml += renderNode(child, ctx);
+        }
+
         // Render as custom element with Declarative Shadow DOM
         const attrStr = attrs !== null ? renderAttrs(attrs) : "";
-        return `<${tag}${attrStr}><template shadowrootmode="open">${dsdContent}</template></${tag}>`;
+        return `<${tag}${attrStr}><template shadowrootmode="open">${dsdContent}</template>${lightDomHtml}</${tag}>`;
       }
     }
 

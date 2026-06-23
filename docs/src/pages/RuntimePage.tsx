@@ -5,8 +5,12 @@ function RuntimePage() {
     <section>
       <h1>DOM Runtime & SSR</h1>
       <p>
-        <code>@dathra/runtime</code> provides low-level DOM manipulation
-        primitives, SSR rendering functions, and a hydration engine.
+        <code>@dathra/runtime</code> provides low-level DOM manipulation primitives, SSR rendering
+        functions, and a hydration engine.
+      </p>
+      <p>
+        Runtime APIs are mainly for compiler output, integrations, and Dathra contributors. For
+        exact signatures, see the <a href="/reference/runtime">Runtime API Reference</a>.
       </p>
 
       <h2>DOM Primitives</h2>
@@ -22,9 +26,7 @@ function RuntimePage() {
 } from "@dathra/runtime";`}</DocCodeBlock>
 
       <h2>Tree IR</h2>
-      <p>
-        Build DOM from a structured intermediate representation:
-      </p>
+      <p>Build DOM from a structured intermediate representation:</p>
       <DocCodeBlock language="ts">{`import { fromTree, fromMarkup } from "@dathra/runtime";
 
 const el = fromTree({

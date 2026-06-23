@@ -4,9 +4,15 @@ function GettingStartedCsrPage() {
   return (
     <section>
       <h1>Getting Started: CSR</h1>
+      <p>
+        CSR mode is the smallest setup. The browser loads a module, the module registers your custom
+        elements, and the HTML page places those elements directly in the document.
+      </p>
 
       <h2>Installation</h2>
-      <DocCodeBlock language="bash">pnpm add @dathra/core @dathra/components @dathra/runtime @dathra/plugin</DocCodeBlock>
+      <DocCodeBlock language="bash">
+        pnpm add @dathra/core @dathra/components @dathra/runtime @dathra/plugin
+      </DocCodeBlock>
 
       <h2>1. vite.config.ts</h2>
       <DocCodeBlock language="ts">{`import { dathraVitePlugin } from "@dathra/plugin";
@@ -84,11 +90,29 @@ export { AppRoot };`}</DocCodeBlock>
 
 // Importing the module registers <app-root> and its nested components.`}</DocCodeBlock>
 
+      <h2>7. Run the App</h2>
+      <DocCodeBlock language="bash">pnpm vite --host 0.0.0.0</DocCodeBlock>
+
       <p>
-        This pattern keeps the app rooted in a single Web Component. Nested
-        custom elements like <code>{"<my-counter>"}</code> are rendered inside
-        <code>{"<app-root>"}</code> just like they would be in a larger app.
+        This pattern keeps the app rooted in a single Web Component. Nested custom elements like{" "}
+        <code>{"<my-counter>"}</code> are rendered inside <code>{"<app-root>"}</code> just like they
+        would be in a larger app.
       </p>
+
+      <h2>Common Mistakes</h2>
+      <ul>
+        <li>
+          Use <code>jsx: "preserve"</code>. The Dathra plugin needs to see the JSX before TypeScript
+          lowers it.
+        </li>
+        <li>
+          Import component modules for their registration side effects before using their custom
+          element tags in HTML.
+        </li>
+        <li>
+          Use <code>class</code>, not <code>className</code>, in Dathra JSX.
+        </li>
+      </ul>
     </section>
   );
 }
