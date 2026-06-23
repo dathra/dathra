@@ -48,6 +48,8 @@
     - `storeSnapshotSchema` を使う場合は `store` も必須とする
     - `data-dh-store` の payload は `storeSnapshotSchema.serialize(store)` を `serializeState()` でシリアライズした plain object とする
     - 既存の `data-dh-state` とは別 script として扱う
+    - custom element を DSD 出力する場合でも、Tree children は `<template shadowrootmode="open">...</template>` の後ろに light DOM として残す
+    - `ComponentRenderer` は shadow DOM 内容だけを返し、outer custom element と light DOM children の組み立ては runtime が担当する
   ],
   test_cases: [
     - 単純な要素をレンダリング
@@ -66,6 +68,7 @@
     - style オブジェクトを CSS 文字列にシリアライズして SSR 出力に含める
     - compiled SSR helper が dynamic text / attr / spread / insert / each を文字列へレンダリングできる
     - setComponentRenderer で設定したグローバル componentRenderer を使用する
+    - ComponentRenderer が登録された custom element でも children を light DOM として出力する
     - storeSnapshotSchema を store なしで指定するとエラーをスローする
   ],
   edge_cases: [

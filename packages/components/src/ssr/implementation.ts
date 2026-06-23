@@ -213,6 +213,34 @@ function stringifyAttrValue(value: unknown): string {
   }
 }
 
+function renderLightDomChildren(value: unknown): string {
+  if (value === null || value === undefined || typeof value === "boolean") {
+    return "";
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => renderLightDomChildren(item)).join("");
+  }
+
+  if (typeof value === "function") {
+    return renderLightDomChildren((value as () => unknown)());
+  }
+
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "bigint"
+  ) {
+    return String(value);
+  }
+
+  if (typeof value === "symbol") {
+    return value.description ?? "";
+  }
+
+  return "";
+}
+
 /**
  * Render Declarative Shadow DOM content (inner template only).
  *
@@ -279,6 +307,7 @@ function renderDSD(
 ): string {
   const tagName = typeof target === "string" ? target : target.__tagName__;
   const dsdTemplate = renderDSDContent(tagName, attrs, options);
+  const childrenHtml = renderLightDomChildren(attrs.children);
 
   // Build attribute string
   let attrStr = "";
@@ -306,7 +335,7 @@ function renderDSD(
     attrStr += ` ${key}="${escapeAttr(stringifyAttrValue(value))}"`;
   }
 
-  return `<${tagName}${attrStr}>${dsdTemplate}</${tagName}>`;
+  return `<${tagName}${attrStr}>${dsdTemplate}${childrenHtml}</${tagName}>`;
 }
 
 /**

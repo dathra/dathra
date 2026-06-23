@@ -222,6 +222,30 @@ describe("SSR Render", () => {
     setComponentRenderer(undefined);
   });
 
+  it("keeps custom element children as light DOM when rendering DSD", () => {
+    const tree: Tree[] = [["my-card", null, ["p", null, "child"]]];
+
+    const html = renderTree(tree, {
+      componentRenderer: () => "<slot></slot>",
+    });
+
+    expect(html).toBe(
+      '<my-card><template shadowrootmode="open"><slot></slot></template><p>child</p></my-card>',
+    );
+  });
+
+  it("does not pre-render custom element children when ComponentRenderer returns null", () => {
+    const tree: Tree[] = [["my-card", null, ["{text}", null]]];
+    const dynamicValues = new Map<number, unknown>([[1, "child"]]);
+
+    const html = renderTree(tree, {
+      dynamicValues,
+      componentRenderer: () => null,
+    });
+
+    expect(html).toBe("<my-card><!--dh:t:1-->child<!----></my-card>");
+  });
+
   it("throws when storeSnapshotSchema is provided without a store", () => {
     const schema = defineAtomStoreSnapshot({ count: atom("count", 0) });
     const tree: Tree[] = [["div", null, "Hello"]];
