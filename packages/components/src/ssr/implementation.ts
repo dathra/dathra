@@ -213,6 +213,10 @@ function stringifyAttrValue(value: unknown): string {
   }
 }
 
+/**
+ * Render trusted child markup into host light DOM for SSR slot projection.
+ * String children are intentionally treated as HTML, not escaped text.
+ */
 function renderLightDomChildren(value: unknown): string {
   if (value === null || value === undefined || typeof value === "boolean") {
     return "";

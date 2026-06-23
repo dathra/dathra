@@ -51,6 +51,7 @@ Declarative Shadow DOM を使った Web Components の SSR レンダリングを
     - `renderDSD()` は `<custom-el><template shadowrootmode="open">...</template></custom-el>` を返す
     - `renderDSD()` は `attrs.children` が指定された場合、DSD `<template>` の後ろに light DOM children として出力する
     - `attrs.children` は slot 投影用の表示 transport として扱い、通常の `children` 属性にはしない
+    - `attrs.children` の string は trusted HTML markup として扱い、HTML escape しない。未信頼入力を渡してはならない
     - `data-dh-children` は client-side `ctx.children` 復元用 metadata であり、SSR 表示用の唯一の transport にしてはならない
     - `renderDSDContent()` は template 部分のみ返す
     - 未登録コンポーネントでは `renderDSD()` と `renderDSDContent()` は例外を投げる

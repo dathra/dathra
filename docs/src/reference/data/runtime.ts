@@ -200,8 +200,14 @@ declare function createStoreScript(serializedSnapshot: string): string;`,
       name: "renderToString() / renderTree()",
       kind: "function",
       description: "Render runtime tree IR to HTML strings.",
-      signature: `declare function renderTree(tree: Tree, context: RenderContext): string;
-declare function renderToString(tree: readonly Tree[], options?: RenderOptions): string;`,
+      signature: `declare function renderTree(tree: Tree[], options?: RenderOptions): string;
+declare function renderToString(
+  tree: Tree[],
+  stateOrOptions?: StateObject | RenderOptions,
+  dynamicValues?: Map<number, unknown>,
+  componentRenderer?: ComponentRenderer,
+  store?: AtomStore,
+): string;`,
     },
     {
       name: "Dynamic SSR render helpers",
@@ -220,7 +226,11 @@ declare function renderDynamicEach<T>(items: Iterable<T>, renderItem: (item: T, 
       description: "Serialize SSR state and plug custom-element rendering into runtime SSR.",
       signature: `type SerializableValue = string | number | boolean | null | SerializableValue[] | { [key: string]: SerializableValue };
 type StateObject = Record<string, SerializableValue>;
-type ComponentRenderer = (tagName: string, attrs: Record<string, unknown>) => string | null;
+type ComponentRenderer = (
+  tagName: string,
+  attrs: Record<string, unknown>,
+  options?: { store?: AtomStore },
+) => string | null;
 
 declare function serializeState(state: StateObject): string;
 declare function setComponentRenderer(renderer: ComponentRenderer | undefined): void;`,
