@@ -1,10 +1,5 @@
-import {
-  ApiEntry,
-  ExportGroup,
-  ExportInventory,
-  ExportItem,
-  ReferenceHeader,
-} from "../components/reference";
+import { DocCodeBlock } from "../components/DocCodeBlock";
+import { ReferenceHeader } from "../components/reference";
 import { referenceDocuments } from "../reference/data";
 import type { ReferenceId } from "../reference/types";
 
@@ -26,26 +21,28 @@ function ReferencePage({ referenceId }: { referenceId: ReferenceId }) {
       />
 
       <h2>Public API Inventory</h2>
-      <ExportInventory>
+      <div class="reference-inventory-grid">
         {reference.exports.map((group) => (
-          <ExportGroup label={group.label}>
-            {group.items.map((item) => (
-              <ExportItem name={item} />
-            ))}
-          </ExportGroup>
+          <section class="reference-inventory-card">
+            <h3>{group.label}</h3>
+            <ul>
+              {group.items.map((item) => (
+                <li>
+                  <code>{item}</code>
+                </li>
+              ))}
+            </ul>
+          </section>
         ))}
-      </ExportInventory>
+      </div>
 
       <h2>API Details</h2>
       {reference.apis.map((api) => (
-        <ApiEntry
-          description={api.description}
-          example={api.example ?? ""}
-          kind={api.kind}
-          name={api.name}
-          returns={api.returns ?? ""}
-          signature={api.signature}
-        >
+        <article class="reference-api-entry">
+          <span class="reference-api-kind">{api.kind}</span>
+          <h3>{api.name}</h3>
+          <p>{api.description}</p>
+          <DocCodeBlock language="ts">{api.signature}</DocCodeBlock>
           {api.parameters !== undefined && api.parameters.length > 0 ? (
             <>
               <h4>Parameters</h4>
@@ -77,6 +74,21 @@ function ReferencePage({ referenceId }: { referenceId: ReferenceId }) {
           ) : (
             <></>
           )}
+          {api.returns !== undefined ? (
+            <p>
+              <strong>Returns:</strong> {api.returns}
+            </p>
+          ) : (
+            <></>
+          )}
+          {api.example !== undefined ? (
+            <>
+              <h4>Example</h4>
+              <DocCodeBlock language="ts">{api.example}</DocCodeBlock>
+            </>
+          ) : (
+            <></>
+          )}
           {api.notes !== undefined && api.notes.length > 0 ? (
             <>
               <h4>Notes</h4>
@@ -89,7 +101,7 @@ function ReferencePage({ referenceId }: { referenceId: ReferenceId }) {
           ) : (
             <></>
           )}
-        </ApiEntry>
+        </article>
       ))}
     </section>
   );
