@@ -1,32 +1,5 @@
 import { css, defineComponent } from "@dathra/components";
 
-import { decodeReferenceData } from "../../reference/format";
-import type { ReferenceDocument } from "../../reference/types";
-
-type HeaderData = Pick<
-  ReferenceDocument,
-  | "audience"
-  | "declarationFile"
-  | "description"
-  | "exportPath"
-  | "importPath"
-  | "level"
-  | "packageName"
-  | "preferredImport"
-  | "title"
->;
-
-const fallbackHeader: HeaderData = {
-  audience: "Framework integrators and Dathra contributors.",
-  declarationFile: "dist/index.d.mts",
-  description: "",
-  exportPath: "",
-  importPath: "",
-  level: "extension",
-  packageName: "",
-  title: "API Reference",
-};
-
 const headerStyles = css`
   :host {
     display: block;
@@ -71,41 +44,42 @@ const headerStyles = css`
 const ReferenceHeader = defineComponent(
   "dathra-reference-header",
   ({ props }) => {
-    const data = decodeReferenceData<HeaderData>(props.data.value, fallbackHeader);
+    const level = props.level.value;
+    const preferredImport = props.preferredImport.value;
 
     return (
       <header>
-        <span class="badge">{data.level === "recommended" ? "Recommended API" : data.level}</span>
-        <h1>{data.title}</h1>
-        <p>{data.description}</p>
+        <span class="badge">{level === "recommended" ? "Recommended API" : level}</span>
+        <h1>{props.title.value}</h1>
+        <p>{props.description.value}</p>
         <div class="meta">
           <div class="row">
             <span class="label">Package</span>
-            <code>{data.packageName}</code>
+            <code>{props.packageName.value}</code>
           </div>
           <div class="row">
             <span class="label">Audience</span>
-            <span>{data.audience}</span>
+            <span>{props.audience.value}</span>
           </div>
           <div class="row">
             <span class="label">Exported from</span>
-            <code>{data.exportPath}</code>
+            <code>{props.exportPath.value}</code>
           </div>
           <div class="row">
             <span class="label">Import path</span>
-            <code>{data.importPath}</code>
+            <code>{props.importPath.value}</code>
           </div>
-          {data.preferredImport !== undefined ? (
+          {preferredImport.length > 0 ? (
             <div class="row">
               <span class="label">Preferred app import</span>
-              <code>{data.preferredImport}</code>
+              <code>{preferredImport}</code>
             </div>
           ) : (
             <></>
           )}
           <div class="row">
             <span class="label">Signature source</span>
-            <code>{data.declarationFile}</code>
+            <code>{props.declarationFile.value}</code>
           </div>
         </div>
       </header>
@@ -113,7 +87,15 @@ const ReferenceHeader = defineComponent(
   },
   {
     props: {
-      data: { type: String, default: "" },
+      audience: { type: String, default: "Framework integrators and Dathra contributors." },
+      declarationFile: { type: String, default: "dist/index.d.mts" },
+      description: { type: String, default: "" },
+      exportPath: { type: String, default: "" },
+      importPath: { type: String, default: "" },
+      level: { type: String, default: "extension" },
+      packageName: { type: String, default: "" },
+      preferredImport: { type: String, default: "" },
+      title: { type: String, default: "API Reference" },
     },
     styles: [headerStyles],
   },

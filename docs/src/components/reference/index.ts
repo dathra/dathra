@@ -1,4 +1,3 @@
 export { ApiEntry } from "./ApiEntry";
-export { ExportInventory } from "./ExportInventory";
-export { ParameterTable } from "./ParameterTable";
+export { ExportGroup, ExportInventory, ExportItem } from "./ExportInventory";
 export { ReferenceHeader } from "./ReferenceHeader";

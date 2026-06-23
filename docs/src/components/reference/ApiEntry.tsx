@@ -1,16 +1,6 @@
 import { css, defineComponent } from "@dathra/components";
 
 import { DocCodeBlock } from "../DocCodeBlock";
-import { decodeReferenceData, encodeReferenceData } from "../../reference/format";
-import type { ReferenceApi } from "../../reference/types";
-import { ParameterTable } from "./ParameterTable";
-
-const fallbackApi: ReferenceApi = {
-  description: "",
-  kind: "function",
-  name: "API",
-  signature: "",
-};
 
 const apiEntryStyles = css`
   :host {
@@ -55,45 +45,27 @@ const apiEntryStyles = css`
 const ApiEntry = defineComponent(
   "dathra-api-entry",
   ({ props }) => {
-    const api = decodeReferenceData<ReferenceApi>(props.api.value, fallbackApi);
+    const example = props.example.value;
+    const returns = props.returns.value;
 
     return (
       <article>
-        <span class="kind">{api.kind}</span>
-        <h3>{api.name}</h3>
-        <p>{api.description}</p>
-        <DocCodeBlock language="ts">{api.signature}</DocCodeBlock>
-        {api.parameters !== undefined && api.parameters.length > 0 ? (
-          <>
-            <h4>Parameters</h4>
-            <ParameterTable parameters={encodeReferenceData(api.parameters)} />
-          </>
-        ) : (
-          <></>
-        )}
-        {api.returns !== undefined ? (
+        <span class="kind">{props.kind.value}</span>
+        <h3>{props.name.value}</h3>
+        <p>{props.description.value}</p>
+        <DocCodeBlock language="ts">{props.signature.value}</DocCodeBlock>
+        <slot />
+        {returns.length > 0 ? (
           <p>
-            <strong>Returns:</strong> {api.returns}
+            <strong>Returns:</strong> {returns}
           </p>
         ) : (
           <></>
         )}
-        {api.example !== undefined ? (
+        {example.length > 0 ? (
           <>
             <h4>Example</h4>
-            <DocCodeBlock language="ts">{api.example}</DocCodeBlock>
-          </>
-        ) : (
-          <></>
-        )}
-        {api.notes !== undefined && api.notes.length > 0 ? (
-          <>
-            <h4>Notes</h4>
-            <ul>
-              {api.notes.map((note) => (
-                <li>{note}</li>
-              ))}
-            </ul>
+            <DocCodeBlock language="ts">{example}</DocCodeBlock>
           </>
         ) : (
           <></>
@@ -103,7 +75,12 @@ const ApiEntry = defineComponent(
   },
   {
     props: {
-      api: { type: String, default: "" },
+      description: { type: String, default: "" },
+      example: { type: String, default: "" },
+      kind: { type: String, default: "function" },
+      name: { type: String, default: "API" },
+      returns: { type: String, default: "" },
+      signature: { type: String, default: "" },
     },
     styles: [apiEntryStyles],
   },

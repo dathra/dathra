@@ -1,8 +1,5 @@
 import { css, defineComponent } from "@dathra/components";
 
-import { decodeReferenceData } from "../../reference/format";
-import type { ReferenceExportGroup } from "../../reference/types";
-
 const inventoryStyles = css`
   :host {
     display: block;
@@ -34,34 +31,46 @@ const inventoryStyles = css`
   }
 `;
 
-const ExportInventory = defineComponent(
-  "dathra-export-inventory",
+const ExportGroup = defineComponent(
+  "dathra-export-group",
   ({ props }) => {
-    const groups = decodeReferenceData<ReferenceExportGroup[]>(props.groups.value, []);
-
     return (
-      <div class="grid">
-        {groups.map((group) => (
-          <section>
-            <h3>{group.label}</h3>
-            <ul>
-              {group.items.map((item) => (
-                <li>
-                  <code>{item}</code>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
+      <section>
+        <h3>{props.label.value}</h3>
+        <ul>
+          <slot />
+        </ul>
+      </section>
     );
   },
   {
     props: {
-      groups: { type: String, default: "[]" },
+      label: { type: String, default: "Exports" },
     },
     styles: [inventoryStyles],
   },
 );
 
-export { ExportInventory };
+function ExportItem({ name }: { name: string }) {
+  return (
+    <li>
+      <code>{name}</code>
+    </li>
+  );
+}
+
+const ExportInventory = defineComponent(
+  "dathra-export-inventory",
+  () => {
+    return (
+      <div class="grid">
+        <slot />
+      </div>
+    );
+  },
+  {
+    styles: [inventoryStyles],
+  },
+);
+
+export { ExportGroup, ExportInventory, ExportItem };
