@@ -319,9 +319,10 @@ function renderDSD(
     if (key === "children" && value !== undefined) {
       let serialized: string;
       try {
-        serialized = JSON.stringify(value);
+        const json = JSON.stringify(value);
+        serialized = typeof json === "string" ? json : childrenHtml;
       } catch {
-        serialized = String(value);
+        serialized = childrenHtml;
       }
       attrStr += ` data-dh-children="${escapeAttr(serialized)}"`;
       continue;

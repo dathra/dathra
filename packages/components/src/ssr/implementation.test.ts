@@ -199,6 +199,29 @@ describe("ssr", () => {
       expect(html).not.toContain(' children="');
     });
 
+    it("should serialize function and symbol children metadata without throwing", () => {
+      const setup = () => "<slot></slot>";
+      registerComponent("slot-host-non-json", setup, []);
+
+      const functionHtml = renderDSD("slot-host-non-json", {
+        children: () => "<span>lazy</span>",
+      });
+      const symbolHtml = renderDSD("slot-host-non-json", {
+        children: Symbol("named-child"),
+      });
+
+      expect(functionHtml).toContain(
+        'data-dh-children="&lt;span&gt;lazy&lt;/span&gt;"',
+      );
+      expect(functionHtml).toContain(
+        '<template shadowrootmode="open"><slot></slot></template><span>lazy</span>',
+      );
+      expect(symbolHtml).toContain('data-dh-children="named-child"');
+      expect(symbolHtml).toContain(
+        '<template shadowrootmode="open"><slot></slot></template>named-child',
+      );
+    });
+
     it("should handle multiple attributes", () => {
       const setup = () => "<div>Multi Attrs</div>";
       registerComponent("multi-attrs", setup, [], {
