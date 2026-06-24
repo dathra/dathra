@@ -10,7 +10,9 @@ if (rootHost instanceof HTMLElement) {
 }
 
 void Promise.all([
-  import("./syntaxHighlight").then(({ prepareSyntaxHighlighting }) => prepareSyntaxHighlighting()),
+  import("./components/DocCodeBlock.syntaxHighlight").then(({ prepareSyntaxHighlighting }) =>
+    prepareSyntaxHighlighting(),
+  ),
   import("./DocsAppRoot"),
 ]).then(() => {
   queueMicrotask(() => {

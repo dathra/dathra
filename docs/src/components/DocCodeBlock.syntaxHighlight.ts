@@ -10,7 +10,7 @@ import githubDark from "shiki/themes/github-dark.mjs";
 import githubLight from "shiki/themes/github-light.mjs";
 import { createHighlighterCore, type BundledLanguage, type HighlighterGeneric } from "shiki/core";
 
-import { setDocsHighlighter } from "./syntaxHighlightRuntime";
+import { setDocsHighlighter } from "./DocCodeBlock.syntaxHighlightRuntime";
 
 type DocsHighlighter = HighlighterGeneric<BundledLanguage, "github-light" | "github-dark">;
 
