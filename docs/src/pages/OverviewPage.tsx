@@ -14,6 +14,22 @@ function OverviewPage() {
         <code>@dathra/core/hydration</code>, and styled inside Shadow DOM.
       </p>
 
+      <div class="callout-card">
+        <h2>Start Here</h2>
+        <p>
+          Choose the rendering path first. CSR is the fastest way to try Dathra in a browser-only
+          app. SSR adds server-rendered Declarative Shadow DOM, request state, and hydration.
+        </p>
+        <div class="action-row">
+          <a class="action-link" href="/getting-started-csr">
+            Build a CSR app
+          </a>
+          <a class="action-link" href="/getting-started-ssr">
+            Build an SSR app
+          </a>
+        </div>
+      </div>
+
       <div class="feature-grid">
         <article class="feature-card">
           <h3>Reactive by default</h3>
@@ -70,6 +86,22 @@ function OverviewPage() {
           page.
         </li>
       </ul>
+
+      <h2>Recommended Reading Order</h2>
+      <ol>
+        <li>
+          Read <a href="/getting-started">Getting Started</a> to choose between CSR and SSR.
+        </li>
+        <li>
+          Learn <a href="/reactivity">Reactivity</a> before writing component state.
+        </li>
+        <li>
+          Read <a href="/components">Components</a> to define custom elements and props.
+        </li>
+        <li>
+          Use the <a href="/reference/reactivity">API Reference</a> when you need exact signatures.
+        </li>
+      </ol>
 
       <h2>Architecture</h2>
       <p>Dathra is organized as a monorepo with eight packages:</p>

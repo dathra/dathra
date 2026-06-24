@@ -10,6 +10,10 @@ function DocsShell({
   renderPage: () => JSX.Element;
 }) {
   const sections = [...new Set(docRoutes.map((r) => r.section))];
+  const currentRoute = docRoutes.find((route) => route.path === routePath);
+  const currentSectionRoute = docRoutes.find(
+    (route) => route.section === currentRoute?.section && (routePath === "/" || route.path !== "/"),
+  );
 
   return (
     <>
@@ -31,7 +35,20 @@ function DocsShell({
           ))}
         </nav>
       </aside>
-      <main class="content">{renderPage()}</main>
+      <main class="content">
+        {currentRoute !== undefined ? (
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Docs</a>
+            <span aria-hidden="true">/</span>
+            <a href={currentSectionRoute?.path ?? "/"}>{currentRoute.section}</a>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{currentRoute.label}</span>
+          </nav>
+        ) : (
+          <></>
+        )}
+        {renderPage()}
+      </main>
       <MobileNav routePath={routePath} />
     </>
   );

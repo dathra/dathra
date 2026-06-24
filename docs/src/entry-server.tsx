@@ -3,6 +3,7 @@ import { defineSsrEntry, render as renderSSR } from "@dathra/core/ssr";
 
 import { DocsAppRoot } from "./DocsAppRoot";
 import { getDocRoute, normalizeDocPath } from "./routes";
+import { prepareSyntaxHighlighting } from "./components/DocCodeBlock/syntaxHighlight";
 
 const render = defineSsrEntry(async ({ request }) => {
   const url = new URL(request.url);
@@ -10,6 +11,12 @@ const render = defineSsrEntry(async ({ request }) => {
 
   const routePath = normalizeDocPath(url.pathname);
   const route = getDocRoute(routePath);
+
+  try {
+    await prepareSyntaxHighlighting();
+  } catch (error) {
+    console.warn("[docs:ssr] Syntax highlighting unavailable", error);
+  }
 
   try {
     if (route === undefined) {

@@ -14,7 +14,8 @@
   "dependencies": {
     "@dathra/components": "workspace:*",
     "@dathra/core": "workspace:*",
-    "@dathra/runtime": "workspace:*"
+    "@dathra/runtime": "workspace:*",
+    "shiki": "^4.2.0"
   },
   "devDependencies": {
     "@dathra/config": "workspace:*",

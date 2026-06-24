@@ -1,4 +1,7 @@
 import { css, defineComponent, signal } from "@dathra/core";
+import { fromMarkup } from "@dathra/runtime";
+
+import { highlightCode } from "./syntaxHighlightRuntime";
 
 function formatCode(code: string): string {
   const lines = code.split("\n");
@@ -15,7 +18,7 @@ const codeStyles = css`
     display: block;
     margin: 16px 0;
     border-radius: 14px;
-    border: 1px solid rgba(28, 58, 47, 0.12);
+    border: 1px solid var(--panel-border);
     font-family: "Intel One Mono", "Berkeley Mono", "SFMono-Regular", monospace;
     max-width: 100%;
   }
@@ -25,8 +28,8 @@ const codeStyles = css`
     justify-content: space-between;
     align-items: center;
     padding: 8px 16px;
-    background: rgba(17, 36, 29, 0.98);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: color-mix(in srgb, var(--panel-bg) 82%, var(--accent));
+    border-bottom: 1px solid var(--panel-border);
   }
 
   .lang {
@@ -34,7 +37,7 @@ const codeStyles = css`
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: rgba(180, 220, 200, 0.7);
+    color: var(--muted);
   }
 
   .copy-btn {
@@ -42,10 +45,10 @@ const codeStyles = css`
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--panel-border);
     border-radius: 6px;
     background: transparent;
-    color: rgba(180, 220, 200, 0.6);
+    color: var(--muted);
     font-size: 0.75rem;
     font-family: inherit;
     cursor: pointer;
@@ -53,13 +56,13 @@ const codeStyles = css`
   }
 
   .copy-btn:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    color: rgba(180, 220, 200, 0.9);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--accent);
   }
 
   .copy-btn.copied {
-    border-color: rgba(75, 195, 160, 0.4);
-    color: #4bc3a0;
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--panel-border));
+    color: var(--accent);
   }
 
   .scroll-wrap {
@@ -69,19 +72,37 @@ const codeStyles = css`
   .inner {
     overflow: hidden;
     border-radius: inherit;
-    background: rgba(17, 36, 29, 0.94);
+    background: color-mix(in srgb, var(--code-bg) 72%, var(--panel-bg));
   }
 
   pre {
     margin: 0;
     padding: 16px 20px;
-    color: #dcece3;
     line-height: 1.55;
     font-family: inherit;
     font-size: 0.85rem;
     width: max-content;
     min-width: 100%;
     box-sizing: border-box;
+  }
+
+  pre.shiki {
+    background: transparent !important;
+  }
+
+  pre.shiki span {
+    background-color: transparent !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    pre.shiki,
+    pre.shiki span {
+      color: var(--shiki-dark) !important;
+      background-color: transparent !important;
+      font-style: var(--shiki-dark-font-style) !important;
+      font-weight: var(--shiki-dark-font-weight) !important;
+      text-decoration: var(--shiki-dark-text-decoration) !important;
+    }
   }
 `;
 
@@ -92,6 +113,13 @@ const DocCodeBlock = defineComponent(
     const raw =
       typeof children === "string" && children.length > 0 ? children : (props.code.value ?? "");
     const source = formatCode(raw);
+    const highlighted = highlightCode(source, props.language.value ?? "");
+    const highlightedContent =
+      highlighted !== undefined
+        ? typeof document === "undefined"
+          ? highlighted
+          : fromMarkup(highlighted)()
+        : undefined;
 
     function handleCopy() {
       if (typeof navigator.clipboard?.writeText === "function") {
@@ -112,9 +140,13 @@ const DocCodeBlock = defineComponent(
           </button>
         </div>
         <div class="scroll-wrap">
-          <pre>
-            <code>{source}</code>
-          </pre>
+          {highlightedContent !== undefined ? (
+            highlightedContent
+          ) : (
+            <pre>
+              <code>{source}</code>
+            </pre>
+          )}
         </div>
       </div>
     );
