@@ -7,30 +7,10 @@ function formatCode(code: string): string {
   const lines = code.split("\n");
   while (lines.length > 0 && lines[0]!.trim() === "") lines.shift();
   while (lines.length > 0 && lines[lines.length - 1]!.trim() === "") lines.pop();
-  const contentLines = lines.filter((l) => l.trim().length > 0);
-  if (contentLines.length === 0) return "";
-
-  const indent = Math.min(...contentLines.map((l) => l.match(/^ */)![0]!.length));
+  const indent = Math.min(
+    ...lines.filter((l) => l.trim().length > 0).map((l) => l.match(/^ */)![0]!.length),
+  );
   return lines.map((l) => l.slice(indent)).join("\n");
-}
-
-function resolveSource(children: unknown, code: string): string {
-  return formatCode(typeof children === "string" && children.length > 0 ? children : code);
-}
-
-function renderHighlightedContent(
-  source: string,
-  language: string,
-): string | DocumentFragment | undefined {
-  const highlighted = highlightCode(source, language);
-  if (highlighted === undefined) return undefined;
-  return typeof document === "undefined" ? highlighted : fromMarkup(highlighted)();
-}
-
-function replaceCodeContent(shadowRoot: ShadowRoot, content: string | DocumentFragment): void {
-  const wrap = shadowRoot.querySelector(".scroll-wrap");
-  if (wrap === null) return;
-  wrap.replaceChildren(typeof content === "string" ? fromMarkup(content)() : content);
 }
 
 const codeStyles = css`
@@ -130,36 +110,16 @@ const DocCodeBlock = defineComponent(
   "dathra-code",
   ({ props, children }) => {
     const copied = signal(false);
-    const highlighterRevision = signal(0);
-    const source = resolveSource(children, props.code.value ?? "");
-
-    function renderCodeContent() {
-      highlighterRevision.value;
-      const highlightedContent = renderHighlightedContent(source, props.language.value ?? "");
-      if (highlightedContent === undefined) {
-        return (
-          <pre>
-            <code>{source}</code>
-          </pre>
-        );
-      }
-
-      return highlightedContent;
-    }
-
-    if (
-      typeof document !== "undefined" &&
-      highlightCode(source, props.language.value ?? "") === undefined
-    ) {
-      void import("./syntaxHighlight").then(async ({ prepareSyntaxHighlighting }) => {
-        try {
-          await prepareSyntaxHighlighting();
-          highlighterRevision.set(highlighterRevision.value + 1);
-        } catch (error) {
-          console.warn("[docs:client] Syntax highlighting unavailable", error);
-        }
-      });
-    }
+    const raw =
+      typeof children === "string" && children.length > 0 ? children : (props.code.value ?? "");
+    const source = formatCode(raw);
+    const highlighted = highlightCode(source, props.language.value ?? "");
+    const highlightedContent =
+      highlighted !== undefined
+        ? typeof document === "undefined"
+          ? highlighted
+          : fromMarkup(highlighted)()
+        : undefined;
 
     function handleCopy() {
       if (typeof navigator.clipboard?.writeText === "function") {
@@ -179,33 +139,19 @@ const DocCodeBlock = defineComponent(
             {copied.value ? "Copied!" : "Copy"}
           </button>
         </div>
-        <div class="scroll-wrap">{renderCodeContent()}</div>
+        <div class="scroll-wrap">
+          {highlightedContent !== undefined ? (
+            highlightedContent
+          ) : (
+            <pre>
+              <code>{source}</code>
+            </pre>
+          )}
+        </div>
       </div>
     );
   },
   {
-    hydrate: ({ host, props, children }) => {
-      const shadowRoot = host.shadowRoot;
-      if (shadowRoot === null || shadowRoot.querySelector("pre.shiki") !== null) return;
-
-      const source = resolveSource(children, props.code.value ?? "");
-      const language = props.language.value ?? "";
-      const highlightedContent = renderHighlightedContent(source, language);
-      if (highlightedContent !== undefined) {
-        replaceCodeContent(shadowRoot, highlightedContent);
-        return;
-      }
-
-      void import("./syntaxHighlight").then(async ({ prepareSyntaxHighlighting }) => {
-        try {
-          await prepareSyntaxHighlighting();
-          const nextContent = renderHighlightedContent(source, language);
-          if (nextContent !== undefined) replaceCodeContent(shadowRoot, nextContent);
-        } catch (error) {
-          console.warn("[docs:client] Syntax highlighting unavailable", error);
-        }
-      });
-    },
     props: {
       code: { type: String, default: "" },
       language: { type: String, default: "" },
