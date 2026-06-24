@@ -8,7 +8,7 @@ import typescript from "shiki/langs/typescript.mjs";
 import tsx from "shiki/langs/tsx.mjs";
 import githubDark from "shiki/themes/github-dark.mjs";
 import githubLight from "shiki/themes/github-light.mjs";
-import { createHighlighterCore, type HighlighterGeneric } from "shiki/core";
+import { createHighlighterCore, type BundledLanguage, type HighlighterGeneric } from "shiki/core";
 
 import { setDocsHighlighter } from "./syntaxHighlightRuntime";
 

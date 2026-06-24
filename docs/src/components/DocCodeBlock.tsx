@@ -110,7 +110,6 @@ const DocCodeBlock = defineComponent(
   "dathra-code",
   ({ props, children }) => {
     const copied = signal(false);
-    const highlighterReady = signal(false);
     const raw =
       typeof children === "string" && children.length > 0 ? children : (props.code.value ?? "");
     const source = formatCode(raw);
@@ -121,17 +120,6 @@ const DocCodeBlock = defineComponent(
           ? highlighted
           : fromMarkup(highlighted)()
         : undefined;
-
-    if (
-      highlightedContent === undefined &&
-      typeof document !== "undefined" &&
-      !highlighterReady.value
-    ) {
-      void import("../syntaxHighlight").then(async ({ prepareSyntaxHighlighting }) => {
-        await prepareSyntaxHighlighting();
-        highlighterReady.set(true);
-      });
-    }
 
     function handleCopy() {
       if (typeof navigator.clipboard?.writeText === "function") {
