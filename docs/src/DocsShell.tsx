@@ -11,7 +11,9 @@ function DocsShell({
 }) {
   const sections = [...new Set(docRoutes.map((r) => r.section))];
   const currentRoute = docRoutes.find((route) => route.path === routePath);
-  const currentSectionRoute = docRoutes.find((route) => route.section === currentRoute?.section);
+  const currentSectionRoute = docRoutes.find(
+    (route) => route.section === currentRoute?.section && (routePath === "/" || route.path !== "/"),
+  );
 
   return (
     <>

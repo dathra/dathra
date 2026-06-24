@@ -28,7 +28,10 @@ async function loadDocsHighlighter(): Promise<DocsHighlighter> {
 }
 
 async function prepareSyntaxHighlighting(): Promise<void> {
-  highlighterPromise ??= loadDocsHighlighter();
+  highlighterPromise ??= loadDocsHighlighter().catch((error: unknown) => {
+    highlighterPromise = undefined;
+    throw error;
+  });
   await highlighterPromise;
 }
 

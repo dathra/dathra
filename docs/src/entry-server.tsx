@@ -7,11 +7,16 @@ import { prepareSyntaxHighlighting } from "./components/DocCodeBlock/syntaxHighl
 
 const render = defineSsrEntry(async ({ request }) => {
   const url = new URL(request.url);
-  await prepareSyntaxHighlighting();
   clearGlobalStyles();
 
   const routePath = normalizeDocPath(url.pathname);
   const route = getDocRoute(routePath);
+
+  try {
+    await prepareSyntaxHighlighting();
+  } catch (error) {
+    console.warn("[docs:ssr] Syntax highlighting unavailable", error);
+  }
 
   try {
     if (route === undefined) {
