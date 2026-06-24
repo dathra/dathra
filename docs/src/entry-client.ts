@@ -9,13 +9,7 @@ if (rootHost instanceof HTMLElement) {
   bindStoreToHost(rootHost, createDocsStore({ appId: "dathra-docs-client" }));
 }
 
-const syntaxHighlightingReady = import("./components/DocCodeBlock/syntaxHighlight")
-  .then(({ prepareSyntaxHighlighting }) => prepareSyntaxHighlighting())
-  .catch((error) => {
-    console.warn("[docs:client] Syntax highlighting unavailable", error);
-  });
-
-void Promise.all([syntaxHighlightingReady, import("./DocsAppRoot")]).then(() => {
+void import("./DocsAppRoot").then(() => {
   queueMicrotask(() => {
     hydrate(document);
   });

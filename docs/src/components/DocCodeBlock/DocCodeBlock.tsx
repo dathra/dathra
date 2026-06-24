@@ -7,9 +7,10 @@ function formatCode(code: string): string {
   const lines = code.split("\n");
   while (lines.length > 0 && lines[0]!.trim() === "") lines.shift();
   while (lines.length > 0 && lines[lines.length - 1]!.trim() === "") lines.pop();
-  const indent = Math.min(
-    ...lines.filter((l) => l.trim().length > 0).map((l) => l.match(/^ */)![0]!.length),
-  );
+  const contentLines = lines.filter((l) => l.trim().length > 0);
+  if (contentLines.length === 0) return "";
+
+  const indent = Math.min(...contentLines.map((l) => l.match(/^ */)![0]!.length));
   return lines.map((l) => l.slice(indent)).join("\n");
 }
 
@@ -110,16 +111,38 @@ const DocCodeBlock = defineComponent(
   "dathra-code",
   ({ props, children }) => {
     const copied = signal(false);
+    const highlighterRevision = signal(0);
     const raw =
       typeof children === "string" && children.length > 0 ? children : (props.code.value ?? "");
     const source = formatCode(raw);
-    const highlighted = highlightCode(source, props.language.value ?? "");
-    const highlightedContent =
-      highlighted !== undefined
-        ? typeof document === "undefined"
-          ? highlighted
-          : fromMarkup(highlighted)()
-        : undefined;
+
+    function renderCodeContent() {
+      highlighterRevision.value;
+      const highlighted = highlightCode(source, props.language.value ?? "");
+      if (highlighted === undefined) {
+        return (
+          <pre>
+            <code>{source}</code>
+          </pre>
+        );
+      }
+
+      return typeof document === "undefined" ? highlighted : fromMarkup(highlighted)();
+    }
+
+    if (
+      typeof document !== "undefined" &&
+      highlightCode(source, props.language.value ?? "") === undefined
+    ) {
+      void import("./syntaxHighlight").then(async ({ prepareSyntaxHighlighting }) => {
+        try {
+          await prepareSyntaxHighlighting();
+          highlighterRevision.set(highlighterRevision.value + 1);
+        } catch (error) {
+          console.warn("[docs:client] Syntax highlighting unavailable", error);
+        }
+      });
+    }
 
     function handleCopy() {
       if (typeof navigator.clipboard?.writeText === "function") {
@@ -139,15 +162,7 @@ const DocCodeBlock = defineComponent(
             {copied.value ? "Copied!" : "Copy"}
           </button>
         </div>
-        <div class="scroll-wrap">
-          {highlightedContent !== undefined ? (
-            highlightedContent
-          ) : (
-            <pre>
-              <code>{source}</code>
-            </pre>
-          )}
-        </div>
+        <div class="scroll-wrap">{renderCodeContent()}</div>
       </div>
     );
   },
