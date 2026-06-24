@@ -14,6 +14,25 @@ function formatCode(code: string): string {
   return lines.map((l) => l.slice(indent)).join("\n");
 }
 
+function resolveSource(children: unknown, code: string): string {
+  return formatCode(typeof children === "string" && children.length > 0 ? children : code);
+}
+
+function renderHighlightedContent(
+  source: string,
+  language: string,
+): string | DocumentFragment | undefined {
+  const highlighted = highlightCode(source, language);
+  if (highlighted === undefined) return undefined;
+  return typeof document === "undefined" ? highlighted : fromMarkup(highlighted)();
+}
+
+function replaceCodeContent(shadowRoot: ShadowRoot, content: string | DocumentFragment): void {
+  const wrap = shadowRoot.querySelector(".scroll-wrap");
+  if (wrap === null) return;
+  wrap.replaceChildren(typeof content === "string" ? fromMarkup(content)() : content);
+}
+
 const codeStyles = css`
   :host {
     display: block;
@@ -112,14 +131,12 @@ const DocCodeBlock = defineComponent(
   ({ props, children }) => {
     const copied = signal(false);
     const highlighterRevision = signal(0);
-    const raw =
-      typeof children === "string" && children.length > 0 ? children : (props.code.value ?? "");
-    const source = formatCode(raw);
+    const source = resolveSource(children, props.code.value ?? "");
 
     function renderCodeContent() {
       highlighterRevision.value;
-      const highlighted = highlightCode(source, props.language.value ?? "");
-      if (highlighted === undefined) {
+      const highlightedContent = renderHighlightedContent(source, props.language.value ?? "");
+      if (highlightedContent === undefined) {
         return (
           <pre>
             <code>{source}</code>
@@ -127,7 +144,7 @@ const DocCodeBlock = defineComponent(
         );
       }
 
-      return typeof document === "undefined" ? highlighted : fromMarkup(highlighted)();
+      return highlightedContent;
     }
 
     if (
@@ -167,6 +184,28 @@ const DocCodeBlock = defineComponent(
     );
   },
   {
+    hydrate: ({ host, props, children }) => {
+      const shadowRoot = host.shadowRoot;
+      if (shadowRoot === null || shadowRoot.querySelector("pre.shiki") !== null) return;
+
+      const source = resolveSource(children, props.code.value ?? "");
+      const language = props.language.value ?? "";
+      const highlightedContent = renderHighlightedContent(source, language);
+      if (highlightedContent !== undefined) {
+        replaceCodeContent(shadowRoot, highlightedContent);
+        return;
+      }
+
+      void import("./syntaxHighlight").then(async ({ prepareSyntaxHighlighting }) => {
+        try {
+          await prepareSyntaxHighlighting();
+          const nextContent = renderHighlightedContent(source, language);
+          if (nextContent !== undefined) replaceCodeContent(shadowRoot, nextContent);
+        } catch (error) {
+          console.warn("[docs:client] Syntax highlighting unavailable", error);
+        }
+      });
+    },
     props: {
       code: { type: String, default: "" },
       language: { type: String, default: "" },
