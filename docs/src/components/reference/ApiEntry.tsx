@@ -1,6 +1,6 @@
 import { css, defineComponent } from "@dathra/components";
 
-import { DocCodeBlock } from "../DocCodeBlock";
+import { DocCodeBlock } from "../DocCodeBlock/index";
 
 const apiEntryStyles = css`
   :host {

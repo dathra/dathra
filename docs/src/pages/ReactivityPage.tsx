@@ -1,4 +1,4 @@
-import { DocCodeBlock } from "../components/DocCodeBlock";
+import { DocCodeBlock } from "../components/DocCodeBlock/index";
 
 function ReactivityPage() {
   return (
