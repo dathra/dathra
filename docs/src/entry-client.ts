@@ -9,7 +9,10 @@ if (rootHost instanceof HTMLElement) {
   bindStoreToHost(rootHost, createDocsStore({ appId: "dathra-docs-client" }));
 }
 
-void import("./DocsAppRoot").then(() => {
+void Promise.all([
+  import("./syntaxHighlight").then(({ prepareSyntaxHighlighting }) => prepareSyntaxHighlighting()),
+  import("./DocsAppRoot"),
+]).then(() => {
   queueMicrotask(() => {
     hydrate(document);
   });

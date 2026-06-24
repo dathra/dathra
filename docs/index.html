@@ -12,6 +12,7 @@
   <style>
     body {
       margin: 0;
+      background: #fafcfb;
     }
 
     * {
@@ -26,10 +27,28 @@
       --muted: #476257;
       --accent: #1e6b55;
       --code-bg: rgba(33, 71, 60, 0.07);
+      color-scheme: light;
       font-family: "Inter", "Iowan Old Style", "Palatino Linotype", "Georgia", serif;
       display: grid;
       grid-template-columns: 260px 1fr;
       min-height: 100vh;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #0d1713;
+      }
+
+      dathra-docs {
+        --page-bg: #0d1713;
+        --panel-bg: rgba(20, 37, 31, 0.82);
+        --panel-border: rgba(167, 213, 195, 0.16);
+        --text: #e5f2ec;
+        --muted: #a8c2b7;
+        --accent: #73d7b8;
+        --code-bg: rgba(115, 215, 184, 0.12);
+        color-scheme: dark;
+      }
     }
 
     @media (max-width: 720px) {

@@ -18,7 +18,7 @@ const mobileStyles = css`
     position: fixed;
     inset: 0;
     z-index: 140;
-    background: rgba(0, 0, 0, 0.3);
+    background: color-mix(in srgb, var(--page-bg) 24%, rgba(0, 0, 0, 0.56));
   }
 
   .backdrop.is-open {
@@ -89,11 +89,11 @@ const mobileStyles = css`
   }
 
   .sidebar a:hover {
-    background: rgba(33, 71, 60, 0.08);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
   }
 
   .sidebar a.is-active {
-    background: rgba(33, 71, 60, 0.12);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
     font-weight: 600;
   }
 
@@ -121,7 +121,7 @@ const mobileStyles = css`
   }
 
   .menu-btn:hover {
-    background: rgba(33, 71, 60, 0.06);
+    background: color-mix(in srgb, var(--accent) 10%, var(--page-bg));
   }
 
   .menu-icon {

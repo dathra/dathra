@@ -8,6 +8,29 @@ function GettingStartedPage() {
         to emit Declarative Shadow DOM before hydration.
       </p>
 
+      <h2>Choose a Rendering Path</h2>
+      <div class="comparison-grid">
+        <article class="comparison-card">
+          <h3>Use CSR when</h3>
+          <ul>
+            <li>You are prototyping or building an internal browser-only app.</li>
+            <li>The initial HTML does not need server-rendered component content.</li>
+            <li>
+              You want the smallest setup: one HTML file, one client entry, and component modules.
+            </li>
+          </ul>
+        </article>
+
+        <article class="comparison-card">
+          <h3>Use SSR when</h3>
+          <ul>
+            <li>You need usable HTML before JavaScript finishes loading.</li>
+            <li>You want Declarative Shadow DOM output for custom elements.</li>
+            <li>You have request-derived state such as route, locale, or user-visible flags.</li>
+          </ul>
+        </article>
+      </div>
+
       <div class="feature-grid">
         <article class="feature-card">
           <h3>CSR Quick Start</h3>
@@ -31,6 +54,22 @@ function GettingStartedPage() {
           </p>
         </article>
       </div>
+
+      <h2>Before You Start</h2>
+      <ul>
+        <li>
+          Use <code>jsx: "preserve"</code> and <code>jsxImportSource: "@dathra/core"</code> so the
+          Dathra transformer receives JSX.
+        </li>
+        <li>
+          Keep component registration explicit by importing each custom element module before its
+          tag appears in the DOM.
+        </li>
+        <li>
+          Write Dathra JSX with platform attribute names such as <code>class</code> and event props
+          such as <code>onClick</code>.
+        </li>
+      </ul>
 
       <h2>What Stays the Same</h2>
       <ul>
@@ -64,6 +103,26 @@ function GettingStartedPage() {
         </li>
         <li>
           <code>vite.config.ts</code> installs the Dathra Vite plugin in SSR mode
+        </li>
+      </ul>
+
+      <h2>Next Steps</h2>
+      <p>
+        After the first app runs, use the concept docs to understand the primitives behind the quick
+        starts:
+      </p>
+      <ul>
+        <li>
+          <a href="/reactivity">Reactivity</a> explains signals, computed values, effects, and root
+          cleanup.
+        </li>
+        <li>
+          <a href="/runtime">Runtime</a> explains DOM insertion, text, attrs, events, SSR, and
+          hydration primitives.
+        </li>
+        <li>
+          <a href="/plugin">Build Plugin</a> explains how Vite and other build tools run the Dathra
+          transformer.
         </li>
       </ul>
     </section>

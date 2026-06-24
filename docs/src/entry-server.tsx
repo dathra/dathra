@@ -3,9 +3,11 @@ import { defineSsrEntry, render as renderSSR } from "@dathra/core/ssr";
 
 import { DocsAppRoot } from "./DocsAppRoot";
 import { getDocRoute, normalizeDocPath } from "./routes";
+import { prepareSyntaxHighlighting } from "./syntaxHighlight";
 
 const render = defineSsrEntry(async ({ request }) => {
   const url = new URL(request.url);
+  await prepareSyntaxHighlighting();
   clearGlobalStyles();
 
   const routePath = normalizeDocPath(url.pathname);
