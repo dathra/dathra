@@ -1,7 +1,7 @@
 import { css, defineComponent, signal } from "@dathra/core";
 import { fromMarkup } from "@dathra/runtime";
 
-import { highlightCode } from "./DocCodeBlock.syntaxHighlightRuntime";
+import { highlightCode } from "./syntaxHighlightRuntime";
 
 function formatCode(code: string): string {
   const lines = code.split("\n");

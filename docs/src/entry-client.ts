@@ -10,7 +10,7 @@ if (rootHost instanceof HTMLElement) {
 }
 
 void Promise.all([
-  import("./components/DocCodeBlock.syntaxHighlight").then(({ prepareSyntaxHighlighting }) =>
+  import("./components/DocCodeBlock/syntaxHighlight").then(({ prepareSyntaxHighlighting }) =>
     prepareSyntaxHighlighting(),
   ),
   import("./DocsAppRoot"),
