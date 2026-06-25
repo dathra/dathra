@@ -222,31 +222,6 @@ const MobileNav = defineComponent(
     props: {
       routePath: { type: String, default: "/" },
     },
-    hydrate: ({ host }) => {
-      const shadowRoot = host.shadowRoot;
-      if (shadowRoot === null) return;
-
-      const button = shadowRoot.querySelector<HTMLButtonElement>(".menu-btn");
-      const backdrop = shadowRoot.querySelector<HTMLElement>(".backdrop");
-      const sidebar = shadowRoot.querySelector<HTMLElement>(".sidebar");
-      if (button === null || backdrop === null || sidebar === null) return;
-
-      const setOpen = (open: boolean) => {
-        button.classList.toggle("is-open", open);
-        backdrop.classList.toggle("is-open", open);
-        sidebar.classList.toggle("is-open", open);
-      };
-
-      button.onclick = () => {
-        setOpen(!button.classList.contains("is-open"));
-      };
-      backdrop.onclick = () => {
-        setOpen(false);
-      };
-      sidebar.onclick = (event) => {
-        if ((event.target as HTMLElement).closest("a") !== null) setOpen(false);
-      };
-    },
     styles: [mobileStyles],
   },
 );

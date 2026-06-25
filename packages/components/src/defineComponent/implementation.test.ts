@@ -1017,16 +1017,20 @@ describe("defineComponent", () => {
     const tag = uniqueTag();
     const clickSpy = vi.fn();
 
-    defineComponent(tag, () => {
-      const button = document.createElement("button");
-      button.setAttribute("data-dh-client-target", "cta");
-      button.setAttribute("data-dh-client-strategy", "interaction");
-      button.textContent = "Click me";
-      button.addEventListener("click", () => {
-        clickSpy();
-      });
-      return button;
-    });
+    defineComponent(
+      tag,
+      () => {
+        const button = document.createElement("button");
+        button.setAttribute("data-dh-client-target", "cta");
+        button.setAttribute("data-dh-client-strategy", "interaction");
+        button.textContent = "Click me";
+        button.addEventListener("click", () => {
+          clickSpy();
+        });
+        return button;
+      },
+      { hydration: { unsupported: "rerender" } },
+    );
 
     const container = document.createElement("div");
     container.innerHTML = `<${tag}><template shadowrootmode="open"><button data-dh-client-target="cta" data-dh-client-strategy="interaction">Click me</button></template></${tag}>`;
@@ -1054,16 +1058,20 @@ describe("defineComponent", () => {
     const tag = uniqueTag();
     const keySpy = vi.fn();
 
-    defineComponent(tag, () => {
-      const input = document.createElement("input");
-      input.setAttribute("data-dh-client-target", "field");
-      input.setAttribute("data-dh-client-strategy", "interaction");
-      input.setAttribute("data-dh-client-event", "keydown");
-      input.addEventListener("keydown", (event) => {
-        keySpy((event as KeyboardEvent).key);
-      });
-      return input;
-    });
+    defineComponent(
+      tag,
+      () => {
+        const input = document.createElement("input");
+        input.setAttribute("data-dh-client-target", "field");
+        input.setAttribute("data-dh-client-strategy", "interaction");
+        input.setAttribute("data-dh-client-event", "keydown");
+        input.addEventListener("keydown", (event) => {
+          keySpy((event as KeyboardEvent).key);
+        });
+        return input;
+      },
+      { hydration: { unsupported: "rerender" } },
+    );
 
     const container = document.createElement("div");
     container.innerHTML = `<${tag}><template shadowrootmode="open"><input data-dh-client-target="field" data-dh-client-strategy="interaction" data-dh-client-event="keydown"></template></${tag}>`;
@@ -1117,16 +1125,20 @@ describe("defineComponent", () => {
 
     vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
 
-    defineComponent(tag, () => {
-      const button = document.createElement("button");
-      button.setAttribute("data-dh-client-target", "cta");
-      button.setAttribute("data-dh-client-strategy", "visible");
-      button.textContent = "Visible click";
-      button.addEventListener("click", () => {
-        clickSpy();
-      });
-      return button;
-    });
+    defineComponent(
+      tag,
+      () => {
+        const button = document.createElement("button");
+        button.setAttribute("data-dh-client-target", "cta");
+        button.setAttribute("data-dh-client-strategy", "visible");
+        button.textContent = "Visible click";
+        button.addEventListener("click", () => {
+          clickSpy();
+        });
+        return button;
+      },
+      { hydration: { unsupported: "rerender" } },
+    );
 
     const container = document.createElement("div");
     container.innerHTML = `<${tag}><template shadowrootmode="open"><button data-dh-client-target="cta" data-dh-client-strategy="visible">Visible click</button></template></${tag}>`;
@@ -1175,16 +1187,20 @@ describe("defineComponent", () => {
     );
     vi.stubGlobal("cancelIdleCallback", vi.fn());
 
-    defineComponent(tag, () => {
-      const button = document.createElement("button");
-      button.setAttribute("data-dh-client-target", "cta");
-      button.setAttribute("data-dh-client-strategy", "idle");
-      button.textContent = "Idle click";
-      button.addEventListener("click", () => {
-        clickSpy();
-      });
-      return button;
-    });
+    defineComponent(
+      tag,
+      () => {
+        const button = document.createElement("button");
+        button.setAttribute("data-dh-client-target", "cta");
+        button.setAttribute("data-dh-client-strategy", "idle");
+        button.textContent = "Idle click";
+        button.addEventListener("click", () => {
+          clickSpy();
+        });
+        return button;
+      },
+      { hydration: { unsupported: "rerender" } },
+    );
 
     const container = document.createElement("div");
     container.innerHTML = `<${tag}><template shadowrootmode="open"><button data-dh-client-target="cta" data-dh-client-strategy="idle">Idle click</button></template></${tag}>`;
@@ -1348,15 +1364,19 @@ describe("defineComponent", () => {
     const tag = uniqueTag();
     const clickSpy = vi.fn();
 
-    defineComponent(tag, () => {
-      const button = document.createElement("button");
-      button.setAttribute("data-dh-client-target", "cta");
-      button.textContent = "Click me";
-      button.addEventListener("click", () => {
-        clickSpy();
-      });
-      return button;
-    });
+    defineComponent(
+      tag,
+      () => {
+        const button = document.createElement("button");
+        button.setAttribute("data-dh-client-target", "cta");
+        button.textContent = "Click me";
+        button.addEventListener("click", () => {
+          clickSpy();
+        });
+        return button;
+      },
+      { hydration: { unsupported: "rerender" } },
+    );
 
     const container = document.createElement("div");
     container.innerHTML = `<${tag} data-dh-island="interaction"><template shadowrootmode="open"><button data-dh-client-target="cta">Click me</button></template></${tag}>`;
@@ -1381,15 +1401,19 @@ describe("defineComponent", () => {
     const tag = uniqueTag();
     const keySpy = vi.fn();
 
-    defineComponent(tag, () => {
-      const input = document.createElement("input");
-      input.setAttribute("data-dh-client-target", "field");
-      input.setAttribute("data-dh-client-event", "keydown");
-      input.addEventListener("keydown", (event) => {
-        keySpy((event as KeyboardEvent).key);
-      });
-      return input;
-    });
+    defineComponent(
+      tag,
+      () => {
+        const input = document.createElement("input");
+        input.setAttribute("data-dh-client-target", "field");
+        input.setAttribute("data-dh-client-event", "keydown");
+        input.addEventListener("keydown", (event) => {
+          keySpy((event as KeyboardEvent).key);
+        });
+        return input;
+      },
+      { hydration: { unsupported: "rerender" } },
+    );
 
     const container = document.createElement("div");
     container.innerHTML = `<${tag}><template shadowrootmode="open"><input data-dh-client-target="field" data-dh-client-strategy="interaction" data-dh-client-event="keydown"></template></${tag}>`;
@@ -1768,7 +1792,7 @@ describe("defineComponent", () => {
     el.remove();
   });
 
-  it("should expand DSD <template shadowrootmode> into real shadowRoot on fallback", async () => {
+  it("should preserve DSD content by default when no hydrate plan is available", async () => {
     const tag = uniqueTag();
     const setupFn = vi.fn(() => document.createTextNode("re-rendered"));
 
@@ -1786,14 +1810,35 @@ describe("defineComponent", () => {
     expect(el.querySelector("template")).toBeNull();
     // ShadowRoot should exist
     expect(el.shadowRoot).not.toBeNull();
-    // Without hydrate option, setup runs and clears DSD content, then re-renders
-    expect(setupFn).toHaveBeenCalled();
+    // Without hydrate option or compiler plan, DSD content is preserved by default.
+    expect(setupFn).not.toHaveBeenCalled();
+    expect(el.shadowRoot!.textContent).toBe("SSR fallback content");
+
+    el.remove();
+  });
+
+  it("should rerender DSD content only when unsupported hydration explicitly opts in", async () => {
+    const tag = uniqueTag();
+    const setupFn = vi.fn(() => document.createTextNode("re-rendered"));
+
+    defineComponent(tag, setupFn, {
+      hydration: { unsupported: "rerender" },
+    });
+
+    const container = document.createElement("div");
+    container.innerHTML = `<${tag}><template shadowrootmode="open"><div>SSR fallback content</div></template></${tag}>`;
+    const el = container.firstElementChild!;
+
+    document.body.appendChild(el);
+    await waitForMicrotask();
+
+    expect(setupFn).toHaveBeenCalledTimes(1);
     expect(el.shadowRoot!.textContent).toBe("re-rendered");
 
     el.remove();
   });
 
-  it("should log unsupportedReason and fallback to setup rerender when compiler-generated hydration is unsupported", async () => {
+  it("should log unsupportedReason and preserve DSD when compiler-generated hydration is unsupported", async () => {
     const tag = uniqueTag();
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const setupFn = vi.fn(({ props }) => {
@@ -1822,16 +1867,43 @@ describe("defineComponent", () => {
     document.body.appendChild(el);
     await waitForMicrotask();
 
-    expect(setupFn).toHaveBeenCalledTimes(1);
-    expect(el.shadowRoot?.textContent).toBe("fallback");
+    expect(setupFn).not.toHaveBeenCalled();
+    expect(el.shadowRoot?.textContent).toBe("SSR");
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "compiler-generated hydration is unsupported: imperative-dom-query",
-      ),
+      expect.stringContaining("Preserving existing DSD for"),
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("imperative-dom-query"),
     );
 
     el.remove();
     warnSpy.mockRestore();
+  });
+
+  it("should report an error and preserve DSD when unsupported hydration is strict", async () => {
+    const tag = uniqueTag();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const setupFn = vi.fn(() => document.createTextNode("strict-rerender"));
+
+    defineComponent(tag, setupFn, {
+      hydration: { unsupported: "error" },
+    });
+
+    const container = document.createElement("div");
+    container.innerHTML = `<${tag}><template shadowrootmode="open"><div>strict SSR</div></template></${tag}>`;
+    const el = container.firstElementChild as HTMLElement;
+
+    document.body.appendChild(el);
+    await waitForMicrotask();
+
+    expect(setupFn).not.toHaveBeenCalled();
+    expect(el.shadowRoot?.textContent).toBe("strict SSR");
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Unsupported hydration for"),
+    );
+
+    el.remove();
+    errorSpy.mockRestore();
   });
 
   it("should exclude attribute: false prop from observedAttributes and only allow JS property setter", async () => {

@@ -65,28 +65,25 @@ void import("./AppRoot").then(() => {
   });
 });`}</DocCodeBlock>
 
-      <h2>Hydration Hooks</h2>
+      <h2>Hydration Behavior</h2>
       <p>
-        If the default upgrade behavior is not enough, pass a <code>hydrate</code> option to{" "}
-        <code>defineComponent()</code>. It receives the existing host, props, and store so you can
-        replace or attach to the server-rendered shadow content.
+        Dathra treats server-rendered Declarative Shadow DOM as the source of truth during upgrade.
+        Supported compiler-generated hydration plans connect bindings in place; unsupported DSD
+        keeps its existing DOM instead of being replaced.
       </p>
       <DocCodeBlock language="tsx">{`const AppRoot = defineComponent(
   "app-root",
   ({ props }) => <main>{props.routePath.value}</main>,
   {
-    hydrate: ({ host, props }) => {
-      const shadowRoot = host.shadowRoot;
-      if (shadowRoot === null) return;
-
-      shadowRoot.innerHTML = "";
-      shadowRoot.append(<main>{props.routePath.value}</main>);
-    },
     props: {
       routePath: { type: String, default: "/" },
     },
   },
 );`}</DocCodeBlock>
+      <p>
+        Use <code>hydration.unsupported: "rerender"</code> only when a component must discard SSR
+        DOM and rebuild itself on the client.
+      </p>
 
       <h2>Islands Architecture</h2>
       <p>

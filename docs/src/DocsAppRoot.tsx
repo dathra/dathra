@@ -72,7 +72,6 @@ export const DocsAppRoot = defineComponent(
     ));
   },
   {
-    hydrate: () => {},
     props: {
       routePath: { type: String, default: "/" },
       requestStoreAppId: { type: String, default: "dathra-docs-root" },

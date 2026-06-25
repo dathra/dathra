@@ -72,6 +72,9 @@
       styles?: readonly (CSSStyleSheet | string)[];
       props?: S;
       hydrate?: HydrateSetupFunction<S>;
+      hydration?: {
+        unsupported?: "preserve-dom" | "rerender" | "error";
+      };
     }
 
     type ComponentConstructor<S extends PropsSchema = PropsSchema> = {
@@ -137,7 +140,9 @@
     - `connectedCallback` では local `styles` と `adoptGlobalStyles()` で登録済みの global style を合成し、`adoptedStyleSheets` へ反映する
     - host-level `data-dh-island*` metadata はその custom element host の hydration boundary を定義し、同じ host setup が生成した subtree 全体は strategy 発火までその boundary に従う
     - DSD が存在し、user-defined `hydrate` または compiler-generated generic setup hydration plan がある場合は既存 Shadow DOM を破壊せず hydrate パスへ入る
-    - DSD が存在し、user-defined `hydrate` も compiler-generated hydration plan もない場合だけ shadowRoot をクリアして再実行する fallback を許可する
+    - DSD が存在し、user-defined `hydrate` も compiler-generated hydration plan もない場合は、デフォルトで既存 Shadow DOM を保持する `preserve-dom` fallback に入る
+    - `hydration.unsupported: "rerender"` が明示された場合だけ、DSD あり unsupported hydration で shadowRoot をクリアして `setup` を再実行する fallback を許可する
+    - `hydration.unsupported: "error"` が明示された場合、DSD あり unsupported hydration は既存 Shadow DOM を保持し、dev/prod ともに error diagnostic を出して hydrate を受理しない
     - DSD と `hydrate` があり、host が runtime が認識する `data-dh-island` metadata（`load` / `visible` / `idle` / `interaction` / `media`）を持つ場合は `connectedCallback` で即 hydrate せず、runtime `hydrateIslands()` が呼ぶ internal hook を host に公開して遅延 hydrate する
     - compiler-generated hydration plan により hydrate される host も、`data-dh-island*` metadata を持つ場合は runtime scheduler の strategy 発火まで in-place hydration を遅延できる
     - deferred host boundary の内側にある通常の DOM 要素や plain component subtree は、host boundary が hydrate されるまで inert な SSR markup として扱う
@@ -150,6 +155,25 @@
     - browser implementation path へ入る条件は `window` 単独ではなく、`document` / `HTMLElement` / `customElements` の capability で判定する
     - 属性から Signal への型変換は `String` / `Number` / `Boolean` / カスタム関数の規則に従い、初期化時と属性変更時で同じ coercion 規則を使う。`Number` では `null` を `Number(null)` にせずデフォルト値へフォールバックする
     - `bindStoreToHost()` は SSR markup の client entry など、store boundary を public API 経由で host に紐付けるために公開する
+  ],
+)
+
+#adr(
+  header("DSD unsupported hydration fallback は DOM 保持をデフォルトにする", Status.Accepted, "2026-06-25"),
+  [
+    DSD が存在する component で compiler-generated hydration plan が生成できない場合、従来の fallback は `setup` を再実行して Shadow DOM 全体を置き換えていた。
+    この挙動は SSR 済み DOM を一時的に破壊し、scroll position / focus / selection / media state / animation state を失わせる可能性がある。
+  ],
+  [
+    unsupported hydration の既定 fallback を `preserve-dom` にする。
+    - `preserve-dom`: 既存 Shadow DOM を保持し、host を hydrated boundary として扱う。ただし setup 内の client bindings は接続されない degraded mode とする。
+    - `rerender`: 明示 opt-in の場合だけ従来通り Shadow DOM を消して `setup` を再実行する。
+    - `error`: 既存 Shadow DOM を保持し、unsupported hydration を diagnostic error として扱う。
+  ],
+  [
+    Hydration の基本原則を「SSR DOM を再利用する」に揃えられる。
+    full rerender は危険な fallback なので暗黙にせず、必要な component だけが明示する。
+    custom hydrate を毎回書かなくても DOM 破壊を避けられる土台を作り、最終的には compiler-generated hydration plan の対応範囲拡大で interactivity も自動接続する。
   ],
 )
 
