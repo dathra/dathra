@@ -13,32 +13,6 @@ function formatCode(code: string): string {
   return lines.map((l) => l.slice(indent)).join("\n");
 }
 
-function resolveSource(children: unknown, code: string): string {
-  return formatCode(typeof children === "string" && children.length > 0 ? children : code);
-}
-
-function highlightedFragment(source: string, language: string): DocumentFragment | undefined {
-  const highlighted = highlightCode(source, language);
-  return highlighted === undefined ? undefined : fromMarkup(highlighted)();
-}
-
-function syncCopyButton(shadowRoot: ShadowRoot, source: string): void {
-  const button = shadowRoot.querySelector<HTMLButtonElement>(".copy-btn");
-  if (button === null) return;
-
-  button.onclick = () => {
-    if (typeof navigator.clipboard?.writeText === "function") {
-      navigator.clipboard.writeText(source).catch(() => {});
-    }
-    button.classList.add("copied");
-    button.textContent = "Copied!";
-    setTimeout(() => {
-      button.classList.remove("copied");
-      button.textContent = "Copy";
-    }, 1800);
-  };
-}
-
 const codeStyles = css`
   :host {
     display: block;
@@ -181,18 +155,6 @@ const DocCodeBlock = defineComponent(
     props: {
       code: { type: String, default: "" },
       language: { type: String, default: "" },
-    },
-    hydrate: ({ host, props, children }) => {
-      const shadowRoot = host.shadowRoot;
-      if (shadowRoot === null) return;
-
-      const source = resolveSource(children, props.code.value ?? "");
-      syncCopyButton(shadowRoot, source);
-
-      if (shadowRoot.querySelector("pre.shiki") !== null) return;
-      const fragment = highlightedFragment(source, props.language.value ?? "");
-      const wrap = shadowRoot.querySelector(".scroll-wrap");
-      if (fragment !== undefined && wrap !== null) wrap.replaceChildren(fragment);
     },
     styles: [codeStyles],
   },

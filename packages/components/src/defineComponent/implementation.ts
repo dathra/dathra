@@ -124,6 +124,8 @@ interface ComponentClientContext {
   readonly hydrated: boolean;
 }
 
+type UnsupportedHydrationBehavior = "preserve-dom" | "rerender" | "error";
+
 interface JSXReactiveValue<T> {
   readonly value: T;
 }
@@ -173,6 +175,10 @@ interface ComponentOptions<S extends PropsSchema = PropsSchema> {
   props?: S;
   /** Hydration setup function for Declarative Shadow DOM. */
   hydrate?: HydrateSetupFunction<S>;
+  /** Behavior when DSD exists but no hydrate function or compiler plan can hydrate it. */
+  hydration?: {
+    unsupported?: UnsupportedHydrationBehavior;
+  };
 }
 
 /** Component class with tag name and schema metadata. */
@@ -321,6 +327,12 @@ function isIslandsDirectiveProp(
 
 function isKnownIslandStrategy(value: string | null): boolean {
   return isIslandStrategyName(value) && KNOWN_ISLAND_STRATEGIES.has(value);
+}
+
+function getUnsupportedHydrationBehavior(
+  options: ComponentOptions<PropsSchema>,
+): UnsupportedHydrationBehavior {
+  return options.hydration?.unsupported ?? "preserve-dom";
 }
 
 function getNormalizedIslandStrategy(
@@ -856,6 +868,9 @@ function createClientDefinedComponent<S extends PropsSchema>(
   hydrationMetadata?: ComponentHydrationMetadata,
 ): DefinedComponent<S> {
   const { styles, props: propsSchema, hydrate: hydrateSetup } = options;
+  const unsupportedHydrationBehavior = getUnsupportedHydrationBehavior(
+    options as ComponentOptions<PropsSchema>,
+  );
 
   if (typeof __DEV__ !== "undefined" && __DEV__) {
     if (!tagName.includes("-")) {
@@ -898,6 +913,7 @@ function createClientDefinedComponent<S extends PropsSchema>(
     static observedAttributes = observedAttrNames;
     #dispose: RootDispose | undefined;
     #clientActionCleanup: (() => void) | undefined;
+    #hasDeclarativeShadowRoot = false;
     #islandHydrationAccepted = false;
     #storeRetryScheduled = false;
 
@@ -910,12 +926,15 @@ function createClientDefinedComponent<S extends PropsSchema>(
           ":scope > template[shadowrootmode]",
         ) as HTMLTemplateElement | null;
         if (template) {
+          this.#hasDeclarativeShadowRoot = true;
           const shadow = this.attachShadow({ mode: "open" });
           shadow.appendChild(template.content);
           template.remove();
         } else {
           this.attachShadow({ mode: "open" });
         }
+      } else {
+        this.#hasDeclarativeShadowRoot = true;
       }
 
       if (propsSchema) {
@@ -938,7 +957,8 @@ function createClientDefinedComponent<S extends PropsSchema>(
     connectedCallback(): void {
       const propSignals = propSignalMap.get(this) ?? {};
       const shadowRoot = this.shadowRoot!;
-      const hasDSD = shadowRoot.childNodes.length > 0;
+      const hasDSD =
+        this.#hasDeclarativeShadowRoot && shadowRoot.childNodes.length > 0;
       let colocatedStrategy = hasDSD
         ? getColocatedClientStrategyFromShadowRoot(shadowRoot)
         : null;
@@ -1140,13 +1160,10 @@ function createClientDefinedComponent<S extends PropsSchema>(
         }
       };
 
-      const logUnsupportedHydrationReason = (): void => {
-        if (hydrationMetadata?.unsupportedReason === undefined) {
-          return;
-        }
-
-        console.warn(
-          `[dathra] Falling back to setup rerender for <${tagName}> because compiler-generated hydration is unsupported: ${hydrationMetadata.unsupportedReason}`,
+      const getUnsupportedHydrationReason = (): string => {
+        return (
+          hydrationMetadata?.unsupportedReason ??
+          "no hydrate function or compiler plan"
         );
       };
 
@@ -1183,6 +1200,61 @@ function createClientDefinedComponent<S extends PropsSchema>(
         }
       };
 
+      const preserveUnsupportedHydration = (
+        trigger?: IslandHydrationTrigger,
+      ): boolean => {
+        const reason = getUnsupportedHydrationReason();
+
+        if (unsupportedHydrationBehavior === "error") {
+          console.error(
+            `[dathra] Unsupported hydration for <${tagName}>: ${reason}`,
+          );
+          return false;
+        }
+
+        if (
+          typeof __DEV__ !== "undefined" &&
+          __DEV__ &&
+          hydrationMetadata?.unsupportedReason !== undefined
+        ) {
+          console.warn(
+            `[dathra] Preserving existing DSD for <${tagName}> because hydration is unsupported: ${reason}`,
+          );
+        }
+
+        this.#dispose = createRoot(() => {});
+        this.#islandHydrationAccepted = true;
+        finalizeHostClientActions(trigger);
+        replayHydrationTrigger(shadowRoot, trigger);
+        if (
+          isKnownIslandStrategy(this.getAttribute(ISLAND_METADATA_ATTRIBUTE))
+        ) {
+          (this as Record<PropertyKey, unknown>)[HYDRATE_ISLANDS_STATUS] =
+            "hydrated";
+        }
+        return true;
+      };
+
+      const runUnsupportedHydrationFallback = (
+        trigger?: IslandHydrationTrigger,
+      ): boolean => {
+        if (unsupportedHydrationBehavior === "rerender") {
+          const reason = getUnsupportedHydrationReason();
+          if (
+            typeof __DEV__ !== "undefined" &&
+            __DEV__ &&
+            hydrationMetadata?.unsupportedReason !== undefined
+          ) {
+            console.warn(
+              `[dathra] Falling back to setup rerender for <${tagName}> because hydration is unsupported: ${reason}`,
+            );
+          }
+          return runSetup(trigger);
+        }
+
+        return preserveUnsupportedHydration(trigger);
+      };
+
       if (hasDSD) {
         if (this.shadowRoot!.adoptedStyleSheets.length > 0) {
           const dsdStyles = shadowRoot.querySelectorAll("style");
@@ -1208,7 +1280,7 @@ function createClientDefinedComponent<S extends PropsSchema>(
                 ? runHydrate(trigger)
                 : planFactory !== null
                   ? runHydrateWithPlan(trigger)
-                  : runSetup(trigger);
+                  : runUnsupportedHydrationFallback(trigger);
             if (didHydrate) {
               (this as Record<PropertyKey, unknown>)[HYDRATE_ISLANDS_STATUS] =
                 "hydrated";
@@ -1223,8 +1295,7 @@ function createClientDefinedComponent<S extends PropsSchema>(
         } else if (planFactory !== null) {
           runHydrateWithPlan();
         } else {
-          logUnsupportedHydrationReason();
-          runSetup();
+          runUnsupportedHydrationFallback();
         }
       } else {
         runSetup();

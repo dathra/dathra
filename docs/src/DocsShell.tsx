@@ -17,6 +17,20 @@ function DocsShell({
 
   return (
     <>
+      <main class="content">
+        {currentRoute !== undefined ? (
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Docs</a>
+            <span aria-hidden="true">/</span>
+            <a href={currentSectionRoute?.path ?? "/"}>{currentRoute.section}</a>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{currentRoute.label}</span>
+          </nav>
+        ) : (
+          <></>
+        )}
+        {renderPage()}
+      </main>
       <aside class="sidebar-desktop">
         <h2>Dathra</h2>
         <p class="version">v0.0.21</p>
@@ -35,20 +49,6 @@ function DocsShell({
           ))}
         </nav>
       </aside>
-      <main class="content">
-        {currentRoute !== undefined ? (
-          <nav class="breadcrumb" aria-label="Breadcrumb">
-            <a href="/">Docs</a>
-            <span aria-hidden="true">/</span>
-            <a href={currentSectionRoute?.path ?? "/"}>{currentRoute.section}</a>
-            <span aria-hidden="true">/</span>
-            <span aria-current="page">{currentRoute.label}</span>
-          </nav>
-        ) : (
-          <></>
-        )}
-        {renderPage()}
-      </main>
       <MobileNav routePath={routePath} />
     </>
   );

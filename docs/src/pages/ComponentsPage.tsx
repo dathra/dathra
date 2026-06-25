@@ -66,29 +66,32 @@ const html = renderDSD(MyCounter, { initial: 5 });
 
       <h2>Hydration</h2>
       <p>
-        When the DSD-rendered element upgrades on the client, the <code>hydrate</code> option lets
-        you replace the server-generated Shadow DOM content with a reactive client-side tree:
+        When a DSD-rendered element upgrades on the client, Dathra preserves the existing Shadow DOM
+        by default. Compiler-generated hydration plans attach supported text, attr, event, and
+        insert bindings in place, so most components do not need a custom <code>hydrate</code>{" "}
+        option.
       </p>
       <DocCodeBlock language="tsx">{`const AppRoot = defineComponent(
   "app-root",
   ({ props }) => {
-    // Fresh render for non-DSD / island hydration
     return <main>{props.route.value}</main>;
   },
   {
     props: {
       route: { type: String },
     },
-    hydrate: ({ host, props }) => {
-      // Replace DSD content with reactive client tree
-      const shadow = host.shadowRoot;
-      if (shadow === null) return;
-      shadow.innerHTML = "";
-      shadow.append(<main>{props.route.value}</main>);
-    },
     styles: [baseStyles],
   },
 );`}</DocCodeBlock>
+      <p>
+        If a component is intentionally client-rendered after SSR, opt in to the legacy replacement
+        fallback explicitly:
+      </p>
+      <DocCodeBlock language="tsx">{`defineComponent("client-only-widget", setup, {
+  hydration: {
+    unsupported: "rerender",
+  },
+});`}</DocCodeBlock>
 
       <h2>CSS Helpers</h2>
       <DocCodeBlock language="ts">{`import { css, adoptGlobalStyles } from "@dathra/components";
