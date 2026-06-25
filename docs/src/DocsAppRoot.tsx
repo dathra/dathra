@@ -1,6 +1,5 @@
 import { defineComponent } from "@dathra/components";
 import { getCurrentStore, withStore } from "@dathra/core";
-import { fromMarkup } from "@dathra/runtime";
 
 import { createDocsStore } from "./store";
 import baseStyles from "./style.css?raw";
@@ -50,15 +49,6 @@ const docPageRenderers = {
   "/reference/core/hydration": () => <ReferencePage referenceId="core-hydration" />,
 } satisfies Record<string, (_props: DocPageProps) => JSX.Element>;
 
-function replaceShadowRootContent(shadowRoot: ShadowRoot, content: string | Node): void {
-  shadowRoot.innerHTML = "";
-  if (typeof content === "string") {
-    shadowRoot.append(fromMarkup(content)());
-    return;
-  }
-  shadowRoot.append(content);
-}
-
 export const DocsAppRoot = defineComponent(
   "dathra-docs",
   ({ props }) => {
@@ -82,26 +72,7 @@ export const DocsAppRoot = defineComponent(
     ));
   },
   {
-    hydrate: ({ host, props, store }) => {
-      const routePath = props.routePath.value as DocRoutePath;
-      const shadowRoot = host.shadowRoot;
-      if (shadowRoot === null) return;
-
-      const renderPage = docPageRenderers[routePath];
-      const pageContent =
-        renderPage !== undefined ? (
-          renderPage({ requestStoreAppId: props.requestStoreAppId.value })
-        ) : (
-          <OverviewPage />
-        );
-
-      replaceShadowRootContent(
-        shadowRoot,
-        withStore(store, () => (
-          <DocsShell routePath={routePath} renderPage={() => pageContent} />
-        )) as string | Node,
-      );
-    },
+    hydrate: () => {},
     props: {
       routePath: { type: String, default: "/" },
       requestStoreAppId: { type: String, default: "dathra-docs-root" },
