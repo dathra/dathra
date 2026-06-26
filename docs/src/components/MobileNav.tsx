@@ -27,13 +27,13 @@ const mobileStyles = css`
 
   .sidebar {
     position: fixed;
-    bottom: 16px;
+    bottom: 96px;
     left: 16px;
     right: 16px;
     width: auto;
     top: auto;
     height: auto;
-    max-height: calc(70vh - 32px);
+    max-height: calc(70vh - 112px);
     z-index: 150;
     background: var(--page-bg);
     border: 1px solid var(--panel-border);
@@ -47,7 +47,6 @@ const mobileStyles = css`
 
   .sidebar.is-open {
     transform: translateY(0);
-    padding-bottom: 68px;
   }
 
   .sidebar h2 {
@@ -97,12 +96,33 @@ const mobileStyles = css`
     font-weight: 600;
   }
 
-  .menu-btn {
+  .bottom-header {
     position: fixed;
     bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 16px;
+    right: 16px;
     z-index: 200;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    padding: 0 10px 0 18px;
+    border: 1px solid var(--panel-border);
+    border-radius: 18px;
+    background: var(--page-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .brand {
+    font-size: 0.98rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .menu-btn {
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -110,8 +130,7 @@ const mobileStyles = css`
     height: 44px;
     border: 1px solid var(--panel-border);
     border-radius: 50%;
-    background: var(--page-bg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: color-mix(in srgb, var(--panel-bg) 74%, var(--page-bg));
     cursor: pointer;
     font-family: inherit;
     font-size: 0.82rem;
@@ -189,13 +208,16 @@ const MobileNav = defineComponent(
 
     return (
       <>
-        <button
-          class={"menu-btn" + (menuOpen.value ? " is-open" : "")}
-          onClick={toggle}
-          aria-label="Toggle navigation menu"
-        >
-          <span class="menu-icon" />
-        </button>
+        <header class="bottom-header">
+          <span class="brand">Dathra</span>
+          <button
+            class={"menu-btn" + (menuOpen.value ? " is-open" : "")}
+            onClick={toggle}
+            aria-label="Toggle navigation menu"
+          >
+            <span class="menu-icon" />
+          </button>
+        </header>
         <div class={"backdrop" + (menuOpen.value ? " is-open" : "")} onClick={close} />
         <aside class={"sidebar" + (menuOpen.value ? " is-open" : "")} onClick={onLinkClick}>
           <h2>Dathra</h2>
