@@ -17,6 +17,12 @@ import type { EffectCleanup } from "../types";
 
 /**
  * Run and flush all registered effect-scope cleanup functions.
+ *
+ * These cleanups belong to a single effect execution. They run before the next
+ * execution and when the effect is stopped. Failures are isolated so one broken
+ * cleanup cannot prevent later cleanups from running.
+ *
+ * @param {(() => void)[]} cleanups Mutable cleanup list for one effect.
  */
 function runEffectCleanups(cleanups: (() => void)[]): void {
   for (const fn of cleanups) {
@@ -33,6 +39,13 @@ function runEffectCleanups(cleanups: (() => void)[]): void {
  * Register a reactive side-effect that re-runs when tracked dependencies change.
  * Supports `onCleanup` calls within the effect body: registered cleanups run
  * before each re-execution and when the returned stop function is called.
+ *
+ * The initial run is executed immediately with this effect node as `activeSub`,
+ * so signal and computed reads can link themselves to the effect. Re-executions
+ * use a wrapped function that first clears the previous effect-scope cleanups.
+ * The returned cleanup function runs those cleanups and unlinks the effect from
+ * the reactive graph.
+ *
  * @param {() => void} fn Effect function to execute and track.
  * @returns {EffectCleanup} Cleanup function that stops the effect.
  */

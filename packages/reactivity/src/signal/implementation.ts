@@ -18,6 +18,20 @@ import {
 } from "../internal/system";
 import type { Signal } from "../types";
 
+/**
+ * Read from or write to a signal node.
+ *
+ * With a value argument this performs a write, marks the node dirty when the
+ * value changed, propagates to subscribers, and flushes immediately unless a
+ * batch is active. Without a value argument this performs a tracked read,
+ * updates the node's previous value when needed, and links the signal to the
+ * current active subscriber.
+ *
+ * @template T
+ * @param {SignalNode<T>} node Internal signal node.
+ * @param {[] | [T]} value Optional single value used for writes.
+ * @returns {T | void} Current value for reads, otherwise void.
+ */
 function signalOper<T>(node: SignalNode<T>, ...value: [] | [T]): T | void {
   if (value.length > 0) {
     const oldValue = node.value;
@@ -58,6 +72,17 @@ function signalOper<T>(node: SignalNode<T>, ...value: [] | [T]): T | void {
   }
 }
 
+/**
+ * Create the public Signal API around an internal signal node.
+ *
+ * `.value` performs a tracked read, `.peek()` performs the same read with
+ * tracking disabled, and `.set()` normalizes direct values and updater
+ * callbacks into a write operation.
+ *
+ * @template T
+ * @param {SignalNode<T>} node Internal signal node to expose.
+ * @returns {Signal<T>} Public signal object.
+ */
 function createSignalApi<T>(node: SignalNode<T>): Signal<T> {
   const readTracked = () => signalOper(node) as T;
   const readUntracked = () => withNoTracking(() => signalOper(node) as T);
@@ -84,6 +109,12 @@ function createSignalApi<T>(node: SignalNode<T>): Signal<T> {
 
 /**
  * Create a mutable signal that tracks reads and notifies dependents on updates.
+ *
+ * Signals are the mutable source nodes of the reactive graph. Reading `.value`
+ * links the signal to the currently running effect or computed node. Calling
+ * `.set()` updates the value and propagates only when `Object.is` reports a
+ * real change.
+ *
  * @template T
  * @param {T} initialValue Initial value stored in the signal.
  * @returns {Signal<T>} Reactive signal instance.

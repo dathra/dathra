@@ -10,6 +10,12 @@ import { getCurrentEffectCleanups, getCurrentOwner } from "../internal/state";
  * When called inside an `effect`, the cleanup runs before the effect re-executes
  * or when the effect is stopped. When called inside a `createRoot`, the cleanup
  * runs when the root is disposed.
+ *
+ * Effect cleanups take priority over root cleanups. This matters for an effect
+ * created inside a root: `onCleanup` should belong to the effect execution so it
+ * can run before re-execution, not only when the root is disposed. Calls outside
+ * both scopes are treated as no-ops.
+ *
  * @param {() => void} fn Cleanup function to register.
  */
 function onCleanup(fn: () => void): void {
