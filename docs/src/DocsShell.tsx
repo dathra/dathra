@@ -17,6 +17,7 @@ function DocsShell({
 
   return (
     <>
+      <MobileNav routePath={routePath} />
       <main class="content">
         {currentRoute !== undefined ? (
           <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -49,7 +50,6 @@ function DocsShell({
           ))}
         </nav>
       </aside>
-      <MobileNav routePath={routePath} />
     </>
   );
 }

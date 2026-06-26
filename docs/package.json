@@ -8,6 +8,7 @@
     "build:client": "vite build --outDir dist/client",
     "build:server": "vite build --outDir dist/server --ssr src/entry-server.tsx",
     "build": "pnpm build:client && pnpm build:server",
+    "preview": "node server.mjs",
     "fmt": "oxfmt --ignore-path ../.gitignore --no-error-on-unmatched-pattern --write \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\"",
     "fmt:check": "oxfmt --ignore-path ../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\""
   },
