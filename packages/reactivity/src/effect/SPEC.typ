@@ -45,7 +45,7 @@
   ],
   edge_cases: [
     - effect のクリーンアップは冪等（複数回呼び出しても安全）
-    - createRoot 内の effect は owner によって追跡される
+    - createRoot 内の effect は owner によって自動追跡されない
     - createRoot 外の effect は独立している
     - effect 内で onCleanup を複数回呼ぶと、すべて登録順に実行される
     - effect 内の onCleanup が throw しても、後続の onCleanup は継続して実行される
