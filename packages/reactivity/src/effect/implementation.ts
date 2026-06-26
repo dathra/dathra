@@ -20,7 +20,11 @@ import type { EffectCleanup } from "../types";
  */
 function runEffectCleanups(cleanups: (() => void)[]): void {
   for (const fn of cleanups) {
-    fn();
+    try {
+      fn();
+    } catch {
+      // Continue running later cleanups even when one fails.
+    }
   }
   cleanups.length = 0;
 }

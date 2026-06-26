@@ -48,6 +48,7 @@
     - createRoot 内の effect は owner によって追跡される
     - createRoot 外の effect は独立している
     - effect 内で onCleanup を複数回呼ぶと、すべて登録順に実行される
+    - effect 内の onCleanup が throw しても、後続の onCleanup は継続して実行される
     - 初回実行中に自身が読んだ signal を更新しても、初回実行が戻る前に同じ effect を再入実行しない
   ],
   test_cases: [
@@ -58,6 +59,7 @@
     - effect 内で onCleanup を登録し、再実行前に実行される
     - effect 内で onCleanup を登録し、stop() 時に実行される
     - effect 内で複数の onCleanup を登録すると順番に実行される
+    - effect 内の onCleanup が throw しても後続の onCleanup が実行される
     - effect 再実行時に前回の onCleanup が破棄され新しいものが登録される
     - effect 内で作成した effect は、外側 effect 再実行時に自動クリーンアップされる
     - 初回実行中の self-write は初回実行中に再入実行されない

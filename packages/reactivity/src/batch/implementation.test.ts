@@ -89,4 +89,28 @@ describe("batch", () => {
     const result = batch(() => 42);
     expect(result).toBe(42);
   });
+
+  it("ends batch and flushes partial updates when callback throws", () => {
+    const count = signal(0);
+    const observed: number[] = [];
+
+    effect(() => {
+      observed.push(count.value);
+    });
+
+    expect(() =>
+      batch(() => {
+        count.set(1);
+        throw new Error("batch error");
+      }),
+    ).toThrow("batch error");
+
+    expect(observed).toEqual([0, 1]);
+
+    batch(() => {
+      count.set(2);
+    });
+
+    expect(observed).toEqual([0, 1, 2]);
+  });
 });

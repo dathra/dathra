@@ -145,6 +145,38 @@ describe("effect onCleanup integration", () => {
     expect(order).toEqual([1, 2, 3]);
   });
 
+  it("continues effect cleanups when one cleanup throws before re-execution", () => {
+    const count = signal(0);
+    const log: string[] = [];
+
+    effect(() => {
+      void count.value;
+      onCleanup(() => log.push("first"));
+      onCleanup(() => {
+        throw new Error("cleanup error");
+      });
+      onCleanup(() => log.push("third"));
+    });
+
+    expect(() => count.set(1)).not.toThrow();
+    expect(log).toEqual(["first", "third"]);
+  });
+
+  it("continues effect cleanups when one cleanup throws on stop", () => {
+    const log: string[] = [];
+
+    const stop = effect(() => {
+      onCleanup(() => log.push("first"));
+      onCleanup(() => {
+        throw new Error("cleanup error");
+      });
+      onCleanup(() => log.push("third"));
+    });
+
+    expect(() => stop()).not.toThrow();
+    expect(log).toEqual(["first", "third"]);
+  });
+
   it("re-execution replaces previous onCleanup with new ones", () => {
     const count = signal(0);
     const log: string[] = [];
