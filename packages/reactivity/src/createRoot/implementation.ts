@@ -11,8 +11,13 @@ import {
 
 /**
  * Create a cleanup scope that tracks effects and cleanup functions.
- * All effects and templateEffects created within the callback are automatically
- * tracked and disposed when the returned dispose function is called.
+ *
+ * The callback runs with a fresh owner as the current owner. `templateEffect`
+ * instances created in that callback register their stop functions in
+ * `owner.effects`, and `onCleanup` calls outside effect execution register in
+ * `owner.cleanups`. Plain `effect` calls are not auto-tracked and must be
+ * stopped manually or registered with `onCleanup`.
+ *
  * Nested createRoot scopes are automatically disposed when the parent is disposed.
  * @param {(dispose: RootDispose) => void} fn Callback to run within the scope.
  * @returns {RootDispose} Dispose function that cleans up all tracked effects.

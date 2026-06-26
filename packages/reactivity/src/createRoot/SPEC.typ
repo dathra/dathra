@@ -7,7 +7,7 @@
 == 目的
 
 effect とクリーンアップ関数を追跡するクリーンアップスコープを作成する。
-コールバック内で作成されたすべての effect と templateEffect は自動的に追跡され、
+コールバック内で作成された templateEffect とネストされた createRoot は自動的に追跡され、
 返された dispose 関数が呼び出されたときに破棄される。
 
 == 機能仕様
@@ -15,7 +15,7 @@ effect とクリーンアップ関数を追跡するクリーンアップスコ�
 #feature_spec(
   name: "createRoot",
   summary: [
-    effect と cleanup を束ねる owner スコープを作成し、dispose でまとめて破棄する。
+    templateEffect と cleanup を束ねる owner スコープを作成し、dispose でまとめて破棄する。
   ],
   api: [
     ```typescript
@@ -56,8 +56,8 @@ effect とクリーンアップ関数を追跡するクリーンアップスコ�
   ],
   test_cases: [
     - dispose 関数を返す
-    - スコープ内で作成された effect を追跡してクリーンアップする
-    - 複数の effect を追跡する
+    - スコープ内で作成された templateEffect を追跡してクリーンアップする
+    - 複数の templateEffect を追跡する
     - コールバックに dispose 関数を提供する
     - ネストされた createRoot を処理する
     - createRoot 外の effect は追跡しない
