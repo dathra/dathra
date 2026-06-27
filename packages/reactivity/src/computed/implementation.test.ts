@@ -159,6 +159,37 @@ describe("computed", () => {
       count.set(10);
       expect(comp.value).toBe(20);
     });
+
+    it("keeps existing dependencies when getter throws", () => {
+      const count = signal(1);
+      let shouldThrow = false;
+      const observed: number[] = [];
+      const failures: string[] = [];
+      const comp = computed(() => {
+        if (shouldThrow) {
+          throw new Error("getter error");
+        }
+        return count.value * 2;
+      });
+
+      effect(() => {
+        try {
+          observed.push(comp.value);
+        } catch (error) {
+          failures.push((error as Error).message);
+        }
+      });
+
+      expect(observed).toEqual([2]);
+
+      shouldThrow = true;
+      expect(() => count.set(2)).toThrow("getter error");
+      expect(failures).toEqual([]);
+
+      shouldThrow = false;
+      count.set(3);
+      expect(observed).toEqual([2, 6]);
+    });
   });
 
   describe("peek", () => {
@@ -285,6 +316,25 @@ describe("computed", () => {
       // The effect must not re-run because doubleFortyTwo's value did not change
       expect(observed).toEqual([84]);
       expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not re-run downstream effects when computed remains NaN", () => {
+      const flag = signal(false);
+      const notANumber = computed(() => {
+        void flag.value;
+        return NaN;
+      });
+      const observed: number[] = [];
+
+      effect(() => {
+        observed.push(notANumber.value);
+      });
+
+      expect(observed).toEqual([NaN]);
+
+      flag.set(true);
+
+      expect(observed).toEqual([NaN]);
     });
   });
 });

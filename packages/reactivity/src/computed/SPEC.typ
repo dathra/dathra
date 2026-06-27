@@ -38,6 +38,7 @@
     *依存関係の追跡*:
     - computed 内で読み取られた signal は依存関係になる
     - computed を読み取る effect は computed に依存する
+    - `computed.peek()` は値を読み取るが、呼び出し元を computed の依存先として登録しない
     - 最初の計算時には `undefined` が渡される
     - 以降の計算では前回の値が渡される
 
@@ -61,6 +62,8 @@
     - 最初の計算時に `undefined` を渡す
     - 以降の計算では前回の値を渡す
     - getter が throw しても状態を破損しない
+    - getter が throw しても既存 deps が保持され、次の依存元更新で再通知される
+    - computed の戻り値が `NaN` から `NaN` のままの場合、下流の effect は再実行されない
     - `__type__` が `"computed"` であることを確認する
     - signal → computed → computed → effect の chain で signal 変更時に effect が最新値を取得する
     - chain 途中の computed の値が変わらない場合、下流の effect は再実行されない

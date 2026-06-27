@@ -307,6 +307,10 @@ function updateComputed<T>(computed: ComputedNode<T>): boolean {
       computed.depsTail = oldDepsTail;
       // Mark as dirty so it will retry on next read
       computed.flags |= ReactiveFlags.Dirty;
+      const subs = computed.subs;
+      if (subs !== undefined) {
+        shallowPropagate(subs);
+      }
     }
   }
 }
