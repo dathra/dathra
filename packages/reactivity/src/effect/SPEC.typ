@@ -31,6 +31,7 @@
     - 返されたクリーンアップ関数は effect を停止する
     - クリーンアップ後、effect は再実行されない
     - クリーンアップはすべての追跡された依存関係を切断する
+    - stop() 時は依存関係を切断してから effect スコープの onCleanup を実行する
 
     *依存関係の追跡*:
     - effect 内での signal/computed の読み取りは依存関係になる
@@ -58,10 +59,13 @@
     - 複数の連続した変更を正しく処理する
     - effect 内で onCleanup を登録し、再実行前に実行される
     - effect 内で onCleanup を登録し、stop() 時に実行される
+    - stop() 時の onCleanup が依存 signal を更新しても停止対象 effect は再実行されない
+    - stop() を複数回呼んでも cleanup は一度だけ実行される
     - effect 内で複数の onCleanup を登録すると順番に実行される
     - effect 内の onCleanup が throw しても後続の onCleanup が実行される
     - effect 再実行時に前回の onCleanup が破棄され新しいものが登録される
     - effect 内で作成した effect は、外側 effect 再実行時に自動クリーンアップされる
+    - createRoot 内で作成した通常 effect は root dispose で自動停止されない
     - 初回実行中の self-write は初回実行中に再入実行されない
   ],
 )

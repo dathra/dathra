@@ -84,8 +84,8 @@ function effect(fn: () => void): EffectCleanup {
   }
 
   return () => {
-    runEffectCleanups(effectCleanups);
     effectCleanup(effectNode);
+    runEffectCleanups(effectCleanups);
   };
 }
 

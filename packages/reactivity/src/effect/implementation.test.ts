@@ -130,6 +130,33 @@ describe("effect onCleanup integration", () => {
     expect(cleanupSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("does not re-run when stop cleanup updates a dependency", () => {
+    const count = signal(0);
+    const observed: number[] = [];
+
+    const stop = effect(() => {
+      observed.push(count.value);
+      onCleanup(() => count.set(1));
+    });
+
+    stop();
+
+    expect(observed).toEqual([0]);
+    expect(count.value).toBe(1);
+  });
+
+  it("runs effect cleanups only once when stopped repeatedly", () => {
+    const cleanupSpy = vi.fn();
+    const stop = effect(() => {
+      onCleanup(cleanupSpy);
+    });
+
+    stop();
+    stop();
+
+    expect(cleanupSpy).toHaveBeenCalledTimes(1);
+  });
+
   it("multiple onCleanup calls in effect run in order", () => {
     const order: number[] = [];
     const count = signal(0);
@@ -231,6 +258,24 @@ describe("effect - cleanup context restoration", () => {
 
     // root cleanup runs; effect cleanups ran at stop time (effects are stopped first)
     expect(log).toContain("root");
+  });
+
+  it("plain effects created inside createRoot are not stopped by root dispose", () => {
+    const count = signal(0);
+    const observed: number[] = [];
+
+    const dispose = createRoot(() => {
+      effect(() => {
+        observed.push(count.value);
+      });
+    });
+
+    expect(observed).toEqual([0]);
+
+    dispose();
+    count.set(1);
+
+    expect(observed).toEqual([0, 1]);
   });
 });
 
