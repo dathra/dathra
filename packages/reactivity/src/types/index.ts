@@ -7,7 +7,9 @@
 export type { Owner, RootDispose } from "../internal/state";
 
 /** Function or value for updating a signal */
-type SignalUpdate<T> = T | ((prev: T) => T);
+type SignalUpdate<T> = [T] extends [(...args: never[]) => unknown]
+  ? T
+  : T | ((prev: T) => T);
 
 /** Cleanup function returned by effect() */
 type EffectCleanup = () => void;

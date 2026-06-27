@@ -31,6 +31,17 @@ describe("signal", () => {
       count.set((prev) => prev + 5);
       expect(count.value).toBe(15);
     });
+
+    it("sets function values without treating them as updater functions", () => {
+      const initial = () => "initial";
+      const next = () => "next";
+      const fn = signal(initial);
+
+      fn.set(next);
+
+      expect(fn.value).toBe(next);
+      expect(fn.value()).toBe("next");
+    });
   });
 
   describe("Dependency tracking", () => {

@@ -84,6 +84,7 @@ function signalOper<T>(node: SignalNode<T>, ...value: [] | [T]): T | void {
  * @returns {Signal<T>} Public signal object.
  */
 function createSignalApi<T>(node: SignalNode<T>): Signal<T> {
+  const usesFunctionValue = typeof node.value === "function";
   const readTracked = () => signalOper(node) as T;
   const readUntracked = () => withNoTracking(() => signalOper(node) as T);
   const write = (value: T) => {
@@ -95,10 +96,10 @@ function createSignalApi<T>(node: SignalNode<T>): Signal<T> {
     },
     set(update) {
       const nextValue =
-        typeof update === "function"
+        typeof update === "function" && !usesFunctionValue
           ? (update as (prev: T) => T)(readUntracked())
           : update;
-      write(nextValue);
+      write(nextValue as T);
     },
     peek() {
       return readUntracked();
