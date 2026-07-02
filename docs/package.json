@@ -7,7 +7,10 @@
     "dev": "vite --host 0.0.0.0 --port 3080",
     "build:client": "vite build --outDir dist/client",
     "build:server": "vite build --outDir dist/server --ssr src/entry-server.tsx",
+    "build:worker": "vite build --mode cloudflare --outDir dist/cloudflare --ssr src/entry-cloudflare.ts",
     "build": "pnpm build:client && pnpm build:server",
+    "build:cloudflare": "pnpm build:client && pnpm build:worker",
+    "deploy:cloudflare": "pnpm build:cloudflare && wrangler deploy",
     "preview": "node server.mjs",
     "fmt": "oxfmt --ignore-path ../.gitignore --no-error-on-unmatched-pattern --write \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\"",
     "fmt:check": "oxfmt --ignore-path ../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\""
@@ -19,10 +22,12 @@
     "shiki": "^4.2.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260701.1",
     "@dathra/config": "workspace:*",
     "@dathra/plugin": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "~5.8.3",
-    "vite": "^6.3.4"
+    "vite": "^6.3.4",
+    "wrangler": "^4.24.0"
   }
 }
