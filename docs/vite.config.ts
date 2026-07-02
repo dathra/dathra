@@ -14,7 +14,7 @@ const workspacePackages = [
   "@dathra/shared",
 ];
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   root: projectRoot,
   plugins: [
     dathraVitePlugin({
@@ -29,6 +29,7 @@ export default defineConfig({
   },
   ssr: {
     noExternal: workspacePackages,
+    target: mode === "cloudflare" ? "webworker" : "node",
   },
   build: {
     rollupOptions: {
@@ -37,4 +38,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

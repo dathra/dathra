@@ -1,0 +1,9 @@
+name = "dathra-docs"
+main = "dist/cloudflare/entry-cloudflare.js"
+compatibility_date = "2026-07-02"
+
+[assets]
+binding = "ASSETS"
+directory = "./dist/client"
+not_found_handling = "none"
+run_worker_first = true
