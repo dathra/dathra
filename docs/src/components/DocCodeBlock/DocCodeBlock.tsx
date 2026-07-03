@@ -1,4 +1,4 @@
-import { css, defineComponent, signal } from "@dathra/core";
+import { css, defineComponent, onCleanup, signal } from "@dathra/core";
 import { fromMarkup } from "@dathra/runtime";
 
 import { highlightCode } from "./syntaxHighlightRuntime";
@@ -11,6 +11,11 @@ function formatCode(code: string): string {
     ...lines.filter((l) => l.trim().length > 0).map((l) => l.match(/^ */)![0]!.length),
   );
   return lines.map((l) => l.slice(indent)).join("\n");
+}
+
+function getCodeSource(children: unknown, code: string | undefined): string {
+  const raw = typeof children === "string" && children.length > 0 ? children : (code ?? "");
+  return formatCode(raw);
 }
 
 const codeStyles = css`
@@ -110,9 +115,7 @@ const DocCodeBlock = defineComponent(
   "dathra-code",
   ({ props, children }) => {
     const copied = signal(false);
-    const raw =
-      typeof children === "string" && children.length > 0 ? children : (props.code.value ?? "");
-    const source = formatCode(raw);
+    const source = getCodeSource(children, props.code.value);
     const highlighted = highlightCode(source, props.language.value ?? "");
     const highlightedContent =
       highlighted !== undefined
@@ -157,6 +160,34 @@ const DocCodeBlock = defineComponent(
       language: { type: String, default: "" },
     },
     styles: [codeStyles],
+    hydrate: ({ host, props, children }) => {
+      const source = getCodeSource(children, props.code.value);
+      const button = host.shadowRoot?.querySelector<HTMLButtonElement>(".copy-btn");
+      if (button === undefined || button === null) return;
+
+      let resetTimer: ReturnType<typeof setTimeout> | undefined;
+      const setCopied = (copied: boolean): void => {
+        button.classList.toggle("copied", copied);
+        button.textContent = copied ? "Copied!" : "Copy";
+      };
+      const handleCopy = (): void => {
+        if (typeof navigator.clipboard?.writeText === "function") {
+          navigator.clipboard.writeText(source).catch(() => {});
+        }
+        setCopied(true);
+        if (resetTimer !== undefined) clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => {
+          setCopied(false);
+          resetTimer = undefined;
+        }, 1800);
+      };
+
+      button.addEventListener("click", handleCopy);
+      onCleanup(() => {
+        button.removeEventListener("click", handleCopy);
+        if (resetTimer !== undefined) clearTimeout(resetTimer);
+      });
+    },
   },
 );
 
