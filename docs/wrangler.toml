@@ -1,4 +1,4 @@
-name = "dathra-docs"
+name = "dathra"
 main = "dist/cloudflare/entry-cloudflare.js"
 compatibility_date = "2026-07-02"
 
