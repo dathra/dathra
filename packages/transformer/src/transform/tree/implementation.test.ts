@@ -179,7 +179,9 @@ describe("transform/tree", () => {
     expect(attrPart.type === "attr" ? attrPart.key : null).toBe(
       "data-render-mode",
     );
-    expect(attrPart.expression).toEqual(nId("modeLabel"));
+    expect(attrPart.type === "attr" ? attrPart.expression : null).toEqual(
+      nId("modeLabel"),
+    );
   });
 
   it("jsxToTree keeps fragment dynamic text parts", () => {
@@ -335,7 +337,9 @@ describe("transform/tree", () => {
     const textPart = result.dynamicParts.find((part) => part.type === "text");
 
     expect(textPart).toBeDefined();
-    expect(textPart?.expression).toEqual(nId("modeLabel"));
+    expect(textPart?.type === "text" ? textPart.expression : null).toEqual(
+      nId("modeLabel"),
+    );
   });
 
   it("jsxToTree treats .map() call expression as insert dynamic part", () => {
@@ -423,6 +427,70 @@ describe("transform/tree", () => {
     const eventPart = result.dynamicParts.find((part) => part.type === "event");
     expect(eventPart).toBeDefined();
     expect(eventPart?.type === "event" ? eventPart.key : null).toBe("click");
+  });
+
+  it("jsxToTree records hydrate:preserve as a preserve boundary without emitting an attribute", () => {
+    const state = createInitialState("csr");
+    const element: JSXElement = {
+      type: "JSXElement",
+      openingElement: {
+        type: "JSXOpeningElement",
+        name: { type: "JSXIdentifier", name: "section" },
+        attributes: [
+          {
+            type: "JSXAttribute",
+            name: {
+              type: "JSXNamespacedName",
+              namespace: { type: "JSXIdentifier", name: "hydrate" },
+              name: { type: "JSXIdentifier", name: "preserve" },
+            },
+            value: null,
+          },
+        ],
+        selfClosing: false,
+      },
+      children: [
+        {
+          type: "JSXExpressionContainer",
+          expression: nId("expensiveHtml"),
+        },
+      ],
+      closingElement: null,
+    };
+
+    const result = jsxToTree(element, state, nested);
+
+    expect(result.dynamicParts).toContainEqual({ type: "preserve", path: [0] });
+    expect(JSON.stringify(result.tree)).not.toContain("hydrate:preserve");
+  });
+
+  it("jsxToTree rejects valued hydrate:preserve directives", () => {
+    const state = createInitialState("csr");
+    const element: JSXElement = {
+      type: "JSXElement",
+      openingElement: {
+        type: "JSXOpeningElement",
+        name: { type: "JSXIdentifier", name: "section" },
+        attributes: [
+          {
+            type: "JSXAttribute",
+            name: {
+              type: "JSXNamespacedName",
+              namespace: { type: "JSXIdentifier", name: "hydrate" },
+              name: { type: "JSXIdentifier", name: "preserve" },
+            },
+            value: nLit("true"),
+          },
+        ],
+        selfClosing: false,
+      },
+      children: [],
+      closingElement: null,
+    };
+
+    expect(() => jsxToTree(element, state, nested)).toThrow(
+      "hydrate:preserve does not accept a value",
+    );
   });
 
   it("buildComponentCall injects island metadata for client:visible", () => {

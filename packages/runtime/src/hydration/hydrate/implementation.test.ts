@@ -453,6 +453,40 @@ describe("hydrateWithPlan", () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(shadowRoot.textContent).toContain("beforeBafter");
   });
+
+  it("does not hydrate bindings or markers inside preserved boundaries", async () => {
+    const outer = signal("outer-ready");
+    const preserved = signal("should-not-apply");
+    shadowRoot.innerHTML =
+      "<section><div><!--dh:t:1-->server-static</div><!--dh:t:1-->outer</section>";
+
+    const plan: GenericHydrationPlan = {
+      namespace: "html",
+      bindings: [
+        {
+          kind: "attr",
+          path: [0, 0],
+          key: "data-preserved",
+          expression: () => preserved.value,
+        },
+        {
+          kind: "text",
+          markerId: 1,
+          expression: () => outer.value,
+        },
+      ],
+      nestedBoundaries: [],
+      preservedBoundaries: [{ path: [0, 0] }],
+    };
+
+    hydrateWithPlan(shadowRoot, plan);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    const preservedElement = shadowRoot.querySelector("div");
+    expect(preservedElement?.textContent).toBe("server-static");
+    expect(preservedElement?.hasAttribute("data-preserved")).toBe(false);
+    expect(shadowRoot.textContent).toContain("server-staticouter-ready");
+  });
 });
 
 describe("hydrateIslands nested hosts", () => {

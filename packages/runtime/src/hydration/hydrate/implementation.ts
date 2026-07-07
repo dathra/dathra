@@ -177,6 +177,10 @@ interface NestedBoundaryRef {
   readonly islandStrategy: string | null;
 }
 
+interface PreservedBoundaryRef {
+  readonly path: readonly number[];
+}
+
 type HydrationBinding =
   | TextBinding
   | AttrBinding
@@ -188,6 +192,7 @@ interface GenericHydrationPlan {
   readonly namespace: "html" | "svg" | "math";
   readonly bindings: readonly HydrationBinding[];
   readonly nestedBoundaries: readonly NestedBoundaryRef[];
+  readonly preservedBoundaries?: readonly PreservedBoundaryRef[];
 }
 
 function stringifyEventField(value: unknown): string {
@@ -373,10 +378,13 @@ function pathEquals(
 function collectMarkersOutsideNestedBoundaries(
   root: ShadowRoot,
   nestedBoundaries: readonly NestedBoundaryRef[],
+  preservedBoundaries: readonly PreservedBoundaryRef[] = [],
 ): MarkerInfo[] {
-  if (nestedBoundaries.length === 0) {
+  if (nestedBoundaries.length === 0 && preservedBoundaries.length === 0) {
     return collectMarkers(root);
   }
+
+  const blockedBoundaries = [...nestedBoundaries, ...preservedBoundaries];
 
   const markers: MarkerInfo[] = [];
 
@@ -389,7 +397,7 @@ function collectMarkersOutsideNestedBoundaries(
       return;
     }
 
-    for (const boundary of nestedBoundaries) {
+    for (const boundary of blockedBoundaries) {
       if (pathEquals(path, boundary.path)) {
         return;
       }
@@ -498,8 +506,9 @@ function pathMatchesOrDescends(
 function isPathBlockedByNestedBoundary(
   path: readonly number[],
   nestedBoundaries: readonly NestedBoundaryRef[],
+  preservedBoundaries: readonly PreservedBoundaryRef[] = [],
 ): boolean {
-  for (const boundary of nestedBoundaries) {
+  for (const boundary of [...nestedBoundaries, ...preservedBoundaries]) {
     if (pathMatchesOrDescends(path, boundary.path)) {
       return true;
     }
@@ -1096,7 +1105,11 @@ function hydrateWithPlan(
 
           case "attr": {
             if (
-              isPathBlockedByNestedBoundary(binding.path, plan.nestedBoundaries)
+              isPathBlockedByNestedBoundary(
+                binding.path,
+                plan.nestedBoundaries,
+                plan.preservedBoundaries,
+              )
             ) {
               continue;
             }
@@ -1121,7 +1134,11 @@ function hydrateWithPlan(
 
           case "event": {
             if (
-              isPathBlockedByNestedBoundary(binding.path, plan.nestedBoundaries)
+              isPathBlockedByNestedBoundary(
+                binding.path,
+                plan.nestedBoundaries,
+                plan.preservedBoundaries,
+              )
             ) {
               continue;
             }
@@ -1144,7 +1161,11 @@ function hydrateWithPlan(
 
           case "insert": {
             if (
-              isPathBlockedByNestedBoundary(binding.path, plan.nestedBoundaries)
+              isPathBlockedByNestedBoundary(
+                binding.path,
+                plan.nestedBoundaries,
+                plan.preservedBoundaries,
+              )
             ) {
               continue;
             }
@@ -1179,7 +1200,11 @@ function hydrateWithPlan(
 
           case "spread": {
             if (
-              isPathBlockedByNestedBoundary(binding.path, plan.nestedBoundaries)
+              isPathBlockedByNestedBoundary(
+                binding.path,
+                plan.nestedBoundaries,
+                plan.preservedBoundaries,
+              )
             ) {
               continue;
             }
@@ -1212,6 +1237,7 @@ function hydrateWithPlan(
         collectMarkersOutsideNestedBoundaries(
           currentRoot,
           plan.nestedBoundaries,
+          plan.preservedBoundaries,
         ),
       ),
   );
@@ -1247,6 +1273,7 @@ export type {
   InsertBinding,
   IslandHydrationTrigger,
   IslandHost,
+  PreservedBoundaryRef,
   NestedBoundaryRef,
   SpreadBinding,
   TextBinding,

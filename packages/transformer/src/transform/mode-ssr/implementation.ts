@@ -101,7 +101,11 @@ function transformJSXForSSRNode(
   const { tree, dynamicParts } = jsxToTree(node, state, nested);
   const roots = readStaticTreeRoots(tree);
   if (roots === null || roots.some(hasCustomElement)) {
-    return buildLegacyRenderCall(tree, dynamicParts, state);
+    return buildLegacyRenderCall(
+      tree,
+      dynamicParts.filter((part) => part.type !== "preserve"),
+      state,
+    );
   }
 
   const markerDynamicParts = dynamicParts.filter(

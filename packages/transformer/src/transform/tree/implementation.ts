@@ -58,6 +58,10 @@ import {
 
 type DynamicPart =
   | {
+      type: "preserve";
+      path: number[];
+    }
+  | {
       type: "text" | "spread";
       path: number[];
       expression: ESTNode;
@@ -176,6 +180,19 @@ function getUnsupportedColocatedDirectiveError(
     )
   ) {
     return `Unsupported colocated client directive: ${rawName}`;
+  }
+
+  return null;
+}
+
+function getHydratePreserveDirectiveError(attr: JSXAttribute): string | null {
+  const rawName = getRawAttributeNameForDiagnostics(attr.name);
+  if (rawName !== "hydrate:preserve") {
+    return null;
+  }
+
+  if (attr.value !== null) {
+    return "hydrate:preserve does not accept a value";
   }
 
   return null;
@@ -1031,6 +1048,17 @@ function processAttributes(
       throw new Error(
         "[dathra] client:* directives are only supported on component elements",
       );
+    }
+
+    const hydratePreserveDirectiveError =
+      getHydratePreserveDirectiveError(attr);
+    if (hydratePreserveDirectiveError !== null) {
+      throw new Error(`[dathra] ${hydratePreserveDirectiveError}`);
+    }
+
+    if (getRawAttributeNameForDiagnostics(attr.name) === "hydrate:preserve") {
+      dynamicParts.push({ type: "preserve", path });
+      continue;
     }
 
     const colocatedClientDirective = getColocatedClientDirective(attr.name);

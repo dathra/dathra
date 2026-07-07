@@ -118,6 +118,7 @@ SSR で生成された DOM を再利用し、リアクティビティとイベ�
       readonly namespace: "html" | "svg" | "math"
       readonly bindings: readonly HydrationBinding[]
       readonly nestedBoundaries: readonly NestedBoundaryRef[]
+      readonly preservedBoundaries?: readonly PreservedBoundaryRef[]
     }
 
     type HydrationBinding =
@@ -167,6 +168,10 @@ SSR で生成された DOM を再利用し、リアクティビティとイベ�
       readonly islandStrategy: string | null
     }
 
+    interface PreservedBoundaryRef {
+      readonly path: readonly number[]
+    }
+
     function hydrateWithPlan(
       root: ShadowRoot,
       plan: GenericHydrationPlan,
@@ -182,6 +187,7 @@ SSR で生成された DOM を再利用し、リアクティビティとイベ�
     - `attr` / `event` / `spread` binding は `path` で既存要素を解決し、`text` / `insert` は `markerId` で既存 SSR marker を解決する
     - marker 解決は per-root の index を使って O(1) で行い、walk 済み marker 配列の線形検索へ戻さない
     - `nestedBoundaries` がある場合、outer plan の marker index にはその subtree 内の marker を含めず、duplicate marker id があっても nested host 側へ誤接続しない
+    - `preservedBoundaries` がある場合、その subtree 内の marker を index から除外し、path-based binding も skip する
     - `path` は `fromTree`/SSR tree の child index 規則と共有し、placeholder を含めた安定 index として扱う
   ],
   test_cases: [
@@ -191,6 +197,7 @@ SSR で生成された DOM を再利用し、リアクティビティとイベ�
     - insert binding を SSR marker に接続できる
     - nested boundary 指定位置は outer hydration plan が直接書き換えない
     - nested boundary subtree に duplicate marker id があっても outer plan は outer marker を解決する
+    - preserve boundary subtree に duplicate marker id があっても outer plan は outer marker を解決し、preserve 配下 path binding は skip する
     - `path` 解決に失敗した binding は hydration mismatch 扱いになる
   ],
   edge_cases: [

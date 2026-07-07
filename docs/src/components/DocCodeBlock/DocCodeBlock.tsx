@@ -116,23 +116,23 @@ const DocCodeBlock = defineComponent(
   ({ props, children }) => {
     const copied = signal(false);
     const source = getCodeSource(children, props.code.value);
-    const highlighted = highlightCode(source, props.language.value ?? "");
-    const highlightedContent =
-      highlighted !== undefined
-        ? typeof document === "undefined"
-          ? highlighted
-          : fromMarkup(highlighted)()
-        : undefined;
+    let resetTimer: ReturnType<typeof setTimeout> | undefined;
 
     function handleCopy() {
       if (typeof navigator.clipboard?.writeText === "function") {
         navigator.clipboard.writeText(source).catch(() => {});
       }
       copied.set(true);
-      setTimeout(() => {
+      if (resetTimer !== undefined) clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => {
         copied.set(false);
+        resetTimer = undefined;
       }, 1800);
     }
+
+    onCleanup(() => {
+      if (resetTimer !== undefined) clearTimeout(resetTimer);
+    });
 
     return (
       <div class="inner">
@@ -142,14 +142,19 @@ const DocCodeBlock = defineComponent(
             {copied.value ? "Copied!" : "Copy"}
           </button>
         </div>
-        <div class="scroll-wrap">
-          {highlightedContent !== undefined ? (
-            highlightedContent
-          ) : (
-            <pre>
-              <code>{source}</code>
-            </pre>
-          )}
+        <div class="scroll-wrap" hydrate:preserve>
+          {(() => {
+            const highlighted = highlightCode(source, props.language.value ?? "");
+            if (highlighted !== undefined) {
+              return typeof document === "undefined" ? highlighted : fromMarkup(highlighted)();
+            }
+
+            return (
+              <pre>
+                <code>{source}</code>
+              </pre>
+            );
+          })()}
         </div>
       </div>
     );
@@ -160,34 +165,6 @@ const DocCodeBlock = defineComponent(
       language: { type: String, default: "" },
     },
     styles: [codeStyles],
-    hydrate: ({ host, props, children }) => {
-      const source = getCodeSource(children, props.code.value);
-      const button = host.shadowRoot?.querySelector<HTMLButtonElement>(".copy-btn");
-      if (button === undefined || button === null) return;
-
-      let resetTimer: ReturnType<typeof setTimeout> | undefined;
-      const setCopied = (copied: boolean): void => {
-        button.classList.toggle("copied", copied);
-        button.textContent = copied ? "Copied!" : "Copy";
-      };
-      const handleCopy = (): void => {
-        if (typeof navigator.clipboard?.writeText === "function") {
-          navigator.clipboard.writeText(source).catch(() => {});
-        }
-        setCopied(true);
-        if (resetTimer !== undefined) clearTimeout(resetTimer);
-        resetTimer = setTimeout(() => {
-          setCopied(false);
-          resetTimer = undefined;
-        }, 1800);
-      };
-
-      button.addEventListener("click", handleCopy);
-      onCleanup(() => {
-        button.removeEventListener("click", handleCopy);
-        if (resetTimer !== undefined) clearTimeout(resetTimer);
-      });
-    },
   },
 );
 

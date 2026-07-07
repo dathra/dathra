@@ -261,6 +261,7 @@
       readonly namespace: "html" | "svg" | "math";
       readonly bindings: readonly HydrationBinding[];
       readonly nestedBoundaries: readonly NestedBoundaryRef[];
+      readonly preservedBoundaries?: readonly PreservedBoundaryRef[];
     }
 
     type HydrationBinding =
@@ -309,12 +310,17 @@
       readonly tagName: string;
       readonly islandStrategy: string | null;
     }
+
+    interface PreservedBoundaryRef {
+      readonly path: readonly number[];
+    }
     ```
   ],
   test_cases: [
     - simple transformable setup から generic hydration metadata が生成される
     - text / attr / event / insert binding が plan に反映される
     - nested child component with explicit `client:*` は `nestedBoundaries` として plan に含まれる
+    - `hydrate:preserve` 付き HTML subtree は `preservedBoundaries` として plan に含まれ、配下 binding は plan から除外される
     - plan 生成不能な setup は `unsupportedReason` 付き metadata に落とす
     - `DynamicPart.path` と SSR marker id から plan の `path` / `markerId` が安定生成される
   ],
@@ -322,6 +328,27 @@
     - existing dynamicParts / tree output を generic hydration plan の土台として再利用できる
     - `text` / `insert` は既存 SSR marker id を再利用し、`attr` / `event` / `spread` / nested boundary は tree path を stable node ref として使う
     - initial implementation では component definition ごとに static `planFactory` を出力し、runtime は host/ctx を渡して expression を評価できる形にする
+    - `hydrate:preserve` 配下の text / insert は plan から除外しても SSR marker id の整合性を保つため、marker id counter 自体は進める
+  ],
+)
+
+#feature_spec(
+  name: "hydrate:preserve directive",
+  summary: [
+    SSR で生成した重い/static subtree を client hydration の評価・binding 対象から除外し、同じ component 内の兄弟 UI は通常通り hydrate できるようにする。
+  ],
+  edge_cases: [
+    - SSR / 通常 CSR render では subtree は通常通り評価して DOM を出す
+    - compiler-generated hydration plan では subtree 配下の attr / event / text / insert / spread binding を生成しない
+    - preserve 内の marker は runtime 側の marker index から除外される前提で、preserve 外の後続 marker id は SSR と一致させる
+    - preserve 内の mismatch は検査せず既存 SSR DOM を保持する
+    - nested component boundary が preserve 配下にある場合、outer plan からは hydrate / mutate 対象にしない
+  ],
+  test_cases: [
+    - `<div hydrate:preserve>{expensive()}</div>` は `preservedBoundaries` を生成する
+    - preserve 配下の `expensive()` は planFactory の binding expression に含まれない
+    - preserve 配下に text marker があっても後続 preserve 外 binding の marker id がずれない
+    - `hydrate:preserve="..."` は transform error にする
   ],
 )
 
