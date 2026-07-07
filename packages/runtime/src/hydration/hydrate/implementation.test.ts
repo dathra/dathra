@@ -458,7 +458,7 @@ describe("hydrateWithPlan", () => {
     const outer = signal("outer-ready");
     const preserved = signal("should-not-apply");
     shadowRoot.innerHTML =
-      '<section><div><!--dh:t:1-->server-static</div><!--dh:t:1-->outer</section>';
+      "<section><div><!--dh:t:1-->server-static</div><!--dh:t:1-->outer</section>";
 
     const plan: GenericHydrationPlan = {
       namespace: "html",

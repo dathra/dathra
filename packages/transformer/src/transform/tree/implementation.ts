@@ -185,9 +185,7 @@ function getUnsupportedColocatedDirectiveError(
   return null;
 }
 
-function getHydratePreserveDirectiveError(
-  attr: JSXAttribute,
-): string | null {
+function getHydratePreserveDirectiveError(attr: JSXAttribute): string | null {
   const rawName = getRawAttributeNameForDiagnostics(attr.name);
   if (rawName !== "hydrate:preserve") {
     return null;
@@ -1052,7 +1050,8 @@ function processAttributes(
       );
     }
 
-    const hydratePreserveDirectiveError = getHydratePreserveDirectiveError(attr);
+    const hydratePreserveDirectiveError =
+      getHydratePreserveDirectiveError(attr);
     if (hydratePreserveDirectiveError !== null) {
       throw new Error(`[dathra] ${hydratePreserveDirectiveError}`);
     }

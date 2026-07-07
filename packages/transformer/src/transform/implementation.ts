@@ -1686,9 +1686,7 @@ function isPathInsideBoundary(
 }
 
 function createPreservedBoundary(path: readonly number[]): ESTNode {
-  return nObj([
-    nProp(nId("path"), nArr(path.map((segment) => nLit(segment)))),
-  ]);
+  return nObj([nProp(nId("path"), nArr(path.map((segment) => nLit(segment))))]);
 }
 
 function createPlanBinding(
