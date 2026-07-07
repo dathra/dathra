@@ -106,7 +106,7 @@
 #feature_spec(
 	name: "JSX to tree conversion",
 	summary: [
-		JSX を構造化配列 tree に変換し、動的パーツ（text / attr / event / spread / insert）を収集する。
+		JSX を構造化配列 tree に変換し、動的パーツ（text / attr / event / spread / insert / preserve）を収集する。
 	],
 	api: [
 		- `DynamicPart`, `TreeResult` 型
@@ -134,5 +134,7 @@
 		- HTML 要素上の `client:*` directive は例外を投げる
 		- 未知の `client:*` directive 名は例外を投げる
 		- islands directive と `data-dh-island*` 明示 props の衝突は例外を投げる
+		- HTML 要素上の bare `hydrate:preserve` は preserve dynamic part を記録し、属性としては出力しない
+		- 値付き `hydrate:preserve` は例外を投げる
 	],
 )

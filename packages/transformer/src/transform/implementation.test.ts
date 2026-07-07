@@ -1521,6 +1521,53 @@ describe("transform", () => {
       expect(result.code).toContain('namespace: "html"');
     });
 
+    it("should include hydrate:preserve boundaries in generated hydration metadata", () => {
+      const code = `
+        const PreserveCard = defineComponent(
+          "preserve-card",
+          ({ props }) => (
+            <section>
+              <div hydrate:preserve>{renderExpensive(props.code.value)}</div>
+              <button onClick={() => props.onCopy.value()}>Copy</button>
+            </section>
+          ),
+        );
+      `;
+
+      const result = transform(code, { mode: "csr" });
+
+      expect(result.code).toContain("__hydrationMetadata__");
+      expect(result.code).toContain("planFactory");
+      expect(result.code).toContain("preservedBoundaries");
+      expect(result.code).toContain("path: [0, 0]");
+      expect(result.code).toContain('kind: "event"');
+      expect(result.code.match(/renderExpensive/g) ?? []).toHaveLength(1);
+      expect(result.code).not.toContain("hydrate:preserve");
+    });
+
+    it("should keep marker ids aligned when hydrate:preserve skips earlier dynamic content", () => {
+      const code = `
+        const PreserveMarkers = defineComponent(
+          "preserve-markers",
+          ({ props }) => (
+            <section>
+              <div hydrate:preserve>{props.staticHtml.value}</div>
+              <p>{props.label.value}</p>
+            </section>
+          ),
+        );
+      `;
+
+      const result = transform(code, { mode: "csr" });
+
+      expect(result.code).toContain("preservedBoundaries");
+      expect(result.code).toContain("markerId: 2");
+      expect(result.code).toContain("props.label.value");
+      expect(result.code.match(/props\.staticHtml\.value/g) ?? []).toHaveLength(
+        1,
+      );
+    });
+
     it("should support multiple signals in prelude", () => {
       const code = `
         const MultiSigCard = defineComponent(

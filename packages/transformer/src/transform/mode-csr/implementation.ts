@@ -142,6 +142,10 @@ function transformJSXNode(
   }
 
   for (const part of dynamicParts) {
+    if (part.type === "preserve") {
+      continue;
+    }
+
     const nodeId = ensureNodeDeclaration(part.path);
 
     switch (part.type) {

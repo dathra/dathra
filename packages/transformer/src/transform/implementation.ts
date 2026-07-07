@@ -1661,10 +1661,44 @@ function getExplicitNestedBoundary(part: DynamicPart): ESTNode | null {
   return null;
 }
 
+function pathMatchesOrDescends(
+  path: readonly number[],
+  prefix: readonly number[],
+): boolean {
+  if (prefix.length > path.length) {
+    return false;
+  }
+
+  for (let i = 0; i < prefix.length; i += 1) {
+    if (path[i] !== prefix[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function isPathInsideBoundary(
+  path: readonly number[],
+  boundaries: readonly number[][],
+): boolean {
+  return boundaries.some((boundary) => pathMatchesOrDescends(path, boundary));
+}
+
+function createPreservedBoundary(path: readonly number[]): ESTNode {
+  return nObj([
+    nProp(nId("path"), nArr(path.map((segment) => nLit(segment)))),
+  ]);
+}
+
 function createPlanBinding(
   part: DynamicPart,
   markerId: number | null,
 ): ESTNode {
+  if (part.type === "preserve") {
+    throw new Error("[dathra] hydrate:preserve cannot be emitted as a binding");
+  }
+
   const sharedProperties = [
     nProp(nId("kind"), nLit(part.type)),
     nProp(nId("path"), nArr(part.path.map((segment) => nLit(segment)))),
@@ -2093,11 +2127,24 @@ function buildDispatchPlanMetadata(
 
     const planBindings: ESTNode[] = [];
     const nestedBoundaries: ESTNode[] = [];
+    const preservedBoundaries: ESTNode[] = [];
+    const preservedBoundaryPaths: number[][] = [];
     let markerId = 1;
 
     for (const part of dynamicParts) {
+      if (part.type === "preserve") {
+        preservedBoundaryPaths.push(part.path);
+        preservedBoundaries.push(createPreservedBoundary(part.path));
+        continue;
+      }
+
       const currentMarkerId =
         part.type === "text" || part.type === "insert" ? markerId++ : null;
+
+      if (isPathInsideBoundary(part.path, preservedBoundaryPaths)) {
+        continue;
+      }
+
       planBindings.push(createPlanBinding(part, currentMarkerId));
 
       const nestedBoundary = getExplicitNestedBoundary(part);
@@ -2116,6 +2163,7 @@ function buildDispatchPlanMetadata(
           nProp(nId("namespace"), nLit(getRootNamespace(branch.jsxRoot))),
           nProp(nId("bindings"), nArr(planBindings)),
           nProp(nId("nestedBoundaries"), nArr(nestedBoundaries)),
+          nProp(nId("preservedBoundaries"), nArr(preservedBoundaries)),
         ]),
       ),
     );
@@ -2669,11 +2717,24 @@ function buildComponentHydrationMetadata(
 
   const planBindings: ESTNode[] = [];
   const nestedBoundaries: ESTNode[] = [];
+  const preservedBoundaries: ESTNode[] = [];
+  const preservedBoundaryPaths: number[][] = [];
   let markerId = 1;
 
   for (const part of dynamicParts) {
+    if (part.type === "preserve") {
+      preservedBoundaryPaths.push(part.path);
+      preservedBoundaries.push(createPreservedBoundary(part.path));
+      continue;
+    }
+
     const currentMarkerId =
       part.type === "text" || part.type === "insert" ? markerId++ : null;
+
+    if (isPathInsideBoundary(part.path, preservedBoundaryPaths)) {
+      continue;
+    }
+
     planBindings.push(createPlanBinding(part, currentMarkerId));
 
     const nestedBoundary = getExplicitNestedBoundary(part);
@@ -2694,6 +2755,7 @@ function buildComponentHydrationMetadata(
         ),
         nProp(nId("bindings"), nArr(planBindings)),
         nProp(nId("nestedBoundaries"), nArr(nestedBoundaries)),
+        nProp(nId("preservedBoundaries"), nArr(preservedBoundaries)),
       ]),
     ),
   );

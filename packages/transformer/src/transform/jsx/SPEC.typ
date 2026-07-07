@@ -46,6 +46,7 @@
 		- タグ判定（`isComponentTag`）
 		- 名前変換（`jsxNameToExpression`, `getTagName`）
 		- islands directive 判定（`isClientDirectiveNamespace`, `getIslandsDirectiveName`, `normalizeIslandsDirectiveValue`）
+		- hydrate directive は通常の namespaced 属性名として tree 変換へ渡し、`hydrate:preserve` の意味解釈は tree 変換側で行う
 		- 識別子妥当性判定（`isValidIdentifier`）
 	],
 	test_cases: [
