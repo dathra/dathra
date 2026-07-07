@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dathomir SDD/TDD Learning"
+  short_description: "Explain Dathomir packages one file at a time"
+  default_prompt: "Use $dathomir-sdd-tdd-learning to explain a Dathomir package under packages/ one file at a time using SPEC and tests for context."
