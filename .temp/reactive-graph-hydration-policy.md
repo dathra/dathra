@@ -456,3 +456,115 @@ client runtime に入るのは compiler が抽出した client reactive graph �
 Hydration は DSD の自動反応でも component replay でもない。
 Hydration は既存 DOM に reactive edge を接続する処理である。
 ```
+
+## 議論メモ: runtime reactive graph と compiler-inferred client graph
+
+Dathra には既に runtime reactive graph がある。
+`signal` / `computed` / `effect` / `templateEffect` により、実行時に signal read と effect / binding の依存関係が記録され、signal update に応じて DOM binding や effect が再実行される。
+
+ただし、この runtime reactive graph は「reactive な要素を source から特定する」ためのものではない。
+役割は、既に実行された binding / effect が読んだ signal を追跡し、その signal が変化した時に該当 effect を再実行することである。
+
+```txt
+runtime reactive graph:
+  -> signal update に対して、どの effect / binding を再実行するかを管理する
+
+compiler-inferred client reactive graph:
+  -> source を解析し、client に送るべき signal / event / DOM binding / cleanup edge を抽出する
+```
+
+そのため、runtime graph が存在するだけでは server-only code の client bundle 混入は防げない。
+client で component body 全体を実行して runtime graph を作る場合、server-only work や重い依存も同じ client artifact に巻き込まれやすい。
+
+`DocCodeBlock` の例では、client に必要なのは `copied` signal、copy button の class / text binding、`onClick` handler、timer cleanup である。
+一方、syntax highlight や highlighted HTML の生成は server render graph に閉じたい。
+
+したがって、問題の根は次の点にある。
+
+```txt
+server と client で component body / setup が同じ実行単位として扱われると、
+server-only work と client reactive work が client artifact 上で分離されにくい。
+```
+
+最小 hydrate の目的は、単に DOM 再構築を避けることではない。
+client に送る code graph を、実際に必要な reactive edge まで小さくすることである。
+
+## 議論メモ: React / Vue との比較
+
+React の従来 hydration も、server で component tree を render し、client で同じ component tree を再実行して既存 DOM に event / state / effect を接続する model である。
+このため、server-only work と client interaction が同じ component に同居すると、client component 側へ server-only dependency が巻き込まれやすい。
+
+React Server Components は、この問題を component boundary で解く。
+
+```txt
+React Server Components:
+  Server Component は server だけで実行され、client bundle に入らない
+  Client Component は browser で hydrate / interactive になる
+  "use client" 以降の subtree は client artifact に入る
+```
+
+Dathra の主軸案は、React Server Components より細かい粒度を目指す。
+
+```txt
+React の境界:
+  component boundary
+
+Dathra reactive graph hydration の境界:
+  DOM binding / event / signal / effect edge
+```
+
+Vue も同系統の問題を持つ。
+Vue SSR は基本的に universal component model であり、server で render した Vue app と同じ app implementation を client でも作成して hydration する。
+Vue 公式 docs でも、SSR app は多くの code が server と client の両方で動く isomorphic / universal app と説明されている。
+
+Vue template compiler は、Dathra がいう reactive edge に近い情報を一部持っている。
+たとえば static hoisting、patch flags、block tree / tree flattening により、どの element が dynamic class / props / text を持つか、どの dynamic descendants だけを hydration 時に辿ればよいかを把握する。
+
+ただし、Vue の compiler hints は主に runtime rendering / hydration の最適化に使われる。
+
+```txt
+Vue compiler hints:
+  -> static subtree を skip する
+  -> patch flag により class / text / props などの update fast path を使う
+  -> hydration 時に block nodes と dynamic descendants だけを辿る
+
+使われないもの:
+  -> server-only import を client bundle から落とすための program slicing boundary
+```
+
+つまり Vue の template-level partial hydration は、DOM traversal / patch cost の削減であり、component execution / bundle graph の分離ではない。
+client hydration 後も Vue component instance、reactive scope、props、lifecycle、provide/inject、refs、scheduler、render effect が必要になる。
+
+Nuxt は server/client 分離を framework layer の明示 boundary で扱う。
+
+```txt
+Nuxt の boundary:
+  .server.vue
+  .client.vue
+  <ClientOnly>
+  server components / islands
+  lazy hydration strategies
+```
+
+たとえば `.server.vue` の server component では、markdown parsing や highlighting libraries を client bundle に含めないことができる。
+これは component / file boundary による分離であり、template compiler の patch flags による自動 program slicing ではない。
+
+Vue / Nuxt と Dathra 案の違いは次の通り。
+
+```txt
+Vue:
+  template compiler が dynamic binding を把握する
+  hydration / patch を fast path 化する
+  server/client bundle 分離は component / file boundary に寄せる
+
+Nuxt:
+  .server.vue / .client.vue / islands で明示的に境界を作る
+  lazy hydration は component 単位で activation timing を制御する
+
+Dathra 主軸案:
+  compiler が source を server render graph と client reactive graph に分割する
+  component body 全体を client で再実行しない
+  client には必要な reactive edge と serialized capture だけを送る
+```
+
+この比較から、Dathra で決めるべきことは、Vue 的な template-level dynamic hints に留めるのか、それとも React Server Components / Nuxt server components が component boundary で解いている問題を、さらに細かい reactive edge boundary で解くのかである。
