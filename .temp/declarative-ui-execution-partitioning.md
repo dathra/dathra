@@ -1,8 +1,8 @@
 # Declarative UI execution partitioning design
 
 作成日: 2026-07-08
-更新日: 2026-07-11
-状態: 設計判断完了、実装未着手
+更新日: 2026-07-12
+状態: 設計判断完了、実装中
 
 この文書は、Dathra の server と client の実行分割に関する設計判断の正本である。
 末尾の「破棄した案」を除くすべての節を、現行方針の規範として扱う。
@@ -11,7 +11,7 @@
 後方互換性は設計上の制約にしない。
 現行の hydration API、island scheduler、directive、runtime semantics は、必要であれば破壊的に変更する。
 
-この段階では production code を変更しない。
+設計判断を正本として固定し、production code への実装を進める。
 
 ## 最終目標
 

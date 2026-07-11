@@ -1,0 +1,470 @@
+# 宣言的 UI 実行分割の実装指示
+
+この文書全体を `/goal` の実行指示として扱ってください。
+ユーザーの承認を待たず、調査、仕様更新、テスト作成、実装、移行、検証、レビュー、commit、push を自律的に進めてください。
+
+## 最終目標
+
+最終目標は次のとおりです。
+
+> 宣言的 UI から server と client の実行配置を導出し、server-first な出力と必要最小限の client runtime を両立する設計を、Dathra の production code、仕様、テスト、公開 API、文書、playground に実装する。
+
+`.temp/declarative-ui-execution-partitioning.md` を execution partitioning の設計判断の正本として扱ってください。
+同文書の「破棄した案」を除く規範本文、解決済みの設計事項、実装時の検証事項を実装要件とします。
+
+この goal は production code の変更を明示的に許可します。
+設計文書に残る「実装未着手」と「production code を変更しない」という記述は、設計フェーズの完了時点を表す状態記録です。
+実装開始時に状態を「実装中」へ更新してください。
+手順 10 の全体監査が `ACCEPT` になった後に「実装完了」へ更新し、その文書 commit の exact remote OID に対する手順 11 の最終監査が `ACCEPT` になった後だけ goal を完了してください。
+
+後方互換性は制約にしません。
+設計正本が削除を決めた hydration API、island semantics、fallback は、互換 layer を残さず置き換えてください。
+ただし、`@dathra/store` の snapshot API など、UI hydration と無関係な同名 API を文字列一致だけで削除してはいけません。
+
+この goal の実行開始を、大規模変更の実装アプローチに対するユーザーの承認として扱ってください。
+設計、優先順位、実装方法についてユーザーへ追加承認を求めないでください。
+
+## 正本と優先順位
+
+実装判断では、次の資料を照合してください。
+
+1. root と対象 package の `AGENTS.md`
+2. `.temp/declarative-ui-execution-partitioning.md` の現行方針
+3. 対象 API と同じディレクトリの `SPEC.typ`
+4. 対象 API と同じディレクトリの `implementation.test.ts`
+5. compiler、runtime、plugin、components、core、docs、playground の実コード
+6. 依存 package、Web 標準、外部技術の一次資料
+
+現行 `implementation.ts` は既存実装を調査する根拠ですが、新仕様の正本ではありません。
+新しい振る舞いは設計正本から対象 package の `SPEC.typ` へ落とし込み、その仕様を `implementation.test.ts` で検証してから実装してください。
+
+Accepted ADR の意味内容を直接書き換えてはいけません。
+既存 ADR と新設計が衝突する場合は、既存 ADR を supersede する新しい ADR を追加してください。
+
+設計正本に実装不能な矛盾が見つかった場合は、都合のよい fallback を実装してはいけません。
+該当事項を未決事項へ戻し、独立した sub-agent の評価を経て設計正本に superseding decision を記録してから実装を再開してください。
+
+## 完了条件
+
+次の条件をすべて満たすまで goal を完了扱いにしてはいけません。
+
+- 設計正本の実装方針 1 から 8 が production code とテストへ反映されている
+- 設計正本の「実装時の検証事項」を一件ずつ検証し、証拠を記録している
+- compiler が ExecutionGraph、ObservationContract、MaterializationPlan、ClientScopeGraph から server/client 配置を導出する
+- server-only code、依存 package、resource が client artifact closure に入らない
+- server が生成した HTML と DSD を component body の再実行なしで activation できる
+- client root がない route では bootstrap と request payload が生成されない
+- `DocCodeBlock` の syntax highlight と highlighted subtree が server に残り、copy interaction だけが client artifact に入る
+- `render:client`、`activate:*`、`dom:external` と関連 diagnostic が設計どおりに動作する
+- reference、subscription、remote operation、failure、cleanup、budget、authority の state machine が設計契約を満たす
+- subscription の session incarnation と owner/session pair fence が revision、terminal event、acknowledgement の race を拒否する
+- remote operation の private object、wire DTO、verified receipt が環境境界で混同されない
+- 旧 `client:*` hydration semantics、`hydrate:*`、component hydrate option、island scheduler、manual UI hydrate API、rerender fallback が削除されている
+- components、runtime、transformer、plugin、core の公開 export と JSDoc が新しい API に一致する
+- docs と playground が旧 hydration の説明や利用例を残していない
+- docs と全 playground が実処理を持つ `build`、`fmt:check`、`test` gate を公開し、no-op script なしで成功する
+- package ごとの SPEC、test、implementation が相互に整合している
+- unit test、integration test、E2E、build、typecheck、lint、format check が成功する
+- 独立した sub-agent による push 後の全体監査が `ACCEPT` になる
+- 作業ツリーが clean で、local HEAD と remote branch が同じ commit を指している
+
+interface と placeholder だけを追加した状態、旧実装と新実装を並存させた状態、一部 package だけを移行した状態は完了ではありません。
+既存テストが通ることだけを、新しい設計の実装証拠にしてはいけません。
+
+## 作業記録
+
+実装開始時に `.temp/declarative-ui-execution-partitioning-implementation-progress.md` を作成してください。
+この進捗文書には、少なくとも次の内容を記録してください。
+
+- 設計要件と acceptance work の一覧
+- 各要件を担当する package、API、SPEC、test、implementation
+- dependency と実装順序
+- `pending`、`in-progress`、`completed` の状態
+- 実行した検証 command と結果
+- 独立レビューの結果と採否
+- slice ごとの commit hash と push 先
+- 未完了事項と外部 blocker
+
+設計正本の acceptance work を要約だけで消化せず、一項目につき一つ以上の直接的な検証証拠へ対応付けてください。
+長期作業の context が圧縮されても、この進捗文書から次の作業を再開できる状態を維持してください。
+
+goal 文書と進捗文書は `.temp/` が ignore 対象でも `git add -f` で feature branch に含めてください。
+
+## 手順 0：実装 branch と baseline を準備する
+
+最初に `git status`、最近の commit、local HEAD、追跡先 remote branch を確認してください。
+現在の `doc/hydration-policy` が clean で、`origin/doc/hydration-policy` と同期していることを確認してください。
+
+新規 branch は独自 command を使って次のように作成してください。
+
+```sh
+gnb -f doc/hydration-policy declarative-ui-execution-partitioning
+```
+
+作成される branch 名は `feature/declarative-ui-execution-partitioning` とします。
+同名 branch がすでに存在する場合は新しい branch を重ねて作らず、その branch の状態と remote tracking を確認して継続してください。
+`git reset --hard`、force push、既存の user changes の破棄は禁止します。
+
+branch 作成後、goal 文書と進捗文書を最初の計画 commit に含め、remote tracking branch を作成してください。
+
+実装前 baseline として、少なくとも次を実行してください。
+
+```sh
+pnpm build
+pnpm test
+pnpm typecheck
+pnpm lint
+pnpm fmt:check
+pnpm test:e2e
+pnpm --filter @dathra/config lint
+pnpm --filter @dathra/config lint:type-aware
+pnpm --filter @dathra/docs build
+pnpm --filter @dathra/docs build:cloudflare
+pnpm --filter @dathra/docs fmt:check
+pnpm --filter @playground/e2e build
+pnpm --filter @playground/e2e fmt:check
+pnpm --filter @playground/ssr build
+pnpm --filter @playground/ssr fmt:check
+pnpm --filter @playground/vanilla build
+pnpm --filter @playground/vanilla fmt:check
+pnpm --filter @playground/getting-started-check build
+pnpm --filter @playground/nuxt build
+```
+
+baseline failure がある場合は、失敗 command、対象 package、既存 branch でも再現するかを進捗文書に記録してください。
+既存 branch でも再現する scope 外 failure が最終検証を妨げる場合は、手順 2 と同じ規律で独立した baseline-repair slice を作成してください。
+baseline-repair slice は failure を解消する最小変更だけを含め、独立レビューと別 commit を必要とします。
+production implementation を変更する repair では、関連 SPEC、test、implementation の三点を更新してください。
+package script、tooling config、文書、format だけを修正する repair では、変更対象に対応する検証を追加し、存在しない production API の三点セットを作ってはいけません。
+無関係な機能追加や refactor を baseline repair の名目で行ってはいけません。
+repository 内で修正できず、認証、権限、外部 service、host dependency、user の product decision が必要な failure だけを外部 blocker として扱ってください。
+最終完了時には、上記 command がすべて成功する状態を必要とします。
+
+手順 1 で implementation matrix を確定した後、最初の vertical slice として verification-gate slice を実行してください。
+verification-gate slice を完了するまで Phase 1 の production implementation を開始してはいけません。
+この slice では、`@dathra/docs` と全 playground に実処理を持つ `build`、`fmt:check`、`test` script を揃えてください。
+既存の中央 E2E suite を package の `test` から呼ぶ場合は、その package 固有の workflow を選択して検証しなければなりません。
+`passWithNoTests`、常に成功する shell command、build だけを別名にした test script は gate として認めません。
+新しい gate 自体を実行し、独立レビュー、commit、push を完了してから Phase 1 へ進んでください。
+
+## 手順 1：実装 matrix を確定する
+
+設計正本から、公開 API、compiler IR、runtime state、wire schema、artifact、diagnostic、削除対象、acceptance work を抽出してください。
+抽出した要件を package と既存 API へ対応付け、進捗文書に implementation matrix を作ってください。
+
+少なくとも `shared`、`components`、`runtime`、`transformer`、`plugin`、`core`、`docs`、`playgrounds` を確認してください。
+`reactivity` と `store` は名前だけで変更対象に含めず、ExecutionGraph と materialization の依存が実際に到達する場合だけ対象にしてください。
+
+新しい API または内部機能が必要な場合は、次の構成を作業単位にしてください。
+
+```txt
+packages/{package-name}/src/{api-name}/
+├── AGENTS.md
+├── SPEC.typ
+├── implementation.test.ts
+└── implementation.ts
+```
+
+既存ディレクトリへ責務を追加する場合は、そのディレクトリの既存構成と正準 `SPEC/SPEC.typ` の記法に合わせてください。
+
+implementation matrix は、依存先のない foundation から user-visible workflow へ向かう順に並べてください。
+package 単位で横に実装するのではなく、観測可能な振る舞いを一つずつ完成させる vertical slice に分割してください。
+
+## 手順 2：次の vertical slice を選ぶ
+
+未完了の implementation matrix から、ほかの slice の前提になる項目を一つ選んでください。
+一度に複数の密結合 slice を開始してはいけません。
+write set が重ならない調査、fixture、検証は sub-agent と並行して構いません。
+
+slice 開始前に次を明文化してください。
+
+- この slice が実現する設計要件
+- 変更する package と API
+- 更新する SPEC と ADR
+- 先に追加する test case
+- compiler、runtime、SSR、browser、plugin、公開 API への影響
+- failure、race、authority、budget、cleanup の edge case
+- slice 完了を証明する command と artifact inspection
+
+この内容を進捗文書と session plan に反映してください。
+
+## 手順 3：SPEC と test を先に更新する
+
+production implementation を変更する前に、対象 API の `SPEC.typ` を更新してください。
+次に `implementation.test.ts` へ期待する振る舞いと failure case を追加し、可能な範囲で新 test が旧実装に対して失敗することを確認してください。
+
+この goal の実行をもって、旧 hydration semantics を検証する test の修正と置換を明示的に許可します。
+ただし、旧 test を削除する場合は、superseding SPEC と新契約を検証する replacement test を同じ slice に追加してください。
+coverage を減らすための test 削除、assertion の弱体化、skip 化は禁止します。
+
+SPEC、test、implementation の三ファイルは、各 slice の終了時点で相互に整合させてください。
+次の slice に進むために、意図的な不整合を commit してはいけません。
+
+## 手順 4：production code を実装する
+
+既存 package の責務と local pattern に従い、SPEC と test を満たす最小の production change を実装してください。
+設計正本が要求する複雑さを、簡単な compatibility fallback、eager hydration、full module 配信、component rerender、暗黙 RPC へ置き換えてはいけません。
+
+compiler unknown は dependency closure を示す diagnostic にし、runtime fallback の理由にしないでください。
+server-only dependency が client artifact に到達した場合は、bundle を許可して runtime で無視するのではなく build を失敗させてください。
+
+公開 API には英語の JSDoc を追加してください。
+code comment も英語で記述し、処理から明らかなコメントは追加しないでください。
+TypeScript の型安全性を弱める cast、`any`、unchecked wire object、private brand の shape-based reconstruction は導入しないでください。
+
+unrelated refactor、format churn、metadata update を同じ slice に含めないでください。
+作業中に user または別 agent の変更を見つけた場合は、破棄せず、その変更と整合する形で実装してください。
+
+## 実装順序
+
+実装は次の dependency order を基本とします。
+実コードを調査して依存関係が異なると証明できた場合は、理由を進捗文書に記録して順序を修正してください。
+
+### Phase 1：ExecutionGraph foundation
+
+- ModuleCoordinator と module graph snapshot
+- ExecutionGraph の node、edge、TemplateNode、Occurrence、identity
+- ObservationContract、composition、RealizationWitness
+- canonical preimage、digest、qualified ID の共通 primitive
+- incremental invalidation と deterministic graph test
+
+### Phase 2：semantic contract と registry
+
+- semantic fact、relation、execution contract
+- registry descriptor と environment/role binding
+- browser/server-request projection と protocol binding
+- conflict、namespace、dangling reference、kind mismatch diagnostic
+- contract compiler と runtime validation
+
+### Phase 3：解析と placement
+
+- root、read、effect、callback、module evaluation の導出
+- functional component と `defineComponent` の graph transparency
+- function extraction、capture、mutable state、module closure
+- environment constraint、exposure、authority label
+- finite candidate solver、cost vector、diagnostic path
+
+### Phase 4：server render
+
+- server renderer を ExecutionGraph から生成する経路
+- RenderOperation、retry、cancellation、header、stream
+- FinalHeaderCommit、Early Hints、non-atomic writer
+- DSD、static DOM、style artifact の server output
+
+### Phase 5：materialization と projection
+
+- MaterializationRequirement と MaterializationPlan
+- snapshot、codec、graph-table、reference、subscription、remote operation
+- request class、projection definition、projection instance
+- artifact address、integrity、manifest core、fixed envelope、plan identity
+- budget、wire validation、private loader と boot authority
+
+### Phase 6：ClientScopeGraph と client runtime
+
+- client root、activation group、shared state、prerequisite
+- lifetime owner、lease、generation、allocation/commit transaction
+- bootstrap の request-reachable projection
+- RuntimeFailureChannel、FailureRef、cleanup ledger
+- client root がない route の zero-bootstrap path
+
+### Phase 7：DOM activation
+
+- marker、binding、existing DOM attachment
+- DSD parse fence と custom-element reaction ordering
+- reconciliation、user input、autofill、history restoration
+- event admission、interaction recording、dynamic client UI
+- `render:client`、`activate:*`、`dom:external`
+
+### Phase 8：protocol と lifecycle
+
+- reference cache、grant、lease、release
+- subscription continuity、namespace、session incarnation、pair fence、resync、ack、GC
+- remote admission、canonical wire、authorization cut、receipt、recovery、watermark
+- effect、activation、dispose、late settlement、failure containment
+- hard budget と bounded cleanup
+
+### Phase 9：公開 API と移行
+
+- components、runtime、core、plugin の export
+- `defineComponent` と functional component の最終 semantics
+- docs と playground の新 API への移行
+- `DocCodeBlock` の server/client artifact 分割
+- 旧 hydration、island、manual hydrate、fallback の削除
+- 旧 semantics の test fixture と reference data の置換
+
+### Phase 10：全体 acceptance
+
+- 設計正本の全 acceptance work の直接検証
+- cross-package integration と E2E
+- artifact closure、byte identity、reproducible build の検査
+- race、budget、cancellation、cleanup、authority の stress test
+- incremental build cost と runtime memory の測定
+- 公開 API、docs、example の整合確認
+
+各 phase は複数の vertical slice に分割して構いません。
+型だけをまとめて追加し、利用されない placeholder を残したまま phase 完了としてはいけません。
+
+## 手順 5：slice を検証する
+
+slice ごとに、変更 package の test、typecheck、lint、build を実行してください。
+変更が package boundary を越える場合は、consumer package と関連 playground の test も実行してください。
+browser workflow、DSD、event、activation、artifact delivery に影響する場合は E2E を実行してください。
+
+少なくとも次を確認してください。
+
+- success、typed failure、cancel、dispose の主要 path
+- stale generation、duplicate event、late settlement、resync の race
+- malformed manifest、wire、codec、marker、registry の拒否
+- server-only import が client artifact に入らないこと
+- static DOM が client mutation plan に入らないこと
+- cleanup、grant、lease、budget reservation が terminal path で解放されること
+- diagnostic が root から失敗 dependency までの path を示すこと
+
+coverage は可能な限り 100% を維持してください。
+既存 threshold を下げて test を通してはいけません。
+実行 command、結果、未検証事項を進捗文書へ記録してください。
+
+## 手順 6：独立レビューを収束させる
+
+各 vertical slice の実装後、実装を担当していない新しい独立した sub-agent にレビューを依頼してください。
+同じ agent session に提案、実装、最終評価を完結させてはいけません。
+
+reviewer には、少なくとも次を確認させてください。
+
+- 設計正本、SPEC、test、implementation が一致するか
+- old hydration semantics または暗黙 fallback が残っていないか
+- server-only closure が client artifact へ漏れないか
+- ownership、generation、session identity、cleanup が race-safe か
+- authority、private brand、wire DTO、receipt の trust boundary が保たれるか
+- budget と terminal state が resource leak や永久 hole を作らないか
+- public API と diagnostic が実用的か
+- test が implementation detail ではなく契約を検証しているか
+- unrelated change や未完了 placeholder が混入していないか
+
+メインセッションは review result を根拠とコードに照合し、正しい指摘だけを採用してください。
+意味上の修正を加えた場合は、別の新しい sub-agent に再レビューさせてください。
+実質的な指摘がなくなるまで実装、検証、レビューを繰り返してください。
+
+sub-agent は調査、fixture、独立した write set の実装にも使えます。
+ただし、メインセッションは各変更の統合、SPEC/test/implementation の整合、最終判断に責任を持ってください。
+
+## 手順 7：slice を commit して push する
+
+review が収束した slice だけを stage してください。
+無関係な変更、生成 cache、coverage output、debug log を commit に含めてはいけません。
+
+commit 前に `git diff --check` と staged file list を確認してください。
+変更内容を特定できる commit message で commit し、`feature/declarative-ui-execution-partitioning` へ push してください。
+push 後は local HEAD と tracking branch が同じ commit を指すことを確認してください。
+
+進捗文書へ commit hash と検証証拠を記録してください。
+未完了 slice がある場合は、ユーザーへ確認を求めず手順 2 に戻ってください。
+
+## 手順 8：旧実装を削除する
+
+新経路で全 call site と fixture を置き換えた後、設計正本が破壊的削除を決めた UI hydration implementation を削除してください。
+旧経路を先に削除して作業ツリーを長期間壊した状態にせず、同じ slice で consumer migration と replacement test を完了してください。
+
+最終的に `rg` で旧 API、directive、marker、island metadata、scheduler、fallback の参照を調査してください。
+historical design record を除き、production、public export、docs、playground、active test に旧 semantics を残してはいけません。
+同名でも別責務の API は、qualified import path と振る舞いを確認して保持してください。
+
+## 手順 9：全 acceptance work を検証する
+
+全 implementation matrix が completed になった後、設計正本の「実装時の検証事項」を先頭から一件ずつ再検証してください。
+各項目について、test 名、command、artifact、benchmark、inspection result のいずれが直接証拠になるかを進捗文書に記録してください。
+
+次の root command を最終状態で実行してください。
+
+```sh
+pnpm build
+pnpm test
+pnpm typecheck
+pnpm lint
+pnpm lint:type-aware
+pnpm fmt:check
+pnpm test:e2e
+pnpm --filter @dathra/config lint
+pnpm --filter @dathra/config lint:type-aware
+pnpm --filter @dathra/docs build
+pnpm --filter @dathra/docs build:cloudflare
+pnpm --filter @dathra/docs fmt:check
+pnpm --filter @dathra/docs test
+pnpm --filter @playground/e2e build
+pnpm --filter @playground/e2e fmt:check
+pnpm --filter @playground/e2e test
+pnpm --filter @playground/ssr build
+pnpm --filter @playground/ssr fmt:check
+pnpm --filter @playground/ssr test
+pnpm --filter @playground/vanilla build
+pnpm --filter @playground/vanilla fmt:check
+pnpm --filter @playground/vanilla test
+pnpm --filter @playground/getting-started-check build
+pnpm --filter @playground/getting-started-check fmt:check
+pnpm --filter @playground/getting-started-check test
+pnpm --filter @playground/nuxt build
+pnpm --filter @playground/nuxt fmt:check
+pnpm --filter @playground/nuxt test
+```
+
+formatter は変更対象だけに適用し、無関係な repository-wide churn を起こさないでください。
+失敗を `passWithNoTests`、skip、threshold 低下、snapshot の無条件更新で隠してはいけません。
+
+`DocCodeBlock` と client root がない route については、runtime behavior だけでなく final artifact closure と delivered bytes も検査してください。
+server-only highlight dependency が client artifact から到達不能であることを、bundle metadata または同等の直接証拠で示してください。
+
+## 手順 10：push 後の全体監査を行う
+
+全変更を commit、push した後、新しい独立した sub-agent に repository 全体を監査させてください。
+reviewer には設計正本、implementation matrix、全変更 diff、関連 SPEC、test、implementation、公開 API、docs、playground、最終検証結果を確認させてください。
+
+次を監査対象にしてください。
+
+- 設計要件の未実装、部分実装、意味のすり替え
+- SPEC、test、implementation の不整合
+- server-only closure の client artifact 混入
+- fallback または旧 hydration semantics の残存
+- race、authority、budget、cleanup、wire boundary の欠落
+- docs、example、public export の stale state
+- acceptance evidence が requirement の範囲を直接証明しているか
+
+実質的な指摘が見つかった場合は、該当 slice を reopened にして手順 2 へ戻ってください。
+修正後は新しい reviewer で再評価し、commit、push 後にもう一度 repository 全体を監査してください。
+
+## 手順 11：完了を報告する
+
+全体監査が `ACCEPT` になった後、設計正本の状態を「実装完了」へ更新してください。
+進捗文書の全 implementation matrix と acceptance work を completed にしてください。
+
+最後の文書変更も commit、push し、その commit を対象に clean tree と local/remote 同期を再確認してください。
+監査直前に `git rev-parse HEAD` と `git ls-remote --heads origin refs/heads/feature/declarative-ui-execution-partitioning` を実行し、local HEAD と remote branch OID が一致することを確認してください。
+その後、別の新しい独立した sub-agent に、この exact remote OID を明示して最終監査を依頼してください。
+最終監査は、実装完了の状態変更、進捗文書の completed 宣言、acceptance evidence、最新 diff、clean tree、local/remote 同期を確認しなければなりません。
+最後の文書 commit が表現変更だけであっても、この監査を省略してはいけません。
+最終監査で指摘が出た場合は該当 slice を reopened にし、修正、検証、commit、push 後に、さらに新しい reviewer で最新 remote HEAD を監査してください。
+最終監査が `ACCEPT` になった後、`git ls-remote` を再実行してください。
+監査前に渡した OID と監査後の remote OID が異なる場合は監査結果を無効とし、新しい exact remote OID に対する監査をやり直してください。
+ユーザーへの完了報告は、監査前後で変化していない最新 remote OID に対する最終監査が `ACCEPT` になった後だけ行ってください。
+
+ユーザーには次を報告してください。
+
+- 実装した execution model と主要な公開 API
+- 削除した旧 hydration semantics
+- package ごとの主要変更
+- unit、integration、E2E、artifact、benchmark の検証結果
+- 残る実装上の制約
+- feature branch 名、最新 commit hash、push 先
+
+## 自律実行と blocker
+
+実装上の不確実性、設計判断、優先順位は、コード、SPEC、設計正本、一次資料、sub-agent を使って解決してください。
+人間の選好を聞かなくても最終目標から判断できる事項は、ユーザーへ質問してはいけません。
+
+network、認証、権限、再現不能な外部 service、利用不能な host dependency、user の product decision など、repository 内の変更では解決できない要因だけを外部 blocker とします。
+外部 blocker がなければ、途中報告で作業を止めず、次の slice へ進んでください。
+一つの blocker が見つかっても、独立して進められる slice と検証を先に完了してください。
+同じ外部 blocker が三回連続する goal turn で再確認され、ほかに意味のある作業が残っていない場合だけ goal を `blocked` にしてください。
+一回目または二回目の失敗、作業量、難度、時間を blocker 扱いしてはいけません。
+
+goal の完了条件を、実装済みの一部へ狭めてはいけません。
+token、時間、変更量、実装難度を理由に、scaffolding、MVP、互換 layer、未検証の placeholder を最終成果としてはいけません。
