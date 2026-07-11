@@ -300,7 +300,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | ID01 | completed | canonical preimage、digest、qualified ID の共通 primitive | shared test/typecheck/lint/build と artifact inspection | 2回目の独立レビュー `ACCEPT` | `3816c34` / push 済み |
 | SC01-DESIGN | completed | flat projection と artifact 順序の矛盾を解消する | design type/prose、matrix、生成 DAG の整合確認 | proposal review と final actual diff review は `ACCEPT` | `17591e5` / push 済み |
 | SC01 | completed | closed registry schema、catalog、fixed-point projection | shared 6 files・142 tests、typecheck、lint、fmt、build、artifact inspection | 3回目の独立実装レビューは `ACCEPT` | `da05b19` / push 済み |
-| OC01-DESIGN | in-progress | canonical trace language、relation inclusion、composition result、instance witness | 設計正本、matrix、digest DAG、責務分担を更新中 | 4段階の修正後、Ampere の最終提案レビューは `ACCEPT` | 未 commit |
+| OC01-DESIGN | completed | canonical trace language、relation inclusion、composition result、instance witness | 設計正本、matrix、digest DAG、責務分担を更新した | 提案と2回目の actual diff レビューは `ACCEPT` | `2900469` / push 済み |
 
 ## Review Log
 
@@ -357,6 +357,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | ID01 | `3816c34` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `3816c342ce203cbf5ddf5b91c67479c03e72a163` で一致した |
 | SC01-DESIGN | `17591e5` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `17591e5d8d0d4f54501d12753353bf8887a70f6e` で一致した |
 | SC01 | `da05b19` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `da05b191945df608e09a61d87538a7bf69ceca82` で一致した |
+| OC01-DESIGN | `2900469` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `29004694c0f5a700825afe2d22e15e70ffe5f8f5` で一致した |
 
 ## 未完了事項
 
