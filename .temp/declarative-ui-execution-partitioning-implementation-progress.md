@@ -27,7 +27,7 @@
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
-| P01 | ExecutionGraph foundation | pending | 未着手 |
+| P01 | ExecutionGraph foundation | in-progress | ID01 canonical identity から開始する |
 | P02 | semantic contract と registry | pending | 未着手 |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
@@ -82,7 +82,7 @@ package 間で使う internal export、package export map、build entry は、�
 | ID | 設計要件 | 主担当と API base path | SPEC / Test | Implementation / artifact | Dependency | 状態 |
 | --- | --- | --- | --- | --- | --- | --- |
 | VG01 | docs と全 playground の実処理 gate | root、`docs/`、`playgrounds/{e2e,ssr,vanilla,getting-started-check,nuxt}/` | app ごとの workflow test と `vitest.config.ts` | package scripts、CI、Nuxt context repair | なし | completed |
-| ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | pending |
+| ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | in-progress |
 | SC01 | RegistryId、descriptor、environment/role/protocol binding | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema と validation | ID01 | pending |
 | OC01 | ObservationContract、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | 同 directory の implementation | SC01 / ID01 | pending |
 | EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | pending |
@@ -184,6 +184,28 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - 現行 solver は final bytes を持たないため、candidate generation と finalization 後 selection を CN01 と SL01 に分離した。
 - Phase 5 の finalization は Phase 6〜8 の client runtime semantic unit を実際に bundle してからでなければ cost を確定できないため、設計正本の dependency を根拠に AF01 と SL01 を runtime/activation/protocol 後へ配置した。
 
+## 現在の Slice
+
+### ID01 canonical identity
+
+- **設計要件**：同じ canonical preimage から server と browser で同じ `sha-256:<padding なし base64url>` digest を生成し、namespace、semantic kind、local ID を衝突なく束縛した qualified ID を生成する。
+- **変更範囲**：`packages/shared/src/canonicalIdentity/` に `AGENTS.md`、`SPEC.typ`、`implementation.test.ts`、`implementation.ts` を追加し、`packages/shared/src/index.ts` から公開する。
+- **SPEC と ADR**：RFC 8785 JCS の対象を side-effect-free な closed JSON value に制限する新規仕様と ADR を追加する。既存 Accepted ADR の変更はない。
+- **先行 test**：object key order、nested value、UTF-8、known SHA-256 vector、canonical digest guard、qualified ID の domain separation を成功系として追加する。non-finite number、negative zero、lone surrogate、undefined、BigInt、symbol、function、accessor、non-enumerable/symbol property、custom prototype、sparse/extra-property array、cycle、noncanonical digest を失敗系として追加する。
+- **影響範囲**：shared の pure API と export surface だけを変更する。compiler、runtime、SSR、browser、plugin の既存挙動は変更せず、後続 slice が同じ primitive を利用する。
+- **edge case**：digest 開始後の caller mutation が結果を変えないよう bytes を同期 copy する。getter を実行せず拒否し、shared reference は value として許可するが ancestor cycle は拒否する。qualified ID は namespace、kind、local ID を canonical preimage の field として束縛する。
+- **完了証拠**：shared の test、typecheck、lint、build、root export test、browser-compatible build artifact inspection、独立レビュー、commit、push を必要とする。
+
+### ID01 の検証証拠
+
+- `implementation.test.ts` を先に追加し、実装不在による失敗を確認してから production implementation を追加した。
+- `pnpm --filter @dathra/shared test` は5 files、115 tests が成功し、`canonicalIdentity/implementation.ts` は statement 97.41%、branch 96.39%、function 100%、line 97.36% であった。
+- `pnpm --filter @dathra/shared typecheck`、`lint`、`fmt:check`、`build` はすべて成功した。
+- `pnpm --filter @dathra/shared lint:type-aware` は ID01 の error と warning が0件で成功した。既存の `rlse.config.ts` に warning が1件残る。
+- ESM/CJS/DTS build artifact に Node.js 固有の crypto API、`Buffer`、`createHash` が含まれないことを検索で確認した。
+- build 後の ESM API で `abc` の SHA-256 vector が `sha-256:ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0` になることを実行して確認した。
+- `git diff --check` は成功した。
+
 ## Acceptance Work
 
 各項目は設計正本の「実装時の検証事項」に一対一で対応する。
@@ -244,6 +266,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | BASELINE-00 | completed | 実装前の既存挙動と gate を固定する | Baseline 表の19 command | production change がないため独立実装レビュー対象外 | この記録を次の文書 commit に含める |
 | MATRIX-01 | completed | package/API/SPEC/test/implementation と acceptance owner を確定する | 59 row、未定義 dependency 0、cycle 0、AX01 閉包外 0 | 3回目の独立レビュー `ACCEPT` | この記録を matrix commit に含める |
 | VG01 | completed | docs と全 playground に実処理の build/fmt/test gate を設ける | 全 app production workflow、root aggregate、CI format/build/test | 5回目の独立レビュー `ACCEPT` | `8fe6c60` / push 済み |
+| ID01 | in-progress | canonical preimage、digest、qualified ID の共通 primitive | shared test/typecheck/lint/build と artifact inspection | 2回目の独立レビュー `ACCEPT` | 未 commit |
 
 ## Review Log
 
@@ -258,6 +281,8 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | VG01 3回目 | Volta (`019f5230-d95b-7b20-a374-461da6026706`) | CHANGES REQUIRED | vanilla の未到達 demo に残っていた旧 `Signal.update()` を現行 API へ移行し、runtime API と FC の production interaction を Chromium gate に追加した。docs と playground の `.update()` 残存が 0 件であることを確認した |
 | VG01 4回目 | Boyle (`019f523a-1682-7ca2-839a-4da76ca0579a`) | CHANGES REQUIRED | E2E build を harness の unmanaged child から package `test` script の前段へ移した。production build は一度だけ実行され、各 test file は preview と browser だけを所有して明示的に解放する |
 | VG01 5回目 | Hilbert (`019f5240-f9b5-79e3-8523-3551bbebfe23`) | ACCEPT | 実質的な問題は残っていない。VG01 の全要件、既往リスク、tracked/untracked 差分、lockfile の変更範囲を確定した |
+| ID01 初回 | Kierkegaard (`019f525f-03b5-7da2-aa37-86fc578aac96`) | CHANGES REQUIRED | `Uint8Array.from()` が overridable iterator を実行する問題、qualified input の field 再読と accessor 実行、non-zero pad bit test の不足を採用した。SPEC と失敗 test を先に追加し、intrinsic typed-array copy、closed descriptor snapshot、同長 invalid vector へ修正した |
+| ID01 2回目 | Heisenberg (`019f526c-208a-7591-995c-ed105f435ee9`) | ACCEPT | 初回3件の根本解消、JCS、digest pad bit、domain separation、typed failure、public export、browser-compatible artifact を確認した。残余リスクは契約外の Proxy と cross-engine smoke test に限定される |
 
 ## Commit / Push Log
 
