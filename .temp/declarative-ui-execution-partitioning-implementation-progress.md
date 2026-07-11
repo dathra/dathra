@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: VG01 の独立レビューを実施し、指摘を収束させて commit と push を完了する。
+- 次の作業: ID01 の canonical preimage、digest、qualified ID を SPEC と test から実装する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -26,7 +26,7 @@
 | --- | --- | --- | --- |
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
-| S02 | verification-gate slice | in-progress | docs と全 playground の production workflow gate を対象にする |
+| S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
 | P01 | ExecutionGraph foundation | pending | 未着手 |
 | P02 | semantic contract と registry | pending | 未着手 |
 | P03 | 解析と placement | pending | 未着手 |
@@ -81,7 +81,7 @@ package 間で使う internal export、package export map、build entry は、�
 
 | ID | 設計要件 | 主担当と API base path | SPEC / Test | Implementation / artifact | Dependency | 状態 |
 | --- | --- | --- | --- | --- | --- | --- |
-| VG01 | docs と全 playground の実処理 gate | root、`docs/`、`playgrounds/{e2e,ssr,vanilla,getting-started-check,nuxt}/` | app ごとの workflow test と `vitest.config.ts` | package scripts、CI、Nuxt context repair | なし | in-progress |
+| VG01 | docs と全 playground の実処理 gate | root、`docs/`、`playgrounds/{e2e,ssr,vanilla,getting-started-check,nuxt}/` | app ごとの workflow test と `vitest.config.ts` | package scripts、CI、Nuxt context repair | なし | completed |
 | ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | pending |
 | SC01 | RegistryId、descriptor、environment/role/protocol binding | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema と validation | ID01 | pending |
 | OC01 | ObservationContract、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | 同 directory の implementation | SC01 / ID01 | pending |
@@ -243,7 +243,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | PLAN-00 | completed | 実装 branch、正本、進捗台帳を確立する | clean tree と local/remote tracking を確認 | goal 文書の事前独立レビューは `ACCEPT` | `8a0eedd` / push 済み |
 | BASELINE-00 | completed | 実装前の既存挙動と gate を固定する | Baseline 表の19 command | production change がないため独立実装レビュー対象外 | この記録を次の文書 commit に含める |
 | MATRIX-01 | completed | package/API/SPEC/test/implementation と acceptance owner を確定する | 59 row、未定義 dependency 0、cycle 0、AX01 閉包外 0 | 3回目の独立レビュー `ACCEPT` | この記録を matrix commit に含める |
-| VG01 | in-progress | docs と全 playground に実処理の build/fmt/test gate を設ける | 全 app production workflow、root aggregate、CI format/build/test | 新しい reviewer へ依頼する | 未 commit |
+| VG01 | completed | docs と全 playground に実処理の build/fmt/test gate を設ける | 全 app production workflow、root aggregate、CI format/build/test | 5回目の独立レビュー `ACCEPT` | `8fe6c60` / push 済み |
 
 ## Review Log
 
@@ -266,9 +266,9 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | PLAN-00 | `8a0eedd` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
 | BASELINE-00 | `9cd4266` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
 | MATRIX-01 | `549e312` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
+| VG01 | `8fe6c60` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `8fe6c60cd2e4cab82b9785525a76e5f485148e95` で一致した |
 
 ## 未完了事項
 
-- verification-gate slice を独立レビュー、commit、push まで完了する。
 - Phase 1 から Phase 10 を vertical slice 単位で実装する。
 - push 後の全体監査と exact remote OID の最終監査を完了する。
