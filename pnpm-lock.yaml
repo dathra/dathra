@@ -141,6 +141,9 @@ importers:
       vite:
         specifier: ^6.3.4
         version: 6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
       wrangler:
         specifier: ^4.24.0
         version: 4.106.0(@cloudflare/workers-types@4.20260701.1)
@@ -168,10 +171,10 @@ importers:
         version: 24.2.0
       '@vitest/browser-playwright':
         specifier: 'catalog:'
-        version: 4.0.4(playwright@1.56.1)(vite@6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4)
+        version: 4.0.4(playwright@1.56.1)(vite@7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4)
       '@vitest/coverage-v8':
         specifier: 'catalog:'
-        version: 4.0.4(@vitest/browser@4.0.4(vite@6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4))(vitest@4.0.4)
+        version: 4.0.4(@vitest/browser@4.0.4(vite@7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4))(vitest@4.0.4)
       playwright:
         specifier: ^1.56.1
         version: 1.56.1
@@ -456,6 +459,9 @@ importers:
       vite:
         specifier: ^6.3.4
         version: 6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
 
   playgrounds/nuxt:
     dependencies:
@@ -478,12 +484,24 @@ importers:
         specifier: ^3.5.13
         version: 3.5.28(typescript@6.0.3)
     devDependencies:
+      '@dathra/config':
+        specifier: workspace:*
+        version: link:../../config
       '@dathra/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin
       '@nuxt/devtools':
         specifier: ^3.1.1
         version: 3.1.1(vite@7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vue@3.5.28(typescript@6.0.3))
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.2.0
+      playwright:
+        specifier: ^1.56.1
+        version: 1.56.1
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
 
   playgrounds/ssr:
     dependencies:
@@ -512,6 +530,9 @@ importers:
       vite:
         specifier: ^6.3.4
         version: 6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
 
   playgrounds/vanilla:
     dependencies:
@@ -525,12 +546,21 @@ importers:
       '@dathra/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.2.0
+      playwright:
+        specifier: ^1.56.1
+        version: 1.56.1
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^6.3.4
         version: 6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
 
 packages:
 
@@ -8622,7 +8652,7 @@ snapshots:
   '@parcel/watcher-wasm@2.5.6':
     dependencies:
       is-glob: 4.0.3
-      picomatch: 4.0.4
+      picomatch: 4.0.3
 
   '@parcel/watcher-win32-arm64@2.5.6':
     optional: true
@@ -9206,19 +9236,6 @@ snapshots:
       vite: 7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
       vue: 3.5.28(typescript@6.0.3)
 
-  '@vitest/browser-playwright@4.0.4(playwright@1.56.1)(vite@6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4)':
-    dependencies:
-      '@vitest/browser': 4.0.4(vite@6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4)
-      '@vitest/mocker': 4.0.4(vite@6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))
-      playwright: 1.56.1
-      tinyrainbow: 3.0.3
-      vitest: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
-    transitivePeerDependencies:
-      - bufferutil
-      - msw
-      - utf-8-validate
-      - vite
-
   '@vitest/browser-playwright@4.0.4(playwright@1.56.1)(vite@7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4)':
     dependencies:
       '@vitest/browser': 4.0.4(vite@7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4)
@@ -9248,6 +9265,7 @@ snapshots:
       - msw
       - utf-8-validate
       - vite
+    optional: true
 
   '@vitest/browser@4.0.4(vite@7.3.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2))(vitest@4.0.4)':
     dependencies:
@@ -12765,7 +12783,7 @@ snapshots:
       rolldown-plugin-dts: 0.25.0(@typescript/native-preview@7.0.0-dev.20260421.2)(rolldown@1.0.0)(typescript@6.0.3)
       semver: 7.7.4
       tinyexec: 1.1.2
-      tinyglobby: 0.2.16
+      tinyglobby: 0.2.15
       tree-kill: 1.2.2
       unconfig-core: 7.5.0
     optionalDependencies:
@@ -13179,11 +13197,11 @@ snapshots:
       expect-type: 1.2.2
       magic-string: 0.30.21
       pathe: 2.0.3
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       std-env: 3.10.0
       tinybench: 2.9.0
       tinyexec: 0.3.2
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.16
       tinyrainbow: 3.0.3
       vite: 6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
       why-is-node-running: 2.3.0

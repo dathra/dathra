@@ -12,8 +12,8 @@
     "preview": "tsx server.ts --preview",
     "fmt": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --write \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\"",
     "fmt:check": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\"",
-    "test": "pnpm --dir ../.. exec vitest run --config playgrounds/e2e/vitest.config.ts",
-    "test:watch": "pnpm --dir ../.. exec vitest --config playgrounds/e2e/vitest.config.ts"
+    "test": "pnpm build && pnpm --dir ../.. exec vitest run --config playgrounds/e2e/vitest.config.ts",
+    "test:watch": "pnpm build && pnpm --dir ../.. exec vitest --config playgrounds/e2e/vitest.config.ts"
   },
   "dependencies": {
     "@dathra/components": "workspace:*",

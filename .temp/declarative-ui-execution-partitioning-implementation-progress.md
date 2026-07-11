@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: VG01 の test と gate を先に追加し、旧 Nuxt consumer の production failure を確認してから修正する。
+- 次の作業: VG01 の独立レビューを実施し、指摘を収束させて commit と push を完了する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -81,7 +81,7 @@ package 間で使う internal export、package export map、build entry は、�
 
 | ID | 設計要件 | 主担当と API base path | SPEC / Test | Implementation / artifact | Dependency | 状態 |
 | --- | --- | --- | --- | --- | --- | --- |
-| VG01 | docs と全 playground の実処理 gate | root、`docs/`、`playgrounds/{e2e,ssr,vanilla,getting-started-check,nuxt}/` | app ごとの workflow test と `vitest.config.ts` | package scripts、CI、Nuxt context repair | なし | pending |
+| VG01 | docs と全 playground の実処理 gate | root、`docs/`、`playgrounds/{e2e,ssr,vanilla,getting-started-check,nuxt}/` | app ごとの workflow test と `vitest.config.ts` | package scripts、CI、Nuxt context repair | なし | in-progress |
 | ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | pending |
 | SC01 | RegistryId、descriptor、environment/role/protocol binding | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema と validation | ID01 | pending |
 | OC01 | ObservationContract、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | 同 directory の implementation | SC01 / ID01 | pending |
@@ -150,6 +150,28 @@ package 間で使う internal export、package export map、build entry は、�
 - getting-started-check は production server bundle を実行し、DSD と初期 counter content を検証する。
 - Nuxt は production Nitro server を起動し、`GET /` の status 200、DSD、代表 counter interaction を Chromium で検証する。
 - root aggregate command と CI は docs と全 playground の `build`、`fmt:check`、`test` を実行する。
+
+### VG01 の検証証拠
+
+新しい browser gate は、build だけでは検出できなかった既存 consumer failure を検出した。
+vanilla では `Signal.update()` の呼び出しにより最初の counter click が `TypeError` になり、Nuxt では旧 setup context の `attrs` 参照により production Nitro server が `GET /` へ HTTP 500 を返した。
+現行の signal API と `defineComponent()` context に consumer を移行し、Nuxt client bundle では custom-element registration が tree-shaking されないことも同じ browser test で確認した。
+
+| Command | 状態 | 結果 |
+| --- | --- | --- |
+| `pnpm --filter @playground/vanilla test` | completed | production preview を Chromium で開き、JSX counter、runtime counter、list reconciliation、FC toggle、custom-element counter の interaction、reactive DOM 更新、page error 不在を検証した |
+| `pnpm --filter @playground/nuxt test` | completed | production Nitro server の status 200、DSD、client registration、counter の `5` から `6` への更新を検証した |
+| `pnpm --filter @playground/e2e test` | completed | package script で production build を一度完了してから、明示的な suite teardown を使う15 files、15 tests が31.23秒で成功した。終了後に preview process が残らないことを確認した |
+| `pnpm --filter @playground/e2e exec tsc --noEmit` | completed | E2E harness と全 fixture の型検査が成功した |
+| `pnpm fmt:check` | completed | docs、全 playground、全 package を含む14 workspace project の format gate が成功した |
+| `pnpm build` | completed | 8 package の production build が成功した |
+| `pnpm build:apps` | completed | docs と5 playground の production build が成功した |
+| `pnpm test:apps` | completed | 最新差分で docs と全 playground の test が成功した。既存 E2E は15 files、15 tests が成功した |
+| `pnpm --filter @dathra/docs build:cloudflare` | completed | client と Cloudflare worker bundle の build が成功した |
+| `pnpm test` | completed | 8 package、1,330 tests が成功した |
+| `pnpm typecheck` | completed | 8 package が成功した |
+| `pnpm lint` | completed | 8 package が warning 0、error 0 で成功した |
+| `pnpm install --frozen-lockfile` | completed | dependency 追加後の lockfile 整合性を確認した |
 
 ### Matrix 調査根拠
 
@@ -221,7 +243,7 @@ package 間で使う internal export、package export map、build entry は、�
 | PLAN-00 | completed | 実装 branch、正本、進捗台帳を確立する | clean tree と local/remote tracking を確認 | goal 文書の事前独立レビューは `ACCEPT` | `8a0eedd` / push 済み |
 | BASELINE-00 | completed | 実装前の既存挙動と gate を固定する | Baseline 表の19 command | production change がないため独立実装レビュー対象外 | この記録を次の文書 commit に含める |
 | MATRIX-01 | completed | package/API/SPEC/test/implementation と acceptance owner を確定する | 59 row、未定義 dependency 0、cycle 0、AX01 閉包外 0 | 3回目の独立レビュー `ACCEPT` | この記録を matrix commit に含める |
-| VG01 | in-progress | docs と全 playground に実処理の build/fmt/test gate を設ける | app production workflow と root/CI aggregate | 実装後に新しい reviewer へ依頼する | 未 commit |
+| VG01 | in-progress | docs と全 playground に実処理の build/fmt/test gate を設ける | 全 app production workflow、root aggregate、CI format/build/test | 新しい reviewer へ依頼する | 未 commit |
 
 ## Review Log
 
@@ -231,6 +253,11 @@ package 間で使う internal export、package export map、build entry は、�
 | Implementation Matrix 初回 | Hypatia (`019f51dd-7ae2-7560-b20e-245a5e4f2d86`) | CHANGES REQUIRED | candidate/final selection 分割、runtime materialization/registry/capability、store migration、dependency inversion、acceptance owner、package 別 public API、VG01 観測条件をすべて採用した |
 | Implementation Matrix 2回目 | Fermat (`019f51eb-7486-78c1-8511-857b82d585ce`) | CHANGES REQUIRED | ST01 の最終依存、producer-owned internal export、A13/A26/A33/A40/A43 の owner と evidence、再開情報を修正した |
 | Implementation Matrix 3回目 | Peirce (`019f51f5-61ab-79b3-9b70-028cffe3b506`) | ACCEPT | 実質的な不足なし。59 row と A01〜A44 の実装・検証計画を確定した |
+| VG01 初回 | Aristotle (`019f5215-c14f-7ac2-b741-0e481550f7ff`) | CHANGES REQUIRED | E2E harness の明示 teardown、startup failure cleanup、動的 preview log、vanilla failure diagnostics を採用した。Nuxt の no-op tree-shaking barrier は削除し、Vue JSX plugin の PURE 対象から Dathra API を除外した |
+| VG01 2回目 | Epicurus (`019f5224-2ee9-7510-b7f0-ea7ef0b161f2`) | CHANGES REQUIRED | E2E と Nuxt の readiness request に wall-clock deadline を追加した。E2E は cleanup 中 state の再取得を待機させ、Nuxt は SIGKILL 後の未終了と複数 cleanup failure を報告するようにした |
+| VG01 3回目 | Volta (`019f5230-d95b-7b20-a374-461da6026706`) | CHANGES REQUIRED | vanilla の未到達 demo に残っていた旧 `Signal.update()` を現行 API へ移行し、runtime API と FC の production interaction を Chromium gate に追加した。docs と playground の `.update()` 残存が 0 件であることを確認した |
+| VG01 4回目 | Boyle (`019f523a-1682-7ca2-839a-4da76ca0579a`) | CHANGES REQUIRED | E2E build を harness の unmanaged child から package `test` script の前段へ移した。production build は一度だけ実行され、各 test file は preview と browser だけを所有して明示的に解放する |
+| VG01 5回目 | Hilbert (`019f5240-f9b5-79e3-8523-3551bbebfe23`) | ACCEPT | 実質的な問題は残っていない。VG01 の全要件、既往リスク、tracked/untracked 差分、lockfile の変更範囲を確定した |
 
 ## Commit / Push Log
 
@@ -238,6 +265,7 @@ package 間で使う internal export、package export map、build entry は、�
 | --- | --- | --- | --- |
 | PLAN-00 | `8a0eedd` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
 | BASELINE-00 | `9cd4266` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
+| MATRIX-01 | `549e312` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
 
 ## 未完了事項
 

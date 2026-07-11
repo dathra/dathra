@@ -45,7 +45,7 @@ export const Toggle: FCWithChildren<{ initialOpen?: boolean }> = ({
 
   return (
     <div class="toggle">
-      <button onClick={() => isOpen.update((v) => !v)}>
+      <button onClick={() => isOpen.set((value) => !value)}>
         {isOpen.value ? "▼" : "▶"} {isOpen.value ? "Close" : "Open"}
       </button>
       {isOpen.value && <div class="toggle-content">{children}</div>}

@@ -4,6 +4,9 @@
  * This example uses JSX with the jsx-runtime.
  */
 import { Counter } from "./Counter";
+import { FCExample } from "./FCExample";
+
+import "./main-runtime";
 
 // Mount the counter component
 const app = document.getElementById("app");
@@ -13,4 +16,11 @@ if (app) {
   console.log("Dathra playground initialized!");
 } else {
   console.error("App element not found");
+}
+
+const fcExampleApp = document.getElementById("fc-example-app");
+if (fcExampleApp) {
+  fcExampleApp.appendChild(FCExample());
+} else {
+  console.error("FC example element not found");
 }

@@ -7,6 +7,8 @@ import { chromium, type Browser, type Page } from "playwright";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../..");
+const SERVER_START_TIMEOUT_MS = 60000;
+const SERVER_REQUEST_TIMEOUT_MS = 1000;
 
 type Harness = {
   baseUrl: string;
@@ -19,7 +21,11 @@ type HarnessState = {
   refs: number;
   promise: Promise<Harness>;
   cleanupPromise?: Promise<void>;
-  cleanupRegistered: boolean;
+};
+
+type PreviewLogs = {
+  value: string;
+  processError: Error | null;
 };
 
 declare global {
@@ -59,44 +65,38 @@ async function getAvailablePort(): Promise<number> {
   });
 }
 
-function runCommand(command: string, args: string[]): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd: repoRoot,
-      env: { ...process.env, FORCE_COLOR: "0" },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-
-    let stderr = "";
-    child.stderr?.on("data", (chunk) => {
-      stderr += chunk.toString();
-    });
-
-    child.on("error", reject);
-    child.on("exit", (code) => {
-      if (code === 0) {
-        resolve();
-        return;
-      }
-
-      reject(
-        new Error(
-          `[playground/e2e] ${command} ${args.join(" ")} failed with exit code ${code}\n${stderr}`,
-        ),
-      );
-    });
-  });
-}
-
 async function waitForServer(
   baseUrl: string,
-  previewLogs: string,
+  previewProcess: ChildProcess,
+  previewLogs: PreviewLogs,
 ): Promise<void> {
   let lastError: unknown = null;
+  const deadline = Date.now() + SERVER_START_TIMEOUT_MS;
 
-  for (let attempt = 0; attempt < 120; attempt += 1) {
+  while (Date.now() < deadline) {
+    if (previewLogs.processError !== null) {
+      throw new Error(
+        `[playground/e2e] Preview server failed to start: ${previewLogs.processError.message}\n${previewLogs.value}`,
+      );
+    }
+    if (
+      previewProcess.exitCode !== null ||
+      previewProcess.signalCode !== null
+    ) {
+      throw new Error(
+        `[playground/e2e] Preview server exited before becoming ready with code ${String(previewProcess.exitCode)} and signal ${String(previewProcess.signalCode)}.\n${previewLogs.value}`,
+      );
+    }
+
     try {
-      const response = await fetch(baseUrl);
+      const requestTimeout = Math.max(
+        1,
+        Math.min(SERVER_REQUEST_TIMEOUT_MS, deadline - Date.now()),
+      );
+      const response = await fetch(baseUrl, {
+        signal: AbortSignal.timeout(requestTimeout),
+      });
+      await response.body?.cancel();
       if (response.ok) {
         return;
       }
@@ -105,39 +105,97 @@ async function waitForServer(
       lastError = error;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const retryDelay = Math.min(500, Math.max(0, deadline - Date.now()));
+    if (retryDelay > 0) {
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    }
   }
 
   throw new Error(
-    `[playground/e2e] Preview server did not become ready. Last error: ${String(lastError)}\n${previewLogs}`,
+    `[playground/e2e] Preview server did not become ready. Last error: ${String(lastError)}\n${previewLogs.value}`,
   );
 }
 
 async function stopPreviewServer(previewProcess: ChildProcess): Promise<void> {
-  if (previewProcess.exitCode !== null) {
+  if (
+    previewProcess.exitCode !== null ||
+    previewProcess.signalCode !== null ||
+    previewProcess.pid === undefined
+  ) {
     return;
   }
 
-  await new Promise<void>((resolve) => {
-    const timeout = setTimeout(() => {
-      previewProcess.kill("SIGKILL");
+  await new Promise<void>((resolve, reject) => {
+    let forceExitTimeout: ReturnType<typeof setTimeout> | undefined;
+    const terminateTimeout = setTimeout(() => {
+      if (
+        previewProcess.exitCode !== null ||
+        previewProcess.signalCode !== null
+      ) {
+        finish();
+        return;
+      }
+
+      if (!previewProcess.kill("SIGKILL")) {
+        if (
+          previewProcess.exitCode !== null ||
+          previewProcess.signalCode !== null
+        ) {
+          finish();
+          return;
+        }
+
+        fail("[playground/e2e] Failed to send SIGKILL to preview server");
+        return;
+      }
+
+      forceExitTimeout = setTimeout(() => {
+        cleanup();
+        reject(
+          new Error(
+            "[playground/e2e] Preview server did not exit after SIGKILL",
+          ),
+        );
+      }, 1000);
     }, 5000);
 
-    previewProcess.once("exit", () => {
-      clearTimeout(timeout);
-      resolve();
-    });
+    const cleanup = () => {
+      clearTimeout(terminateTimeout);
+      if (forceExitTimeout !== undefined) {
+        clearTimeout(forceExitTimeout);
+      }
+      previewProcess.off("exit", finish);
+    };
 
-    previewProcess.kill("SIGTERM");
+    const finish = () => {
+      cleanup();
+      resolve();
+    };
+
+    const fail = (message: string) => {
+      cleanup();
+      reject(new Error(message));
+    };
+
+    previewProcess.once("exit", finish);
+
+    if (!previewProcess.kill("SIGTERM")) {
+      if (
+        previewProcess.exitCode !== null ||
+        previewProcess.signalCode !== null
+      ) {
+        finish();
+      } else {
+        fail("[playground/e2e] Failed to send SIGTERM to preview server");
+      }
+    }
   });
 }
 
 async function startHarness(): Promise<Harness> {
   const previewPort = await getAvailablePort();
   const baseUrl = `http://127.0.0.1:${previewPort}`;
-  const previewLogs = { value: "" };
-
-  await runCommand("pnpm", ["--filter", "@playground/e2e", "build"]);
+  const previewLogs: PreviewLogs = { value: "", processError: null };
 
   const previewProcess = spawn(
     "pnpm",
@@ -154,21 +212,40 @@ async function startHarness(): Promise<Harness> {
   previewProcess.stderr?.on("data", (chunk) =>
     appendPreviewLog(previewLogs, chunk),
   );
+  previewProcess.on("error", (error) => {
+    previewLogs.processError = error;
+    appendPreviewLog(previewLogs, `${error.stack ?? error.message}\n`);
+  });
 
+  let browser: Browser | undefined;
   try {
-    await waitForServer(baseUrl, previewLogs.value);
+    await waitForServer(baseUrl, previewProcess, previewLogs);
+    browser = await chromium.launch({ headless: true });
+
+    return {
+      baseUrl,
+      browser,
+      previewProcess,
+      previewPort,
+    };
   } catch (error) {
-    await stopPreviewServer(previewProcess);
+    const cleanupResults = await Promise.allSettled([
+      browser?.close() ?? Promise.resolve(),
+      stopPreviewServer(previewProcess),
+    ]);
+    const cleanupErrors = cleanupResults.flatMap((result) =>
+      result.status === "rejected" ? [result.reason] : [],
+    );
+
+    if (cleanupErrors.length > 0) {
+      throw new AggregateError(
+        [error, ...cleanupErrors],
+        "[playground/e2e] Harness startup and cleanup failed",
+      );
+    }
+
     throw error;
   }
-
-  const browser = await chromium.launch({ headless: true });
-  return {
-    baseUrl,
-    browser,
-    previewProcess,
-    previewPort,
-  };
 }
 
 async function disposeHarness(): Promise<void> {
@@ -184,41 +261,68 @@ async function disposeHarness(): Promise<void> {
 
   state.cleanupPromise = (async () => {
     try {
-      const harness = await state.promise;
-      await harness.browser.close();
-      await stopPreviewServer(harness.previewProcess);
+      let harness: Harness;
+      try {
+        harness = await state.promise;
+      } catch {
+        return;
+      }
+
+      const cleanupResults = await Promise.allSettled([
+        harness.browser.close(),
+        stopPreviewServer(harness.previewProcess),
+      ]);
+      const cleanupErrors = cleanupResults.flatMap((result) =>
+        result.status === "rejected" ? [result.reason] : [],
+      );
+
+      if (cleanupErrors.length > 0) {
+        throw new AggregateError(
+          cleanupErrors,
+          "[playground/e2e] Failed to dispose harness resources",
+        );
+      }
     } finally {
-      globalThis.__dathraPlaygroundE2EHarness = undefined;
+      if (globalThis.__dathraPlaygroundE2EHarness === state) {
+        globalThis.__dathraPlaygroundE2EHarness = undefined;
+      }
     }
   })();
 
   await state.cleanupPromise;
 }
 
-function registerHarnessCleanup(): void {
-  const state = globalThis.__dathraPlaygroundE2EHarness;
-  if (state === undefined || state.cleanupRegistered) {
-    return;
-  }
-
-  state.cleanupRegistered = true;
-  process.once("beforeExit", () => {
-    void disposeHarness();
-  });
-}
-
 async function acquireHarness(): Promise<void> {
-  if (globalThis.__dathraPlaygroundE2EHarness === undefined) {
-    globalThis.__dathraPlaygroundE2EHarness = {
-      refs: 0,
-      promise: startHarness(),
-      cleanupRegistered: false,
-    };
-  }
+  while (true) {
+    if (globalThis.__dathraPlaygroundE2EHarness === undefined) {
+      globalThis.__dathraPlaygroundE2EHarness = {
+        refs: 0,
+        promise: startHarness(),
+      };
+    }
 
-  registerHarnessCleanup();
-  globalThis.__dathraPlaygroundE2EHarness.refs += 1;
-  await globalThis.__dathraPlaygroundE2EHarness.promise;
+    const state = globalThis.__dathraPlaygroundE2EHarness;
+    if (state.cleanupPromise !== undefined) {
+      await state.cleanupPromise;
+      continue;
+    }
+
+    state.refs += 1;
+
+    try {
+      await state.promise;
+      return;
+    } catch (error) {
+      state.refs -= 1;
+      if (
+        state.refs <= 0 &&
+        globalThis.__dathraPlaygroundE2EHarness === state
+      ) {
+        globalThis.__dathraPlaygroundE2EHarness = undefined;
+      }
+      throw error;
+    }
+  }
 }
 
 async function releaseHarness(): Promise<void> {
@@ -233,6 +337,7 @@ async function releaseHarness(): Promise<void> {
   }
 
   state.refs = 0;
+  await disposeHarness();
 }
 
 async function getHarness(): Promise<Harness> {

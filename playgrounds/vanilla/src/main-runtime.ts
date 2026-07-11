@@ -78,10 +78,10 @@ createRoot(() => {
 
   // Event handlers
   event("click", decBtn as HTMLElement, () => {
-    count.update((v) => v - 1);
+    count.set((value) => value - 1);
   });
   event("click", incBtn as HTMLElement, () => {
-    count.update((v) => v + 1);
+    count.set((value) => value + 1);
   });
   event("click", addBtn as HTMLElement, () => {
     items.set([...items.value, `Item ${items.value.length + 1}`]);
@@ -102,7 +102,7 @@ createRoot(() => {
   });
 
   // Mount to DOM
-  append(document.getElementById("app")!, div!);
+  append(document.getElementById("runtime-app")!, div!);
 
   console.log("Dathra playground (Runtime API) initialized!");
 });

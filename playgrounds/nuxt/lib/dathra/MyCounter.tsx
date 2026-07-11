@@ -5,32 +5,36 @@
 import { defineComponent } from "@dathra/components";
 import { signal } from "@dathra/reactivity";
 
-export const MyCounter = defineComponent(
+const MyCounter = defineComponent(
   "my-counter",
-  ({ initial }) => {
-    const count = signal(initial.value);
+  ({ props }) => {
+    const count = signal(props.initial.value);
 
     const increment = () => {
-      count.update(v => v + 1);
+      count.set(count.value + 1);
     };
 
     const decrement = () => {
-      count.update(v => v - 1);
+      count.set(count.value - 1);
     };
 
     return (
-      <div style={{
-        padding: "20px",
-        border: "2px solid #00dc82",
-        borderRadius: "8px",
-        background: "#ffffff"
-      }}>
+      <div
+        style={{
+          padding: "20px",
+          border: "2px solid #00dc82",
+          borderRadius: "8px",
+          background: "#ffffff",
+        }}
+      >
         <h3 style={{ margin: "0 0 15px 0" }}>Counter Component</h3>
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "15px"
-        }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "15px",
+          }}
+        >
           <button
             onClick={decrement}
             style={{
@@ -39,17 +43,19 @@ export const MyCounter = defineComponent(
               cursor: "pointer",
               background: "#f0f0f0",
               border: "1px solid #ddd",
-              borderRadius: "4px"
+              borderRadius: "4px",
             }}
           >
             −
           </button>
-          <span style={{
-            fontSize: "24px",
-            fontWeight: "bold",
-            minWidth: "50px",
-            textAlign: "center"
-          }}>
+          <span
+            style={{
+              fontSize: "24px",
+              fontWeight: "bold",
+              minWidth: "50px",
+              textAlign: "center",
+            }}
+          >
             {count.value}
           </span>
           <button
@@ -61,7 +67,7 @@ export const MyCounter = defineComponent(
               background: "#00dc82",
               color: "white",
               border: "none",
-              borderRadius: "4px"
+              borderRadius: "4px",
             }}
           >
             +
@@ -72,7 +78,8 @@ export const MyCounter = defineComponent(
   },
   {
     props: { initial: { type: Number, default: 0 } },
-    styles: [`
+    styles: [
+      `
       :host {
         display: block;
         margin: 20px 0;
@@ -80,6 +87,9 @@ export const MyCounter = defineComponent(
       button:hover {
         opacity: 0.8;
       }
-    `],
-  }
+    `,
+    ],
+  },
 );
+
+export { MyCounter };
