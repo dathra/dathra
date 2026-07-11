@@ -83,40 +83,51 @@ ObservationContract は root ごとに定義する。
 plan の合法性は、同じ external input と event identity に対する source trace と plan trace の関係で判定する。
 契約は、観測集合の equality を要求するのか、許容範囲内の refinement を認めるのかを明示する。
 
-ObservationContract は次の closed schema を正本とする。
+ObservationContract は closed constraint と canonical trace language の関係として実装する。
+
+この節は、constraint ID だけを並べた concrete trace と、constraint ごとに一つの provenance を置く `dathra.realization-witness/1` の初期案を supersede する。
+後方互換 layer は設けない。
+
+#### Constraint と order
 
 ```ts
 type ObservationCardinality =
   | { readonly kind: "exactly"; readonly count: number }
   | { readonly kind: "range"; readonly minimum: number; readonly maximum: number };
 
+type ObservationVisibility = "external" | "internal-ordering";
+
 type ObservationConstraint =
   | {
       readonly kind: "value";
-      readonly id: string;
+      readonly id: Sha256Digest;
       readonly subjectId: string;
+      readonly visibility: ObservationVisibility;
       readonly equivalenceDomainId: string;
       readonly consistencyCutId: string;
     }
   | {
       readonly kind: "dom";
-      readonly id: string;
+      readonly id: Sha256Digest;
       readonly subjectId: string;
+      readonly visibility: ObservationVisibility;
       readonly realizationDomainId: string;
       readonly mutableFacetPolicyId: string;
       readonly consistencyCutId: string;
     }
   | {
       readonly kind: "artifact" | "protocol";
-      readonly id: string;
+      readonly id: Sha256Digest;
       readonly subjectId: string;
+      readonly visibility: ObservationVisibility;
       readonly byteOrMessageSchemaId: string;
       readonly cardinality: ObservationCardinality;
     }
   | {
       readonly kind: "event" | "effect" | "callback";
-      readonly id: string;
+      readonly id: Sha256Digest;
       readonly subjectId: string;
+      readonly visibility: ObservationVisibility;
       readonly inputIdentityDomainId: string;
       readonly occurrenceIdentityDomainId: string;
       readonly cardinality: ObservationCardinality;
@@ -125,22 +136,25 @@ type ObservationConstraint =
     }
   | {
       readonly kind: "identity" | "lifetime";
-      readonly id: string;
+      readonly id: Sha256Digest;
       readonly subjectId: string;
+      readonly visibility: ObservationVisibility;
       readonly identityDomainId: string;
       readonly lifetimeDomainId: string;
     }
   | {
       readonly kind: "authority" | "exposure";
-      readonly id: string;
+      readonly id: Sha256Digest;
       readonly subjectId: string;
+      readonly visibility: ObservationVisibility;
       readonly policyQualifiedId: QualifiedRegistryId<"policy">;
       readonly policyEpochDomainId: string;
     }
   | {
       readonly kind: "terminal";
-      readonly id: string;
+      readonly id: Sha256Digest;
       readonly subjectId: string;
+      readonly visibility: "external";
       readonly outcomes: readonly (
         | "success"
         | "typed-failure"
@@ -152,26 +166,26 @@ type ObservationConstraint =
     };
 
 interface ObservationOrderEdge {
-  readonly id: string;
-  readonly beforeConstraintId: string;
-  readonly afterConstraintId: string;
+  readonly id: Sha256Digest;
+  readonly beforeConstraintId: Sha256Digest;
+  readonly afterConstraintId: Sha256Digest;
   readonly relation: "strict" | "serial" | "exclusive";
 }
 
 interface ObservationRefinementRule {
-  readonly id: string;
+  readonly id: Sha256Digest;
   readonly kind:
     | "equivalent-value"
     | "narrow-cardinality"
     | "omit-unobservable-internal-step"
     | "commutative-reorder"
     | "declared-event-coalescing";
-  readonly constraintIds: readonly string[];
-  readonly proofDomainId: string;
+  readonly constraintIds: readonly Sha256Digest[];
+  readonly proofDomainId: Sha256Digest;
 }
 
 interface ObservationContractPreimage {
-  readonly schema: "dathra.observation-contract/1";
+  readonly schema: "dathra.observation-contract/2";
   readonly rootDefinitionId: string;
   readonly externalInputIdentitySchemaId: string;
   readonly eventIdentitySchemaId: string;
@@ -182,53 +196,522 @@ interface ObservationContractPreimage {
   readonly refinementRules: readonly ObservationRefinementRule[];
 }
 
+interface CanonicalRecord<Preimage> {
+  readonly id: Sha256Digest;
+  readonly preimage: Preimage;
+}
+```
+
+cardinality の count、minimum、maximum は非負の safe integer とし、range は `minimum <= maximum` を満たす。
+cardinality field を持たない constraint の実効 cardinality は `exactly(1)` とする。
+`omit-unobservable-internal-step` は `internal-ordering` の constraint にだけ適用できる。
+
+`strict` は、両 constraint の occurrence が存在するときに全 before occurrence が全 after occurrence より先行する関係である。
+`serial` は strict に加えて両 constraint の occurrence union が全順序になることを要求する。
+`exclusive` は両 constraint の同一 trace 内での共存を禁止し、有向 closure には加えない。
+
+strict と serial の self edge と cycle を拒否する。
+exclusive の pair は小さい constraint ID を `beforeConstraintId` に置く。
+
+#### Canonical trace language
+
+一つの concrete trace は cardinality range、入力依存の分岐、event 間の相関を証明できない。
+source と candidate の behavior は、external input の canonical finite partition class ごとの有限 trace language として表す。
+
+```ts
+type ObservationTraceSymbol =
+  | {
+      readonly kind: "event";
+      readonly id: Sha256Digest;
+      readonly identityDomainDigest: Sha256Digest;
+      readonly occurrenceOrdinal: number;
+    }
+  | {
+      readonly kind: "occurrence";
+      readonly id: Sha256Digest;
+      readonly constraintId: Sha256Digest;
+      readonly occurrenceIdentityDomainDigest: Sha256Digest;
+      readonly occurrenceOrdinal: number;
+      readonly observationTokenRelationDigest: Sha256Digest;
+      readonly inputEventSymbolIds: readonly Sha256Digest[];
+    }
+  | {
+      readonly kind: "terminal";
+      readonly id: Sha256Digest;
+      readonly constraintId: Sha256Digest;
+      readonly occurrenceOrdinal: number;
+      readonly outcome:
+        | "success"
+        | "typed-failure"
+        | "cancelled"
+        | "timed-out"
+        | "disconnected"
+        | "ambiguous";
+    };
+
+interface ObservationAutomatonTransition {
+  readonly fromState: number;
+  readonly symbolId: Sha256Digest;
+  readonly toState: number;
+}
+
+interface ObservationTraceLanguagePreimage {
+  readonly schema: "dathra.observation-trace-language/1";
+  readonly alphabet: readonly ObservationTraceSymbol[];
+  readonly stateCount: number;
+  readonly initialState: 0;
+  readonly acceptingStates: readonly number[];
+  readonly transitions: readonly ObservationAutomatonTransition[];
+}
+
+interface ObservationAutomatonBudget {
+  readonly maximumAlphabetSize: number;
+  readonly maximumStateCount: number;
+  readonly maximumTransitionCount: number;
+  readonly maximumDeterminizedStateCount: number;
+  readonly maximumProductStateCount: number;
+}
+
+interface ObservationBehaviorSummaryPreimage {
+  readonly schema: "dathra.observation-behavior/1";
+  readonly role: "source" | "candidate";
+  readonly observationContractId: Sha256Digest;
+  readonly semanticGraphDigest: Sha256Digest;
+  readonly inputPartitionDigest: Sha256Digest;
+  readonly inputClasses: readonly {
+    readonly inputClassId: Sha256Digest;
+    readonly traceLanguageId: Sha256Digest;
+  }[];
+}
+
+interface ObservationBehaviorDerivationClaimPreimage {
+  readonly schema: "dathra.observation-behavior-derivation-claim/1";
+  readonly behaviorSummaryId: Sha256Digest;
+  readonly observationContractId: Sha256Digest;
+  readonly semanticGraphDigest: Sha256Digest;
+  readonly inputPartitionDigest: Sha256Digest;
+  readonly proofDomainId: Sha256Digest;
+}
+```
+
+trace language は reachable、deterministic、complete、minimal な DFA とする。
+DFA を最小化した後、initial state から symbol ID 順に breadth-first traversal して state number を振り直す。
+alphabet、accepting state、transition table は canonical order に固定し、DFA 全体を一つの preimage として hash する。
+alphabet に含める symbol は accepted word のいずれかに出現するものだけとし、常に rejecting sink へ進む未使用 symbol を canonical language に残さない。
+
+state ごとの recursive hash は cycle を作るため使用しない。
+initial state から到達でき、accepting state へ到達できる productive cycle は有限 cardinality contract に反するため拒否する。
+normalization、projection、determinization、product inclusion は toolchain profile が与える hard automaton budget を消費する。
+budget を超えた場合は dependency path を持つ typed diagnostic とし、部分的な relation、近似 equality、runtime fallback を生成しない。
+
+event と occurrence は同じ alphabet に置く。
+同じ callback body または同じ label を持つ occurrence も、constraint ID、identity domain、ordinal から作る別 slot とする。
+各 partial order と両立する全 linearization を language に含めるため、独立な `a0` と `a1` は `a0 a1` と `a1 a0` の両方を持ち、直列化された trace と区別できる。
+
+BehaviorSummary の summary ID は semantic graph digest を束縛する。
+trace equality の比較対象から role、semantic graph digest、summary ID を除き、input class ごとの canonical language ID を比較する。
+summary が semantic graph と contract の全 behavior を被覆することは、summary ID、graph digest、contract ID、input partition digest を持つ derivation claim に対する proof acceptance で証明する。
+
+#### Equality と refinement
+
+`trace-equality` は、source と candidate が同じ contract と input class 集合を持ち、class ごとの canonical trace language が一致する場合だけ合法とする。
+cardinality、terminal outcome、occurrence identity、partial order は alphabet と accepted language に含まれるため、別の unchecked summary field へ退避しない。
+OC01 は accepted language と cardinality counter、terminal checker、strict、serial、exclusive の violation automaton を product し、contract に違反する accepted word が存在しないことを検証する。
+accepted word を全列挙して検証したことにはしない。
+
+refinement は、actual relation `R` と rule-derived allowed relation `A` を分けて判定する。
+
+```ts
+interface ObservationRelationSymbol {
+  readonly id: Sha256Digest;
+  readonly sourceSymbolId: Sha256Digest | null;
+  readonly candidateSymbolId: Sha256Digest | null;
+  readonly ruleId: Sha256Digest | null;
+}
+
+interface ObservationRelationLanguagePreimage {
+  readonly schema: "dathra.observation-relation-language/1";
+  readonly alphabet: readonly ObservationRelationSymbol[];
+  readonly stateCount: number;
+  readonly initialState: 0;
+  readonly acceptingStates: readonly number[];
+  readonly transitions: readonly ObservationAutomatonTransition[];
+}
+
+type ObservationRuleApplicationPreimage = {
+  readonly schema: "dathra.observation-rule-application/1";
+  readonly ruleId: Sha256Digest;
+  readonly sourceSummaryId: Sha256Digest;
+  readonly candidateSummaryId: Sha256Digest;
+  readonly inputClassId: Sha256Digest;
+  readonly proofDomainId: Sha256Digest;
+  readonly allowedRelationLanguageId: Sha256Digest;
+} & (
+  | {
+      readonly kind: "equivalent-value";
+      readonly allowedTokenPairs: readonly {
+        readonly sourceSymbolId: Sha256Digest;
+        readonly candidateSymbolId: Sha256Digest;
+      }[];
+    }
+  | {
+      readonly kind: "narrow-cardinality";
+      readonly constraintId: Sha256Digest;
+      readonly sourceCardinality: ObservationCardinality;
+      readonly candidateCardinality: ObservationCardinality;
+      readonly slotMappings: readonly {
+        readonly sourceSymbolId: Sha256Digest;
+        readonly candidateSymbolId: Sha256Digest | null;
+      }[];
+    }
+  | {
+      readonly kind: "omit-unobservable-internal-step";
+      readonly constraintId: Sha256Digest;
+      readonly omittedSourceSymbolIds: readonly Sha256Digest[];
+    }
+  | {
+      readonly kind: "commutative-reorder";
+      readonly compositionId: Sha256Digest;
+      readonly bindingId: Sha256Digest;
+      readonly independenceRelationDigest: Sha256Digest;
+    }
+  | {
+      readonly kind: "declared-event-coalescing";
+      readonly constraintId: Sha256Digest;
+      readonly coalescingPolicyId: string;
+      readonly policyTransducerLanguageId: Sha256Digest;
+      readonly eventSlotMappings: readonly {
+        readonly sourceEventSymbolId: Sha256Digest;
+        readonly candidateOccurrenceSymbolId: Sha256Digest;
+      }[];
+      readonly overflowTerminalSymbolId: Sha256Digest | null;
+    }
+);
+
+interface ObservationComparisonClaimPreimage {
+  readonly schema: "dathra.observation-comparison-claim/1";
+  readonly observationContractId: Sha256Digest;
+  readonly compositionId: Sha256Digest | null;
+  readonly direction: "source-to-candidate";
+  readonly sourceSummaryId: Sha256Digest;
+  readonly candidateSummaryId: Sha256Digest;
+  readonly inputClasses: readonly {
+    readonly inputClassId: Sha256Digest;
+    readonly actualRelationLanguageId: Sha256Digest;
+    readonly allowedRelationLanguageId: Sha256Digest;
+    readonly ruleApplicationIds: readonly Sha256Digest[];
+  }[];
+}
+
+interface ObservationProofAcceptancePreimage {
+  readonly schema: "dathra.observation-proof-acceptance/1";
+  readonly proofDomainId: Sha256Digest;
+  readonly claimDigest: Sha256Digest;
+  readonly attestationDigest: Sha256Digest;
+}
+
+interface AcceptedObservationRelationPreimage {
+  readonly schema: "dathra.accepted-observation-relation/1";
+  readonly comparisonClaimDigest: Sha256Digest;
+  readonly sourceDerivationAcceptanceId: Sha256Digest;
+  readonly candidateDerivationAcceptanceId: Sha256Digest;
+  readonly ruleApplicationAcceptanceIds: readonly Sha256Digest[];
+}
+```
+
+relation symbol は source と candidate の少なくとも一方を持つ。
+actual relation の source projection と candidate projection を epsilon-NFA projection、determinization、minimization によって再構築し、各 BehaviorSummary の language と完全一致させる。
+この projection equality は trace 集合の被覆を証明するが、rule 適合性そのものは証明しない。
+
+OC01 は contract の refinement rule、accepted value pair、cardinality interval と slot mapping、internal omission、composition algebra の independence relation、coalescing policy の canonical finite-state transducer から allowed relation `A` を生成する。
+そのうえで product emptiness により `R subset-of A` を検証する。
+proof acceptance だけを根拠に arbitrary relation を合法化しない。
+
+equivalent value は同じ equivalence domain が受理した token pair、cardinality narrowing は source interval の部分集合、internal omission は `internal-ordering` slot、reorder は composition が宣言した independence relationだけを許可する。
+coalescing は event slot から output occurrence slot への total mapping、空でない output preimage、quotient language、cardinality、overflow terminal を allowed relation に含める。
+callback body の一致または同じ task 内の発生は rule application にならない。
+
+claim、proof acceptance、accepted relation は別の content-addressed record とする。
+claim は contract、composition、方向、source/candidate summary、rule、slot mapping、cardinality、overflow、binding を束縛する。
+proof acceptance は versioned content-addressed proof domain、exact claim digest、attestation digest を束縛する。
+proof acceptance は proof-domain verifier が検証済み context にだけ生成し、untrusted wire record から brand を復元しない。
+
+#### Composition
+
+composition の constraint reference は contract ID で修飾する。
+binding は shared subject 全体ではなく `(sharedSubjectId, constraintKind)` ごとに一件作る。
+
+```ts
+interface ObservationConstraintReference {
+  readonly contractId: Sha256Digest;
+  readonly constraintId: Sha256Digest;
+}
+
 interface ObservationCompositionBinding {
+  readonly id: Sha256Digest;
   readonly sharedSubjectId: string;
-  readonly memberConstraintIds: readonly string[];
+  readonly constraintKind: ObservationConstraint["kind"];
+  readonly members: readonly ObservationConstraintReference[];
   readonly resolution:
-    | { readonly kind: "exclusive-owner"; readonly ownerConstraintId: string }
-    | { readonly kind: "commutative"; readonly proofDomainId: string }
-    | { readonly kind: "total-order"; readonly orderedConstraintIds: readonly string[] };
+    | { readonly kind: "merge-identical" }
+    | { readonly kind: "exclusive-owner"; readonly owner: ObservationConstraintReference }
+    | {
+        readonly kind: "commutative";
+        readonly compositionAlgebraId: Sha256Digest;
+        readonly proofDomainId: Sha256Digest;
+      }
+    | {
+        readonly kind: "total-order";
+        readonly compositionAlgebraId: Sha256Digest;
+        readonly orderedMembers: readonly ObservationConstraintReference[];
+      };
 }
 
 interface ObservationCompositionPreimage {
-  readonly schema: "dathra.observation-composition/1";
-  readonly memberContractIds: readonly string[];
+  readonly schema: "dathra.observation-composition/2";
+  readonly memberContractIds: readonly Sha256Digest[];
   readonly bindings: readonly ObservationCompositionBinding[];
+  readonly resultConstraintIds: readonly Sha256Digest[];
+  readonly memberToResult: readonly {
+    readonly member: ObservationConstraintReference;
+    readonly resultConstraintId: Sha256Digest;
+  }[];
+  readonly resultOrderClosure: readonly {
+    readonly beforeConstraintId: Sha256Digest;
+    readonly afterConstraintId: Sha256Digest;
+  }[];
+}
+
+interface ObservationCompositionRelationSymbol {
+  readonly id: Sha256Digest;
+  readonly memberSymbolIds: readonly (Sha256Digest | null)[];
+  readonly resultSymbolId: Sha256Digest | null;
+  readonly bindingId: Sha256Digest | null;
+}
+
+interface ObservationCompositionRelationLanguagePreimage {
+  readonly schema: "dathra.observation-composition-relation-language/1";
+  readonly alphabet: readonly ObservationCompositionRelationSymbol[];
+  readonly stateCount: number;
+  readonly initialState: 0;
+  readonly acceptingStates: readonly number[];
+  readonly transitions: readonly ObservationAutomatonTransition[];
+}
+
+interface ObservationCompositionClaimPreimage {
+  readonly schema: "dathra.observation-composition-claim/1";
+  readonly compositionId: Sha256Digest;
+  readonly memberSummaryIds: readonly Sha256Digest[];
+  readonly inputClasses: readonly {
+    readonly inputClassId: Sha256Digest;
+    readonly memberTraceLanguageIds: readonly Sha256Digest[];
+    readonly resultTraceLanguageId: Sha256Digest;
+    readonly actualRelationLanguageId: Sha256Digest;
+    readonly allowedRelationLanguageId: Sha256Digest;
+  }[];
+  readonly compositionAlgebraIds: readonly Sha256Digest[];
+}
+```
+
+binding は同じ subject と kind の全 shared reference を過不足なく覆う。
+semantic domain field は resolution より先に compatibility を検証する。
+`merge-identical` は同じ constraint record、exclusive owner は owner の cardinality と outcome がほかの member の部分集合になる場合だけ使える。
+commutative と total order は versioned composition algebra が定義する operation kind に限る。
+
+creator は result constraint、全 member-to-result mapping、result order closure を再計算する。
+parser は caller が渡した result view と再計算結果の完全一致を要求する。
+member/result trace language の composition は multi-tape relation language として表し、各 member projection と result projection の完全一致、actual relation と algebra-derived allowed relation の包含を検証する。
+`memberSymbolIds` の position は `memberContractIds` の canonical order と一致させ、全 member symbol と result symbol が null の relation symbol を拒否する。
+
+#### RealizationWitness
+
+RealizationWitness は一つの concrete render instance の証拠である。
+全 external input class に server materialization が存在することは、別の symbolic WitnessTemplate と coverage claim で証明する。
+
+```ts
+interface RealizationObligation {
+  readonly id: Sha256Digest;
+  readonly observationContractId: Sha256Digest;
+  readonly constraintId: Sha256Digest;
+  readonly observableIdentity: string;
+  readonly expectedObservationTokenDigest: Sha256Digest;
+}
+
+type RealizationStep =
+  | {
+      readonly kind: "artifact-token";
+      readonly id: Sha256Digest;
+      readonly templateSymbolId: Sha256Digest;
+      readonly occurrenceIdentity: string;
+      readonly artifactTokenId: string;
+      readonly inputByteRangeDigest: Sha256Digest;
+      readonly outputObservationTokenDigest: Sha256Digest;
+    }
+  | {
+      readonly kind: "parser-operation";
+      readonly id: Sha256Digest;
+      readonly templateSymbolId: Sha256Digest;
+      readonly occurrenceIdentity: string;
+      readonly parserOperationId: string;
+      readonly inputStepIds: readonly Sha256Digest[];
+      readonly inputObservationTokenDigests: readonly Sha256Digest[];
+      readonly outputObservationTokenDigest: Sha256Digest;
+    };
+
+type RealizationTemplateStepSymbol =
+  | {
+      readonly kind: "artifact-token";
+      readonly id: Sha256Digest;
+      readonly artifactTokenClassId: string;
+      readonly outputTokenRelationDigest: Sha256Digest;
+    }
+  | {
+      readonly kind: "parser-operation";
+      readonly id: Sha256Digest;
+      readonly parserOperationId: string;
+      readonly inputSymbolIds: readonly Sha256Digest[];
+      readonly outputTokenRelationDigest: Sha256Digest;
+    };
+
+interface RealizationSequenceLanguagePreimage {
+  readonly schema: "dathra.realization-sequence-language/1";
+  readonly alphabet: readonly RealizationTemplateStepSymbol[];
+  readonly stateCount: number;
+  readonly initialState: 0;
+  readonly acceptingStates: readonly number[];
+  readonly transitions: readonly ObservationAutomatonTransition[];
+}
+
+interface RealizationSequenceClaimPreimage {
+  readonly schema: "dathra.realization-sequence-claim/1";
+  readonly witnessTemplateId: Sha256Digest;
+  readonly observationContractId: Sha256Digest;
+  readonly behaviorSummaryId: Sha256Digest;
+  readonly inputClassId: Sha256Digest;
+  readonly realizationInputDigest: Sha256Digest;
+  readonly parserProfileId: Sha256Digest;
+  readonly proofDomainId: Sha256Digest;
+  readonly obligationIds: readonly Sha256Digest[];
+  readonly steps: readonly RealizationStep[];
+  readonly parserSequence: readonly Sha256Digest[];
+  readonly obligationOutputs: readonly {
+    readonly obligationId: Sha256Digest;
+    readonly outputStepId: Sha256Digest;
+  }[];
+}
+
+interface CanonicalParserProfilePreimage {
+  readonly schema: "dathra.canonical-parser-profile/1";
+  readonly targetHostProfileId: QualifiedRegistryId<"host-profile">;
+  readonly version: string;
+  readonly encoding: "utf-8";
+  readonly contentTypeIds: readonly string[];
+  readonly documentModes: readonly ("no-quirks" | "limited-quirks" | "quirks")[];
+  readonly parserOperationIds: readonly string[];
+  readonly sequenceProofDomainId: Sha256Digest;
+  readonly baseUrlProofDomainId: Sha256Digest;
+}
+
+interface CanonicalBaseUrlClaimPreimage {
+  readonly schema: "dathra.canonical-base-url-claim/1";
+  readonly parserProfileId: Sha256Digest;
+  readonly canonicalBaseUrl: string;
+  readonly proofDomainId: Sha256Digest;
+}
+
+interface RealizationWitnessTemplatePreimage {
+  readonly schema: "dathra.realization-witness-template/1";
+  readonly observationContractId: Sha256Digest;
+  readonly behaviorSummaryId: Sha256Digest;
+  readonly inputClassId: Sha256Digest;
+  readonly parserProfileId: Sha256Digest;
+  readonly obligations: readonly RealizationObligation[];
+  readonly sequenceLanguageId: Sha256Digest;
+  readonly proofDomainId: Sha256Digest;
+}
+
+interface RealizationCoverageClaimPreimage {
+  readonly schema: "dathra.realization-coverage-claim/1";
+  readonly observationContractId: Sha256Digest;
+  readonly behaviorSummaryId: Sha256Digest;
+  readonly inputPartitionDigest: Sha256Digest;
+  readonly templates: readonly {
+    readonly inputClassId: Sha256Digest;
+    readonly witnessTemplateId: Sha256Digest;
+  }[];
+  readonly proofDomainId: Sha256Digest;
 }
 
 interface RealizationWitnessPreimage {
-  readonly schema: "dathra.realization-witness/1";
-  readonly observationContractId: string;
+  readonly schema: "dathra.realization-witness/2";
+  readonly renderInstanceId: string;
+  readonly observationContractId: Sha256Digest;
+  readonly behaviorSummaryId: Sha256Digest;
+  readonly comparisonClaimDigest: Sha256Digest;
+  readonly inputClassId: Sha256Digest;
+  readonly realizationInputDigest: Sha256Digest;
+  readonly realizationSequenceClaimId: Sha256Digest;
   readonly targetHostProfileId: QualifiedRegistryId<"host-profile">;
   readonly encoding: "utf-8";
   readonly contentTypeId: string;
   readonly documentMode: "no-quirks" | "limited-quirks" | "quirks";
   readonly canonicalBaseUrl: string;
+  readonly baseUrlClaimDigest: Sha256Digest;
   readonly policyEpoch: string;
   readonly customElementRegistryIdentity: string;
-  readonly parserProfileId: string;
-  readonly parserOperationIds: readonly string[];
+  readonly parserProfileId: Sha256Digest;
   readonly upgradeEffectIds: readonly string[];
   readonly adoptEffectIds: readonly string[];
-  readonly realizedConstraintIds: readonly string[];
+}
+
+interface ArtifactReproductionRecordPreimage {
+  readonly schema: "dathra.artifact-reproduction/1";
+  readonly artifactAddressId: string;
+  readonly rawExactByteDigest: Sha256Digest;
+  readonly byteLength: number;
+  readonly encoding: "utf-8";
+  readonly contentTypeId: string;
+  readonly parserProfileId: Sha256Digest;
+  readonly parserProfileVersion: string;
+  readonly parserInputBytesDigest: Sha256Digest;
+  readonly tokenStreamDigest: Sha256Digest;
+  readonly witnessTemplateId: Sha256Digest;
+}
+
+interface ObservationAdmissionSidecarPreimage {
+  readonly schema: "dathra.observation-admission-sidecar/1";
+  readonly witnessId: Sha256Digest;
+  readonly reproductionRecordId: Sha256Digest;
+  readonly selectionDomainDigest: Sha256Digest;
+  readonly environmentCatalogDigest: Sha256Digest;
+  readonly artifactAddressId: string;
+  readonly rawExactByteDigest: Sha256Digest;
 }
 ```
 
-constraint、order edge、refinement rule、composition binding は ID 順に並べ、各 ID は ID field を除く canonical record の digest とする。
-contract ID、composition ID、RealizationWitness ID はそれぞれ canonical preimage 全体の digest とする。
-outcome と member ID の list は重複なしの昇順とし、dangling edge、order cycle、同じ shared subject に対する複数 resolution を拒否する。
+各 observable node と value は atomic obligation を持つ。
+WitnessTemplate は obligation record の実体と canonical symbolic sequence language を所有する。
+concrete sequence claim は template ID を参照し、obligation ID 集合が template の obligation 集合と完全一致しなければならない。
+各 concrete step の `templateSymbolId` から作る word は template の sequence language に受理されなければならない。
+obligation は exactly one output step に解決し、step DAG の input と output token は連続しなければならない。
+DSD は artifact token から canonical parser operation へ進む chain として記録し、単独 provenance にしない。
+upgrade と adopt の author effect は記録するが、RealizationStep の kind には含めない。
 
-`trace-equality` は、同じ external input identity ごとに constraint ID、occurrence identity、cardinality、terminal、partial-order closure が一致する場合だけ合法とする。
-`trace-refinement` は source constraint ごとに明示された ObservationRefinementRule だけを適用できる。
-value replacement は同じ equivalence domain の proof、cardinality narrowing は source range の部分集合、reorder は composition が証明した commutative set に限定する。
-event coalescing は、coalescing policy が入力 event identity から出力 occurrence identity への total mapping、保持する order、cardinality、overflow terminal を定義する場合だけ許可する。
-単に同じ callback body であることや同じ task 内で発生したことを coalescing の根拠にしない。
+OC01 は URL host object を実行しない。
+canonical base URL は parser profile が指定する proof domain の claim として検証する。
+parser operation は profile の operation set に含まれ、content type、document mode、encoding、target host は profile と一致しなければならない。
 
-composition は member contract を shared subject ごとに join する。
-同じ subject の identity、lifetime、authority、exposure、terminal が一致せず、exclusive owner、commutativity proof、total order のいずれでも解決できない場合は planning 前の compile diagnostic とする。
-RealizationWitness は実現した constraint を一つずつ参照し、未証明 constraint、別 contract の witness、canonical parser profile にない operation を受理しない。
 targetHostProfileId は selection domain の hostProfileIds と対象 environment catalog の qualified host-profile membership の両方に存在しなければならない。
+selection、catalog、artifact exact digest は witness preimage に入れず、finalization 後の admission sidecar で束縛する。
+
+sidecar の hash だけを artifact provenance の証拠にしない。
+AF01 は artifact address、raw exact byte digest、byte length、encoding、content type、parser profile ID と version、parser input bytes digest、token stream digest、witness template ID を持つ reproduction record を生成する。
+SL01 は検証済み reproduction record を参照し、post-finalization witness と admission sidecar に束縛する。
+同じ parser profile で exact bytes を再処理して token と step を再現できない candidate は拒否する。
+dynamic response は RenderOperation が同じ検証を instance byte stream と witness step に対して commit protocol 内で行う。
+
+OC01 は closed schema、canonical automaton、projection、language inclusion、contract conformance、claim と witness の構造検証だけを担当する。
+EG03 と PL02 は source summary、CN01 は candidate summary と semantic claim、AF01 は exact-byte reproduction、SL01 は post-finalization witness と admission sidecar、RR01 は runtime conformance の再検証を担当する。
 
 ### server-first の合法性
 
@@ -243,7 +726,8 @@ server materialization を構成できず、client-only contract もない場合
 server artifact が initial DOM root を満たすには、**RealizationWitness** が必要である。
 RealizationWitness は、target host、encoding、content type、document mode、base URL、policy、custom-element registry、parser、upgrade、adopt の effect を記録する。
 
-初期 DOM の各 observable node と value は、server artifact token、DSD、または author code を実行しない規範的な parser operation に由来しなければならない。
+初期 DOM の各 observable node と value は、server artifact token、または author code を実行しない規範的な parser operation に由来しなければならない。
+DSD は server artifact token と parser operation の連続した chain として証明する。
 custom-element constructor、upgrade、adopt が実行した author code の DOM write は client effect であり、server materialization の根拠にはしない。
 
 ### client artifact の選択
@@ -6056,7 +6540,7 @@ Accepted ADR の意味を直接書き換えず、必要な場合は superseding 
 47. reference cache identity は envelope、revision、resolver、locator、audience、share domain、private grant、authorization generation を含み、cache lease と grant claim を原子的に pin する。
 48. dynamic instantiation は boot graph-table とは別 schema を使い、operation、slot generation、expected epoch、canonical key、principal、policy epoch に束縛する。
 49. client cost は class/variant ごとの cold delivered manifest core、固定長 envelope、artifact、exact HTML carrier bytes を数える。
-50. ObservationContract は closed constraint、partial order、refinement rule、composition binding、RealizationWitness preimage から canonical trace relation を判定する。
+50. ObservationContract は closed constraint と input class ごとの canonical trace-language DFA を持ち、actual relation の両 projection、rule-derived allowed relation への language inclusion、composition result、RealizationWitness preimage から canonical trace relation を判定する。
 51. remote non-commit certainty は将来の commit を禁止する terminal tombstone と fence を atomic ledger write に含む receipt だけから導出する。
 52. remote operation descriptor は input、output、failure codec と対応 value domain/failure schema を qualified ID で束縛する。
 53. PolicyGrantAuthority は canonical policy input から revocable、expiring、lifetime-bound grant を発行し、author object に authority brand を与えない。
