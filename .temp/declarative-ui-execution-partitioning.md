@@ -1000,8 +1000,10 @@ SubscriptionSequenceContract の count、byte、gap は正の safe integer、hor
 sequence namespace ID は source qualified ID、canonical locator digest、principal、descriptor の namespaceDomainId、source が attestation した sequence epoch の canonical SubscriptionSequenceNamespacePreimage digest とする。
 runtime は VerifiedBootContext の SubscriptionNamespaceAuthority で issuer、proof、source、locator、principal、namespace domain、epoch、preimage digest を検証し、source が任意 namespace ID を自己申告することを許さない。
 transport continuity ID は source、canonical locator、principal、policy epoch、verified sequence namespace の canonical SubscriptionTransportContinuityPreimage digest とし、SSR/browser handoff で維持する。
-local SubscriptionSession identity は transport continuity ID、client-local owner generation、use schema、share domain、authorization generation、audience evaluation、capability binding の canonical preimage digest とし、SSR generation を browser owner として再利用しない。
-runtime は owner generation、root binding、use schema を SubscriptionRuntimeRequestContext として wrapper 側だけに保持する。
+runtime は wrapper 作成ごとに coordinator ID、client-local owner generation、単調 session incarnation sequence の canonical SubscriptionSessionIncarnationPreimage から新しい sessionIncarnationId を発行する。
+sequence は leading zero のない unsigned decimal string とし、resume、reconnect wrapper replacement、resync のたびに進め、同じ owner generation 内でも再利用しない。
+local SubscriptionSession identity は session incarnation ID、transport continuity ID、client-local owner generation、use schema、share domain、authorization generation、audience evaluation、capability binding の canonical preimage digest とし、SSR generation を browser owner として再利用しない。
+runtime は owner generation、session incarnation、root binding、use schema を SubscriptionRuntimeRequestContext として wrapper 側だけに保持する。
 open 前に locator、compiled registry、grant、share domain を検証し、session budget を provisional に予約して private SubscriptionAdmissionToken を source-facing SubscriptionTransportOpenRequest へ渡す。
 source-facing open、resume、resync request は owner generation、root binding schema、use schema、local session identity を含めない。
 source は SubscriptionTransportOpenResult として initial consistency point、transport session、namespace attestation だけを返し、runtime identity、budget claim ID、terminal deadline、grant claim を生成しない。
@@ -1011,10 +1013,12 @@ session admission は concurrent session、outstanding revision、unacknowledged
 SSR から browser への handoff では、browser source の `resume` に initial snapshot、snapshot revision、log-boundary cursor、expected transport continuity ID、expected sequence namespace を渡す。
 resume は cursor より後の event だけを admission し、open を再実行して snapshot と log の間に gap を作らない。
 source implementation の server `open` と browser `resume` は同じ qualified descriptor と sequence contract に束縛し、client-only polling へ置換しない。
-transport の `next()` は transport continuity ID、sequence namespace、transport base revision を持つ SubscriptionTransportRevisionEnvelope を返し、runtime-local owner generation または session identity を生成しない。
-wrapper は continuity、namespace、base revision、payload digest を検証した後、wrapper 作成時の SubscriptionRuntimeRequestContext.ownerGenerationId を baseOwnerGenerationId、local session identity を sessionIdentityDigest として付けた SubscriptionRevisionEnvelope を生成する。
-UpdateAttempt は captured baseOwnerGenerationId を publication 直前の current owner generation に照合し、旧 wrapper から遅延到着した event を拒否する。
-gap、cursor expiry、typed failure は closed SubscriptionEvent で処理し、throw または reject は runtime failure とする。
+transport の `next()` は revision、gap、cursor expiry、typed failure の SubscriptionTransportEvent を返し、runtime-local owner generation または session identity を生成しない。
+revision event は transport continuity ID、sequence namespace、transport base revision を持つ SubscriptionTransportRevisionEnvelope を運ぶ。
+wrapper は revision の continuity、namespace、base revision、payload digest を検証し、すべての event を wrapper 作成時の owner generation と local session identity を持つ SubscriptionRuntimeEventEnvelope で包む。
+coordinator は revision publication、gap/resync 遷移、cursor-expired terminal、typed-failure terminal、acknowledgement forwarding の各直前に、envelope の `(capturedOwnerGenerationId, capturedSessionIdentityDigest)` を current wrapper pair と一つの lock で原子的に照合する。
+pair が異なる旧 wrapper の revision、terminal event、acknowledgement は current session へ作用させず破棄し、transport close だけを旧 wrapper の cleanup ledger で完了する。
+throw または reject は runtime failure とするが、同じ pair fence を通らない旧 wrapper failure で current session を失敗させない。
 
 acknowledgement は revision publication 後だけ単調に進め、失敗 UpdateAttempt の sequence と cursor を acknowledge しない。
 consumer が maxUnacknowledgedRevisions、maxOutstandingRevisions、maxRetainedBytes、maxSequenceGap のいずれかへ達した場合は新 revision を無制限に buffer せず、contract の overflow に従って close-and-resync または failed terminal にする。
@@ -1025,7 +1029,8 @@ cursor expiry または policy revalidation 後の resync は SubscriptionSessio
 runtime は fresh capability/authorization evaluation、grant claim、provisional budget token を取得し、local expected old session identity と transport continuity ID、expected old namespace、new authorization generation を持つ SubscriptionLocalResyncCommand を作る。
 runtime は command の local old identity が current wrapper と一致することを検証した後、local identity を除いた SubscriptionTransportResyncRequest を source へ渡す。
 source は old transport continuity と namespace が current transport に一致する場合だけ新しい initial consistency point を返し、runtime-local identity を観測しない。
-resync は旧 session を新 session identity へ暗黙 alias せず、provisional new session の検証後に一つの generation swap で publish して旧 session と旧 grant claim を閉じる。
+resync は旧 session を新 session identity へ暗黙 alias せず、必ず新しい sessionIncarnationId を発行する。
+provisional new session の検証後に current wrapper pair と generation value を一つの atomic swap で publish して旧 session と旧 grant claim を閉じる。
 sequence contract が `preserve` なら resync result の namespace は old namespace と一致しなければならない。
 `rotate-with-new-snapshot` なら新 snapshot consistency point と新 attested namespace を同時 publish し、旧 namespace の revision を新 session へ admission しない。
 SubscriptionUseSchemaRecord または required compiled registry entry がない subscription demand は client polling へ fallback せず compile diagnostic とする。
@@ -4103,8 +4108,16 @@ interface ReferenceResolver<Value, Locator extends CodecWireValue, Failure>
   release?(value: Value, context: CodecContext): void | Promise<void>;
 }
 
+interface SubscriptionSessionIncarnationPreimage {
+  readonly schema: "dathra.subscription-session-incarnation/1";
+  readonly coordinatorId: string;
+  readonly ownerGenerationId: string;
+  readonly sessionIncarnationSequence: string;
+}
+
 interface SubscriptionSessionIdentityPreimage {
   readonly schema: "dathra.subscription-session/1";
+  readonly sessionIncarnationId: string;
   readonly transportContinuityId: string;
   readonly subscriptionUseSchemaId: string;
   readonly shareDomainId: string;
@@ -4173,6 +4186,7 @@ interface SubscriptionAdmissionToken {
 
 interface SubscriptionRuntimeRequestContext {
   readonly ownerGenerationId: string;
+  readonly sessionIncarnationId: string;
   readonly rootBindingSchemaId: string;
   readonly subscriptionUseSchemaId: string;
 }
@@ -4220,13 +4234,6 @@ interface SubscriptionTransportRevisionEnvelope<Wire extends CodecWireValue> {
   readonly payloadDigest: string;
 }
 
-interface SubscriptionRevisionEnvelope<Wire extends CodecWireValue> {
-  readonly schema: "dathra.subscription-runtime-revision/1";
-  readonly sessionIdentityDigest: string;
-  readonly baseOwnerGenerationId: string;
-  readonly transport: SubscriptionTransportRevisionEnvelope<Wire>;
-}
-
 type SubscriptionTransportEvent<Wire extends CodecWireValue, Failure> =
   | {
       readonly kind: "revision";
@@ -4236,11 +4243,15 @@ type SubscriptionTransportEvent<Wire extends CodecWireValue, Failure> =
   | { readonly kind: "cursor-expired" }
   | { readonly kind: "typed-failure"; readonly error: Failure };
 
+interface SubscriptionRuntimeEventEnvelope<Wire extends CodecWireValue, Failure> {
+  readonly schema: "dathra.subscription-runtime-event/1";
+  readonly capturedOwnerGenerationId: string;
+  readonly capturedSessionIdentityDigest: string;
+  readonly transportEvent: SubscriptionTransportEvent<Wire, Failure>;
+}
+
 type SubscriptionEvent<Wire extends CodecWireValue, Failure> =
-  | { readonly kind: "revision"; readonly envelope: SubscriptionRevisionEnvelope<Wire> }
-  | { readonly kind: "gap"; readonly expectedSequence: string; readonly receivedSequence: string }
-  | { readonly kind: "cursor-expired" }
-  | { readonly kind: "typed-failure"; readonly error: Failure };
+  SubscriptionRuntimeEventEnvelope<Wire, Failure>;
 
 interface SubscriptionTransportSession<Wire extends CodecWireValue, Failure> {
   readonly transportSessionId: string;
@@ -5696,7 +5707,7 @@ Accepted ADR の意味を直接書き換えず、必要な場合は superseding 
 - 7 種類の policy input、value-domain、failure-schema、host-profile、brand implementation の conformance
 - RenderOperation の cancel、retry、header、stream race
 - FinalHeaderCommit と複数 103 publication の writer acceptance linearization
-- runtime-owned subscription wrapper が SSR handoff record、source-facing request、transport event から client-local owner/session identity を除外し、local revision wrapper だけに owner generation/session identity を付与して、transport continuity、boot-bound private namespace authority、local/transport resync 分離、purpose-bound grant evidence、budget、overflow、acknowledgement、GC を強制すること
+- runtime-owned subscription wrapper が wrapper ごとに non-reused session incarnation を発行し、SSR handoff record、source-facing request、transport event から client-local owner/session identity を除外し、全 runtime event と acknowledgement を captured owner generation/session identity の atomic pair fence に通して、transport continuity、boot-bound private namespace authority、local/transport resync 分離、purpose-bound grant evidence、budget、overflow、acknowledgement、GC を強制すること
 - allocation token、cleanup deadline、LateSettlementLedger の race
 - target generation を参照しない creation operation、restartable generation、allocation/commit transaction が coordinator-issued incarnation から identity を作ること
 - retention claim set、CleanupTaskToken、LateCleanupLedger、hard admission budget、sink-side atomic generation fence、self-await rejection
@@ -5802,7 +5813,7 @@ Accepted ADR の意味を直接書き換えず、必要な場合は superseding 
 75. remote terminal evidence を失った operation は public reason `terminal-evidence-expired`、recovery null の ambiguous outcome にする。
 76. `dom:external` は compiler-generated external regionへ lower する reserved JSX directive とし、Dathra DOMTarget との overlap、nested owner、cleanup 不在を diagnostic にする。
 77. subscription は SSR と browser の間で transport continuity ID だけを継承し、client-local owner generation を含む session identity は browser runtime wrapper が新しく導出する。
-78. subscription transport revision は transport continuity、sequence namespace、transport base revision だけを運び、runtime wrapper が検証後に wrapper 作成時の owner generation と session identity を付与し、publication 直前の current generation と照合する。
+78. subscription transport event は local identity を運ばず、runtime wrapper が全 event に captured owner generation と wrapper ごとに一意な session incarnation を含む session identity を付与し、revision、terminal、acknowledgement の直前に current wrapper pair と原子的に照合する。
 79. subscription sequence namespace attestation は boot record に束縛された private authority だけが検証し、source の自己申告 digest を信頼しない。
 80. runtime-owned AuthorizationGrantClaim は extension へ渡さず、resolver、subscription source、remote adapter には purpose-bound AuthorizationGrantEvidence だけを渡す。
 81. remote operation の implementation binding は browser transport/verifier と server-request endpoint/handler/delivery の環境別 role に分け、client projection から server-only closure を排除する。
@@ -5812,6 +5823,7 @@ Accepted ADR の意味を直接書き換えず、必要な場合は superseding 
 85. remote wire は versioned canonical JCS UTF-8 frame とし、raw frame、depth、evidence、payload、materialization、codec work を RemoteProtocolBudget で effect admission 前に制限する。
 86. baseline の実行環境は build、server-request、browser に閉じる。remote operation の delivery adapter は server-request で実行し、第三 runtime への再委譲は暗黙 import ではなく将来の明示 protocol とする。
 87. subscription の owner generation、root binding、use schema、local session identity は runtime wrapper context にだけ保持し、source-facing open/resume/resync request または transport event へ渡さない。
+88. subscription wrapper は coordinator-issued monotonic session incarnation を一つずつ持ち、同じ owner generation と transport continuity を保つ resync でも session identity digest を再利用しない。
 
 ## 現行方針の要約
 
