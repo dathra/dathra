@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: 手順 0 の計画 commit と baseline を完了し、手順 1 の implementation matrix を実コードへ対応付ける。
+- 次の作業: 手順 1 の implementation matrix を実コードへ対応付け、verification-gate slice を開始する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -24,8 +24,8 @@
 
 | ID | 作業 | 状態 | 証拠 |
 | --- | --- | --- | --- |
-| S00 | branch、計画文書、baseline | in-progress | branch は規定の `gnb` command で作成済み |
-| S01 | implementation matrix | pending | 実コード調査後に確定する |
+| S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
+| S01 | implementation matrix | in-progress | package と既存 API の実コード調査を開始する |
 | S02 | verification-gate slice | pending | docs と全 playground の実処理 gate を対象にする |
 | P01 | ExecutionGraph foundation | pending | 未着手 |
 | P02 | semantic contract と registry | pending | 未着手 |
@@ -46,25 +46,29 @@ branch 作成前の `doc/hydration-policy` は clean であり、local HEAD と 
 
 | Command | 状態 | 結果 |
 | --- | --- | --- |
-| `pnpm build` | pending | 未実行 |
-| `pnpm test` | pending | 未実行 |
-| `pnpm typecheck` | pending | 未実行 |
-| `pnpm lint` | pending | 未実行 |
-| `pnpm fmt:check` | pending | 未実行 |
-| `pnpm test:e2e` | pending | 未実行 |
-| `pnpm --filter @dathra/config lint` | pending | 未実行 |
-| `pnpm --filter @dathra/config lint:type-aware` | pending | 未実行 |
-| `pnpm --filter @dathra/docs build` | pending | 未実行 |
-| `pnpm --filter @dathra/docs build:cloudflare` | pending | 未実行 |
-| `pnpm --filter @dathra/docs fmt:check` | pending | 未実行 |
-| `pnpm --filter @playground/e2e build` | pending | 未実行 |
-| `pnpm --filter @playground/e2e fmt:check` | pending | 未実行 |
-| `pnpm --filter @playground/ssr build` | pending | 未実行 |
-| `pnpm --filter @playground/ssr fmt:check` | pending | 未実行 |
-| `pnpm --filter @playground/vanilla build` | pending | 未実行 |
-| `pnpm --filter @playground/vanilla fmt:check` | pending | 未実行 |
-| `pnpm --filter @playground/getting-started-check build` | pending | 未実行 |
-| `pnpm --filter @playground/nuxt build` | pending | 未実行 |
+| `pnpm build` | completed | exit 0。8 package の成果物を生成した |
+| `pnpm test` | completed | exit 0。全 package test が成功した |
+| `pnpm typecheck` | completed | exit 0。8 package が成功した |
+| `pnpm lint` | completed | exit 0。8 package が成功した |
+| `pnpm fmt:check` | completed | exit 0。script を持つ package と3 playground が成功した |
+| `pnpm test:e2e` | completed | exit 0。15 files、15 tests が成功した |
+| `pnpm --filter @dathra/config lint` | completed | exit 0 |
+| `pnpm --filter @dathra/config lint:type-aware` | completed | exit 0 |
+| `pnpm --filter @dathra/docs build` | completed | exit 0。client と server bundle を生成した |
+| `pnpm --filter @dathra/docs build:cloudflare` | completed | exit 0。client と worker bundle を生成した |
+| `pnpm --filter @dathra/docs fmt:check` | completed | exit 0。41 files を検査した |
+| `pnpm --filter @playground/e2e build` | completed | exit 0。dependency、client、server build が成功した |
+| `pnpm --filter @playground/e2e fmt:check` | completed | exit 0。46 files を検査した |
+| `pnpm --filter @playground/ssr build` | completed | exit 0。dependency、client、server build が成功した |
+| `pnpm --filter @playground/ssr fmt:check` | completed | exit 0。22 files を検査した |
+| `pnpm --filter @playground/vanilla build` | completed | exit 0。Vite production build が成功した |
+| `pnpm --filter @playground/vanilla fmt:check` | completed | exit 0。9 files を検査した |
+| `pnpm --filter @playground/getting-started-check build` | completed | exit 0。client と server build が成功した |
+| `pnpm --filter @playground/nuxt build` | completed | exit 0。Nuxt client、server、Nitro build が成功した |
+
+baseline では失敗を検出しなかったため、baseline-repair slice は不要である。
+plugin build の mixed exports と Rollup 型定義、config lint の TypeScript version、Nuxt build の browser data に既存 warning が出るが、いずれも exit 0 である。
+`getting-started-check` と `nuxt` には `fmt:check` と `test` がなく、docs、`ssr`、`vanilla` には `test` がないため、VG01 で実処理を持つ gate を追加する。
 
 ## Implementation Matrix
 
@@ -152,23 +156,23 @@ branch 作成前の `doc/hydration-policy` は clean であり、local HEAD と 
 
 | Slice | 状態 | 設計要件 | 検証 | Review | Commit / Push |
 | --- | --- | --- | --- | --- | --- |
-| PLAN-00 | in-progress | 実装 branch、正本、進捗台帳を確立する | `git status`、local/remote OID | 文書 commit 後に確認 | 未 commit |
+| PLAN-00 | completed | 実装 branch、正本、進捗台帳を確立する | clean tree と local/remote tracking を確認 | goal 文書の事前独立レビューは `ACCEPT` | `8a0eedd` / push 済み |
+| BASELINE-00 | completed | 実装前の既存挙動と gate を固定する | Baseline 表の19 command | production change がないため独立実装レビュー対象外 | この記録を次の文書 commit に含める |
 
 ## Review Log
 
 | 対象 | Reviewer | 結果 | 採否と対応 |
 | --- | --- | --- | --- |
-| 未実施 | - | pending | 最初の vertical slice から記録する |
+| implementation goal | goal 作成時の独立 reviewer | ACCEPT | 指摘を収束済み。実装指示の正本として採用した |
 
 ## Commit / Push Log
 
 | Slice | Commit | Remote | 同期確認 |
 | --- | --- | --- | --- |
-| 未実施 | - | `origin/feature/declarative-ui-execution-partitioning` | pending |
+| PLAN-00 | `8a0eedd` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
 
 ## 未完了事項
 
-- baseline command を実行して結果を記録する。
 - 実コードと package ごとの正本を調査し、implementation matrix の `調査中` を具体的な path へ置き換える。
 - verification-gate slice を独立レビュー、commit、push まで完了する。
 - Phase 1 から Phase 10 を vertical slice 単位で実装する。
