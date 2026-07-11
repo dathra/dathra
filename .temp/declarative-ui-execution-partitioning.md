@@ -1001,7 +1001,9 @@ sequence namespace ID は source qualified ID、canonical locator digest、princ
 runtime は VerifiedBootContext の SubscriptionNamespaceAuthority で issuer、proof、source、locator、principal、namespace domain、epoch、preimage digest を検証し、source が任意 namespace ID を自己申告することを許さない。
 transport continuity ID は source、canonical locator、principal、policy epoch、verified sequence namespace の canonical SubscriptionTransportContinuityPreimage digest とし、SSR/browser handoff で維持する。
 local SubscriptionSession identity は transport continuity ID、client-local owner generation、use schema、share domain、authorization generation、audience evaluation、capability binding の canonical preimage digest とし、SSR generation を browser owner として再利用しない。
-runtime は open 前に locator、compiled registry、grant、share domain を検証し、session budget を provisional に予約して private SubscriptionAdmissionToken を source へ渡す。
+runtime は owner generation、root binding、use schema を SubscriptionRuntimeRequestContext として wrapper 側だけに保持する。
+open 前に locator、compiled registry、grant、share domain を検証し、session budget を provisional に予約して private SubscriptionAdmissionToken を source-facing SubscriptionTransportOpenRequest へ渡す。
+source-facing open、resume、resync request は owner generation、root binding schema、use schema、local session identity を含めない。
 source は SubscriptionTransportOpenResult として initial consistency point、transport session、namespace attestation だけを返し、runtime identity、budget claim ID、terminal deadline、grant claim を生成しない。
 runtime は返却値を検証した後に SubscriptionSession wrapper を作り、identity、budget claim、deadline、grant claim、transport forwarding を owner generation の cleanup ledger に同時登録する。
 session admission は concurrent session、outstanding revision、unacknowledged revision、retained byte、gap の枠を原子的に予約し、budgetClaimId を session terminal まで保持する。
@@ -1009,8 +1011,9 @@ session admission は concurrent session、outstanding revision、unacknowledged
 SSR から browser への handoff では、browser source の `resume` に initial snapshot、snapshot revision、log-boundary cursor、expected transport continuity ID、expected sequence namespace を渡す。
 resume は cursor より後の event だけを admission し、open を再実行して snapshot と log の間に gap を作らない。
 source implementation の server `open` と browser `resume` は同じ qualified descriptor と sequence contract に束縛し、client-only polling へ置換しない。
-transport の `next()` は transport continuity ID と sequence namespace を持つ SubscriptionTransportRevisionEnvelope を返し、runtime-local session identity を生成しない。
-wrapper は continuity、namespace、base generation/revision、payload digest を検証した後、local sessionIdentityDigest を付けた SubscriptionRevisionEnvelope を生成して publication する。
+transport の `next()` は transport continuity ID、sequence namespace、transport base revision を持つ SubscriptionTransportRevisionEnvelope を返し、runtime-local owner generation または session identity を生成しない。
+wrapper は continuity、namespace、base revision、payload digest を検証した後、wrapper 作成時の SubscriptionRuntimeRequestContext.ownerGenerationId を baseOwnerGenerationId、local session identity を sessionIdentityDigest として付けた SubscriptionRevisionEnvelope を生成する。
+UpdateAttempt は captured baseOwnerGenerationId を publication 直前の current owner generation に照合し、旧 wrapper から遅延到着した event を拒否する。
 gap、cursor expiry、typed failure は closed SubscriptionEvent で処理し、throw または reject は runtime failure とする。
 
 acknowledgement は revision publication 後だけ単調に進め、失敗 UpdateAttempt の sequence と cursor を acknowledge しない。
@@ -1031,6 +1034,11 @@ SubscriptionUseSchemaRecord または required compiled registry entry がない
 
 remote operation は、author-visible な async API としてだけ導入する。
 compiler は通常の server function call を暗黙 RPC に変換しない。
+
+baseline の ExecutionEnvironment は build、server-request、browser の三つに閉じる。
+remote operation の `remote` は browser から server-request への protocol semantics を表し、第三の Dathra runtime environment を意味しない。
+RemoteDeliveryAdapter は server-request 上の host-attested role とし、外部 service、database、queue との通信は adapter 自身の delivery contract と host attestation の内側で実行する。
+server-request から別 Dathra runtime へ処理を再委譲する機能を将来追加する場合は、同一環境 import で代用せず、専用 endpoint、wire DTO、authority evidence、receipt conversion、protocol budget を持つ第二の明示 protocol として設計する。
 
 baseline は ambiguous failure 後の blind retry と exactly-once を保証しない。
 adapter は、principal-bound key、request commitment、authorization、idempotency、fencing、retention、result disclosure、ambiguous reconciliation を定義する。
@@ -1439,7 +1447,7 @@ type RegistryRoleLocation =
     }
   | {
       readonly registryKind: "remote-delivery-adapter";
-      readonly environment: "server-request" | "remote";
+      readonly environment: "server-request";
       readonly role: "remote-server-delivery";
     };
 
@@ -1497,7 +1505,7 @@ interface RemoteRegistryProtocolBinding {
   readonly serverDeploymentIdentityDigest: string;
   readonly endpointIdentity: string;
   readonly deliveryAdapterQualifiedId: QualifiedRegistryId<"remote-delivery-adapter">;
-  readonly deliveryEnvironment: "server-request" | "remote";
+  readonly deliveryEnvironment: "server-request";
   readonly deliveryRole: "remote-server-delivery";
   readonly deliveryDeploymentIdentityDigest: string;
   readonly transportProfileQualifiedId: QualifiedRegistryId<"host-profile">;
@@ -1814,7 +1822,7 @@ BootAuthority は raw boot record の authenticity、principal、policy epoch �
 subscriptionNamespaceAuthorityAttestationId も private SubscriptionNamespaceAuthority と一致させ、source descriptor の issuer ID と attestation ID を boot authority に照合する。
 remoteAuthorizationEvidenceIssuerAttestationId は browser の private RemoteAuthorizationEvidenceIssuer と一致させ、protocol binding の endpoint、verifier profile、deployment identity に対する evidence だけを発行できるようにする。
 remoteProtocolCodecAttestationId は `dathra.remote-jcs-utf8/1` の strict encoder/decoder を持つ private RemoteProtocolCodec と一致させ、protocol binding の codec metadata digest に照合する。
-server/remote environment は対応する RemoteAuthorizationEvidenceVerifier と RemoteProtocolCodec を host trust anchor から注入し、protocol binding の verifier/codec metadata digest と attestation を照合する。
+server-request environment は対応する RemoteAuthorizationEvidenceVerifier と RemoteProtocolCodec を host trust anchor から注入し、protocol binding の verifier/codec metadata digest と attestation を照合する。
 author code、manifest、registry evaluator は PolicyGrantAuthority、SubscriptionNamespaceAuthority、remote evidence issuer/verifier を注入、置換できない。
 
 runtime は VerifiedBootContext の loader で ProjectionManifest envelope bytes を取得して boot digest、fixed encoding、projection instance preimage を確認する。
@@ -1824,7 +1832,7 @@ runtime は request projection だけから full-domain candidate graph を再�
 検証後は `(build, projection definition ID, definitionId)` で definition を、qualified registry ID で codec、resolver、subscription source、policy、host profile、failure schema、remote operation、remote delivery adapter を引く。
 ProjectionManifestCore の registry table は、request-reachable browser definition と wire record から必要な CompiledExecutionContract.resolvedRegistries の browser implementation/dependency binding と public protocol binding metadata だけを qualified ID で projection する。
 browser-reachable binding が要求する qualified registry role が table にない場合は、module load と materialization の前に失敗させる。
-descriptor が参照していても server/remote role からだけ到達する handler、delivery adapter、ledger、endpoint artifact は client core に入れない。
+descriptor が参照していても server-request role からだけ到達する handler、delivery adapter、ledger、endpoint artifact は client core に入れない。
 browser runtime は protocol binding に固定された endpoint identity、deployment identity、transport profile、schema、verifier metadata の存在を要求するが、接続先 implementation artifact の不在を dangling client dependency と扱わない。
 
 VerifiedModuleLoader は capability に束縛された ArtifactAddressPreimage、artifactBaseUrl、decoder、module-map epoch から canonical URL を導出し、module parser へ渡す実 bytes の digest と byteLength を module instantiation 前に検証する。
@@ -3169,7 +3177,7 @@ subscriber または sink の throw は元の failure と containment を変更�
 build-time extension API は次の型を持つ。
 
 ```ts
-type ExecutionEnvironment = "build" | "server-request" | "browser" | "remote";
+type ExecutionEnvironment = "build" | "server-request" | "browser";
 
 declare const factIdBrand: unique symbol;
 declare const registryIdBrand: unique symbol;
@@ -3527,7 +3535,7 @@ interface RemoteDeliveryAdapterRegistryDescriptor<Qualified extends boolean = fa
     | "none"
     | "fenced-idempotency"
     | "effect-ledger-result-atomic";
-  readonly deliveryEnvironment: "server-request" | "remote";
+  readonly deliveryEnvironment: "server-request";
   readonly hostAttestationDigest: string;
   readonly ledgerBudget: RemoteLedgerBudget;
 }
@@ -4163,19 +4171,22 @@ interface SubscriptionAdmissionToken {
   readonly terminalDeadline: number;
 }
 
-interface SubscriptionOpenRequest<Locator extends CodecWireValue> {
-  readonly locator: Locator;
+interface SubscriptionRuntimeRequestContext {
   readonly ownerGenerationId: string;
   readonly rootBindingSchemaId: string;
   readonly subscriptionUseSchemaId: string;
+}
+
+interface SubscriptionTransportOpenRequest<Locator extends CodecWireValue> {
+  readonly locator: Locator;
   readonly authorizationEvidence: AuthorizationGrantEvidence;
   readonly capabilityEvidence: AuthorizationGrantEvidence | null;
   readonly admission: SubscriptionAdmissionToken;
   readonly signal: AbortSignal;
 }
 
-interface SubscriptionResumeRequest<Locator extends CodecWireValue, Value>
-  extends SubscriptionOpenRequest<Locator> {
+interface SubscriptionTransportResumeRequest<Locator extends CodecWireValue, Value>
+  extends SubscriptionTransportOpenRequest<Locator> {
   readonly expectedTransportContinuityId: string;
   readonly expectedSequenceNamespaceId: string;
   readonly initialSnapshot: Value;
@@ -4191,7 +4202,7 @@ interface SubscriptionLocalResyncCommand {
 }
 
 interface SubscriptionTransportResyncRequest<Locator extends CodecWireValue>
-  extends SubscriptionOpenRequest<Locator> {
+  extends SubscriptionTransportOpenRequest<Locator> {
   readonly expectedOldTransportContinuityId: string;
   readonly expectedOldSequenceNamespaceId: string;
   readonly newAuthorizationGenerationId: string;
@@ -4202,7 +4213,6 @@ interface SubscriptionTransportRevisionEnvelope<Wire extends CodecWireValue> {
   readonly transportContinuityId: string;
   readonly sequenceNamespaceId: string;
   readonly sequence: string;
-  readonly baseGenerationId: string;
   readonly baseRevision: string;
   readonly revision: string;
   readonly cursor: CodecWireValue;
@@ -4213,6 +4223,7 @@ interface SubscriptionTransportRevisionEnvelope<Wire extends CodecWireValue> {
 interface SubscriptionRevisionEnvelope<Wire extends CodecWireValue> {
   readonly schema: "dathra.subscription-runtime-revision/1";
   readonly sessionIdentityDigest: string;
+  readonly baseOwnerGenerationId: string;
   readonly transport: SubscriptionTransportRevisionEnvelope<Wire>;
 }
 
@@ -4242,6 +4253,7 @@ interface SubscriptionTransportSession<Wire extends CodecWireValue, Failure> {
 
 interface SubscriptionSession<Value, Wire extends CodecWireValue, Failure> {
   readonly identity: SubscriptionSessionIdentityPreimage;
+  readonly capturedOwnerGenerationId: string;
   readonly budgetClaimId: string;
   readonly terminalDeadline: number;
   readonly initialSnapshot: Value;
@@ -4270,11 +4282,11 @@ interface SubscriptionSource<
 > extends SubscriptionSourceRegistryDescriptor<false> {
   validateLocator(value: unknown): value is Locator;
   open(
-    request: SubscriptionOpenRequest<Locator>,
+    request: SubscriptionTransportOpenRequest<Locator>,
     context: CodecContext,
   ): Promise<SubscriptionTransportOpenResult<Value, RevisionWire, Failure>>;
   resume(
-    request: SubscriptionResumeRequest<Locator, Value>,
+    request: SubscriptionTransportResumeRequest<Locator, Value>,
     context: CodecContext,
   ): Promise<SubscriptionTransportOpenResult<Value, RevisionWire, Failure>>;
   resync(
@@ -5044,7 +5056,7 @@ role の許可範囲と requirement は次の表を正本とする。
 | policy | runtime environment の evaluate | policy fact から到達する場合に必須 |
 | value-domain、failure-schema、host-profile、brand | runtime environment の各 validator/adaptor | consumer role から到達する場合に必須 |
 | remote-operation | browser の transport/verifier、server-request の endpoint/handler | browser callable を公開する operation では 4 role すべて必須 |
-| remote-delivery-adapter | descriptor が選ぶ server-request または remote の delivery | remote operation から参照された場合に一つだけ必須 |
+| remote-delivery-adapter | server-request の delivery | remote operation から参照された場合に一つだけ必須 |
 
 この表にない kind、environment、role の組は source entry の時点で diagnostic とする。
 required role に実装がない場合、または同じ `(qualified registry ID, environment, role)` に複数実装がある場合も diagnostic とする。
@@ -5053,12 +5065,14 @@ RegistryProtocolBinding は remote-operation entry だけが持てる。
 ほかの registry kind の protocolBindings は型上 `never[]` であり、runtime record では空配列にする。
 
 CompiledRegistryEntry は全 environment の binding と RegistryEnvironmentProjectionRecord を保持する。
-finalizer は browser、server-request、remote ごとに異なる deployment projection を生成し、同一環境 import は RegistryDependencyBinding、環境を越える通信は RegistryProtocolBinding だけで表す。
+finalizer は browser と server-request に異なる deployment projection を生成し、同一環境 import は RegistryDependencyBinding、browser/server-request 間の通信は RegistryProtocolBinding だけで表す。
 ProjectionManifestCore は browser-reachable implementation/dependency binding と、接続先 artifact を含まない public protocol metadata だけを保持する。
 CompiledExecutionContract.sourceArtifactAddressId は build/debug provenance であり、runtime implementation identity は各 role binding の artifact address と export name を正本にする。
 implementation binding は `(registry kind, environment, role)` ごとに一つ、dependency binding は `(sourceEnvironment, sourceRole, targetQualifiedId, targetEnvironment, targetRole)` ごとに一つとする。
 same-environment-import の sourceEnvironment と targetEnvironment は型と validator の双方で一致させる。
-browser から server-request または remote への import/dependency edge が一つでもあれば client projection を拒否し、remote request-response だけを endpoint identity、各 deployment identity、transport profile、request/response schema、protocol codec、evidence verifier、receipt verifier、protocol budget に束縛した protocol binding として許可する。
+browser から server-request への import/dependency edge が一つでもあれば client projection を拒否し、remote operation の request-response だけを endpoint identity、各 deployment identity、transport profile、request/response schema、protocol codec、evidence verifier、receipt verifier、protocol budget に束縛した protocol binding として許可する。
+RemoteRegistryProtocolBinding.deliveryEnvironment は `server-request` に固定し、deliveryDeploymentIdentityDigest は serverDeploymentIdentityDigest と一致させる。
+server endpoint/handler から delivery adapter への edge は同じ server-request projection 内の same-environment-import とし、wire protocol を挟まない。
 runtime は digest だけでなく descriptor 本体、role requirement、implementation/dependency binding、protocol binding を比較し、source-local RegistryId が一つでも残る projection を拒否する。
 
 pure policy の ruleGraph は framework の versioned closed algebra で canonicalize し、PolicyEvaluator の build-time conformance vector と一致しなければならない。
@@ -5086,7 +5100,7 @@ resolver は expected failure を `ReferenceResult` で返し、throw または 
 
 `defineRemoteOperation()` の `handler` は server root であり、returned `RemoteOperation` の call は author-visible な async protocol root である。
 compiler は handler body を client artifact に入れず、call を同期 local function に見せかけない。
-compiler は一つの qualified remote operation から browser の remote-client-transport/receipt-verifier、server の endpoint/handler、descriptor が選ぶ server/remote environment の delivery binding を別々に生成する。
+compiler は一つの qualified remote operation から browser の remote-client-transport/receipt-verifier と server-request の endpoint/handler/delivery binding を別々に生成する。
 ProjectionManifestCore は browser binding、browser codec/policy dependency、public protocol binding metadata だけを含み、server handler、deliveryAdapterId の implementation、ledger、server-only import closure を含まない。
 handler の typed application failure は `RemoteApplicationResult` の `ok: false` で返す。
 caller は success、application failure、cancelled、expired、ambiguous、system failure を `RemoteOutcome` の closed union で受け取る。
@@ -5096,7 +5110,7 @@ capture reject、capture codec 不在、capture 中 cancel、reserve 前の auth
 この path は remote operation sequence を発行しないため terminal hole を作らない。
 RemoteDeliveryAdapter.reserve() が成功した後の outcome だけが attemptId と non-null operationId の両方を持つ。
 RemoteDeliveryAdapter は registry export として実行可能であり、compiler は descriptor、implementation artifact、host attestation を同じ compiled registry entry に束縛する。
-ただし RemoteDeliveryAdapter、RemoteServerEndpoint、handler、ledger は server/remote role であり、browser の RemoteOperation callable が直接 import または invoke しない。
+ただし RemoteDeliveryAdapter、RemoteServerEndpoint、handler、ledger は server-request role であり、browser の RemoteOperation callable が直接 import または invoke しない。
 browser role は RemoteClientTransport と RemoteClientReceiptVerifier だけを持つ。
 browser runtime は private RemoteCapturedRequest から untrusted DTO の RemoteCapturedRequestWire を作り、private RemoteAuthorizationEvidenceIssuer で endpoint、protocol binding、operation、request commitment、attempt、principal、policy epoch、evaluation、expiry、nonce を束縛した RemoteAuthorizationEvidenceWire を発行する。
 AuthorizationGrantClaim、AuthorizationGrantEvidence、RemoteCapturedRequest の private brand または private-store membership を wire DTO へ直列化しない。
@@ -5675,14 +5689,14 @@ Accepted ADR の意味を直接書き換えず、必要な場合は superseding 
 - source、manifest、contract の conflict diagnostic
 - SemanticSubject、relation、qualified fact と registry ID の namespace 衝突検査
 - module map、import map、integrity、redirect の host profile ごとの適合性
-- compiled registry projection が nested ID をすべて qualified form に変換し、closed role requirement、環境別 implementation/dependency projection、cross-environment protocol binding を固定し、browser role から server/remote artifact closure を拒否すること
+- compiled registry projection が nested ID をすべて qualified form に変換し、closed role requirement、browser/server-request 別 implementation/dependency projection、cross-environment protocol binding を固定し、browser role から server-request artifact closure を拒否すること
 - finite GraphPathWitness の edge continuity、cycle rejection、path pattern、locator validation、private grant pin、reference cache identity が invocation 前に完了すること
 - codec graph edge slot table が wire path、edge kind、cardinality、witness ordinal を materialization 前に検証すること
 - BootAuthority が manifest 前に loader と failure channel を注入し、private capability を Realm、Document generation、module-map epoch、decoder、redirect policy に束縛すること
 - 7 種類の policy input、value-domain、failure-schema、host-profile、brand implementation の conformance
 - RenderOperation の cancel、retry、header、stream race
 - FinalHeaderCommit と複数 103 publication の writer acceptance linearization
-- runtime-owned subscription wrapper が SSR handoff record から client-local session identity を除外し、transport continuity、boot-bound private namespace authority、local/transport resync 分離、purpose-bound grant evidence、budget、overflow、acknowledgement、GC を強制すること
+- runtime-owned subscription wrapper が SSR handoff record、source-facing request、transport event から client-local owner/session identity を除外し、local revision wrapper だけに owner generation/session identity を付与して、transport continuity、boot-bound private namespace authority、local/transport resync 分離、purpose-bound grant evidence、budget、overflow、acknowledgement、GC を強制すること
 - allocation token、cleanup deadline、LateSettlementLedger の race
 - target generation を参照しない creation operation、restartable generation、allocation/commit transaction が coordinator-issued incarnation から identity を作ること
 - retention claim set、CleanupTaskToken、LateCleanupLedger、hard admission budget、sink-side atomic generation fence、self-await rejection
@@ -5788,14 +5802,16 @@ Accepted ADR の意味を直接書き換えず、必要な場合は superseding 
 75. remote terminal evidence を失った operation は public reason `terminal-evidence-expired`、recovery null の ambiguous outcome にする。
 76. `dom:external` は compiler-generated external regionへ lower する reserved JSX directive とし、Dathra DOMTarget との overlap、nested owner、cleanup 不在を diagnostic にする。
 77. subscription は SSR と browser の間で transport continuity ID だけを継承し、client-local owner generation を含む session identity は browser runtime wrapper が新しく導出する。
-78. subscription transport revision は transport continuity と sequence namespace を運び、runtime wrapper が検証後に local session identity を付与して publication する。
+78. subscription transport revision は transport continuity、sequence namespace、transport base revision だけを運び、runtime wrapper が検証後に wrapper 作成時の owner generation と session identity を付与し、publication 直前の current generation と照合する。
 79. subscription sequence namespace attestation は boot record に束縛された private authority だけが検証し、source の自己申告 digest を信頼しない。
 80. runtime-owned AuthorizationGrantClaim は extension へ渡さず、resolver、subscription source、remote adapter には purpose-bound AuthorizationGrantEvidence だけを渡す。
-81. remote operation の implementation binding は browser transport/verifier、server endpoint/handler、server/remote delivery の環境別 role に分け、client projection から server-only closure を排除する。
+81. remote operation の implementation binding は browser transport/verifier と server-request endpoint/handler/delivery の環境別 role に分け、client projection から server-only closure を排除する。
 82. SubscriptionRecord は transport continuity、namespace、snapshot、cursor だけを handoff し、browser-local session identity を持たない。local resync command と source 向け transport request も分離する。
 83. remote protocol は AuthorizationGrantEvidence、RemoteCapturedRequest、branded receipt を直列化せず、proof を持つ untrusted wire DTO を host authority が検証して local private object を新規生成する。
 84. registry binding は kind ごとの closed environment/role table、role requirement、同一環境 import、環境別 deployment projection、cross-environment protocol binding を正本とする。
 85. remote wire は versioned canonical JCS UTF-8 frame とし、raw frame、depth、evidence、payload、materialization、codec work を RemoteProtocolBudget で effect admission 前に制限する。
+86. baseline の実行環境は build、server-request、browser に閉じる。remote operation の delivery adapter は server-request で実行し、第三 runtime への再委譲は暗黙 import ではなく将来の明示 protocol とする。
+87. subscription の owner generation、root binding、use schema、local session identity は runtime wrapper context にだけ保持し、source-facing open/resume/resync request または transport event へ渡さない。
 
 ## 現行方針の要約
 
