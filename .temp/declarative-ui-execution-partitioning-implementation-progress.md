@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: 手順 1 の implementation matrix を実コードへ対応付け、verification-gate slice を開始する。
+- 次の作業: VG01 の test と gate を先に追加し、旧 Nuxt consumer の production failure を確認してから修正する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -25,8 +25,8 @@
 | ID | 作業 | 状態 | 証拠 |
 | --- | --- | --- | --- |
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
-| S01 | implementation matrix | in-progress | package と既存 API の実コード調査を開始する |
-| S02 | verification-gate slice | pending | docs と全 playground の実処理 gate を対象にする |
+| S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
+| S02 | verification-gate slice | in-progress | docs と全 playground の production workflow gate を対象にする |
 | P01 | ExecutionGraph foundation | pending | 未着手 |
 | P02 | semantic contract と registry | pending | 未着手 |
 | P03 | 解析と placement | pending | 未着手 |
@@ -72,85 +72,147 @@ plugin build の mixed exports と Rollup 型定義、config lint の TypeScript
 
 ## Implementation Matrix
 
-この matrix は手順 1 の実コード調査で API、SPEC、test、implementation の列を確定する。
 依存順は foundation から user-visible workflow へ向け、各行を独立した vertical slice に分割する。
+新規 API directory は、表に示す base path の下へ `AGENTS.md`、`SPEC.typ`、`implementation.test.ts`、`implementation.ts` を作る。
+既存 API を更新する行は、表の SPEC と test を先に更新し、Accepted ADR と衝突する場合は superseding ADR を追加する。
+schema producer だけを実装した行は、production producer と consumer の integration evidence が揃うまで completed にしない。
+package 間で使う internal export、package export map、build entry は、その producer slice が同じ commit で追加する。
+後段の public API 行は consumer を初めて解決可能にする作業ではなく、公開面の最終確定、JSDoc、不要な internal exposure の除去を担当する。
 
-| ID | 設計要件 | 主担当 | API / artifact | SPEC | Test | Implementation | Dependency | 状態 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| VG01 | docs と全 playground の実処理 gate | docs / playgrounds | package scripts と workflow test | 調査中 | 調査中 | `package.json` と test infrastructure | なし | pending |
-| EG01 | ModuleCoordinator と module graph snapshot | transformer / shared | 調査中 | 調査中 | 調査中 | 調査中 | VG01 | pending |
-| EG02 | ExecutionGraph、TemplateNode、Occurrence、identity | transformer / shared | 調査中 | 調査中 | 調査中 | 調査中 | EG01 | pending |
-| OC01 | ObservationContract、composition、RealizationWitness | transformer / shared | 調査中 | 調査中 | 調査中 | 調査中 | EG02 | pending |
-| ID01 | canonical preimage、digest、qualified ID | shared / transformer | 調査中 | 調査中 | 調査中 | 調査中 | EG01 | pending |
-| SC01 | semantic fact、relation、execution contract、registry | transformer / shared | 調査中 | 調査中 | 調査中 | 調査中 | OC01 / ID01 | pending |
-| PL01 | root、read、effect、callback、module closure の導出 | transformer | 調査中 | 調査中 | 調査中 | 調査中 | EG02 / SC01 | pending |
-| PL02 | placement solver、cost、diagnostic path | transformer | 調査中 | 調査中 | 調査中 | 調査中 | PL01 | pending |
-| SR01 | ExecutionGraph 由来の server renderer | transformer / runtime | 調査中 | 調査中 | 調査中 | 調査中 | PL02 | pending |
-| SR02 | RenderOperation、header、stream、retry、cancel | runtime / plugin | 調査中 | 調査中 | 調査中 | 調査中 | SR01 | pending |
-| MP01 | MaterializationRequirement と MaterializationPlan | transformer / shared | 調査中 | 調査中 | 調査中 | 調査中 | PL02 | pending |
-| MP02 | projection、artifact address、manifest、budget、authority | transformer / runtime / plugin | 調査中 | 調査中 | 調査中 | 調査中 | MP01 / SR02 | pending |
-| CG01 | ClientScopeGraph と activation group | transformer / runtime | 調査中 | 調査中 | 調査中 | 調査中 | MP02 | pending |
-| CR01 | client runtime、ownership、failure、cleanup、zero bootstrap | runtime | 調査中 | 調査中 | 調査中 | 調査中 | CG01 | pending |
-| DA01 | marker、existing DOM attachment、DSD fence、reconciliation | components / runtime / transformer | 調査中 | 調査中 | 調査中 | 調査中 | CR01 | pending |
-| DA02 | event admission、dynamic UI、`render:client`、`activate:*`、`dom:external` | components / runtime / transformer | 調査中 | 調査中 | 調査中 | 調査中 | DA01 | pending |
-| PR01 | reference と subscription lifecycle | runtime / shared | 調査中 | 調査中 | 調査中 | 調査中 | MP02 / CR01 | pending |
-| PR02 | remote operation、wire DTO、authority、receipt、recovery | runtime / plugin / shared | 調査中 | 調査中 | 調査中 | 調査中 | PR01 | pending |
-| LC01 | effect、activation、dispose、late settlement、budgeted cleanup | runtime / components | 調査中 | 調査中 | 調査中 | 調査中 | CR01 / PR01 | pending |
-| API01 | components、runtime、plugin、core の公開 API | components / runtime / plugin / core | 調査中 | 調査中 | 調査中 | 調査中 | DA02 / PR02 / LC01 | pending |
-| MG01 | docs、playground、DocCodeBlock の移行 | docs / playgrounds | 調査中 | 調査中 | 調査中 | 調査中 | API01 | pending |
-| RM01 | 旧 UI hydration、island、fallback の削除 | components / runtime / transformer / plugin / core | 調査中 | 調査中 | 調査中 | 調査中 | MG01 | pending |
+| ID | 設計要件 | 主担当と API base path | SPEC / Test | Implementation / artifact | Dependency | 状態 |
+| --- | --- | --- | --- | --- | --- | --- |
+| VG01 | docs と全 playground の実処理 gate | root、`docs/`、`playgrounds/{e2e,ssr,vanilla,getting-started-check,nuxt}/` | app ごとの workflow test と `vitest.config.ts` | package scripts、CI、Nuxt context repair | なし | pending |
+| ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | pending |
+| SC01 | RegistryId、descriptor、environment/role/protocol binding | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema と validation | ID01 | pending |
+| OC01 | ObservationContract、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | 同 directory の implementation | SC01 / ID01 | pending |
+| EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | pending |
+| EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | pending |
+| EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | pending |
+| SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / test | qualification 前後の contract schema | SC01 / ID01 | pending |
+| SC03 | contract qualification、conflict、dangling、kind diagnostic | transformer: `src/diagnostic/`、`src/contractCompiler/` | 各 directory の SPEC / test | diagnostic path と compiled registry projection | EG02 / SC01 / SC02 | pending |
+| PL01 | function extraction、capture、mutable state、module closure | transformer: `src/moduleClosure/` | 同 directory の SPEC / test | NativeModuleClosure と client closure evidence | EG03 / SC03 | pending |
+| PL02 | root、read、effect、callback、module evaluation の導出 | transformer: `src/executionAnalysis/` | 同 directory の SPEC / test。既存 `transform/SPEC.typ` に superseding ADR | component-transparent semantic analysis | EG03 / SC03 / PL01 | pending |
+| DX01 | `render:client`、`activate:*`、`dom:external` lowering | transformer: `src/executionDirectives/` | 同 directory の SPEC / test。既存 JSX/tree ADR を supersede | reserved prop validation と root/region binding | PL02 | pending |
+| MP01 | materialization requirement、kind、plan schema | shared: `src/materializationContract/` | 同 directory の SPEC / test | snapshot、codec、graph-table、reference、subscription、remote kind | SC01 / OC01 | pending |
+| AR01 | artifact address、exact bytes、integrity schema | shared: `src/artifactContract/` | 同 directory の SPEC / test | canonical address、URL、integrity table | ID01 | pending |
+| PI01 | cost metric と plan identity schema | shared: `src/planIdentity/` | 同 directory の SPEC / test | metric vector、integrity-bound plan identity | AR01 / OC01 | pending |
+| PJ01 | request class、projection definition/instance、manifest、BootAuthority | shared: `src/projectionContract/` | 同 directory の SPEC / test | request partition、ProjectionManifestCore、envelope、budget、trusted boot schema | AR01 / PI01 / MP01 | pending |
+| RC01 | RenderEnvelope、publication、writer contract | shared: `src/renderContract/` | 同 directory の SPEC / test | render/writer closed schema | ID01 / OC01 | pending |
+| RP01 | reference protocol schema | shared: `src/referenceProtocol/` | 同 directory の SPEC / test | grant、lease、release、wire DTO | SC01 / MP01 | pending |
+| SP01 | subscription protocol schema | shared: `src/subscriptionProtocol/` | 同 directory の SPEC / test | continuity、incarnation、pair fence、resync、ack schema | RP01 | pending |
+| OP01 | remote operation protocol schema | shared: `src/remoteProtocol/` | 同 directory の SPEC / test | admission、canonical wire、receipt、recovery schema | RP01 / PJ01 | pending |
+| CN01 | finite candidate generation と合法性 | transformer: `src/candidatePlanner/` | 同 directory の SPEC / test | placement/materialization/adapter candidate DAG と justification | PL02 / DX01 / MP01 / PJ01 / RC01 / RP01 / SP01 / OP01 | pending |
+| MP02 | demand-first MaterializationPlan 生成 | transformer: `src/materializationPlanner/` | 同 directory の SPEC / test | candidate ごとの demand、plan、diagnostic | CN01 / MP01 | pending |
+| CG01 | ClientScopeGraph、root、group、state、prerequisite | transformer: `src/clientScopeGraph/` | 同 directory の SPEC / test | candidate ごとの client graph | CN01 / MP02 / DX01 | pending |
+| SR01 | ExecutionGraph 由来の server renderer 生成 | transformer: `src/serverRenderer/` | 同 directory の SPEC / test。既存 mode SSR ADR を supersede | candidate ごとの generated server artifact | CN01 / RC01 | pending |
+| CP01 | mode 非依存の candidate compiler facade | transformer: `src/compile/` | 同 directory の SPEC / integration test | coordinator から candidate artifact graph までの compile entry | CG01 / SR01 | pending |
+| BR01 | module/contract graph と build tool の bridge | plugin: `src/buildCoordinator/` | 同 directory の SPEC / test | contract discovery、resolver bridge、graph-completeness barrier | CP01 / EG02 / SC03 | pending |
+| RR01 | compiled registry の runtime role validation | runtime: `src/runtimeRegistry/` | 同 directory の SPEC / test | environment/role projection、policy input、conformance | SC01 / SC03 / PJ01 | pending |
+| MT01 | graph-table decode と materialization transaction | runtime: `src/materialization/` | 同 directory の SPEC / test | strict wire validation、codec preflight、budget、allocate/populate/commit | RR01 / MP01 / PJ01 | pending |
+| SE01 | server-side graph-table payload encoder | runtime: `src/ssr/payloadEncoder/` | 同 directory の SPEC / test | canonical carrier、codec enforcement、budget | MT01 / MP02 / RC01 | pending |
+| SR02 | RenderOperation、retry、cancel、header、stream | runtime: `src/ssr/renderOperation/` | 同 directory の SPEC / test | RenderOperation state machine と writer | RC01 / SR01 / SE01 | pending |
+| SR03 | DSD、static DOM、style artifact の server output | components: 既存 `src/ssr/`、`src/defineComponent/` | 既存 SPEC / replacement test と superseding ADR | body replay を使わない renderer/shell contract | SR01 / SR02 | pending |
+| CR01 | client scope instance、owner、lease、generation、transaction | runtime: `src/clientScope/` | 同 directory の SPEC / test | allocation/commit/dispose coordinator | CG01 / PJ01 / MT01 | pending |
+| RF01 | RuntimeFailureChannel、FailureRef、opaque subject、pin budget | runtime: `src/runtimeFailure/` | 同 directory の SPEC / test | failure retention、pin、redaction、notification | CR01 / PJ01 | pending |
+| LC01 | effect、onActivate、onDispose、cleanup DAG、late ledger | runtime: `src/lifecycle/` | 同 directory の SPEC / test | generation-owned lifecycle と bounded cleanup | CR01 / RF01 | pending |
+| CP02 | ActivationCapability と budgeted operation ledger | runtime: `src/activationCapability/`、`src/operationLedger/` | 各 directory の SPEC / test | boot scope、selector、CAS、watermark、terminal slot | CR01 / RF01 / LC01 | pending |
+| CR02 | request-reachable bootstrap と zero-bootstrap | runtime: `src/bootstrap/` | 同 directory の SPEC / test | private loader、BootAuthority、failure injection | CR01 / MT01 / CP02 | pending |
+| DA01 | marker、binding、existing DOM attachment、DSD fence | runtime: `src/dom/markers/`、`src/activation/` | 各 directory の SPEC / test。旧 hydration marker ADR を supersede | marker index、parse/reaction fence、activation state | CR02 / DX01 / SR03 / LC01 | pending |
+| DA02 | reconciliation、event admission、input preservation | runtime: `src/dom/reconciliation/`、既存 `src/events/` | 各 SPEC / test。既存 reconcile/events 契約を更新 | mutable facet reconcile と stable event entry | DA01 / LC01 | pending |
+| DA03 | dynamic list、conditional UI、navigation、late fragment | runtime: `src/dom/slots/` | 同 directory の SPEC / test | slot allocation/commit transaction | DA02 / CR01 | pending |
+| DA04 | custom-element shell、move、adoption、disconnect generation | components: `src/customElementShell/`、既存 `src/defineComponent/` | 新旧 directory の SPEC / test と superseding ADR | DSD-preserving platform lifecycle bridge | DA01 / DA02 / SR03 | pending |
+| RP02 | reference cache、grant、lease、release | runtime: `src/reference/` | 同 directory の SPEC / test | reference runtime state machine | RP01 / MT01 / CR01 / CP02 | pending |
+| SP02 | subscription continuity、pair fence、resync、ack、GC | runtime: `src/subscription/` | 同 directory の SPEC / race test | non-reused incarnation と atomic owner/session fence | SP01 / RP02 / LC01 / CP02 | pending |
+| OP02 | remote admission、wire、authorization、receipt、recovery | runtime: `src/remoteOperation/` | 同 directory の SPEC / race/authority test | private object、wire DTO、verified receipt state machine | OP01 / RP02 / LC01 / CP02 | pending |
+| ST01 | store snapshot API を新 materialization transport へ接続 | store: 既存 `src/defineAtomStoreSnapshot/`、runtime payload/materialization | store SPEC / replacement integration test | `AtomStoreSnapshot.hydrate()` は保持し、`data-dh-store` transport を置換 | MT01 / SE01 | pending |
+| CE01 | client semantic unit と runtime import artifact | transformer: `src/clientArtifactEmitter/` | 同 directory の SPEC / test | ClientScopeGraph から request-reachable module graph を生成 | CG01 / CR02 / DA04 / SP02 / OP02 | pending |
+| AF01 | candidate ごとの final bytes と integrity table | plugin: `src/artifactFinalizer/` | 同 directory の SPEC / deterministic fixture test | SCC collapse、address、exact bytes、manifest core integrity、metrics | BR01 / AR01 / CE01 / SR02 | pending |
+| SL01 | finalization 後の cost selection と plan ID | transformer: `src/finalPlanSelector/` | 同 directory の SPEC / optimality/reproducibility test | semantic subset、cost vector、plan identity、witness | CN01 / AF01 / PI01 / OC01 | pending |
+| PE01 | selected projection の manifest/envelope/bootstrap emission | plugin: `src/projectionEmitter/` | 同 directory の SPEC / artifact test | fixed envelope、plan-bound manifest、zero-bootstrap output | SL01 / PJ01 / CR02 | pending |
+| BO01 | cross-build candidate orchestration | plugin: `src/buildOrchestrator/` | 同 directory の SPEC / integration test | bridge、candidate finalization、selection、projection publication | BR01 / AF01 / SL01 / PE01 | pending |
+| BA01 | bundler-native finalization | plugin: `src/{vite,rollup,webpack,esbuild}/` | 各 adapter SPEC / real build fixture test | generateBundle、processAssets、onEnd integration | BO01 | pending |
+| AS01 | shared contract export surface の最終監査 | shared: `src/index.ts`、`package.json`、`tsdown.config.ts` | contract integration/type test | role-scoped subpath の固定と不要な root exposure の除去 | OC01 / SC02 / MP01 / RC01 / RP01 / SP01 / OP01 / PI01 / PJ01 | pending |
+| AT01 | transformer public compiler API | transformer: `src/index.ts`、`src/types.ts`、`package.json`、`tsdown.config.ts` | public API/type test と旧 transform ADR supersession | final compiler facade。`TransformOptions.mode` と旧 `transform()` を置換 | SL01 / CE01 | pending |
+| AP01 | plugin public API と options | plugin: `src/index.ts`、既存 `src/plugin/`、`package.json`、`tsdown.config.ts` | public API/adapter test と旧 mode ADR supersession | `PluginOptions.mode` と per-file `doTransform` を置換 | BA01 | pending |
+| AR02 | runtime public API の最終監査 | runtime: `src/index.ts`、subpath index、`package.json`、`tsdown.config.ts` | public API/type test | lifecycle、activation、protocol runtime の公開面を固定 | DA03 / SP02 / OP02 | pending |
+| AU01 | components public API と JSX directive type | components: `src/index.ts`、`src/internal.ts`、`package.json`、`tsdown.config.ts` | defineComponent/JSX type replacement test | graph-transparent component と execution directive props | DA04 / DX01 | pending |
+| AO01 | core author-facing facade | core: `src/contracts/`、既存 `src/ssr/`、root/runtime index、`package.json`、`tsdown.config.ts` | contracts/public API/type test | `factId`、`registryId`、`define*`、lifecycle、RenderOperation export。`./hydration` を置換 | AS01 / AT01 / AP01 / AR02 / AU01 | pending |
+| MG01 | docs、全 playground、DocCodeBlock の新経路移行 | docs / playgrounds | workflow/E2E/artifact closure test | entry、examples、reference、DocCodeBlock | AO01 | pending |
+| RM01 | 旧 UI hydration、island、manual API、fallback の削除 | shared/components/runtime/transformer/plugin/core | 各旧 SPEC に superseding ADR と replacement test | old directories、exports、metadata、fixture を削除 | MG01 / ST01 | pending |
+| AX01 | 全 acceptance、artifact、benchmark、stress、reproducibility | repository 全体 | integration/E2E/stress/benchmark | final artifact inspection と evidence | RM01 | pending |
+
+### VG01 の観測条件
+
+- docs は production server bundle を実行し、`GET /` 相当が status 200、DSD、代表 route content を返すことを検証する。
+- e2e は既存の production preview + Chromium workflow 全件を継続する。
+- SSR playground は production server bundle から代表 route を render し、DSD と request-scoped content を検証する。
+- vanilla playground は production preview を Chromium で開き、counter interaction と reactive DOM 更新を検証する。
+- getting-started-check は production server bundle を実行し、DSD と初期 counter content を検証する。
+- Nuxt は production Nitro server を起動し、`GET /` の status 200、DSD、代表 counter interaction を Chromium で検証する。
+- root aggregate command と CI は docs と全 playground の `build`、`fmt:check`、`test` を実行する。
+
+### Matrix 調査根拠
+
+- transformer は現在、単一 source file を CSR/SSR mode で変換し、module graph、typed diagnostic、registry、placement solver を持たない。
+- runtime/components は `renderToString`、component setup replay、numeric hydration marker、manual plan、island scheduler、rerender fallback に結合している。
+- plugin は code と source map だけを返し、SSR/client build を共有する coordinator、projection manifest、content-addressed finalization を持たない。
+- docs と playground の build は成功するが、Nuxt の既存 production artifact は `/` で HTTP 500 になるため、build だけでは workflow correctness を検証できない。
+- `DocCodeBlock` の Shiki dependency は baseline client bundle には入らないが、旧 `hydrate:preserve` と generic hydration plan に依存しているため、A42 の最終証拠にはならない。
+- `@dathra/store` の snapshot schema にある `hydrate()` は UI hydration ではなく、RM01 の削除対象外である。
+- 現行 solver は final bytes を持たないため、candidate generation と finalization 後 selection を CN01 と SL01 に分離した。
+- Phase 5 の finalization は Phase 6〜8 の client runtime semantic unit を実際に bundle してからでなければ cost を確定できないため、設計正本の dependency を根拠に AF01 と SL01 を runtime/activation/protocol 後へ配置した。
 
 ## Acceptance Work
 
 各項目は設計正本の「実装時の検証事項」に一対一で対応する。
 `completed` にするには test、command、artifact、benchmark、inspection result のいずれかによる直接証拠が必要である。
 
-| ID | Acceptance work | 状態 | 直接証拠 |
-| --- | --- | --- | --- |
-| A01 | ModuleCoordinator の incremental build cost と memory usage | pending | 未取得 |
-| A02 | declared candidate universe 内の solver 最適性 | pending | 未取得 |
-| A03 | ObservationContract と RealizationWitness の canonical comparison | pending | 未取得 |
-| A04 | selection-domain class の worst-case metric 再現 | pending | 未取得 |
-| A05 | canonical atom classification と digest の順序独立性、排他性、網羅性 | pending | 未取得 |
-| A06 | plan-independent DeploymentProjectionDefinition ID | pending | 未取得 |
-| A07 | ArtifactAddressId、exact-byte digest、plan ID の非自己参照と再現性 | pending | 未取得 |
-| A08 | 一つの ArtifactAddressId に対する単一 bytes identity | pending | 未取得 |
-| A09 | ProjectionManifestCore、固定長 envelope、cold reachable bytes の計数 | pending | 未取得 |
-| A10 | final bundler closure からの server-only dependency 除外 | pending | 未取得 |
-| A11 | source、manifest、contract conflict diagnostic | pending | 未取得 |
-| A12 | semantic ID と registry ID の namespace 衝突検査 | pending | 未取得 |
-| A13 | module map、import map、integrity、redirect の host profile 適合性 | pending | 未取得 |
-| A14 | compiled registry projection と environment closure | pending | 未取得 |
-| A15 | GraphPathWitness と private grant/reference identity の事前検証 | pending | 未取得 |
-| A16 | codec graph edge slot table の materialization 前検証 | pending | 未取得 |
-| A17 | BootAuthority の事前注入と capability binding | pending | 未取得 |
-| A18 | policy input、value-domain、failure-schema、host-profile、brand の conformance | pending | 未取得 |
-| A19 | RenderOperation の cancel、retry、header、stream race | pending | 未取得 |
-| A20 | FinalHeaderCommit と複数 103 publication の linearization | pending | 未取得 |
-| A21 | subscription incarnation、pair fence、continuity、resync、ack、budget、GC | pending | 未取得 |
-| A22 | allocation token、cleanup deadline、LateSettlementLedger race | pending | 未取得 |
-| A23 | creation operation と allocation/commit identity | pending | 未取得 |
-| A24 | retention、CleanupTaskToken、LateCleanupLedger、hard budget、generation fence | pending | 未取得 |
-| A25 | graph-table budget、codec enforcement、疎配列、symbol validation | pending | 未取得 |
-| A26 | carrier attestation、canonical text、JSON depth、local symbol validation | pending | 未取得 |
-| A27 | DSD parse fence と custom-element reaction ordering | pending | 未取得 |
-| A28 | move、adoption、cross-coordinator migration | pending | 未取得 |
-| A29 | input、autofill、history restoration、form reconciliation | pending | 未取得 |
-| A30 | interaction、load、media、animation event admission frontier | pending | 未取得 |
-| A31 | dynamic UI と late fragment の slot transaction | pending | 未取得 |
-| A32 | activation capability の scope、selector、stale rejection、failure | pending | 未取得 |
-| A33 | integration key、opaque ref、budgeted operation ledger、CAS、watermark | pending | 未取得 |
-| A34 | failure subject、tombstone、snapshot、pin budget、lease | pending | 未取得 |
-| A35 | effect、onActivate、onDispose、owned resource cleanup DAG | pending | 未取得 |
-| A36 | remote outcome の cancellation、expiry、ambiguity、delivery horizon | pending | 未取得 |
-| A37 | remote trust boundary、canonical frame、budget、receipt、recovery | pending | 未取得 |
-| A38 | server receipt から closed wire DTO と response proof を構築する順序 | pending | 未取得 |
-| A39 | `render:client` の prop 契約と reserved prop removal | pending | 未取得 |
-| A40 | `dom:external` の identity、nesting、SSR、lifetime、cleanup | pending | 未取得 |
-| A41 | non-atomic writer の BufferedFinalWrite と unknown terminal | pending | 未取得 |
-| A42 | DocCodeBlock の server-only highlight artifact closure | pending | 未取得 |
-| A43 | client root がない route の zero bootstrap と zero payload | pending | 未取得 |
-| A44 | root から失敗 dependency までの diagnostic path | pending | 未取得 |
+| ID | Acceptance work | Owner row(s) | Planned evidence path | 状態 | 直接証拠 |
+| --- | --- | --- | --- | --- | --- |
+| A01 | ModuleCoordinator の incremental build cost と memory usage | EG02 | `packages/transformer/src/moduleCoordinator/benchmark.test.ts` | pending | 未取得 |
+| A02 | declared candidate universe 内の solver 最適性 | CN01 / AF01 / SL01 | `packages/transformer/src/finalPlanSelector/implementation.test.ts` | pending | 未取得 |
+| A03 | ObservationContract と RealizationWitness の canonical comparison | OC01 | `packages/shared/src/observationContract/implementation.test.ts` | pending | 未取得 |
+| A04 | selection-domain class の worst-case metric 再現 | PJ01 / AF01 / SL01 | `packages/transformer/src/finalPlanSelector/implementation.test.ts` | pending | 未取得 |
+| A05 | canonical atom classification と digest の順序独立性、排他性、網羅性 | PJ01 | `packages/shared/src/projectionContract/implementation.test.ts` | pending | 未取得 |
+| A06 | plan-independent DeploymentProjectionDefinition ID | PJ01 | `packages/shared/src/projectionContract/implementation.test.ts` | pending | 未取得 |
+| A07 | ArtifactAddressId、exact-byte digest、plan ID の非自己参照と再現性 | AR01 / PI01 / AF01 / SL01 | `packages/plugin/src/artifactFinalizer/reproducibility.test.ts` | pending | 未取得 |
+| A08 | 一つの ArtifactAddressId に対する単一 bytes identity | AR01 / AF01 | `packages/plugin/src/artifactFinalizer/implementation.test.ts` | pending | 未取得 |
+| A09 | ProjectionManifestCore、固定長 envelope、cold reachable bytes の計数 | PJ01 / AF01 / PE01 | `packages/plugin/src/projectionEmitter/implementation.test.ts` | pending | 未取得 |
+| A10 | final bundler closure からの server-only dependency 除外 | CE01 / AF01 / BA01 | `packages/plugin/src/artifactFinalizer/artifactClosure.test.ts` | pending | 未取得 |
+| A11 | source、manifest、contract conflict diagnostic | SC03 / PE01 | `packages/transformer/src/contractCompiler/implementation.test.ts` | pending | 未取得 |
+| A12 | semantic ID と registry ID の namespace 衝突検査 | SC01 / SC02 / SC03 | `packages/transformer/src/contractCompiler/implementation.test.ts` | pending | 未取得 |
+| A13 | module map、import map、integrity、redirect の host profile 適合性 | RR01 / CR02 / PE01 / BA01 | `packages/plugin/src/projectionEmitter/implementation.test.ts` | pending | 未取得 |
+| A14 | compiled registry projection と environment closure | SC03 / RR01 / CE01 | `packages/runtime/src/runtimeRegistry/implementation.test.ts` | pending | 未取得 |
+| A15 | GraphPathWitness と private grant/reference identity の事前検証 | SC03 / MT01 / RP02 | `packages/runtime/src/reference/implementation.test.ts` | pending | 未取得 |
+| A16 | codec graph edge slot table の materialization 前検証 | MT01 | `packages/runtime/src/materialization/implementation.test.ts` | pending | 未取得 |
+| A17 | BootAuthority の事前注入と capability binding | PJ01 / CR02 | `packages/runtime/src/bootstrap/implementation.test.ts` | pending | 未取得 |
+| A18 | policy input、value-domain、failure-schema、host-profile、brand の conformance | SC01 / RR01 | `packages/runtime/src/runtimeRegistry/implementation.test.ts` | pending | 未取得 |
+| A19 | RenderOperation の cancel、retry、header、stream race | SR02 | `packages/runtime/src/ssr/renderOperation/implementation.test.ts` | pending | 未取得 |
+| A20 | FinalHeaderCommit と複数 103 publication の linearization | SR02 | `packages/runtime/src/ssr/renderOperation/implementation.test.ts` | pending | 未取得 |
+| A21 | subscription incarnation、pair fence、continuity、resync、ack、budget、GC | SP01 / SP02 | `packages/runtime/src/subscription/implementation.test.ts` | pending | 未取得 |
+| A22 | allocation token、cleanup deadline、LateSettlementLedger race | LC01 / CR01 | `packages/runtime/src/lifecycle/implementation.test.ts` | pending | 未取得 |
+| A23 | creation operation と allocation/commit identity | CR01 | `packages/runtime/src/clientScope/implementation.test.ts` | pending | 未取得 |
+| A24 | retention、CleanupTaskToken、LateCleanupLedger、hard budget、generation fence | LC01 / CP02 | `packages/runtime/src/lifecycle/implementation.test.ts` | pending | 未取得 |
+| A25 | graph-table budget、codec enforcement、疎配列、symbol validation | MT01 | `packages/runtime/src/materialization/implementation.test.ts` | pending | 未取得 |
+| A26 | carrier attestation、canonical text、JSON depth、local symbol validation | MT01 / SE01 / CR02 | `packages/runtime/src/materialization/implementation.test.ts` | pending | 未取得 |
+| A27 | DSD parse fence と custom-element reaction ordering | DA01 / DA04 | `packages/runtime/src/activation/implementation.test.ts` | pending | 未取得 |
+| A28 | move、adoption、cross-coordinator migration | DA04 / CR01 | `packages/components/src/customElementShell/implementation.test.ts` | pending | 未取得 |
+| A29 | input、autofill、history restoration、form reconciliation | DA02 | `packages/runtime/src/dom/reconciliation/implementation.test.ts` | pending | 未取得 |
+| A30 | interaction、load、media、animation event admission frontier | DA02 | `packages/runtime/src/events/implementation.test.ts` | pending | 未取得 |
+| A31 | dynamic UI と late fragment の slot transaction | DA03 | `packages/runtime/src/dom/slots/implementation.test.ts` | pending | 未取得 |
+| A32 | activation capability の scope、selector、stale rejection、failure | CP02 / DA01 | `packages/runtime/src/activationCapability/implementation.test.ts` | pending | 未取得 |
+| A33 | integration key、opaque ref、budgeted operation ledger、CAS、watermark | PJ01 / PE01 / CP02 / DA03 | `packages/runtime/src/operationLedger/implementation.test.ts` と projection integration test | pending | 未取得 |
+| A34 | failure subject、tombstone、snapshot、pin budget、lease | RF01 | `packages/runtime/src/runtimeFailure/implementation.test.ts` | pending | 未取得 |
+| A35 | effect、onActivate、onDispose、owned resource cleanup DAG | LC01 | `packages/runtime/src/lifecycle/implementation.test.ts` | pending | 未取得 |
+| A36 | remote outcome の cancellation、expiry、ambiguity、delivery horizon | OP01 / OP02 | `packages/runtime/src/remoteOperation/implementation.test.ts` | pending | 未取得 |
+| A37 | remote trust boundary、canonical frame、budget、receipt、recovery | OP01 / OP02 / RR01 | `packages/runtime/src/remoteOperation/implementation.test.ts` | pending | 未取得 |
+| A38 | server receipt から closed wire DTO と response proof を構築する順序 | OP01 / OP02 | `packages/runtime/src/remoteOperation/implementation.test.ts` | pending | 未取得 |
+| A39 | `render:client` の prop 契約と reserved prop removal | DX01 / AU01 | `packages/transformer/src/executionDirectives/implementation.test.ts` | pending | 未取得 |
+| A40 | `dom:external` の identity、nesting、SSR、lifetime、cleanup | DX01 / DA01 / DA04 / LC01 | `playgrounds/e2e/src/routes/external-dom-ownership.test.ts` と directive unit test | pending | 未取得 |
+| A41 | non-atomic writer の BufferedFinalWrite と unknown terminal | SR02 | `packages/runtime/src/ssr/renderOperation/implementation.test.ts` | pending | 未取得 |
+| A42 | DocCodeBlock の server-only highlight artifact closure | MG01 / CE01 / AF01 | `docs/src/components/DocCodeBlock/DocCodeBlock.artifact.test.ts` | pending | 未取得 |
+| A43 | client root がない route の zero bootstrap と zero payload | CG01 / SE01 / CR02 / PE01 | `packages/plugin/src/projectionEmitter/zeroBootstrap.test.ts` と emitted route artifact inspection | pending | 未取得 |
+| A44 | root から失敗 dependency までの diagnostic path | SC03 / PL02 / CN01 | `packages/transformer/src/diagnostic/implementation.test.ts` | pending | 未取得 |
 
 ## Slice Log
 
@@ -158,22 +220,27 @@ plugin build の mixed exports と Rollup 型定義、config lint の TypeScript
 | --- | --- | --- | --- | --- | --- |
 | PLAN-00 | completed | 実装 branch、正本、進捗台帳を確立する | clean tree と local/remote tracking を確認 | goal 文書の事前独立レビューは `ACCEPT` | `8a0eedd` / push 済み |
 | BASELINE-00 | completed | 実装前の既存挙動と gate を固定する | Baseline 表の19 command | production change がないため独立実装レビュー対象外 | この記録を次の文書 commit に含める |
+| MATRIX-01 | completed | package/API/SPEC/test/implementation と acceptance owner を確定する | 59 row、未定義 dependency 0、cycle 0、AX01 閉包外 0 | 3回目の独立レビュー `ACCEPT` | この記録を matrix commit に含める |
+| VG01 | in-progress | docs と全 playground に実処理の build/fmt/test gate を設ける | app production workflow と root/CI aggregate | 実装後に新しい reviewer へ依頼する | 未 commit |
 
 ## Review Log
 
 | 対象 | Reviewer | 結果 | 採否と対応 |
 | --- | --- | --- | --- |
 | implementation goal | goal 作成時の独立 reviewer | ACCEPT | 指摘を収束済み。実装指示の正本として採用した |
+| Implementation Matrix 初回 | Hypatia (`019f51dd-7ae2-7560-b20e-245a5e4f2d86`) | CHANGES REQUIRED | candidate/final selection 分割、runtime materialization/registry/capability、store migration、dependency inversion、acceptance owner、package 別 public API、VG01 観測条件をすべて採用した |
+| Implementation Matrix 2回目 | Fermat (`019f51eb-7486-78c1-8511-857b82d585ce`) | CHANGES REQUIRED | ST01 の最終依存、producer-owned internal export、A13/A26/A33/A40/A43 の owner と evidence、再開情報を修正した |
+| Implementation Matrix 3回目 | Peirce (`019f51f5-61ab-79b3-9b70-028cffe3b506`) | ACCEPT | 実質的な不足なし。59 row と A01〜A44 の実装・検証計画を確定した |
 
 ## Commit / Push Log
 
 | Slice | Commit | Remote | 同期確認 |
 | --- | --- | --- | --- |
 | PLAN-00 | `8a0eedd` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
+| BASELINE-00 | `9cd4266` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
 
 ## 未完了事項
 
-- 実コードと package ごとの正本を調査し、implementation matrix の `調査中` を具体的な path へ置き換える。
 - verification-gate slice を独立レビュー、commit、push まで完了する。
 - Phase 1 から Phase 10 を vertical slice 単位で実装する。
 - push 後の全体監査と exact remote OID の最終監査を完了する。
