@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: SC01 の implementation commit と push を完了し、exact OID を記録する。
+- 次の作業: OC01 の ObservationContract、composition、RealizationWitness、canonical comparison を SPEC と test から実装する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -184,7 +184,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - 現行 solver は final bytes を持たないため、candidate generation と finalization 後 selection を CN01 と SL01 に分離した。
 - Phase 5 の finalization は Phase 6〜8 の client runtime semantic unit を実際に bundle してからでなければ cost を確定できないため、設計正本の dependency を根拠に AF01 と SL01 を runtime/activation/protocol 後へ配置した。
 
-## 現在の Slice
+## 直前に完了した Slice
 
 ### SC01 execution registry contract
 
@@ -220,6 +220,8 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - ESM/CJS build artifact に `node:crypto`、`createHash`、`Buffer`、`Array.prototype.toSorted` が含まれないことを検索し、ESM root から主要4 API が function として公開されることを実行確認した。
 - Nash の nested union と empty property key、Lagrange の paired protocol seed と host-profile closure の指摘を test-first で修正した。
 - 3回目の独立実装レビューは `ACCEPT` であり、SC03・AF01・RR01との producer/consumer integration は計画どおり後続 slice に残る。
+- implementation commit `da05b191945df608e09a61d87538a7bf69ceca82` を push した。
+- push 後に local と tracking branch が `da05b191945df608e09a61d87538a7bf69ceca82` で一致した。
 
 ## Acceptance Work
 
@@ -283,7 +285,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | VG01 | completed | docs と全 playground に実処理の build/fmt/test gate を設ける | 全 app production workflow、root aggregate、CI format/build/test | 5回目の独立レビュー `ACCEPT` | `8fe6c60` / push 済み |
 | ID01 | completed | canonical preimage、digest、qualified ID の共通 primitive | shared test/typecheck/lint/build と artifact inspection | 2回目の独立レビュー `ACCEPT` | `3816c34` / push 済み |
 | SC01-DESIGN | completed | flat projection と artifact 順序の矛盾を解消する | design type/prose、matrix、生成 DAG の整合確認 | proposal review と final actual diff review は `ACCEPT` | `17591e5` / push 済み |
-| SC01 | in-progress | closed registry schema、catalog、fixed-point projection | shared 6 files・142 tests、typecheck、lint、fmt、build、artifact inspection | 3回目の独立実装レビューは `ACCEPT` | implementation commit 待ち |
+| SC01 | completed | closed registry schema、catalog、fixed-point projection | shared 6 files・142 tests、typecheck、lint、fmt、build、artifact inspection | 3回目の独立実装レビューは `ACCEPT` | `da05b19` / push 済み |
 
 ## Review Log
 
@@ -330,6 +332,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | VG01 | `8fe6c60` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `8fe6c60cd2e4cab82b9785525a76e5f485148e95` で一致した |
 | ID01 | `3816c34` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `3816c342ce203cbf5ddf5b91c67479c03e72a163` で一致した |
 | SC01-DESIGN | `17591e5` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `17591e5d8d0d4f54501d12753353bf8887a70f6e` で一致した |
+| SC01 | `da05b19` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `da05b191945df608e09a61d87538a7bf69ceca82` で一致した |
 
 ## 未完了事項
 
