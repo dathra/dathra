@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: SC01 の RegistryId、closed descriptor、25 role tuple、symbolic/final catalog schema、pair commitment、exact seed、fixed-point derivation を SPEC と test から実装する。SC03 は symbolic universe、AF01 は candidate catalog/projection/core、PE01 は selected emission を担当する。
+- 次の作業: SC01 の implementation commit と push を完了し、exact OID を記録する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -210,6 +210,17 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - 2回目の独立レビューは `ACCEPT` であり、実装 commit `3816c342ce203cbf5ddf5b91c67479c03e72a163` を push した。
 - push 後に local と tracking branch が同じ exact OID であることを確認した。
 
+### SC01 execution registry contract
+
+- `SPEC.typ` と `implementation.test.ts` を先に追加し、`implementation.ts` 不在による targeted test failure を確認してから production implementation と root export を追加した。
+- 10 descriptor kind、25 legal role tuple と295 illegal tuple、local/qualified identity、closed nested union、symbolic/final/environment/protocol catalog、pair commitment、exact seed、dependency cycle、remote protocol、owner-grouped fixed point を直接検証した。
+- `pnpm --filter @dathra/shared test` は6 files、142 tests が成功し、`executionRegistry/implementation.ts` は statement 89.57%、branch 77.71%、function 96.4%、line 89.26% であった。
+- `pnpm --filter @dathra/shared typecheck`、`lint`、`fmt:check`、`build` はすべて成功し、通常 lint は warning と error が0件であった。
+- `pnpm --filter @dathra/shared lint:type-aware` は成功し、SC01 の warning と error は0件であった。既存の `rlse.config.ts` に warning が1件残る。
+- ESM/CJS build artifact に `node:crypto`、`createHash`、`Buffer`、`Array.prototype.toSorted` が含まれないことを検索し、ESM root から主要4 API が function として公開されることを実行確認した。
+- Nash の nested union と empty property key、Lagrange の paired protocol seed と host-profile closure の指摘を test-first で修正した。
+- 3回目の独立実装レビューは `ACCEPT` であり、SC03・AF01・RR01との producer/consumer integration は計画どおり後続 slice に残る。
+
 ## Acceptance Work
 
 各項目は設計正本の「実装時の検証事項」に一対一で対応する。
@@ -272,7 +283,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | VG01 | completed | docs と全 playground に実処理の build/fmt/test gate を設ける | 全 app production workflow、root aggregate、CI format/build/test | 5回目の独立レビュー `ACCEPT` | `8fe6c60` / push 済み |
 | ID01 | completed | canonical preimage、digest、qualified ID の共通 primitive | shared test/typecheck/lint/build と artifact inspection | 2回目の独立レビュー `ACCEPT` | `3816c34` / push 済み |
 | SC01-DESIGN | completed | flat projection と artifact 順序の矛盾を解消する | design type/prose、matrix、生成 DAG の整合確認 | proposal review と final actual diff review は `ACCEPT` | `17591e5` / push 済み |
-| SC01 | in-progress | closed registry schema、catalog、fixed-point projection | shared test/typecheck/lint/build と exhaustive schema/derivation coverage | design review は `ACCEPT`。実装後に新しい reviewer へ依頼する | 未 commit |
+| SC01 | in-progress | closed registry schema、catalog、fixed-point projection | shared 6 files・142 tests、typecheck、lint、fmt、build、artifact inspection | 3回目の独立実装レビューは `ACCEPT` | implementation commit 待ち |
 
 ## Review Log
 
@@ -305,6 +316,9 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | SC01 actual diff 型閉包 | Gibbs (`019f52e1-d492-7e80-9098-22b92afe19d8`) | CHANGES REQUIRED | role locationを25個の完全なliteral tupleへ展開し、残っていたdigest/qualified IDのbrand漏れと再開スコープを修正した |
 | SC01 actual diff 最終精査 | Franklin (`019f52ee-aa86-7283-b5c0-2bc9abffaa23`) | CHANGES REQUIRED | `RealizationWitnessPreimage.targetHostProfileId`をqualified IDへ変更し、selection domainとenvironment catalogへの所属を必須にした。8個のtargeted probeと14個のTypeScript block結合はstrict diagnostics 0だった |
 | SC01 actual diff 最終 | Linnaeus (`019f52f7-4b4a-7500-bf0e-152e620e1a10`) | ACCEPT | 前回指摘の解消、14個のTypeScript block、targeted probe、digest DAG、責務分担、進捗台帳、actual diff全文にblocking findingがないことを確認した |
+| SC01 implementation 初回 | Nash (`019f5313-fd73-7383-8f0b-d9d56ed70052`) | CHANGES REQUIRED | `array-each` と `single-attempt` の extra field を拒否し、codec property path の empty key と empty root path を受理する回帰 test を追加した |
+| SC01 implementation 2回目 | Lagrange (`019f531e-3ce5-72c0-be70-4c2515933598`) | CHANGES REQUIRED | selected protocol の browser/server seed 対応と、remote transport/endpoint から両 environment の host-profile validator への exact dependency closure を追加した |
+| SC01 implementation 3回目 | James (`019f5328-0697-7c91-b1d0-2fe21ebd654e`) | ACCEPT | 既往4 finding の解消と current diff の closed schema、catalog、protocol、fixed-point、snapshot、public API にblocking findingがないことを確認した。後続 integration はSC03・AF01・RR01が担当する |
 
 ## Commit / Push Log
 
