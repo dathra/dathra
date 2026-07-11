@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: ID01 の canonical preimage、digest、qualified ID を SPEC と test から実装する。
+- 次の作業: SC01 の RegistryId、closed descriptor、environment/role/protocol binding を SPEC と test から実装する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -27,8 +27,8 @@
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
-| P01 | ExecutionGraph foundation | in-progress | ID01 canonical identity から開始する |
-| P02 | semantic contract と registry | pending | 未着手 |
+| P01 | ExecutionGraph foundation | in-progress | ID01 canonical identity は completed。OC01 と module/ExecutionGraph slice は未着手 |
+| P02 | semantic contract と registry | in-progress | OC01 の前提になる SC01 registry contract を先行する |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
 | P05 | materialization と projection | pending | 未着手 |
@@ -82,8 +82,8 @@ package 間で使う internal export、package export map、build entry は、�
 | ID | 設計要件 | 主担当と API base path | SPEC / Test | Implementation / artifact | Dependency | 状態 |
 | --- | --- | --- | --- | --- | --- | --- |
 | VG01 | docs と全 playground の実処理 gate | root、`docs/`、`playgrounds/{e2e,ssr,vanilla,getting-started-check,nuxt}/` | app ごとの workflow test と `vitest.config.ts` | package scripts、CI、Nuxt context repair | なし | completed |
-| ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | in-progress |
-| SC01 | RegistryId、descriptor、environment/role/protocol binding | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema と validation | ID01 | pending |
+| ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | completed |
+| SC01 | RegistryId、descriptor、environment/role/protocol binding | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema と validation | ID01 | in-progress |
 | OC01 | ObservationContract、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | 同 directory の implementation | SC01 / ID01 | pending |
 | EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | pending |
 | EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | pending |
@@ -186,17 +186,20 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 
 ## 現在の Slice
 
+### SC01 execution registry contract
+
+- **設計要件**：source-local `RegistryId` と namespace-qualified identity を分離し、10種類の registry descriptor、許可された environment/role、同一環境 dependency、remote request-response protocol binding を closed discriminated schema として表す。
+- **変更範囲**：`packages/shared/src/executionRegistry/` に `AGENTS.md`、`SPEC.typ`、`implementation.test.ts`、`implementation.ts` を追加し、`packages/shared/src/index.ts` から後続 compiler/runtime slice が使う contract と validator を公開する。
+- **SPEC と ADR**：`dathra.registry/1` descriptor、`dathra.registry-role/*/1` interface schema、`dathra.registry-protocol/1`、`dathra.registry-environment-projection/1` の closed schema と role matrix を新規 ADR で固定する。既存 Accepted ADR の変更はない。
+- **先行 test**：10 descriptor kind、local/qualified ID、role requirement、implementation binding、same-environment dependency、remote protocol binding、environment projection の成功系を追加する。unknown/extra/accessor field、kind/reference mismatch、illegal environment/role、interface schema mismatch、cross-environment import、non-remote protocol、delivery/server deployment mismatch、重複 binding を失敗系として追加する。
+- **影響範囲**：shared の pure contract/validation API と export surface だけを変更する。SC03 が source contract を qualification し、RR01 が runtime projection を検証するまで compiler/runtime の既存挙動は変更しない。
+- **依存順の理由**：SC01 は Phase 2 の contract だが、Phase 1 の OC01 が registry identity を参照する。独立レビュー済み matrix の依存順に従い、ID01 の直後、OC01 より前に実装する。
+- **edge case**：descriptor と binding は getter を実行せず closed data record として snapshot する。`build` は runtime role location に含めず、same-environment import の両 environment を一致させる。cross-environment edge は remote-operation の protocol binding だけに限定し、delivery environment と deployment identity の整合を検証する。
+- **完了証拠**：shared の test、typecheck、lint、build、root export、全 role matrix と closed-schema failure の coverage、独立レビュー、commit、push を必要とする。
+
+## 完了した Slice の証拠
+
 ### ID01 canonical identity
-
-- **設計要件**：同じ canonical preimage から server と browser で同じ `sha-256:<padding なし base64url>` digest を生成し、namespace、semantic kind、local ID を衝突なく束縛した qualified ID を生成する。
-- **変更範囲**：`packages/shared/src/canonicalIdentity/` に `AGENTS.md`、`SPEC.typ`、`implementation.test.ts`、`implementation.ts` を追加し、`packages/shared/src/index.ts` から公開する。
-- **SPEC と ADR**：RFC 8785 JCS の対象を side-effect-free な closed JSON value に制限する新規仕様と ADR を追加する。既存 Accepted ADR の変更はない。
-- **先行 test**：object key order、nested value、UTF-8、known SHA-256 vector、canonical digest guard、qualified ID の domain separation を成功系として追加する。non-finite number、negative zero、lone surrogate、undefined、BigInt、symbol、function、accessor、non-enumerable/symbol property、custom prototype、sparse/extra-property array、cycle、noncanonical digest を失敗系として追加する。
-- **影響範囲**：shared の pure API と export surface だけを変更する。compiler、runtime、SSR、browser、plugin の既存挙動は変更せず、後続 slice が同じ primitive を利用する。
-- **edge case**：digest 開始後の caller mutation が結果を変えないよう bytes を同期 copy する。getter を実行せず拒否し、shared reference は value として許可するが ancestor cycle は拒否する。qualified ID は namespace、kind、local ID を canonical preimage の field として束縛する。
-- **完了証拠**：shared の test、typecheck、lint、build、root export test、browser-compatible build artifact inspection、独立レビュー、commit、push を必要とする。
-
-### ID01 の検証証拠
 
 - `implementation.test.ts` を先に追加し、実装不在による失敗を確認してから production implementation を追加した。
 - `pnpm --filter @dathra/shared test` は5 files、115 tests が成功し、`canonicalIdentity/implementation.ts` は statement 97.41%、branch 96.39%、function 100%、line 97.36% であった。
@@ -204,7 +207,8 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - `pnpm --filter @dathra/shared lint:type-aware` は ID01 の error と warning が0件で成功した。既存の `rlse.config.ts` に warning が1件残る。
 - ESM/CJS/DTS build artifact に Node.js 固有の crypto API、`Buffer`、`createHash` が含まれないことを検索で確認した。
 - build 後の ESM API で `abc` の SHA-256 vector が `sha-256:ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0` になることを実行して確認した。
-- `git diff --check` は成功した。
+- 2回目の独立レビューは `ACCEPT` であり、実装 commit `3816c342ce203cbf5ddf5b91c67479c03e72a163` を push した。
+- push 後に local と tracking branch が同じ exact OID であることを確認した。
 
 ## Acceptance Work
 
@@ -266,7 +270,8 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | BASELINE-00 | completed | 実装前の既存挙動と gate を固定する | Baseline 表の19 command | production change がないため独立実装レビュー対象外 | この記録を次の文書 commit に含める |
 | MATRIX-01 | completed | package/API/SPEC/test/implementation と acceptance owner を確定する | 59 row、未定義 dependency 0、cycle 0、AX01 閉包外 0 | 3回目の独立レビュー `ACCEPT` | この記録を matrix commit に含める |
 | VG01 | completed | docs と全 playground に実処理の build/fmt/test gate を設ける | 全 app production workflow、root aggregate、CI format/build/test | 5回目の独立レビュー `ACCEPT` | `8fe6c60` / push 済み |
-| ID01 | in-progress | canonical preimage、digest、qualified ID の共通 primitive | shared test/typecheck/lint/build と artifact inspection | 2回目の独立レビュー `ACCEPT` | 未 commit |
+| ID01 | completed | canonical preimage、digest、qualified ID の共通 primitive | shared test/typecheck/lint/build と artifact inspection | 2回目の独立レビュー `ACCEPT` | `3816c34` / push 済み |
+| SC01 | in-progress | closed registry schema と environment/role/protocol binding | shared test/typecheck/lint/build と role matrix coverage | 実装後に新しい reviewer へ依頼する | 未 commit |
 
 ## Review Log
 
@@ -292,6 +297,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | BASELINE-00 | `9cd4266` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
 | MATRIX-01 | `549e312` | `origin/feature/declarative-ui-execution-partitioning` | push 後に tracking branch と一致した |
 | VG01 | `8fe6c60` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `8fe6c60cd2e4cab82b9785525a76e5f485148e95` で一致した |
+| ID01 | `3816c34` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `3816c342ce203cbf5ddf5b91c67479c03e72a163` で一致した |
 
 ## 未完了事項
 
