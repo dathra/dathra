@@ -200,7 +200,7 @@ interface ObservationCompositionPreimage {
 interface RealizationWitnessPreimage {
   readonly schema: "dathra.realization-witness/1";
   readonly observationContractId: string;
-  readonly targetHostProfileId: string;
+  readonly targetHostProfileId: QualifiedRegistryId<"host-profile">;
   readonly encoding: "utf-8";
   readonly contentTypeId: string;
   readonly documentMode: "no-quirks" | "limited-quirks" | "quirks";
@@ -228,6 +228,7 @@ event coalescing は、coalescing policy が入力 event identity から出力 o
 composition は member contract を shared subject ごとに join する。
 同じ subject の identity、lifetime、authority、exposure、terminal が一致せず、exclusive owner、commutativity proof、total order のいずれでも解決できない場合は planning 前の compile diagnostic とする。
 RealizationWitness は実現した constraint を一つずつ参照し、未証明 constraint、別 contract の witness、canonical parser profile にない operation を受理しない。
+targetHostProfileId は selection domain の hostProfileIds と対象 environment catalog の qualified host-profile membership の両方に存在しなければならない。
 
 ### server-first の合法性
 
@@ -263,17 +264,17 @@ interface RequestJointVariantDescriptor {
   readonly keyAliasPartitionId: string;
   readonly generationAssignmentId: string;
   readonly cardinalityBoundId: string;
-  readonly resolvedInstanceFamilyDigest: string;
+  readonly resolvedInstanceFamilyDigest: Sha256Digest;
 }
 
 interface DeploymentProjectionDefinitionPreimage {
   readonly schema: "dathra.projection-definition/1";
-  readonly graphSnapshotDigest: string;
-  readonly deploymentIdentityDigest: string;
+  readonly graphSnapshotDigest: Sha256Digest;
+  readonly deploymentIdentityDigest: Sha256Digest;
   readonly rootObligationIds: readonly string[];
   readonly outputProtocolIds: readonly string[];
-  readonly hostProfileIds: readonly string[];
-  readonly requestInputDomainContractDigest: string;
+  readonly hostProfileIds: readonly QualifiedRegistryId<"host-profile">[];
+  readonly requestInputDomainContractDigest: Sha256Digest;
   readonly authorityScopeId: string;
   readonly exposureDomainId: string;
 }
@@ -286,9 +287,9 @@ interface DeploymentProjectionDefinition {
 interface RequestEnvelopeClassDescriptor {
   readonly schema: "dathra.request-class/1";
   readonly id: string;
-  readonly predicateRegionDigest: string;
+  readonly predicateRegionDigest: Sha256Digest;
   readonly projectionIds: readonly string[];
-  readonly inputDomainContractDigest: string;
+  readonly inputDomainContractDigest: Sha256Digest;
   readonly jointVariants: readonly RequestJointVariantDescriptor[];
 }
 
@@ -344,21 +345,21 @@ interface RequestClassificationRecord {
 
 interface RequestEnvelopePartitionContract {
   readonly schema: "dathra.request-partition/1";
-  readonly inputUniverseDigest: string;
+  readonly inputUniverseDigest: Sha256Digest;
   readonly fieldPartitions: readonly RequestInputFieldPartitionDescriptor[];
   readonly jointInputAtoms: readonly RequestJointInputAtomDescriptor[];
   readonly classification: readonly RequestClassificationRecord[];
-  readonly classifierDigest: string;
+  readonly classifierDigest: Sha256Digest;
   readonly classes: readonly RequestEnvelopeClassDescriptor[];
 }
 
 interface PartitioningSelectionDomainDescriptor {
   readonly schema: "dathra.selection-domain/1";
-  readonly graphSnapshotDigest: string;
-  readonly bundlerProfileDigest: string;
-  readonly deploymentIdentityDigest: string;
+  readonly graphSnapshotDigest: Sha256Digest;
+  readonly bundlerProfileDigest: Sha256Digest;
+  readonly deploymentIdentityDigest: Sha256Digest;
   readonly artifactBaseUrl: string;
-  readonly hostProfileIds: readonly string[];
+  readonly hostProfileIds: readonly QualifiedRegistryId<"host-profile">[];
   readonly projectionDefinitions: readonly DeploymentProjectionDefinition[];
   readonly requestPartition: RequestEnvelopePartitionContract;
 }
@@ -456,12 +457,12 @@ type ArtifactEntryRole =
 
 interface DeploymentIdentityPreimage {
   readonly schema: "dathra.deployment-identity/1";
-  readonly applicationNamespaceDigest: string;
+  readonly applicationNamespaceDigest: Sha256Digest;
   readonly releaseIdentity: string;
   readonly targetEnvironmentId: string;
   readonly canonicalPublicOrigin: string;
-  readonly contractNamespaceGraphDigest: string;
-  readonly hostProfileSetDigest: string;
+  readonly contractNamespaceGraphDigest: Sha256Digest;
+  readonly hostProfileSetDigest: Sha256Digest;
 }
 
 interface ArtifactFinalizationTemplate {
@@ -505,9 +506,9 @@ interface ArtifactExportBinding {
 
 interface ArtifactAddressPreimage {
   readonly schema: "dathra.artifact-address/1";
-  readonly deploymentIdentityDigest: string;
+  readonly deploymentIdentityDigest: Sha256Digest;
   readonly artifactBaseUrl: string;
-  readonly bundlerProfileDigest: string;
+  readonly bundlerProfileDigest: Sha256Digest;
   readonly kind: "javascript" | "wasm" | "data";
   readonly finalizationTemplate: ArtifactFinalizationTemplate;
   readonly entryBindings: readonly ArtifactEntryBinding[];
@@ -518,7 +519,7 @@ interface ArtifactAddressPreimage {
 
 interface ArtifactIntegrityEntry {
   readonly artifactAddressId: string;
-  readonly exactDigest: string;
+  readonly exactDigest: Sha256Digest;
   readonly byteLength: number;
 }
 
@@ -531,7 +532,7 @@ interface ManifestCoreIntegrityEntry {
   readonly projectionDefinitionId: string;
   readonly requestClassId: string;
   readonly requestJointVariantId: string;
-  readonly coreDigest: string;
+  readonly coreDigest: Sha256Digest;
   readonly coreByteLength: number;
 }
 
@@ -549,9 +550,9 @@ interface PartitioningMetricVector {
 
 interface PlanIdentityPreimage {
   readonly schema: "dathra.plan-identity/1";
-  readonly candidateGraphDigest: string;
-  readonly selectionDomainDescriptorDigest: string;
-  readonly bundlerProfileDigest: string;
+  readonly candidateGraphDigest: Sha256Digest;
+  readonly selectionDomainDescriptorDigest: Sha256Digest;
+  readonly bundlerProfileDigest: Sha256Digest;
   readonly artifactIntegrityTable: ArtifactIntegrityTable;
   readonly manifestCoreIntegrityTable: ManifestCoreIntegrityTable;
   readonly metricVector: PartitioningMetricVector;
@@ -1004,7 +1005,7 @@ runtime は wrapper 作成ごとに coordinator ID、client-local owner generati
 sequence は leading zero のない unsigned decimal string とし、resume、reconnect wrapper replacement、resync のたびに進め、同じ owner generation 内でも再利用しない。
 local SubscriptionSession identity は session incarnation ID、transport continuity ID、client-local owner generation、use schema、share domain、authorization generation、audience evaluation、capability binding の canonical preimage digest とし、SSR generation を browser owner として再利用しない。
 runtime は owner generation、session incarnation、root binding、use schema を SubscriptionRuntimeRequestContext として wrapper 側だけに保持する。
-open 前に locator、compiled registry、grant、share domain を検証し、session budget を provisional に予約して private SubscriptionAdmissionToken を source-facing SubscriptionTransportOpenRequest へ渡す。
+open 前に locator、authenticated local registry catalog、grant、share domain を検証し、session budget を provisional に予約して private SubscriptionAdmissionToken を source-facing SubscriptionTransportOpenRequest へ渡す。
 source-facing open、resume、resync request は owner generation、root binding schema、use schema、local session identity を含めない。
 source は SubscriptionTransportOpenResult として initial consistency point、transport session、namespace attestation だけを返し、runtime identity、budget claim ID、terminal deadline、grant claim を生成しない。
 runtime は返却値を検証した後に SubscriptionSession wrapper を作り、identity、budget claim、deadline、grant claim、transport forwarding を owner generation の cleanup ledger に同時登録する。
@@ -1033,7 +1034,7 @@ resync は旧 session を新 session identity へ暗黙 alias せず、必ず新
 provisional new session の検証後に current wrapper pair と generation value を一つの atomic swap で publish して旧 session と旧 grant claim を閉じる。
 sequence contract が `preserve` なら resync result の namespace は old namespace と一致しなければならない。
 `rotate-with-new-snapshot` なら新 snapshot consistency point と新 attested namespace を同時 publish し、旧 namespace の revision を新 session へ admission しない。
-SubscriptionUseSchemaRecord または required compiled registry entry がない subscription demand は client polling へ fallback せず compile diagnostic とする。
+SubscriptionUseSchemaRecord または required symbolic registry universe entry がない subscription demand は client polling へ fallback せず compile diagnostic とする。
 
 ### remote operation
 
@@ -1171,13 +1172,16 @@ type GraphNodeRecord =
   | {
       readonly id: string;
       readonly kind: "codec";
-      readonly codec: { readonly qualifiedId: string; readonly version: string };
+      readonly codec: {
+        readonly qualifiedId: QualifiedRegistryId<"codec">;
+        readonly version: string;
+      };
       readonly payload: CodecWireValue;
     }
   | {
       readonly id: string;
       readonly kind: "reference";
-      readonly resolverQualifiedId: string;
+      readonly resolverQualifiedId: QualifiedRegistryId<"resolver">;
       readonly locator: CodecWireValue;
       readonly capabilityRef: string | null;
     };
@@ -1195,13 +1199,13 @@ interface CellRecord {
 
 interface SubscriptionRecord {
   readonly id: string;
-  readonly sourceQualifiedId: string;
+  readonly sourceQualifiedId: QualifiedRegistryId<"subscription-source">;
   readonly locator: CodecWireValue;
   readonly capabilityRef: string | null;
   readonly transportContinuityId: string;
   readonly sequenceNamespaceId: string;
   readonly sequenceEpochId: string;
-  readonly sequenceNamespaceAttestationDigest: string;
+  readonly sequenceNamespaceAttestationDigest: Sha256Digest;
   readonly initialSnapshot: WireValue;
   readonly snapshotRevision: string;
   readonly logBoundaryCursor: CodecWireValue;
@@ -1237,7 +1241,7 @@ interface GraphPathWitness {
   readonly terminal:
     | { readonly kind: "reference"; readonly referenceNodeId: string }
     | { readonly kind: "subscription"; readonly subscriptionId: string };
-  readonly digest: string;
+  readonly digest: Sha256Digest;
 }
 
 interface RootBindingRecord {
@@ -1247,7 +1251,7 @@ interface RootBindingRecord {
   readonly activationGroupDefinitionId: string;
   readonly ownerDefinitionId: string;
   readonly ownerInstanceId: string;
-  readonly captureLayoutDigest: string;
+  readonly captureLayoutDigest: Sha256Digest;
   readonly captures: Readonly<Record<string, WireValue>>;
   readonly domTargets: readonly {
     readonly definitionId: string;
@@ -1271,7 +1275,7 @@ interface GraphTableEnvelope {
   readonly build: string;
   readonly projection: string;
   readonly instance: string;
-  readonly digest: string;
+  readonly digest: Sha256Digest;
   readonly symbols: readonly LocalSymbolRecord[];
   readonly nodes: readonly GraphNodeRecord[];
   readonly cells: readonly CellRecord[];
@@ -1311,7 +1315,7 @@ slot name と canonical wire path は重複できず、array-each は cardinalit
 runtime は materialization 前に canonical wire path を反復走査し、抽出した edge を stable ordinal 順に並べて GraphPathWitness の codec-slot name/ordinal と照合する。
 path 不一致、cardinality 違反、宣言 edge kind と WireValue tag の不一致を codec invocation 前に拒否する。
 graphEdgeSlots が null の codec では codec-slot witness を禁止し、payload 内の `$ref`、`$cell`、`$subscription` という形の object を framework edge として解釈しない。
-GraphNodeRecord の codec qualifiedId と resolverQualifiedId は CompiledRegistryManifestRecord の qualifiedId であり、source-local ID を wire へ出さない。
+GraphNodeRecord の codec qualifiedId と resolverQualifiedId は RegistryEnvironmentCatalogEntry の qualifiedId であり、source-local ID を wire へ出さない。
 
 canonical JSON は RFC 8785 の JSON Canonicalization Scheme を使う。
 `symbols` は symbol ID、`nodes` は node ID、`cells` は cell ID、`subscriptions` は subscription ID、`roots` は root instance ID の昇順に並べる。
@@ -1361,16 +1365,16 @@ interface DefinitionManifestRecord {
     readonly artifactAddressId: string;
     readonly exportName: string;
   } | null;
-  readonly contractDigest: string;
-  readonly keySchemaDigest: string;
-  readonly requiredRegistryQualifiedIds: readonly string[];
+  readonly contractDigest: Sha256Digest;
+  readonly keySchemaDigest: Sha256Digest;
+  readonly registryProjectionSeeds: readonly RegistryProjectionSeed[];
   readonly containmentPolicy: PostActiveFailureContainment | null;
 }
 
 interface ArtifactManifestRecord {
   readonly artifactAddressId: string;
   readonly addressPreimage: ArtifactAddressPreimage;
-  readonly exactDigest: string;
+  readonly exactDigest: Sha256Digest;
   readonly byteLength: number;
 }
 
@@ -1395,61 +1399,30 @@ type RegistryImplementationRole =
 type RuntimeExecutionEnvironment = Exclude<ExecutionEnvironment, "build">;
 
 type RegistryRoleLocation =
-  | {
-      readonly registryKind: "codec";
-      readonly environment: RuntimeExecutionEnvironment;
-      readonly role: "codec-capture" | "codec-materialize";
-    }
-  | {
-      readonly registryKind: "resolver";
-      readonly environment: RuntimeExecutionEnvironment;
-      readonly role: "resolver-resolve";
-    }
-  | {
-      readonly registryKind: "subscription-source";
-      readonly environment: "server-request" | "browser";
-      readonly role: "subscription-open";
-    }
-  | {
-      readonly registryKind: "subscription-source";
-      readonly environment: "browser";
-      readonly role: "subscription-resume" | "subscription-resync";
-    }
-  | {
-      readonly registryKind: "policy";
-      readonly environment: RuntimeExecutionEnvironment;
-      readonly role: "policy-evaluate";
-    }
-  | {
-      readonly registryKind: "value-domain";
-      readonly environment: RuntimeExecutionEnvironment;
-      readonly role: "value-domain-validate";
-    }
-  | {
-      readonly registryKind: "failure-schema";
-      readonly environment: RuntimeExecutionEnvironment;
-      readonly role: "failure-schema-adapt";
-    }
-  | {
-      readonly registryKind: "host-profile";
-      readonly environment: RuntimeExecutionEnvironment;
-      readonly role: "host-profile-validate";
-    }
-  | {
-      readonly registryKind: "brand";
-      readonly environment: RuntimeExecutionEnvironment;
-      readonly role: "brand-validate";
-    }
-  | {
-      readonly registryKind: "remote-operation";
-      readonly environment: "browser";
-      readonly role: "remote-client-transport" | "remote-client-receipt-verifier";
-    }
-  | {
-      readonly registryKind: "remote-operation";
-      readonly environment: "server-request";
-      readonly role: "remote-server-endpoint" | "remote-server-handler";
-    }
+  | { readonly registryKind: "codec"; readonly environment: "browser"; readonly role: "codec-capture" }
+  | { readonly registryKind: "codec"; readonly environment: "browser"; readonly role: "codec-materialize" }
+  | { readonly registryKind: "codec"; readonly environment: "server-request"; readonly role: "codec-capture" }
+  | { readonly registryKind: "codec"; readonly environment: "server-request"; readonly role: "codec-materialize" }
+  | { readonly registryKind: "resolver"; readonly environment: "browser"; readonly role: "resolver-resolve" }
+  | { readonly registryKind: "resolver"; readonly environment: "server-request"; readonly role: "resolver-resolve" }
+  | { readonly registryKind: "subscription-source"; readonly environment: "browser"; readonly role: "subscription-open" }
+  | { readonly registryKind: "subscription-source"; readonly environment: "browser"; readonly role: "subscription-resume" }
+  | { readonly registryKind: "subscription-source"; readonly environment: "browser"; readonly role: "subscription-resync" }
+  | { readonly registryKind: "subscription-source"; readonly environment: "server-request"; readonly role: "subscription-open" }
+  | { readonly registryKind: "policy"; readonly environment: "browser"; readonly role: "policy-evaluate" }
+  | { readonly registryKind: "policy"; readonly environment: "server-request"; readonly role: "policy-evaluate" }
+  | { readonly registryKind: "value-domain"; readonly environment: "browser"; readonly role: "value-domain-validate" }
+  | { readonly registryKind: "value-domain"; readonly environment: "server-request"; readonly role: "value-domain-validate" }
+  | { readonly registryKind: "failure-schema"; readonly environment: "browser"; readonly role: "failure-schema-adapt" }
+  | { readonly registryKind: "failure-schema"; readonly environment: "server-request"; readonly role: "failure-schema-adapt" }
+  | { readonly registryKind: "host-profile"; readonly environment: "browser"; readonly role: "host-profile-validate" }
+  | { readonly registryKind: "host-profile"; readonly environment: "server-request"; readonly role: "host-profile-validate" }
+  | { readonly registryKind: "brand"; readonly environment: "browser"; readonly role: "brand-validate" }
+  | { readonly registryKind: "brand"; readonly environment: "server-request"; readonly role: "brand-validate" }
+  | { readonly registryKind: "remote-operation"; readonly environment: "browser"; readonly role: "remote-client-transport" }
+  | { readonly registryKind: "remote-operation"; readonly environment: "browser"; readonly role: "remote-client-receipt-verifier" }
+  | { readonly registryKind: "remote-operation"; readonly environment: "server-request"; readonly role: "remote-server-endpoint" }
+  | { readonly registryKind: "remote-operation"; readonly environment: "server-request"; readonly role: "remote-server-handler" }
   | {
       readonly registryKind: "remote-delivery-adapter";
       readonly environment: "server-request";
@@ -1464,62 +1437,116 @@ type RegistryRoleLocationFor<Kind extends RegistryKind> = Extract<
 type RegistryRoleInterfaceSchemaId<Role extends RegistryImplementationRole> =
   `dathra.registry-role/${Role}/1`;
 
-type RegistryRoleRequirement<Kind extends RegistryKind = RegistryKind> =
-  RegistryRoleLocationFor<Kind> & {
+type RegistryRoleRequirementForLocation<Location extends RegistryRoleLocation> =
+  Location & {
     readonly requirement: "required" | "request-reachable";
     readonly reasonDefinitionIds: readonly string[];
   };
 
-type RegistryImplementationBinding<Kind extends RegistryKind = RegistryKind> =
-  RegistryRoleLocationFor<Kind> & {
+type RegistryRoleRequirement<Kind extends RegistryKind = RegistryKind> =
+  RegistryRoleLocationFor<Kind> extends infer Location
+    ? Location extends RegistryRoleLocation
+      ? RegistryRoleRequirementForLocation<Location>
+      : never
+    : never;
+
+type RegistryImplementationBindingForLocation<
+  Location extends RegistryRoleLocation,
+> = Location & {
   readonly artifactAddressId: string;
   readonly exportName: string;
-    readonly interfaceSchemaId: RegistryRoleInterfaceSchemaId<
-      RegistryRoleLocationFor<Kind>["role"]
-    >;
-  };
+  readonly interfaceSchemaId: RegistryRoleInterfaceSchemaId<Location["role"]>;
+};
 
-type RegistryDependencyTarget = {
-  [Kind in RegistryKind]: {
-    readonly targetQualifiedId: QualifiedRegistryId<Kind>;
-    readonly targetRole: RegistryRoleLocationFor<Kind>["role"];
-  };
-}[RegistryKind];
+type RegistryImplementationBinding<Kind extends RegistryKind = RegistryKind> =
+  RegistryRoleLocationFor<Kind> extends infer Location
+    ? Location extends RegistryRoleLocation
+      ? RegistryImplementationBindingForLocation<Location>
+      : never
+    : never;
 
-type RegistryDependencyBinding<SourceKind extends RegistryKind = RegistryKind> = {
-  [Environment in RuntimeExecutionEnvironment]: {
-    readonly kind: "same-environment-import";
-    readonly sourceEnvironment: Environment;
-    readonly sourceRole: RegistryRoleLocationFor<SourceKind>["role"];
-    readonly targetEnvironment: Environment;
-  } & RegistryDependencyTarget;
-}[RuntimeExecutionEnvironment];
+type RegistryGenericDependencyTargetLocation = Exclude<
+  RegistryRoleLocation,
+  | { readonly registryKind: "remote-operation" }
+  | { readonly registryKind: "remote-delivery-adapter" }
+>;
+
+type RegistryDependencyTargetForLocation<
+  Location extends RegistryGenericDependencyTargetLocation,
+> = {
+  readonly targetQualifiedId: QualifiedRegistryId<Location["registryKind"]>;
+  readonly targetEnvironment: Location["environment"];
+  readonly targetRole: Location["role"];
+};
+
+type RegistryDependencyTargetForEnvironment<
+  Environment extends RuntimeExecutionEnvironment,
+> = RegistryGenericDependencyTargetLocation extends infer Location
+  ? Location extends RegistryGenericDependencyTargetLocation
+    ? Location["environment"] extends Environment
+      ? RegistryDependencyTargetForLocation<Location>
+      : never
+    : never
+  : never;
+
+type RegistryDependencyBindingForLocation<Location extends RegistryRoleLocation> = {
+  readonly kind: "same-environment-import";
+  readonly sourceEnvironment: Location["environment"];
+  readonly sourceRole: Location["role"];
+} & RegistryDependencyTargetForEnvironment<Location["environment"]>;
+
+type RegistryGenericDependencyBinding<SourceKind extends RegistryKind> =
+  RegistryRoleLocationFor<SourceKind> extends infer Location
+    ? Location extends RegistryRoleLocation
+      ? RegistryDependencyBindingForLocation<Location>
+      : never
+    : never;
+
+interface RemoteDeliveryDependencyBinding {
+  readonly kind: "same-environment-import";
+  readonly sourceEnvironment: "server-request";
+  readonly sourceRole: "remote-server-endpoint";
+  readonly targetQualifiedId: QualifiedRegistryId<"remote-delivery-adapter">;
+  readonly targetEnvironment: "server-request";
+  readonly targetRole: "remote-server-delivery";
+}
+
+type RegistryDependencyBinding<SourceKind extends RegistryKind = RegistryKind> =
+  | RegistryGenericDependencyBinding<SourceKind>
+  | (SourceKind extends "remote-operation" ? RemoteDeliveryDependencyBinding : never);
+
+interface RemoteEndpointIdentityPreimage {
+  readonly schema: "dathra.remote-endpoint-identity/1";
+  readonly serverDeploymentIdentityDigest: Sha256Digest;
+  readonly operationQualifiedId: QualifiedRegistryId<"remote-operation">;
+  readonly transportProfileQualifiedId: QualifiedRegistryId<"host-profile">;
+}
 
 interface RemoteRegistryProtocolBinding {
   readonly schema: "dathra.registry-protocol/1";
   readonly kind: "remote-request-response";
-  readonly id: string;
+  readonly id: Sha256Digest;
   readonly operationQualifiedId: QualifiedRegistryId<"remote-operation">;
   readonly clientEnvironment: "browser";
   readonly clientTransportRole: "remote-client-transport";
   readonly clientVerifierRole: "remote-client-receipt-verifier";
-  readonly clientDeploymentIdentityDigest: string;
+  readonly clientDeploymentIdentityDigest: Sha256Digest;
   readonly serverEnvironment: "server-request";
   readonly serverEndpointRole: "remote-server-endpoint";
   readonly serverHandlerRole: "remote-server-handler";
-  readonly serverDeploymentIdentityDigest: string;
-  readonly endpointIdentity: string;
+  readonly serverDeploymentIdentityDigest: Sha256Digest;
+  readonly endpointIdentity: Sha256Digest;
   readonly deliveryAdapterQualifiedId: QualifiedRegistryId<"remote-delivery-adapter">;
   readonly deliveryEnvironment: "server-request";
   readonly deliveryRole: "remote-server-delivery";
-  readonly deliveryDeploymentIdentityDigest: string;
+  readonly deliveryDeploymentIdentityDigest: Sha256Digest;
   readonly transportProfileQualifiedId: QualifiedRegistryId<"host-profile">;
-  readonly requestSchemaDigest: string;
-  readonly responseSchemaDigest: string;
-  readonly protocolCodecMetadataDigest: string;
-  readonly authorizationEvidenceVerifierMetadataDigest: string;
-  readonly receiptVerifierMetadataDigest: string;
-  readonly protocolBudgetDigest: string;
+  readonly requestSchemaDigest: Sha256Digest;
+  readonly responseSchemaDigest: Sha256Digest;
+  readonly protocolCodecMetadataDigest: Sha256Digest;
+  readonly authorizationEvidenceVerifierMetadataDigest: Sha256Digest;
+  readonly receiptVerifierMetadataDigest: Sha256Digest;
+  readonly protocolBudgetDigest: Sha256Digest;
 }
 
 type RegistryProtocolBinding = RemoteRegistryProtocolBinding;
@@ -1528,20 +1555,88 @@ type RegistryProtocolBindingFor<Kind extends RegistryKind> = Kind extends "remot
   ? RemoteRegistryProtocolBinding
   : never;
 
-type CompiledRegistryManifestRecord = {
+interface RemoteRegistryProtocolTemplate {
+  readonly schema: "dathra.registry-protocol-template/1";
+  readonly kind: "remote-request-response";
+  readonly operationQualifiedId: QualifiedRegistryId<"remote-operation">;
+  readonly clientEnvironment: "browser";
+  readonly clientTransportRole: "remote-client-transport";
+  readonly clientVerifierRole: "remote-client-receipt-verifier";
+  readonly serverEnvironment: "server-request";
+  readonly serverEndpointRole: "remote-server-endpoint";
+  readonly serverHandlerRole: "remote-server-handler";
+  readonly deliveryAdapterQualifiedId: QualifiedRegistryId<"remote-delivery-adapter">;
+  readonly deliveryEnvironment: "server-request";
+  readonly deliveryRole: "remote-server-delivery";
+  readonly transportProfileQualifiedId: QualifiedRegistryId<"host-profile">;
+  readonly requestSchemaDigest: Sha256Digest;
+  readonly responseSchemaDigest: Sha256Digest;
+  readonly protocolCodecMetadataDigest: Sha256Digest;
+  readonly authorizationEvidenceVerifierMetadataDigest: Sha256Digest;
+  readonly receiptVerifierMetadataDigest: Sha256Digest;
+  readonly protocolBudgetDigest: Sha256Digest;
+}
+
+type RegistrySymbolicImplementationBindingForLocation<
+  Location extends RegistryRoleLocation,
+> = Location & {
+  readonly implementation: ModuleExportLocator;
+  readonly interfaceSchemaId: RegistryRoleInterfaceSchemaId<Location["role"]>;
+};
+
+type RegistrySymbolicImplementationBinding<
+  Kind extends RegistryKind = RegistryKind,
+> = RegistryRoleLocationFor<Kind> extends infer Location
+  ? Location extends RegistryRoleLocation
+    ? RegistrySymbolicImplementationBindingForLocation<Location>
+    : never
+  : never;
+
+type QualifiedRegistryUniverseEntry = {
   [Kind in RegistryKind]: {
     readonly qualifiedId: QualifiedRegistryId<Kind>;
-    readonly contractNamespaceId: string;
+    readonly contractNamespaceId: Sha256Digest;
     readonly kind: Kind;
     readonly version: string;
     readonly descriptor: Extract<RegistryDescriptor<true>, { readonly kind: Kind }>;
-    readonly descriptorDigest: string;
+    readonly descriptorDigest: Sha256Digest;
+    readonly roleRequirements: readonly RegistryRoleRequirement<Kind>[];
+    readonly implementationBindings:
+      readonly RegistrySymbolicImplementationBinding<Kind>[];
+    readonly dependencyBindings: readonly RegistryDependencyBinding<Kind>[];
+    readonly protocolTemplates: Kind extends "remote-operation"
+      ? readonly RemoteRegistryProtocolTemplate[]
+      : readonly [];
+  };
+}[RegistryKind];
+
+interface QualifiedRegistryUniverseRecord {
+  readonly schema: "dathra.qualified-registry-universe/1";
+  readonly registries: readonly QualifiedRegistryUniverseEntry[];
+  readonly digest: Sha256Digest;
+}
+
+type FinalizedRegistryCatalogEntry = {
+  [Kind in RegistryKind]: {
+    readonly qualifiedId: QualifiedRegistryId<Kind>;
+    readonly contractNamespaceId: Sha256Digest;
+    readonly kind: Kind;
+    readonly version: string;
+    readonly descriptor: Extract<RegistryDescriptor<true>, { readonly kind: Kind }>;
+    readonly descriptorDigest: Sha256Digest;
     readonly roleRequirements: readonly RegistryRoleRequirement<Kind>[];
     readonly implementationBindings: readonly RegistryImplementationBinding<Kind>[];
     readonly dependencyBindings: readonly RegistryDependencyBinding<Kind>[];
     readonly protocolBindings: readonly RegistryProtocolBindingFor<Kind>[];
   };
 }[RegistryKind];
+
+interface FinalizedRegistryCatalogRecord {
+  readonly schema: "dathra.finalized-registry-catalog/1";
+  readonly symbolicUniverseDigest: Sha256Digest;
+  readonly registries: readonly FinalizedRegistryCatalogEntry[];
+  readonly digest: Sha256Digest;
+}
 
 interface GraphTableBudget {
   readonly maxRawCarrierBytes: number;
@@ -1568,7 +1663,7 @@ interface RootBindingSchemaRecord {
   readonly rootDefinitionId: string;
   readonly activationGroupDefinitionId: string;
   readonly ownerDefinitionId: string;
-  readonly captureLayoutDigest: string;
+  readonly captureLayoutDigest: Sha256Digest;
   readonly domTargetDefinitionIds: readonly string[];
   readonly referenceUseSchemaIds: readonly string[];
   readonly subscriptionUseSchemaIds: readonly string[];
@@ -1591,13 +1686,13 @@ interface ReferenceUseSchemaRecord {
   readonly id: string;
   readonly rootBindingSchemaId: string;
   readonly pathPattern: readonly ReferencePathSegment[];
-  readonly pathPatternDigest: string;
-  readonly resolverQualifiedId: string;
-  readonly valueDomainQualifiedId: string;
-  readonly exposureFactQualifiedId: string;
-  readonly audiencePolicyQualifiedId: string;
-  readonly capabilityPolicyQualifiedId: string;
-  readonly authorizationPolicyQualifiedId: string;
+  readonly pathPatternDigest: Sha256Digest;
+  readonly resolverQualifiedId: QualifiedRegistryId<"resolver">;
+  readonly valueDomainQualifiedId: QualifiedRegistryId<"value-domain">;
+  readonly exposureFactQualifiedId: QualifiedFactId;
+  readonly audiencePolicyQualifiedId: QualifiedRegistryId<"policy">;
+  readonly capabilityPolicyQualifiedId: QualifiedRegistryId<"policy">;
+  readonly authorizationPolicyQualifiedId: QualifiedRegistryId<"policy">;
   readonly capabilityRequired: boolean;
   readonly shareDomainId: string;
 }
@@ -1606,14 +1701,14 @@ interface SubscriptionUseSchemaRecord {
   readonly id: string;
   readonly rootBindingSchemaId: string;
   readonly pathPattern: readonly ReferencePathSegment[];
-  readonly pathPatternDigest: string;
-  readonly sourceQualifiedId: string;
-  readonly valueDomainQualifiedId: string;
-  readonly revisionCodecQualifiedId: string;
-  readonly failureSchemaQualifiedId: string;
-  readonly audiencePolicyQualifiedId: string;
-  readonly capabilityPolicyQualifiedId: string;
-  readonly authorizationPolicyQualifiedId: string;
+  readonly pathPatternDigest: Sha256Digest;
+  readonly sourceQualifiedId: QualifiedRegistryId<"subscription-source">;
+  readonly valueDomainQualifiedId: QualifiedRegistryId<"value-domain">;
+  readonly revisionCodecQualifiedId: QualifiedRegistryId<"codec">;
+  readonly failureSchemaQualifiedId: QualifiedRegistryId<"failure-schema">;
+  readonly audiencePolicyQualifiedId: QualifiedRegistryId<"policy">;
+  readonly capabilityPolicyQualifiedId: QualifiedRegistryId<"policy">;
+  readonly authorizationPolicyQualifiedId: QualifiedRegistryId<"policy">;
   readonly shareDomainId: string;
   readonly updateMode: "replacement" | "stable-handle" | "journaled-in-place";
 }
@@ -1625,17 +1720,17 @@ interface ReferenceMaterializationCacheKeyPreimage {
   readonly valueRevisionId: string;
   readonly referenceNodeId: string;
   readonly referenceUseSchemaId: string;
-  readonly resolverQualifiedId: string;
+  readonly resolverQualifiedId: QualifiedRegistryId<"resolver">;
   readonly canonicalLocator: CodecWireValue;
-  readonly canonicalLocatorDigest: string;
+  readonly canonicalLocatorDigest: Sha256Digest;
   readonly shareDomainId: string;
   readonly principalContextId: string;
   readonly policyEpoch: string;
-  readonly audienceEvaluationDigest: string;
+  readonly audienceEvaluationDigest: Sha256Digest;
   readonly authorizationGenerationId: string;
   readonly authorizationGrantId: string;
   readonly capabilityGrantId: string | null;
-  readonly capabilityBindingDigest: string;
+  readonly capabilityBindingDigest: Sha256Digest;
 }
 
 interface IntegrationTargetRecord {
@@ -1661,7 +1756,7 @@ interface IntegrationModuleRecord {
 interface ProjectionInstancePreimage {
   readonly schema: "dathra.projection-instance/1";
   readonly build: string;
-  readonly graphSnapshotDigest: string;
+  readonly graphSnapshotDigest: Sha256Digest;
   readonly projectionDefinitionId: string;
   readonly requestClassId: string;
   readonly requestJointVariantId: string;
@@ -1673,14 +1768,17 @@ interface ProjectionManifestCore {
   readonly projectionDefinitionId: string;
   readonly requestClassId: string;
   readonly requestJointVariantId: string;
-  readonly graphSnapshotDigest: string;
-  readonly selectionDomainDescriptorDigest: string;
+  readonly graphSnapshotDigest: Sha256Digest;
+  readonly selectionDomainDescriptorDigest: Sha256Digest;
   readonly deploymentIdentity: DeploymentIdentityPreimage;
-  readonly deploymentIdentityDigest: string;
+  readonly deploymentIdentityDigest: Sha256Digest;
   readonly artifactBaseUrl: string;
   readonly artifacts: Readonly<Record<string, ArtifactManifestRecord>>;
   readonly definitions: Readonly<Record<string, DefinitionManifestRecord>>;
-  readonly registries: Readonly<Record<string, CompiledRegistryManifestRecord>>;
+  readonly registryCatalog: RegistryEnvironmentCatalogRecord;
+  readonly registryProtocolCatalog: RegistryProtocolCatalogRecord;
+  readonly registryCatalogPairCommitment: RegistryCatalogPairCommitment;
+  readonly registryProjection: RegistryEnvironmentProjectionRecord;
   readonly prerequisiteEdges: readonly PrerequisiteEdgeDefinition[];
   readonly rootBindingSchemas: Readonly<Record<string, RootBindingSchemaRecord>>;
   readonly referenceUseSchemas: Readonly<Record<string, ReferenceUseSchemaRecord>>;
@@ -1704,7 +1802,7 @@ interface ProjectionManifest {
   readonly projection: string;
   readonly projectionInstance: ProjectionInstancePreimage;
   readonly coreUrl: string;
-  readonly coreDigest: string;
+  readonly coreDigest: Sha256Digest;
   readonly coreByteLength: string;
   readonly planId: string;
   readonly estimatorVersion: "dathra.cost/1";
@@ -1720,15 +1818,15 @@ interface TrustedBootRecord {
   readonly policyEpoch: string;
   readonly planId: string;
   readonly manifestUrl: string;
-  readonly manifestDigest: string;
+  readonly manifestDigest: Sha256Digest;
   readonly envelopeInstance: string | null;
-  readonly envelopeDigest: string | null;
+  readonly envelopeDigest: Sha256Digest | null;
   readonly payloadCarrier: {
     readonly encoding: "utf-8";
     readonly rawByteLength: number;
-    readonly rawDigest: string;
+    readonly rawDigest: Sha256Digest;
     readonly decodedCodeUnits: number;
-    readonly decodedTextDigest: string;
+    readonly decodedTextDigest: Sha256Digest;
   } | null;
   readonly loaderAttestationId: string;
   readonly policyGrantAuthorityAttestationId: string;
@@ -1739,12 +1837,12 @@ interface TrustedBootRecord {
 
 interface LoaderAttestationPreimage {
   readonly schema: "dathra.loader-attestation-preimage/1";
-  readonly hostImplementationDigest: string;
-  readonly realmIdentityDigest: string;
+  readonly hostImplementationDigest: Sha256Digest;
+  readonly realmIdentityDigest: Sha256Digest;
   readonly documentGenerationId: string;
   readonly moduleMapEpoch: string;
-  readonly decodingPolicyDigest: string;
-  readonly redirectPolicyDigest: string;
+  readonly decodingPolicyDigest: Sha256Digest;
+  readonly redirectPolicyDigest: Sha256Digest;
   readonly artifactAddressSchema: "dathra.artifact-address/1";
   readonly artifactUrlSchema: "dathra.artifact-url/1";
 }
@@ -1756,10 +1854,10 @@ interface LoaderAttestation {
 }
 
 interface VerifiedModuleLoader {
-  loadManifest(url: string, exactDigest: string, signal: AbortSignal): Promise<unknown>;
+  loadManifest(url: string, exactDigest: Sha256Digest, signal: AbortSignal): Promise<unknown>;
   loadManifestCore(
     url: string,
-    exactDigest: string,
+    exactDigest: Sha256Digest,
     byteLength: number,
     signal: AbortSignal,
   ): Promise<unknown>;
@@ -1835,8 +1933,9 @@ envelope の plan ID は認証済み TrustedBootRecord.planId と一致しなけ
 次に derived core URL から ProjectionManifestCore の exact byte length と digest を検証する。
 runtime は request projection だけから full-domain candidate graph を再構築して plan ID を再計算するとは仮定しない。
 検証後は `(build, projection definition ID, definitionId)` で definition を、qualified registry ID で codec、resolver、subscription source、policy、host profile、failure schema、remote operation、remote delivery adapter を引く。
-ProjectionManifestCore の registry table は、request-reachable browser definition と wire record から必要な CompiledExecutionContract.resolvedRegistries の browser implementation/dependency binding と public protocol binding metadata だけを qualified ID で projection する。
-browser-reachable binding が要求する qualified registry role が table にない場合は、module load と materialization の前に失敗させる。
+ProjectionManifestCore は authenticated browser environment catalog、pair commitment、exact fixed-point projection を保持する。
+catalog は browser candidate binding metadata と public protocol metadata を保持するが、artifact table と module graph は projection が選択した binding だけを保持する。
+browser-reachable binding が要求する qualified registry role が catalog または projection にない場合は、module load と materialization の前に失敗させる。
 descriptor が参照していても server-request role からだけ到達する handler、delivery adapter、ledger、endpoint artifact は client core に入れない。
 browser runtime は protocol binding に固定された endpoint identity、deployment identity、transport profile、schema、verifier metadata の存在を要求するが、接続先 implementation artifact の不在を dangling client dependency と扱わない。
 
@@ -1851,7 +1950,8 @@ artifact metadata の正本は artifacts table だけであり、definition、re
 runtime は DeploymentIdentityPreimage の digest、addressPreimage の digest、manifest の artifactBaseUrl、導出した canonical URL、実 bytes の exact digest と byteLength をすべて照合する。
 dependencyBindings の target qualified registry role は同じ environment projection 内の implementation binding に解決し、その artifact は同じ artifacts table 内で閉じる。
 同一環境 import graph は SCC collapse 後に acyclic であることを load 前に検証する。
-registry record は CompiledExecutionContract の namespace、qualified ID、kind、version、qualified descriptor、role requirement、environment-qualified implementation/dependency binding、protocol binding、descriptor digest と一致しなければならない。
+build validator は QualifiedRegistryUniverseRecord から finalized global/environment catalog への exact transform を検証する。
+runtime は BootAuthority が認証した local environment catalog、pair commitment、projection の namespace、qualified ID、kind、version、descriptor、requirement、implementation、dependency、protocol、digest を相互検証する。
 RootBindingRecord は bindingSchemaId が指す root、activation group、owner、capture layout、DOMTarget definition の組み合わせと完全に一致しなければならない。
 capture key 集合、reference use path、subscription use path、resolved prerequisite、transaction membership、marker provenance、artifact digest、required registry、containment policy も allocation 前に検証する。
 
@@ -1885,7 +1985,7 @@ envelope instance、value revision、reference node、use schema、resolver、ca
 cache entry は canonical locator を含む key preimage 自体も保持して digest collision を拒否する。
 異なる use を共有できるのは、shareDomainId が等しく、全 policy evaluator が同じ alias と lifetime を明示的に許可した場合だけである。
 
-materialization 前に schema、trusted boot binding、digest、budget、ID uniqueness、reference closure、compiled registry、binding authorization、capability、exposure を検証する。
+materialization 前に schema、trusted boot binding、digest、budget、ID uniqueness、reference closure、local registry catalog/projection、binding authorization、capability、exposure を検証する。
 validation failure は dependent scope を `failed` status にし、別 candidate や rerender へ fallback しない。
 
 request-specific capture、reference、subscription handle、dynamic instance metadata が一つもない projection では、graph-table carrier を出力しない。
@@ -1937,10 +2037,10 @@ interface RenderEnvelope {
   readonly id: string;
   readonly definitionId: string;
   readonly generationId: string;
-  readonly observationContractDigest: string;
-  readonly responseContributionDigest: string;
-  readonly orderedBodyPlanDigest: string;
-  readonly exposureDigest: string;
+  readonly observationContractDigest: Sha256Digest;
+  readonly responseContributionDigest: Sha256Digest;
+  readonly orderedBodyPlanDigest: Sha256Digest;
+  readonly exposureDigest: Sha256Digest;
 }
 
 interface PublicationClaim {
@@ -1950,7 +2050,7 @@ interface PublicationClaim {
   readonly canonicalHeaders: readonly (readonly [string, string])[];
   readonly compatibleEnvelopeDefinitionIds: readonly string[];
   readonly pinnedEnvelopeId: string | null;
-  readonly exposureDigest: string;
+  readonly exposureDigest: Sha256Digest;
   readonly retryMode: "retain-compatible-set" | "pin-single-envelope";
 }
 
@@ -2214,7 +2314,7 @@ type PrerequisiteEdgeDefinition = PrerequisiteEdgeBase &
 interface CanonicalInstanceKey {
   readonly schema: "dathra.instance-key/1";
   readonly keySchemaId: string;
-  readonly digest: string;
+  readonly digest: Sha256Digest;
   readonly value: CodecWireValue;
 }
 
@@ -2223,7 +2323,7 @@ interface GenerationCreationOperationPreimage {
   readonly coordinatorId: string;
   readonly instanceDomainId: string;
   readonly definitionId: string;
-  readonly instanceKeyDigest: string;
+  readonly instanceKeyDigest: Sha256Digest;
   readonly requesterGenerationId: string | null;
   readonly triggerKind:
     | "root-materialization"
@@ -2265,7 +2365,7 @@ type GenerationIdentityPreimage =
     })
   | (GenerationIdentityBase & {
       readonly selector: "environment-generation";
-      readonly realmIdentityDigest: string;
+      readonly realmIdentityDigest: Sha256Digest;
       readonly documentGenerationId: string;
       readonly environmentGenerationId: string;
     })
@@ -2613,8 +2713,8 @@ declare const generationFencedCleanupTokenBrand: unique symbol;
 interface GenerationFencedCleanupToken {
   readonly [generationFencedCleanupTokenBrand]: true;
   readonly adapterQualifiedId: string;
-  readonly sinkIdentityDigest: string;
-  readonly resourceIdentityDigest: string;
+  readonly sinkIdentityDigest: Sha256Digest;
+  readonly resourceIdentityDigest: Sha256Digest;
   readonly ownerGenerationId: string;
   readonly fenceSequence: number;
   readonly compareAndMutateProtocolId: string;
@@ -3184,10 +3284,16 @@ build-time extension API は次の型を持つ。
 ```ts
 type ExecutionEnvironment = "build" | "server-request" | "browser";
 
+declare const sha256DigestBrand: unique symbol;
+declare const qualifiedIdBrand: unique symbol;
 declare const factIdBrand: unique symbol;
 declare const registryIdBrand: unique symbol;
 declare const qualifiedFactIdBrand: unique symbol;
-declare const qualifiedRegistryIdBrand: unique symbol;
+
+type Sha256Digest = string & { readonly [sha256DigestBrand]: true };
+type QualifiedId<Domain extends string> = Sha256Digest & {
+  readonly [qualifiedIdBrand]: Domain;
+};
 
 type FactId = string & { readonly [factIdBrand]: true };
 type QualifiedFactId = string & { readonly [qualifiedFactIdBrand]: true };
@@ -3208,9 +3314,9 @@ type RegistryId<Kind extends RegistryKind> = string & {
   readonly [registryIdBrand]: Kind;
 };
 
-type QualifiedRegistryId<Kind extends RegistryKind> = string & {
-  readonly [qualifiedRegistryIdBrand]: Kind;
-};
+type QualifiedRegistryId<Kind extends RegistryKind> = Kind extends RegistryKind
+  ? QualifiedId<`registry:${Kind}`>
+  : never;
 
 type SemanticPathSegment =
   | { readonly kind: "property"; readonly key: string }
@@ -3500,8 +3606,8 @@ interface CodecGraphEdgeSlotTable {
 
 interface CodecRegistryDescriptor<Qualified extends boolean = false>
   extends RegistryDescriptorBase<"codec", Qualified> {
-  readonly observationContractDigest: string;
-  readonly wireSchemaDigest: string;
+  readonly observationContractDigest: Sha256Digest;
+  readonly wireSchemaDigest: Sha256Digest;
   readonly valueDomainId: RegistryReference<"value-domain", Qualified>;
   readonly materializationTrust: "closed-declarative" | "host-attested";
   readonly graphEdgeSlots: CodecGraphEdgeSlotTable | null;
@@ -3509,7 +3615,7 @@ interface CodecRegistryDescriptor<Qualified extends boolean = false>
 
 interface ResolverRegistryDescriptor<Qualified extends boolean = false>
   extends RegistryDescriptorBase<"resolver", Qualified> {
-  readonly locatorSchemaDigest: string;
+  readonly locatorSchemaDigest: Sha256Digest;
   readonly valueDomainId: RegistryReference<"value-domain", Qualified>;
   readonly exposurePolicyId: RegistryReference<"policy", Qualified>;
   readonly failureSchemaId: RegistryReference<"failure-schema", Qualified>;
@@ -3541,7 +3647,7 @@ interface RemoteDeliveryAdapterRegistryDescriptor<Qualified extends boolean = fa
     | "fenced-idempotency"
     | "effect-ledger-result-atomic";
   readonly deliveryEnvironment: "server-request";
-  readonly hostAttestationDigest: string;
+  readonly hostAttestationDigest: Sha256Digest;
   readonly ledgerBudget: RemoteLedgerBudget;
 }
 
@@ -3576,7 +3682,7 @@ interface SubscriptionRuntimeBudget {
 
 interface SubscriptionSourceRegistryDescriptor<Qualified extends boolean = false>
   extends RegistryDescriptorBase<"subscription-source", Qualified> {
-  readonly locatorSchemaDigest: string;
+  readonly locatorSchemaDigest: Sha256Digest;
   readonly valueDomainId: RegistryReference<"value-domain", Qualified>;
   readonly revisionCodecId: RegistryReference<"codec", Qualified>;
   readonly failureSchemaId: RegistryReference<"failure-schema", Qualified>;
@@ -3600,7 +3706,7 @@ interface BrandRegistryDescriptor<Qualified extends boolean = false>
 
 interface ValueDomainRegistryDescriptor<Qualified extends boolean = false>
   extends RegistryDescriptorBase<"value-domain", Qualified> {
-  readonly valueSchemaDigest: string;
+  readonly valueSchemaDigest: Sha256Digest;
 }
 
 type PolicyKind =
@@ -3617,18 +3723,18 @@ interface PolicyRegistryDescriptor<
   Kind extends PolicyKind = PolicyKind,
 > extends RegistryDescriptorBase<"policy", Qualified> {
   readonly policyKind: Kind;
-  readonly ruleGraphDigest: string;
+  readonly ruleGraphDigest: Sha256Digest;
   readonly evaluation: "pure" | "host-authoritative-async";
 }
 
 interface HostProfileRegistryDescriptor<Qualified extends boolean = false>
   extends RegistryDescriptorBase<"host-profile", Qualified> {
-  readonly featureSetDigest: string;
+  readonly featureSetDigest: Sha256Digest;
 }
 
 interface FailureSchemaRegistryDescriptor<Qualified extends boolean = false>
   extends RegistryDescriptorBase<"failure-schema", Qualified> {
-  readonly failureSchemaDigest: string;
+  readonly failureSchemaDigest: Sha256Digest;
   readonly valueDomainId: RegistryReference<"value-domain", Qualified>;
 }
 
@@ -3698,14 +3804,14 @@ interface PolicyInputByKind {
     readonly operationQualifiedId: QualifiedRegistryId<"remote-operation">;
     readonly operationId: string;
     readonly action: "admit" | "retry-same-id" | "query-ledger" | "classify-terminal";
-    readonly requestCommitment: string;
+    readonly requestCommitment: Sha256Digest;
   };
 }
 
 type PolicyInput = PolicyInputByKind[PolicyKind];
 
 interface PolicyGrantTerms {
-  readonly scopeDigest: string;
+  readonly scopeDigest: Sha256Digest;
   readonly shareDomainId: string | null;
   readonly aliasPermission: "isolated" | "same-share-domain";
   readonly lifetime: "evaluation" | "root-generation" | "owner-generation";
@@ -3714,15 +3820,15 @@ interface PolicyGrantTerms {
 }
 
 interface PolicyAllowResultByKind {
-  readonly audience: { readonly audienceScopeDigest: string };
-  readonly sink: { readonly sinkScopeDigest: string };
+  readonly audience: { readonly audienceScopeDigest: Sha256Digest };
+  readonly sink: { readonly sinkScopeDigest: Sha256Digest };
   readonly release: {
     readonly derived: CodecWireValue;
     readonly auditRecord: CodecWireValue;
   };
   readonly capability: { readonly grantTerms: PolicyGrantTerms };
   readonly authorization: { readonly grantTerms: PolicyGrantTerms };
-  readonly endorsement: { readonly endorsementDigest: string };
+  readonly endorsement: { readonly endorsementDigest: Sha256Digest };
   readonly delivery: {
     readonly allowedAction: PolicyInputByKind["delivery"]["action"];
     readonly horizonMs: number;
@@ -3749,7 +3855,7 @@ interface AuthorizationGrantPreimage {
   readonly schema: "dathra.authorization-grant/1";
   readonly issuerPolicyQualifiedId: QualifiedRegistryId<"policy">;
   readonly policyKind: "capability" | "authorization";
-  readonly evaluationDigest: string;
+  readonly evaluationDigest: Sha256Digest;
   readonly principalContextId: string;
   readonly policyEpoch: string;
   readonly authorizationGenerationId: string;
@@ -3783,10 +3889,10 @@ interface AuthorizationGrantEvidence {
   readonly evidenceId: string;
   readonly grantId: string;
   readonly authorizationGenerationId: string;
-  readonly evaluationDigest: string;
+  readonly evaluationDigest: Sha256Digest;
   readonly purpose: "reference-resolve" | "subscription-open" | "remote-admission";
   readonly audienceId: string;
-  readonly bindingDigest: string;
+  readonly bindingDigest: Sha256Digest;
   readonly expiresAt: number | null;
 }
 
@@ -3794,19 +3900,19 @@ interface RemoteAuthorizationEvidenceWire {
   readonly schema: "dathra.remote-authorization-evidence/1";
   readonly issuerId: string;
   readonly verifierProfileId: string;
-  readonly protocolBindingId: string;
-  readonly endpointIdentity: string;
+  readonly protocolBindingId: Sha256Digest;
+  readonly endpointIdentity: Sha256Digest;
   readonly evidenceId: string;
   readonly issuerPolicyQualifiedId: QualifiedRegistryId<"policy">;
   readonly grantId: string;
   readonly authorizationGenerationId: string;
   readonly revocationEpoch: string;
-  readonly grantTermsDigest: string;
-  readonly evaluationDigest: string;
+  readonly grantTermsDigest: Sha256Digest;
+  readonly evaluationDigest: Sha256Digest;
   readonly principalContextId: string;
   readonly policyEpoch: string;
   readonly operationQualifiedId: QualifiedRegistryId<"remote-operation">;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   readonly attemptId: string;
   readonly nonce: string;
   readonly issuedAt: number;
@@ -3816,15 +3922,15 @@ interface RemoteAuthorizationEvidenceWire {
 }
 
 interface RemoteAuthorizationEvidenceExpectation {
-  readonly protocolBindingId: string;
-  readonly endpointIdentity: string;
+  readonly protocolBindingId: Sha256Digest;
+  readonly endpointIdentity: Sha256Digest;
   readonly operationQualifiedId: QualifiedRegistryId<"remote-operation">;
   readonly authorizationPolicyQualifiedId: QualifiedRegistryId<"policy">;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   readonly attemptId: string;
   readonly principalContextId: string;
   readonly policyEpoch: string;
-  readonly evaluationDigest: string;
+  readonly evaluationDigest: Sha256Digest;
   readonly maximumExpiresAt: number;
 }
 
@@ -3879,10 +3985,10 @@ interface PolicyGrantAuthority {
   ): AuthorizationGrantClaim | null;
   evidence(
     claim: AuthorizationGrantClaim,
-    evaluationDigest: string,
+    evaluationDigest: Sha256Digest,
     purpose: AuthorizationGrantEvidence["purpose"],
     audienceId: string,
-    bindingDigest: string,
+    bindingDigest: Sha256Digest,
   ): AuthorizationGrantEvidence | null;
   verifyEvidence(
     evidence: AuthorizationGrantEvidence,
@@ -3892,33 +3998,37 @@ interface PolicyGrantAuthority {
   admitRemoteOperation(
     claim: AuthorizationGrantClaim,
     operationId: string,
-    requestCommitment: string,
-    evaluationDigest: string,
+    requestCommitment: Sha256Digest,
+    evaluationDigest: Sha256Digest,
   ): RemoteAuthorizationCut | null;
 }
 
-interface PolicyEvaluator<Kind extends PolicyKind = PolicyKind>
-  extends PolicyRegistryDescriptor<false, Kind> {
+interface PolicyEvaluator<Kind extends PolicyKind = PolicyKind> {
+  readonly descriptor: PolicyRegistryDescriptor<false, Kind>;
   evaluate(
     input: PolicyInputByKind[Kind],
     context: RegistryEvaluationContext,
   ): PolicyDecision<Kind> | Promise<PolicyDecision<Kind>>;
 }
 
-interface ValueDomainValidator extends ValueDomainRegistryDescriptor {
+interface ValueDomainValidator {
+  readonly descriptor: ValueDomainRegistryDescriptor;
   validate(value: unknown): boolean;
 }
 
-interface FailureSchemaAdapter extends FailureSchemaRegistryDescriptor {
+interface FailureSchemaAdapter {
+  readonly descriptor: FailureSchemaRegistryDescriptor;
   validate(value: unknown): boolean;
   toPublicDetails(value: unknown): CodecWireValue | null;
 }
 
-interface HostProfileValidator extends HostProfileRegistryDescriptor {
+interface HostProfileValidator {
+  readonly descriptor: HostProfileRegistryDescriptor;
   validateAttestation(attestation: CodecWireValue): boolean;
 }
 
-interface BrandValidator extends BrandRegistryDescriptor {
+interface BrandValidator {
+  readonly descriptor: BrandRegistryDescriptor;
   hasBrand(value: unknown, context: RegistryEvaluationContext): boolean;
 }
 
@@ -3956,27 +4066,112 @@ interface ExecutionContractSource {
   readonly hostAssumptionFactIds: readonly FactId[];
 }
 
-interface CompiledRegistryEntry<Kind extends RegistryKind> {
-  readonly qualifiedId: QualifiedRegistryId<Kind>;
-  readonly contractNamespaceId: string;
-  readonly kind: Kind;
-  readonly version: string;
-  readonly descriptor: Extract<RegistryDescriptor<true>, { readonly kind: Kind }>;
-  readonly descriptorDigest: string;
-  readonly roleRequirements: readonly RegistryRoleRequirement<Kind>[];
-  readonly implementationBindings: readonly RegistryImplementationBinding<Kind>[];
-  readonly dependencyBindings: readonly RegistryDependencyBinding<Kind>[];
-  readonly protocolBindings: readonly RegistryProtocolBindingFor<Kind>[];
+interface RegistryProjectionSeedBase {
+  readonly schema: "dathra.registry-projection-seed/1";
+  readonly definitionId: string;
+}
+
+type RegistryNonProtocolSeedLocation = Exclude<
+  RegistryRoleLocation,
+  | { readonly registryKind: "remote-operation" }
+  | { readonly registryKind: "remote-delivery-adapter" }
+>;
+
+type RegistryProjectionSeedForLocation<
+  Location extends RegistryNonProtocolSeedLocation,
+> = RegistryProjectionSeedBase & {
+  readonly qualifiedId: QualifiedRegistryId<Location["registryKind"]>;
+  readonly environment: Location["environment"];
+  readonly role: Location["role"];
+  readonly protocolBindingId: null;
+};
+
+type RegistryNonProtocolProjectionSeed =
+  RegistryNonProtocolSeedLocation extends infer Location
+    ? Location extends RegistryNonProtocolSeedLocation
+      ? RegistryProjectionSeedForLocation<Location>
+      : never
+    : never;
+
+type RegistryProtocolProjectionSeed = RegistryProjectionSeedBase &
+  (
+    | {
+        readonly qualifiedId: QualifiedRegistryId<"remote-operation">;
+        readonly environment: "browser";
+        readonly role: "remote-client-transport";
+        readonly protocolBindingId: Sha256Digest;
+      }
+    | {
+        readonly qualifiedId: QualifiedRegistryId<"remote-operation">;
+        readonly environment: "server-request";
+        readonly role: "remote-server-endpoint";
+        readonly protocolBindingId: Sha256Digest;
+      }
+  );
+
+type RegistryProjectionSeed =
+  | RegistryNonProtocolProjectionSeed
+  | RegistryProtocolProjectionSeed;
+
+type RegistryEnvironmentCatalogEntry = {
+  [Kind in RegistryKind]: {
+    readonly qualifiedId: QualifiedRegistryId<Kind>;
+    readonly contractNamespaceId: Sha256Digest;
+    readonly kind: Kind;
+    readonly version: string;
+    readonly descriptor: Extract<RegistryDescriptor<true>, { readonly kind: Kind }>;
+    readonly descriptorDigest: Sha256Digest;
+    readonly roleRequirements: readonly RegistryRoleRequirement<Kind>[];
+    readonly implementationBindings: readonly RegistryImplementationBinding<Kind>[];
+    readonly dependencyBindings: readonly RegistryDependencyBinding<Kind>[];
+    readonly protocolBindings: readonly RegistryProtocolBindingFor<Kind>[];
+  };
+}[RegistryKind];
+
+interface RegistryEnvironmentCatalogRecord {
+  readonly schema: "dathra.registry-environment-catalog/1";
+  readonly environment: RuntimeExecutionEnvironment;
+  readonly deploymentIdentityDigest: Sha256Digest;
+  readonly registries: readonly RegistryEnvironmentCatalogEntry[];
+  readonly digest: Sha256Digest;
+}
+
+type RegistryEnvironmentProjectionEntry = {
+  [Kind in RegistryKind]: {
+    readonly qualifiedId: QualifiedRegistryId<Kind>;
+    readonly kind: Kind;
+    readonly activeRoleRequirements: readonly RegistryRoleRequirement<Kind>[];
+    readonly selectedImplementationBindings:
+      readonly RegistryImplementationBinding<Kind>[];
+    readonly selectedDependencyBindings: readonly RegistryDependencyBinding<Kind>[];
+  };
+}[RegistryKind];
+
+interface RegistryProtocolCatalogRecord {
+  readonly schema: "dathra.registry-protocol-catalog/1";
+  readonly bindings: readonly RemoteRegistryProtocolBinding[];
+  readonly digest: Sha256Digest;
+}
+
+interface RegistryCatalogPairCommitment {
+  readonly schema: "dathra.registry-catalog-pair/1";
+  readonly globalFinalCatalogDigest: Sha256Digest;
+  readonly browserCatalogDigest: Sha256Digest;
+  readonly serverCatalogDigest: Sha256Digest;
+  readonly protocolCatalogDigest: Sha256Digest;
+  readonly digest: Sha256Digest;
 }
 
 interface RegistryEnvironmentProjectionRecord {
-  readonly schema: "dathra.registry-environment-projection/1";
+  readonly schema: "dathra.registry-environment-projection/2";
   readonly environment: RuntimeExecutionEnvironment;
-  readonly deploymentIdentityDigest: string;
-  readonly registryQualifiedIds: readonly QualifiedRegistryId<RegistryKind>[];
-  readonly implementationBindings: readonly RegistryImplementationBinding[];
-  readonly dependencyBindings: readonly RegistryDependencyBinding[];
-  readonly protocolBindingIds: readonly string[];
+  readonly deploymentIdentityDigest: Sha256Digest;
+  readonly catalogDigest: Sha256Digest;
+  readonly catalogPairCommitmentDigest: Sha256Digest;
+  readonly seeds: readonly RegistryProjectionSeed[];
+  readonly registries: readonly RegistryEnvironmentProjectionEntry[];
+  readonly protocolBindingIds: readonly Sha256Digest[];
+  readonly digest: Sha256Digest;
 }
 
 interface CompiledFactRecord {
@@ -3988,29 +4183,17 @@ interface CompiledRelationRecord {
 }
 
 interface CompiledExecutionContract {
-  readonly schema: "dathra.compiled-execution/1";
+  readonly schema: "dathra.compiled-execution/2";
   readonly sourceContractId: string;
   readonly sourceContractVersion: string;
-  readonly namespaceId: string;
-  readonly semanticDigest: string;
-  readonly sourceArtifactAddressId: string;
+  readonly namespaceId: Sha256Digest;
+  readonly semanticDigest: Sha256Digest;
+  readonly sourceModuleContentDigest: Sha256Digest;
   readonly qualifiedFacts: readonly CompiledFactRecord[];
   readonly qualifiedRelations: readonly CompiledRelationRecord[];
   readonly exports: Readonly<Record<string, ExportExecutionContract<true>>>;
   readonly hostAssumptionFactIds: readonly QualifiedFactId[];
-  readonly registryEnvironmentProjections: readonly RegistryEnvironmentProjectionRecord[];
-  readonly resolvedRegistries: {
-    readonly codecs: readonly CompiledRegistryEntry<"codec">[];
-    readonly resolvers: readonly CompiledRegistryEntry<"resolver">[];
-    readonly remoteOperations: readonly CompiledRegistryEntry<"remote-operation">[];
-    readonly remoteDeliveryAdapters: readonly CompiledRegistryEntry<"remote-delivery-adapter">[];
-    readonly subscriptionSources: readonly CompiledRegistryEntry<"subscription-source">[];
-    readonly brands: readonly CompiledRegistryEntry<"brand">[];
-    readonly valueDomains: readonly CompiledRegistryEntry<"value-domain">[];
-    readonly policies: readonly CompiledRegistryEntry<"policy">[];
-    readonly hostProfiles: readonly CompiledRegistryEntry<"host-profile">[];
-    readonly failureSchemas: readonly CompiledRegistryEntry<"failure-schema">[];
-  };
+  readonly registryUniverse: QualifiedRegistryUniverseRecord;
 }
 
 interface CodecContext {
@@ -4052,14 +4235,16 @@ interface CodecMaterializationProgram {
   readonly maximumWorkUnits: number;
 }
 
-interface TransferCodecBase<Value, Wire extends CodecWireValue>
-  extends CodecRegistryDescriptor<false> {
+interface TransferCodecBase<Value, Wire extends CodecWireValue> {
+  readonly descriptor: CodecRegistryDescriptor<false>;
   capture(value: Value, context: CodecContext): Wire | Promise<Wire>;
 }
 
 interface DeclarativeTransferCodec<Value, Wire extends CodecWireValue>
   extends TransferCodecBase<Value, Wire> {
-  readonly materializationTrust: "closed-declarative";
+  readonly descriptor: CodecRegistryDescriptor<false> & {
+    readonly materializationTrust: "closed-declarative";
+  };
   readonly materializationProgram: CodecMaterializationProgram;
 }
 
@@ -4068,7 +4253,9 @@ declare const hostAttestedCodecBrand: unique symbol;
 interface HostAttestedTransferCodec<Value, Wire extends CodecWireValue>
   extends TransferCodecBase<Value, Wire> {
   readonly [hostAttestedCodecBrand]: true;
-  readonly materializationTrust: "host-attested";
+  readonly descriptor: CodecRegistryDescriptor<false> & {
+    readonly materializationTrust: "host-attested";
+  };
   validateWire(value: unknown): value is Wire;
   preflight(value: Wire, context: CodecPreflightContext): CodecMaterializationEstimate;
   materialize(value: Wire, context: CodecContext): Value | Promise<Value>;
@@ -4098,8 +4285,8 @@ type ReferenceResult<Value, Failure> =
   | { readonly ok: true; readonly value: Value }
   | { readonly ok: false; readonly error: Failure };
 
-interface ReferenceResolver<Value, Locator extends CodecWireValue, Failure>
-  extends ResolverRegistryDescriptor<false> {
+interface ReferenceResolver<Value, Locator extends CodecWireValue, Failure> {
+  readonly descriptor: ResolverRegistryDescriptor<false>;
   validateLocator(value: unknown): value is Locator;
   resolve(
     request: ReferenceRequest<Locator>,
@@ -4123,14 +4310,14 @@ interface SubscriptionSessionIdentityPreimage {
   readonly shareDomainId: string;
   readonly ownerGenerationId: string;
   readonly authorizationGenerationId: string;
-  readonly audienceEvaluationDigest: string;
-  readonly capabilityBindingDigest: string;
+  readonly audienceEvaluationDigest: Sha256Digest;
+  readonly capabilityBindingDigest: Sha256Digest;
 }
 
 interface SubscriptionTransportContinuityPreimage {
   readonly schema: "dathra.subscription-continuity/1";
   readonly sourceQualifiedId: QualifiedRegistryId<"subscription-source">;
-  readonly canonicalLocatorDigest: string;
+  readonly canonicalLocatorDigest: Sha256Digest;
   readonly principalContextId: string;
   readonly policyEpoch: string;
   readonly sequenceNamespaceId: string;
@@ -4139,7 +4326,7 @@ interface SubscriptionTransportContinuityPreimage {
 interface SubscriptionSequenceNamespacePreimage {
   readonly schema: "dathra.subscription-namespace/1";
   readonly sourceQualifiedId: QualifiedRegistryId<"subscription-source">;
-  readonly canonicalLocatorDigest: string;
+  readonly canonicalLocatorDigest: Sha256Digest;
   readonly principalContextId: string;
   readonly namespaceDomainId: string;
   readonly sequenceEpochId: string;
@@ -4158,7 +4345,7 @@ interface VerifiedSubscriptionSequenceNamespace {
   readonly [verifiedSubscriptionNamespaceBrand]: true;
   readonly preimage: SubscriptionSequenceNamespacePreimage;
   readonly namespaceId: string;
-  readonly attestationDigest: string;
+  readonly attestationDigest: Sha256Digest;
 }
 
 declare const subscriptionNamespaceAuthorityBrand: unique symbol;
@@ -4170,7 +4357,7 @@ interface SubscriptionNamespaceAuthority {
   verify(
     attestation: SubscriptionSequenceNamespaceAttestation,
     expectedSourceQualifiedId: QualifiedRegistryId<"subscription-source">,
-    expectedCanonicalLocatorDigest: string,
+    expectedCanonicalLocatorDigest: Sha256Digest,
     expectedPrincipalContextId: string,
     expectedNamespaceDomainId: string,
   ): VerifiedSubscriptionSequenceNamespace | null;
@@ -4209,7 +4396,7 @@ interface SubscriptionTransportResumeRequest<Locator extends CodecWireValue, Val
 }
 
 interface SubscriptionLocalResyncCommand {
-  readonly expectedOldSessionIdentityDigest: string;
+  readonly expectedOldSessionIdentityDigest: Sha256Digest;
   readonly expectedOldTransportContinuityId: string;
   readonly expectedOldSequenceNamespaceId: string;
   readonly newAuthorizationGenerationId: string;
@@ -4231,7 +4418,7 @@ interface SubscriptionTransportRevisionEnvelope<Wire extends CodecWireValue> {
   readonly revision: string;
   readonly cursor: CodecWireValue;
   readonly payload: Wire;
-  readonly payloadDigest: string;
+  readonly payloadDigest: Sha256Digest;
 }
 
 type SubscriptionTransportEvent<Wire extends CodecWireValue, Failure> =
@@ -4246,7 +4433,7 @@ type SubscriptionTransportEvent<Wire extends CodecWireValue, Failure> =
 interface SubscriptionRuntimeEventEnvelope<Wire extends CodecWireValue, Failure> {
   readonly schema: "dathra.subscription-runtime-event/1";
   readonly capturedOwnerGenerationId: string;
-  readonly capturedSessionIdentityDigest: string;
+  readonly capturedSessionIdentityDigest: Sha256Digest;
   readonly transportEvent: SubscriptionTransportEvent<Wire, Failure>;
 }
 
@@ -4290,7 +4477,8 @@ interface SubscriptionSource<
   Locator extends CodecWireValue,
   RevisionWire extends CodecWireValue,
   Failure,
-> extends SubscriptionSourceRegistryDescriptor<false> {
+> {
+  readonly descriptor: SubscriptionSourceRegistryDescriptor<false>;
   validateLocator(value: unknown): value is Locator;
   open(
     request: SubscriptionTransportOpenRequest<Locator>,
@@ -4326,7 +4514,8 @@ interface RemoteOperationContract<
   InputWire extends CodecWireValue,
   OutputWire extends CodecWireValue,
   FailureWire extends CodecWireValue,
-> extends RemoteOperationRegistryDescriptor<false> {
+> {
+  readonly descriptor: RemoteOperationRegistryDescriptor<false>;
   readonly inputCodec: TransferCodec<Input, InputWire>;
   readonly outputCodec: TransferCodec<Output, OutputWire>;
   readonly failureCodec: TransferCodec<Failure, FailureWire>;
@@ -4336,7 +4525,7 @@ interface RemoteOperationContract<
 interface RemoteContext {
   readonly principal: string;
   readonly operationId: string;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   readonly policyEpoch: string;
   readonly authorizationGenerationId: string;
   readonly authorizationCutId: string;
@@ -4422,9 +4611,9 @@ type RemotePreAdmissionOutcome = {
 interface RemoteOperationIdentityPreimage {
   readonly schema: "dathra.remote-operation-identity/1";
   readonly operationQualifiedId: QualifiedRegistryId<"remote-operation">;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   readonly principalContextId: string;
-  readonly authorizationEvaluationDigest: string;
+  readonly authorizationEvaluationDigest: Sha256Digest;
   readonly authorizationGrantId: string;
   readonly authorizationGenerationId: string;
   readonly issuerEpoch: string;
@@ -4445,7 +4634,7 @@ interface RemoteWireFrame {
   readonly messageKind: RemoteWireMessageKind;
   readonly exactBytes: Uint8Array;
   readonly exactByteLength: number;
-  readonly exactDigest: string;
+  readonly exactDigest: Sha256Digest;
 }
 
 interface RemoteProtocolBudget {
@@ -4467,28 +4656,30 @@ interface RemoteRequestCommitmentPreimage {
   readonly operationQualifiedId: QualifiedRegistryId<"remote-operation">;
   readonly inputCodecQualifiedId: QualifiedRegistryId<"codec">;
   readonly inputCodecVersion: string;
-  readonly wireSchemaDigest: string;
+  readonly wireSchemaDigest: Sha256Digest;
   readonly principalContextId: string;
   readonly policyEpoch: string;
-  readonly authorizationEvaluationDigest: string;
+  readonly authorizationEvaluationDigest: Sha256Digest;
   readonly authorizationGrantId: string;
   readonly authorizationGenerationId: string;
-  readonly capturedWireCanonicalDigest: string;
+  readonly capturedWireCanonicalDigest: Sha256Digest;
   readonly capturedWireCanonicalByteLength: number;
 }
 
 declare const remoteCapturedRequestBrand: unique symbol;
 
+type RawRemoteCapturedRequestWire = Readonly<Record<string, unknown>>;
+
 interface RemoteCapturedRequestWire<Wire extends CodecWireValue> {
   readonly schema: "dathra.remote-captured-request/1";
-  readonly commitment: string;
+  readonly commitment: Sha256Digest;
   readonly preimage: RemoteRequestCommitmentPreimage;
   readonly capturedWire: Wire;
 }
 
 interface RemoteCapturedRequest<Wire extends CodecWireValue> {
   readonly [remoteCapturedRequestBrand]: true;
-  readonly commitment: string;
+  readonly commitment: Sha256Digest;
   readonly preimage: RemoteRequestCommitmentPreimage;
   readonly capturedWire: Wire;
   readonly canonicalCapturedWireBytes: Uint8Array;
@@ -4500,8 +4691,8 @@ interface RemoteAuthorizationCut {
   readonly [remoteAuthorizationCutBrand]: true;
   readonly id: string;
   readonly operationId: string;
-  readonly requestCommitment: string;
-  readonly authorizationEvaluationDigest: string;
+  readonly requestCommitment: Sha256Digest;
+  readonly authorizationEvaluationDigest: Sha256Digest;
   readonly authorizationGrantId: string;
   readonly authorizationGenerationId: string;
   readonly admittedAt: number;
@@ -4547,20 +4738,20 @@ declare const verifiedRemoteNonCommitReceiptBrand: unique symbol;
 interface RemoteAtomicTransaction {
   readonly [remoteAtomicTransactionBrand]: true;
   readonly operationId: string;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   stage(effectQualifiedId: QualifiedFactId, input: CodecWireValue): Promise<CodecWireValue>;
 }
 
 interface RemoteProtocolProof {
   readonly issuerId: string;
-  readonly protocolBindingId: string;
+  readonly protocolBindingId: Sha256Digest;
   readonly verifierProfileId: string;
-  readonly endpointIdentity: string;
-  readonly serverDeploymentIdentityDigest: string;
+  readonly endpointIdentity: Sha256Digest;
+  readonly serverDeploymentIdentityDigest: Sha256Digest;
   readonly proofSequence: string;
   readonly issuedAt: number;
   readonly expiresAt: number;
-  readonly messageDigest: string;
+  readonly messageDigest: Sha256Digest;
   readonly proof: CodecWireValue;
 }
 
@@ -4570,16 +4761,16 @@ interface RemoteCommitReceiptRecord {
   readonly issuerEpoch: string;
   readonly operationSequence: string;
   readonly admissionExpiresAt: number;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   readonly principalContextId: string;
   readonly policyEpoch: string;
-  readonly authorizationEvaluationDigest: string;
+  readonly authorizationEvaluationDigest: Sha256Digest;
   readonly authorizationGrantId: string;
   readonly authorizationGenerationId: string;
   readonly authorizationCutId: string;
-  readonly ledgerEntryDigest: string;
-  readonly effectSetDigest: string;
-  readonly terminalDigest: string;
+  readonly ledgerEntryDigest: Sha256Digest;
+  readonly effectSetDigest: Sha256Digest;
+  readonly terminalDigest: Sha256Digest;
   readonly commitEpoch: string;
   readonly expiresAt: number;
 }
@@ -4610,18 +4801,18 @@ interface RemoteNonCommitReceiptRecord {
   readonly issuerEpoch: string;
   readonly operationSequence: string;
   readonly admissionExpiresAt: number;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   readonly principalContextId: string;
   readonly policyEpoch: string;
-  readonly authorizationEvaluationDigest: string;
+  readonly authorizationEvaluationDigest: Sha256Digest;
   readonly authorizationGrantId: string;
   readonly authorizationGenerationId: string;
   readonly authorizationCutId: string | null;
   readonly observedLedgerEpoch: string;
   readonly terminalFenceId: string;
   readonly terminal: RemoteNonCommitTerminal;
-  readonly terminalDigest: string;
-  readonly ledgerEntryDigest: string;
+  readonly terminalDigest: Sha256Digest;
+  readonly ledgerEntryDigest: Sha256Digest;
   readonly expiresAt: number;
 }
 
@@ -4645,7 +4836,7 @@ interface RemoteDeliveryRequest<InputWire extends CodecWireValue> {
   readonly operationQualifiedId: QualifiedRegistryId<"remote-operation">;
   readonly operationId: string;
   readonly operationIdentity: RemoteOperationIdentityPreimage;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   readonly principalContextId: string;
   readonly policyEpoch: string;
   readonly authorizationCut: RemoteAuthorizationCut;
@@ -4654,10 +4845,10 @@ interface RemoteDeliveryRequest<InputWire extends CodecWireValue> {
 
 interface RemoteAdmissionRequest {
   readonly operationQualifiedId: QualifiedRegistryId<"remote-operation">;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   readonly principalContextId: string;
   readonly policyEpoch: string;
-  readonly authorizationEvaluationDigest: string;
+  readonly authorizationEvaluationDigest: Sha256Digest;
   readonly authorizationEvidence: AuthorizationGrantEvidence;
   readonly requestedExpiresAt: number;
 }
@@ -4676,8 +4867,8 @@ type RemoteAdmissionResult =
 
 interface RemoteWireAdmissionRequest<InputWire extends CodecWireValue> {
   readonly schema: "dathra.remote-wire-admission/1";
-  readonly protocolBindingId: string;
-  readonly endpointIdentity: string;
+  readonly protocolBindingId: Sha256Digest;
+  readonly endpointIdentity: Sha256Digest;
   readonly attemptId: string;
   readonly capturedRequest: RemoteCapturedRequestWire<InputWire>;
   readonly authorizationEvidence: RemoteAuthorizationEvidenceWire;
@@ -4687,28 +4878,28 @@ interface RemoteWireAdmissionRequest<InputWire extends CodecWireValue> {
 type RemoteWireAdmissionResponse =
   | {
       readonly ok: true;
-      readonly protocolBindingId: string;
-      readonly endpointIdentity: string;
+      readonly protocolBindingId: Sha256Digest;
+      readonly endpointIdentity: Sha256Digest;
       readonly attemptId: string;
       readonly operationId: string;
       readonly operationIdentity: RemoteOperationIdentityPreimage;
-      readonly protocolDigest: string;
+      readonly protocolDigest: Sha256Digest;
       readonly proof: RemoteProtocolProof;
     }
   | {
       readonly ok: false;
-      readonly protocolBindingId: string;
-      readonly endpointIdentity: string;
+      readonly protocolBindingId: Sha256Digest;
+      readonly endpointIdentity: Sha256Digest;
       readonly attemptId: string;
       readonly error: RemotePreAdmissionSystemFailure;
-      readonly protocolDigest: string;
+      readonly protocolDigest: Sha256Digest;
       readonly proof: RemoteProtocolProof;
     };
 
 interface RemoteWireExecutionRequest<InputWire extends CodecWireValue> {
   readonly schema: "dathra.remote-wire-execution/1";
-  readonly protocolBindingId: string;
-  readonly endpointIdentity: string;
+  readonly protocolBindingId: Sha256Digest;
+  readonly endpointIdentity: Sha256Digest;
   readonly attemptId: string;
   readonly operationId: string;
   readonly operationIdentity: RemoteOperationIdentityPreimage;
@@ -4721,13 +4912,13 @@ interface RemoteWireExecutionResponse<
   FailureWire extends CodecWireValue,
 > {
   readonly schema: "dathra.remote-wire-response/1";
-  readonly protocolBindingId: string;
-  readonly endpointIdentity: string;
+  readonly protocolBindingId: Sha256Digest;
+  readonly endpointIdentity: Sha256Digest;
   readonly attemptId: string;
   readonly operationId: string;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   readonly attempt: RemoteWireAdapterAttempt<OutputWire, FailureWire>;
-  readonly protocolDigest: string;
+  readonly protocolDigest: Sha256Digest;
   readonly proof: RemoteProtocolProof;
 }
 
@@ -4743,7 +4934,7 @@ declare const remoteProtocolCodecBrand: unique symbol;
 interface VerifiedRemoteWireMessage {
   readonly [verifiedRemoteWireMessageBrand]: true;
   readonly message: RemoteDecodedWireMessage;
-  readonly canonicalDigest: string;
+  readonly canonicalDigest: Sha256Digest;
   readonly canonicalByteLength: number;
   readonly jsonDepth: number;
 }
@@ -4776,18 +4967,18 @@ interface RemoteClientReceiptVerifier<
 > {
   verifyAdmission(
     responseFrame: RemoteWireFrame,
-    expectedProtocolBindingId: string,
-    expectedEndpointIdentity: string,
+    expectedProtocolBindingId: Sha256Digest,
+    expectedEndpointIdentity: Sha256Digest,
     expectedAttemptId: string,
-    expectedCommitment: string,
+    expectedCommitment: Sha256Digest,
   ): RemoteWireAdmissionResponse | null;
   verifyExecution(
     responseFrame: RemoteWireFrame,
-    expectedProtocolBindingId: string,
-    expectedEndpointIdentity: string,
+    expectedProtocolBindingId: Sha256Digest,
+    expectedEndpointIdentity: Sha256Digest,
     expectedAttemptId: string,
     expectedOperation: RemoteOperationIdentityPreimage,
-    expectedCommitment: string,
+    expectedCommitment: Sha256Digest,
   ): RemoteVerifiedAdapterAttempt<OutputWire, FailureWire> | null;
 }
 
@@ -4877,8 +5068,8 @@ interface RemoteDeliveryAdapter<
   InputWire extends CodecWireValue,
   Output,
   Failure,
->
-  extends RemoteDeliveryAdapterRegistryDescriptor<false> {
+> {
+  readonly descriptor: RemoteDeliveryAdapterRegistryDescriptor<false>;
   reserve(
     request: RemoteAdmissionRequest,
     signal: AbortSignal,
@@ -4923,7 +5114,7 @@ type RemoteAmbiguityReason =
 interface RemoteAmbiguitySnapshot {
   readonly attemptId: string;
   readonly operationId: string;
-  readonly requestCommitment: string;
+  readonly requestCommitment: Sha256Digest;
   readonly reason: RemoteAmbiguityReason;
 }
 
@@ -4960,7 +5151,7 @@ type RemoteRecoveryCapability<Output, Failure> = {
     | {
       readonly kind: "retry-same-operation" | "query-ledger";
       readonly operationId: string;
-      readonly requestCommitment: string;
+      readonly requestCommitment: Sha256Digest;
       readonly principalContextId: string;
       readonly policyEpoch: string;
       readonly expiresAt: number;
@@ -4969,7 +5160,7 @@ type RemoteRecoveryCapability<Output, Failure> = {
     | {
         readonly kind: "manual-reconciliation";
         readonly operationId: string;
-        readonly requestCommitment: string;
+        readonly requestCommitment: Sha256Digest;
         readonly principalContextId: string;
         readonly policyEpoch: string;
         readonly expiresAt: number;
@@ -4990,8 +5181,8 @@ type RemoteOutcome<Output, Failure> =
       readonly recovery: null;
     });
 
-interface RemoteOperation<Input, Output, Failure>
-  extends RemoteOperationRegistryDescriptor<false> {
+interface RemoteOperation<Input, Output, Failure> {
+  readonly descriptor: RemoteOperationRegistryDescriptor<false>;
   (input: Input, options?: RemoteCallOptions): Promise<RemoteOutcome<Output, Failure>>;
 }
 
@@ -5033,7 +5224,7 @@ locator は named export または content-bound dependency manifest の export 
 codec、resolver、subscription source、remote operation、remote delivery adapter は対応する `define*` helper の result を role implementation として参照し、それ以外は registry kind ごとの versioned descriptor export と executable role export を分ける。
 compiler は specifier を contract module 基準で解決し、descriptor の kind、`id`、`version`、schema と各 role export の interface schema が RegistrySourceEntry に一致することを確認して CompiledExecutionContract へ digest を付ける。
 複数 role が同じ `defineRemoteOperation()` などの definition export から導出される場合、compiler は environment ごとの virtual module と role export を先に生成する。
-CompiledRegistryEntry の implementation binding は元の aggregate export ではなく生成後の role export を指し、role closure を分離できない definition は diagnostic とする。
+QualifiedRegistryUniverseEntry の symbolic implementation binding は元の aggregate export ではなく生成後の role export を指し、role closure を分離できない definition は diagnostic とする。
 registry key、FactId、export fact reference は重複、dangling reference、kind mismatch を許さない。
 ExportExecutionContract の直接 field と参照先 fact が同じ意味を重複して宣言した場合は、値が一致しなければ diagnostic とする。
 `factId()` と `registryId()` の引数は contract file 内の build-time string literal に限定する。
@@ -5056,7 +5247,8 @@ source-local ID を含む contract は build/debug input にだけ残し、Proje
 metadata-only descriptor は `defineRegistryDescriptor()` で宣言し、runtime で使う policy、value-domain、failure-schema、host-profile、brand は kind ごとの `define*` helper で executable implementation を宣言する。
 codec、resolver、subscription source、remote operation、remote delivery adapter も対応する executable helper の result を使う。
 compiler は RegistrySourceEntry の source implementation export が対応 interface を満たすことを検証し、descriptor 内の全 nested RegistryReference を qualified ID へ変換する。
-その後、operation 単位に closed RegistryRoleRequirement、environment-qualified implementation binding、同一環境 dependency、cross-environment protocol binding を生成する。
+その後、SC03 は operation 単位に closed RegistryRoleRequirement、symbolic implementation binding、同一環境 dependency、cross-environment protocol template を生成する。
+AF01 は deployment と artifact finalization 後に symbolic binding と protocol template を final implementation binding と protocol binding へ解決する。
 role の許可範囲と requirement は次の表を正本とする。
 
 | registry kind | environment と role | requirement |
@@ -5071,20 +5263,96 @@ role の許可範囲と requirement は次の表を正本とする。
 
 この表にない kind、environment、role の組は source entry の時点で diagnostic とする。
 required role に実装がない場合、または同じ `(qualified registry ID, environment, role)` に複数実装がある場合も diagnostic とする。
-request-reachable role だけを final projection に残し、到達しない optional implementation を artifact closure へ入れない。
+selected owner の required role と、reason が到達した request-reachable role を final projection に残し、到達しない optional implementation を artifact closure へ入れない。
 RegistryProtocolBinding は remote-operation entry だけが持てる。
 ほかの registry kind の protocolBindings は型上 `never[]` であり、runtime record では空配列にする。
 
-CompiledRegistryEntry は全 environment の binding と RegistryEnvironmentProjectionRecord を保持する。
-finalizer は browser と server-request に異なる deployment projection を生成し、同一環境 import は RegistryDependencyBinding、browser/server-request 間の通信は RegistryProtocolBinding だけで表す。
-ProjectionManifestCore は browser-reachable implementation/dependency binding と、接続先 artifact を含まない public protocol metadata だけを保持する。
-CompiledExecutionContract.sourceArtifactAddressId は build/debug provenance であり、runtime implementation identity は各 role binding の artifact address と export name を正本にする。
-implementation binding は `(registry kind, environment, role)` ごとに一つ、dependency binding は `(sourceEnvironment, sourceRole, targetQualifiedId, targetEnvironment, targetRole)` ごとに一つとする。
-same-environment-import の sourceEnvironment と targetEnvironment は型と validator の双方で一致させる。
-browser から server-request への import/dependency edge が一つでもあれば client projection を拒否し、remote operation の request-response だけを endpoint identity、各 deployment identity、transport profile、request/response schema、protocol codec、evidence verifier、receipt verifier、protocol budget に束縛した protocol binding として許可する。
-RemoteRegistryProtocolBinding.deliveryEnvironment は `server-request` に固定し、deliveryDeploymentIdentityDigest は serverDeploymentIdentityDigest と一致させる。
-server endpoint/handler から delivery adapter への edge は同じ server-request projection 内の same-environment-import とし、wire protocol を挟まない。
-runtime は digest だけでなく descriptor 本体、role requirement、implementation/dependency binding、protocol binding を比較し、source-local RegistryId が一つでも残る projection を拒否する。
+#### registry qualification と environment catalog の補足決定
+
+この節は、旧 `RegistryEnvironmentProjectionRecord/1`、`CompiledExecutionContract/1`、flat binding array、component ごとの暗黙 owner 対応を supersede する。
+後方互換 layer は設けない。
+
+`RegistryId<Kind>` は source contract 内だけで有効な non-empty string とし、lone surrogate を拒否するが Unicode normalization は行わない。
+`QualifiedRegistryId<Kind>` は `dathra.qualified-id/1` の kind field を `registry:${Kind}` とした digest である。
+SC03 は namespace digest、domain、local ID から qualified ID を再計算し、source-local reference をすべて qualified form へ変換する。
+runtime は digest-shaped local string の由来を文字列だけから推測せず、canonical digest shape、schema context、catalog の ID-to-kind membership、nested reference resolution を検証する。
+source-local ID が final artifact へ残らないことの証明責務は SC03 qualification と artifact inspection に置く。
+wire decoder が受け取る未検証 field は `unknown` または専用 `Raw*` record とし、qualified ID と digest の brand は closed schema、canonical form、catalog membership の検証後にだけ生成する。
+
+RegistryDescriptor と nested metadata は getter、method、hidden property を持たない closed data snapshot とする。
+executable helper result は descriptor を継承せず、`descriptor` field と environment/role implementation を分離する。
+descriptor locator と implementation locator も別 export のまま保持する。
+すべての digest field は canonical `Sha256Digest`、semantic ID と version は non-empty valid Unicode、budget、count、horizon は正の safe integer とする。
+Proxy は caller contract 外とする。
+
+同じ owner の role requirement は `(qualifiedId, environment, role)` で一意とする。
+複数宣言の reason は union して raw UTF-16 順に並べ、`required` と `request-reachable` が競合する場合は `required` を優先して一 record にする。
+`reasonDefinitionIds` は non-empty、unique、canonical order とする。
+同じ `(qualifiedId, environment, role)` の implementation は一 build candidate につき exactly one とし、複数 candidate は別 catalog とする。
+dependency は `(sourceQualifiedId, sourceEnvironment, sourceRole, targetQualifiedId, targetEnvironment, targetRole)` で一意とし、source と target の environment を一致させる。
+
+SC03 は artifact address を持たない `QualifiedRegistryUniverseRecord` を生成する。
+この symbolic universe は qualified descriptor、全 role requirement、module/export locator、same-environment dependency、deployment 未確定の protocol template を保持する。
+AF01 は candidate artifact と deployment identity の確定後に symbolic universe を exact transform し、global finalized registry catalog を生成する。
+endpointIdentity は server deployment、operation qualified ID、transport profile を持つ `RemoteEndpointIdentityPreimage` の canonical digest として導出し、author string や artifact URL を直接使わない。
+descriptor、kind、version、namespace、requirement、dependency semantics の追加、欠落、変更を禁止し、各 symbolic implementation locator を一つの artifact address と export name へ解決する。
+
+environment `E` の registry universe `U_E` は、global finalized catalog のうち `E` の implementation を一件以上持つ owner の exact set とする。
+`RegistryEnvironmentCatalogRecord` は `U_E` と対象 environment の DeploymentIdentityDigest を明示入力として deterministic に射影し、owner metadata、qualified descriptor と digest、`E` の全 requirement、implementation、dependency、利用可能な public protocol binding を保持する。
+build validator は owner set だけでなく全 field と array を global finalized catalog と DeploymentIdentityDigest から再計算して exact equality を検証する。
+browser catalog は browser implementation、browser dependency、public protocol metadata だけを持ち、server implementation、server dependency、server artifact locator を持たない。
+catalog にある未選択 implementation の metadata byte は cost metric に含めるが、artifact table と module graph には final projection が選んだ binding だけを入れる。
+
+`DefinitionManifestRecord.registryProjectionSeeds` は definition が要求する registry owner、environment、role、protocol binding を閉じた record として宣言する。
+各 environment の initial seed set は selected definition records が持つ同じ environment の seed の exact union とし、外部 seed、暗黙 initial owner、protocol による自己正当化を許さない。
+`request-reachable` requirement は owner がすでに選択され、かつ reason の少なくとも一つが selected definition set に含まれる場合だけ active になる。
+`required` requirement は owner が当該 environment で選択された時点で必ず active になる。
+
+environment projection は catalog と exact seed set から finite least fixed point で生成する。
+最初に seed role と seed が参照する protocol の mandatory role を選択する。
+次に selected owner の required requirement、selected owner かつ reason が到達した request-reachable requirement、各 role の unique implementation、implementation の全 dependency target を追加する。
+dependency が新しい owner を選択した場合は、その owner の required requirement も追加し、変化がなくなるまで反復する。
+projection は active requirement、selected implementation、selected dependency、included protocol ID の exact result を owner group ごとに保持する。
+dependency source は同じ owner group の selected implementation、target は同じ projection の target owner group にある selected implementationへ exactly 解決する。
+selected implementation を持たない owner group と、fixed point で正当化されない extra record を拒否する。
+
+remote-operation role は generic dependency target にできない。
+browser transport と server endpoint は non-null protocol seed からだけ選択し、protocol expansion が browser verifier と server handler を追加する。
+endpoint-to-handler relation は RemoteRegistryProtocolBinding の operationQualifiedId、serverEndpointRole、serverHandlerRole が直接所有し、RegistryDependencyBinding へ重複して記録しない。
+server endpoint は descriptor が選んだ remote-delivery-adapter の delivery role へだけ same-environment dependency を持つ。
+adapter implementation は server catalog と server projection だけに存在する。
+RemoteRegistryProtocolBinding の ID は `id` を空 string にした full binding の canonical digest とする。
+同じ protocol ID は対応する browser/server projection に exactly once 現れる。
+binding の clientDeploymentIdentityDigest は browser catalog と browser projection の deploymentIdentityDigest に一致し、serverDeploymentIdentityDigest と deliveryDeploymentIdentityDigest は server catalog と server projection の deploymentIdentityDigest に一致する。
+
+`RegistryProtocolCatalogRecord` は public protocol binding を ID 順に保持し、重複を拒否し、digest field を空 string にした full record の canonical digest を持つ。
+global catalog から browser/server catalog と protocol catalog を生成した後、global、browser、server、protocol の四つの catalog digest を `RegistryCatalogPairCommitment` に束縛する。
+build pair validator は両 environment の protocol ID、deployment identity、endpoint、handler、adapter closure を同時に検証する。
+browser runtime は browser catalog、browser projection、public protocol metadata、BootAuthority が認証した pair commitment だけを受け取る。
+server implementation closure の完全性は build pair validator が証明し、browser runtime は local closure と認証済み pair commitment を検証する。
+server runtime も同じ規則を対称に適用する。
+
+digest の生成順は qualified descriptor、symbolic universe、plan 非依存の deployment identity、plan 非依存の artifact address、public protocol binding、global finalized catalog、environment catalog、public protocol catalog、pair commitment、environment projection、candidate manifest core と integrity table、metric vector、plan identity、selected envelope とする。
+後段の digest を前段の preimage に含めない。
+descriptorDigest は self field を持たない qualified descriptor 全体の canonical JCS bytes から生成する。
+RemoteRegistryProtocolBinding.id は id field だけを空 string にし、ほかの digest-valued field を保持した full binding から生成する。
+QualifiedRegistryUniverseRecord、FinalizedRegistryCatalogRecord、RegistryEnvironmentCatalogRecord、RegistryProtocolCatalogRecord、RegistryCatalogPairCommitment、RegistryEnvironmentProjectionRecord は自身の digest field だけを空 string にし、入力として持つほかの digest-valued field を保持した full record から生成する。
+
+canonical list は normalization せず raw UTF-16 tuple 順で検証する。
+update mode は `replacement`、`stable-handle`、`journaled-in-place`、environment は `browser`、`server-request` の固定順とする。
+requirement と implementation は environment と role、dependency は source environment、source role、target qualified ID、target environment、target role、protocol は ID、owner group は qualified ID の順に並べる。
+DefinitionManifestRecord.registryProjectionSeeds は environment、qualified ID、role、protocol binding ID の順、projection の seeds は definition ID、environment、qualified ID、role、protocol binding ID の順に並べる。
+各 DefinitionManifestRecord の seed は自身の definitionId と同じ definitionId を持ち、list は strictly sorted かつ duplicate-free とする。
+projection の seeds も strictly sorted かつ duplicate-free とし、selected definition records が持つ同じ environment の seed の exact union と一致させる。
+protocol binding ID は null を digest string より前に置き、同じ `(definition ID, environment, qualified ID, role)` に異なる protocol binding ID を割り当てることを拒否する。
+RemoteRegistryProtocolTemplate は operation qualified ID、delivery adapter qualified ID、transport profile qualified ID、request schema digest、response schema digest、protocol codec metadata digest、authorization verifier metadata digest、receipt verifier metadata digest、protocol budget digest の順に並べ、完全に同じ tuple を重複できない。
+
+SC01 は schema、closed snapshot、role matrix、digest、fixed-point derivation と validator を提供する。
+SC03 は symbolic qualified universe を担当する。
+AF01 は candidate ごとの finalized global/environment/protocol catalog、pair commitment、exact seed projection、manifest core bytes、integrity table、metric vector を plan selection 前に完成させる。
+PE01 は plan selection 後に AF01 が完成させた selected candidate の core、projection、envelope、bootstrap を再生成せず emission する。
+RR01 は authenticated local catalog と projection の conformance を担当する。
+compiler から global catalog までの完全性は build TCB と acceptance test が検証し、runtime が source compiler semantics を再実行するという旧要求は supersede する。
 
 pure policy の ruleGraph は framework の versioned closed algebra で canonicalize し、PolicyEvaluator の build-time conformance vector と一致しなければならない。
 host-authoritative-async policy は authority、read、ordering、cancellation を SemanticFact で宣言し、coordinator-owned operation としてだけ実行する。
@@ -5111,7 +5379,8 @@ resolver は expected failure を `ReferenceResult` で返し、throw または 
 
 `defineRemoteOperation()` の `handler` は server root であり、returned `RemoteOperation` の call は author-visible な async protocol root である。
 compiler は handler body を client artifact に入れず、call を同期 local function に見せかけない。
-compiler は一つの qualified remote operation から browser の remote-client-transport/receipt-verifier と server-request の endpoint/handler/delivery binding を別々に生成する。
+compiler は一つの qualified remote operation から browser の remote-client-transport/receipt-verifier と server-request の endpoint/handler binding を別々に生成する。
+remote-server-delivery binding は descriptor が参照する remote-delivery-adapter entry が所有する。
 ProjectionManifestCore は browser binding、browser codec/policy dependency、public protocol binding metadata だけを含み、server handler、deliveryAdapterId の implementation、ledger、server-only import closure を含まない。
 handler の typed application failure は `RemoteApplicationResult` の `ok: false` で返す。
 caller は success、application failure、cancelled、expired、ambiguous、system failure を `RemoteOutcome` の closed union で受け取る。
@@ -5120,7 +5389,8 @@ attempt sequence は remote operation sequence、ledger、watermark と別 names
 capture reject、capture codec 不在、capture 中 cancel、reserve 前の authorization/admission failure は Promise rejection にせず、`operationId: null` の RemotePreAdmissionOutcome を返す。
 この path は remote operation sequence を発行しないため terminal hole を作らない。
 RemoteDeliveryAdapter.reserve() が成功した後の outcome だけが attemptId と non-null operationId の両方を持つ。
-RemoteDeliveryAdapter は registry export として実行可能であり、compiler は descriptor、implementation artifact、host attestation を同じ compiled registry entry に束縛する。
+RemoteDeliveryAdapter は registry export として実行可能であり、SC03 は descriptor と symbolic implementation locator を同じ universe entry に束縛する。
+AF01 は artifact finalization 後に implementation artifact、export、host attestation を finalized catalog entry に束縛する。
 ただし RemoteDeliveryAdapter、RemoteServerEndpoint、handler、ledger は server-request role であり、browser の RemoteOperation callable が直接 import または invoke しない。
 browser role は RemoteClientTransport と RemoteClientReceiptVerifier だけを持つ。
 browser runtime は private RemoteCapturedRequest から untrusted DTO の RemoteCapturedRequestWire を作り、private RemoteAuthorizationEvidenceIssuer で endpoint、protocol binding、operation、request commitment、attempt、principal、policy epoch、evaluation、expiry、nonce を束縛した RemoteAuthorizationEvidenceWire を発行する。
@@ -5217,7 +5487,7 @@ inputCodecId と outputCodecId の valueDomainId は remote descriptor の input
 failureCodecId の valueDomainId は applicationFailureSchemaId が指す FailureSchemaRegistryDescriptor.valueDomainId と一致しなければならない。
 deliveryAdapterId と deliveryPolicyId は compiled descriptor では qualified ID である。
 transportProfileId も qualified host-profile ID とし、protocol binding の transport profile、request/response schema、evidence/receipt verifier metadata、protocol budget digest と一致させる。
-delivery adapter dependency は remote-server-endpoint/handler と descriptor が選んだ delivery environment の role binding にだけ現れ、browser dependency binding に入れない。
+delivery adapter dependency は remote-server-endpoint から descriptor が選んだ remote-server-delivery role への binding としてだけ現れ、browser dependency binding に入れない。
 protocol binding の deliveryEnvironment と RemoteDeliveryAdapterRegistryDescriptor.deliveryEnvironment が異なる場合は diagnostic とする。
 delivery horizon は正の safe integer millisecond とし、idempotency key と transaction ledger の意味は参照した policy descriptor が定義する。
 
@@ -5231,7 +5501,8 @@ contract は少なくとも、identity、realm、call と construct、brand、va
 unknown fact kind、unknown registry kind、schema version mismatch は diagnostic とする。
 
 ExecutionContractSource は author input であり、artifact digest や canonical module URL を要求しない。
-CompiledExecutionContract は resolver と bundler の graph-completeness barrier 後にだけ生成し、source contract、implementation export、artifact bytes を content digest で束縛する。
+CompiledExecutionContract は resolver の module graph-completeness barrier 後に生成し、source contract、source content、symbolic implementation export を QualifiedRegistryUniverseRecord に束縛する。
+artifact bytes、artifact address、final protocol、environment catalog は bundler finalization 後に AF01 が別の finalized catalog として束縛する。
 source から直接証明できた事実を contract で上書きできない。
 
 imperative library が所有する DOM region は、author-facing `dom:external` reserved JSX directive と execution contract の ownership/effect fact を組み合わせる。
@@ -5318,10 +5589,10 @@ interface DynamicInstantiationIdentityPreimage {
   readonly slotInstanceId: string;
   readonly slotGenerationId: string;
   readonly expectedSlotEpoch: number;
-  readonly keyDigest: string;
+  readonly keyDigest: Sha256Digest;
   readonly principalContextId: string;
   readonly policyEpoch: string;
-  readonly graphPayloadDigest: string;
+  readonly graphPayloadDigest: Sha256Digest;
 }
 
 interface DynamicInstantiationEnvelope {
@@ -5339,11 +5610,11 @@ interface DynamicInstantiationEnvelope {
   readonly slotGenerationId: string;
   readonly expectedSlotEpoch: number;
   readonly key: CodecWireValue;
-  readonly keyDigest: string;
+  readonly keyDigest: Sha256Digest;
   readonly principalContextId: string;
   readonly policyEpoch: string;
-  readonly graphPayloadDigest: string;
-  readonly digest: string;
+  readonly graphPayloadDigest: Sha256Digest;
+  readonly digest: Sha256Digest;
   readonly symbols: readonly LocalSymbolRecord[];
   readonly nodes: readonly GraphNodeRecord[];
   readonly cells: readonly CellRecord[];
@@ -5376,7 +5647,7 @@ interface DynamicInstantiationBudget {
 }
 
 type SlotOperationTerminal =
-  | { readonly commit: "committed"; readonly terminalDigest: string }
+  | { readonly commit: "committed"; readonly terminalDigest: Sha256Digest }
   | {
       readonly commit: "not-committed";
       readonly reason:
@@ -5396,7 +5667,7 @@ interface SlotOperationTerminalRecord {
   readonly issuerEpoch: string;
   readonly sequence: string;
   readonly operationId: string;
-  readonly requestCommitment: string | null;
+  readonly requestCommitment: Sha256Digest | null;
   readonly terminal: SlotOperationTerminal;
 }
 
@@ -5700,7 +5971,7 @@ Accepted ADR の意味を直接書き換えず、必要な場合は superseding 
 - source、manifest、contract の conflict diagnostic
 - SemanticSubject、relation、qualified fact と registry ID の namespace 衝突検査
 - module map、import map、integrity、redirect の host profile ごとの適合性
-- compiled registry projection が nested ID をすべて qualified form に変換し、closed role requirement、browser/server-request 別 implementation/dependency projection、cross-environment protocol binding を固定し、browser role から server-request artifact closure を拒否すること
+- SC03 の qualified symbolic universe、AF01 の final/environment catalog と exact-seed fixed-point projection、PE01 の selected emission、RR01 の authenticated local validation が同じ registry identity と role closure に一致し、browser role から server-request artifact closure を拒否すること
 - finite GraphPathWitness の edge continuity、cycle rejection、path pattern、locator validation、private grant pin、reference cache identity が invocation 前に完了すること
 - codec graph edge slot table が wire path、edge kind、cardinality、witness ordinal を materialization 前に検証すること
 - BootAuthority が manifest 前に loader と failure channel を注入し、private capability を Realm、Document generation、module-map epoch、decoder、redirect policy に束縛すること
@@ -5764,7 +6035,7 @@ Accepted ADR の意味を直接書き換えず、必要な場合は superseding 
 26. prerequisite は definition と resolved instance を分け、allocation と commit の cycle を明示 transaction へ collapse する。
 27. async allocation は acquisition token と cleanup ledger を使い、hard admission と terminal bound を満たす deadline 後の result だけを LateSettlementLedger で処理する。
 28. graph-table は expansion budget、closed declarative または host-attested codec、疎配列、local/global/well-known symbol identity、reference と subscription capability を versioned wire schema で検証する。
-29. ProjectionManifestCore は definition、binding、compiled registry、artifact integrity、integration capability の許可関係を固定し、外側 envelope は plan と core integrity を束縛する。
+29. ProjectionManifestCore は definition、binding、registry catalog/projection、artifact integrity、integration capability の許可関係を固定し、外側 envelope は plan と core integrity を束縛する。
 30. execution contract は SemanticSubject、typed relation、qualified fact と registry ID を持つ semantic graph とする。
 31. activation capability は verified boot context と instance domain に束縛し、runtime failure と cleanup order を公開契約にする。
 32. remote call は success、application failure、cancel、expiry、ambiguity、system failure を closed outcome として返す。
@@ -5777,7 +6048,7 @@ Accepted ADR の意味を直接書き換えず、必要な場合は superseding 
 39. generation、allocation transaction、commit transaction identity は coordinator-issued incarnation、selector preimage、full instance scope から導出し、旧 continuation と新 generation を分離する。
 40. retention claim は target ごとに統合し、budgeted late DAG の reuse を terminal、または sink-side compare-and-mutate と publication に線形化した generation fence まで遮断する。
 41. graph-table carrier は host-side raw-byte attestation、canonical decoded text、JSON depth、symbol table を検証する。
-42. CompiledExecutionContract と compiled registry descriptor は nested reference まで qualified ID に変換し、source-local ID を runtime artifact へ残さない。
+42. CompiledExecutionContract の registry universe と finalized registry catalog は nested reference まで qualified ID に変換し、source-local ID を runtime artifact へ残さない。
 43. RuntimeFailure は具体的な internal subject と opaque public subject を分け、owner tombstone と hard-budgeted disposable snapshot から独立した FailureRef pin を作る。
 44. advanced activation は stable integration key から opaque instance と slot ref を解決し、expected slot epoch を instantiate-time CAS する PreparedInstantiationEnvelope だけを受け付ける。
 45. non-atomic writer は 103 と streaming を使わず、unknown external outcome を terminal として retry を禁止する。
@@ -5816,10 +6087,10 @@ Accepted ADR の意味を直接書き換えず、必要な場合は superseding 
 78. subscription transport event は local identity を運ばず、runtime wrapper が全 event に captured owner generation と wrapper ごとに一意な session incarnation を含む session identity を付与し、revision、terminal、acknowledgement の直前に current wrapper pair と原子的に照合する。
 79. subscription sequence namespace attestation は boot record に束縛された private authority だけが検証し、source の自己申告 digest を信頼しない。
 80. runtime-owned AuthorizationGrantClaim は extension へ渡さず、resolver、subscription source、remote adapter には purpose-bound AuthorizationGrantEvidence だけを渡す。
-81. remote operation の implementation binding は browser transport/verifier と server-request endpoint/handler/delivery の環境別 role に分け、client projection から server-only closure を排除する。
+81. remote operation の implementation binding は browser transport/verifier と server-request endpoint/handler に分け、delivery は remote-delivery-adapter entry が所有し、client projection から server-only closure を排除する。
 82. SubscriptionRecord は transport continuity、namespace、snapshot、cursor だけを handoff し、browser-local session identity を持たない。local resync command と source 向け transport request も分離する。
 83. remote protocol は AuthorizationGrantEvidence、RemoteCapturedRequest、branded receipt を直列化せず、proof を持つ untrusted wire DTO を host authority が検証して local private object を新規生成する。
-84. registry binding は kind ごとの closed environment/role table、role requirement、同一環境 import、環境別 deployment projection、cross-environment protocol binding を正本とする。
+84. registry binding は kind ごとの closed environment/role table、role requirement、同一環境 import、環境別 catalog/projection、cross-environment protocol binding を正本とする。
 85. remote wire は versioned canonical JCS UTF-8 frame とし、raw frame、depth、evidence、payload、materialization、codec work を RemoteProtocolBudget で effect admission 前に制限する。
 86. baseline の実行環境は build、server-request、browser に閉じる。remote operation の delivery adapter は server-request で実行し、第三 runtime への再委譲は暗黙 import ではなく将来の明示 protocol とする。
 87. subscription の owner generation、root binding、use schema、local session identity は runtime wrapper context にだけ保持し、source-facing open/resume/resync request または transport event へ渡さない。

@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: SC01 の RegistryId、closed descriptor、environment/role/protocol binding を SPEC と test から実装する。
+- 次の作業: SC01 の RegistryId、closed descriptor、25 role tuple、symbolic/final catalog schema、pair commitment、exact seed、fixed-point derivation を SPEC と test から実装する。SC03 は symbolic universe、AF01 は candidate catalog/projection/core、PE01 は selected emission を担当する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -83,13 +83,13 @@ package 間で使う internal export、package export map、build entry は、�
 | --- | --- | --- | --- | --- | --- | --- |
 | VG01 | docs と全 playground の実処理 gate | root、`docs/`、`playgrounds/{e2e,ssr,vanilla,getting-started-check,nuxt}/` | app ごとの workflow test と `vitest.config.ts` | package scripts、CI、Nuxt context repair | なし | completed |
 | ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | completed |
-| SC01 | RegistryId、descriptor、environment/role/protocol binding | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema と validation | ID01 | in-progress |
+| SC01 | RegistryId、descriptor、symbolic/final catalog、environment projection | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema、role matrix、fixed-point derivation と validation | ID01 | in-progress |
 | OC01 | ObservationContract、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | 同 directory の implementation | SC01 / ID01 | pending |
 | EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | pending |
 | EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | pending |
 | EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | pending |
 | SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / test | qualification 前後の contract schema | SC01 / ID01 | pending |
-| SC03 | contract qualification、conflict、dangling、kind diagnostic | transformer: `src/diagnostic/`、`src/contractCompiler/` | 各 directory の SPEC / test | diagnostic path と compiled registry projection | EG02 / SC01 / SC02 | pending |
+| SC03 | contract qualification、conflict、dangling、kind diagnostic | transformer: `src/diagnostic/`、`src/contractCompiler/` | 各 directory の SPEC / test | diagnostic path と artifact 非依存の QualifiedRegistryUniverse | EG02 / SC01 / SC02 | pending |
 | PL01 | function extraction、capture、mutable state、module closure | transformer: `src/moduleClosure/` | 同 directory の SPEC / test | NativeModuleClosure と client closure evidence | EG03 / SC03 | pending |
 | PL02 | root、read、effect、callback、module evaluation の導出 | transformer: `src/executionAnalysis/` | 同 directory の SPEC / test。既存 `transform/SPEC.typ` に superseding ADR | component-transparent semantic analysis | EG03 / SC03 / PL01 | pending |
 | DX01 | `render:client`、`activate:*`、`dom:external` lowering | transformer: `src/executionDirectives/` | 同 directory の SPEC / test。既存 JSX/tree ADR を supersede | reserved prop validation と root/region binding | PL02 | pending |
@@ -107,7 +107,7 @@ package 間で使う internal export、package export map、build entry は、�
 | SR01 | ExecutionGraph 由来の server renderer 生成 | transformer: `src/serverRenderer/` | 同 directory の SPEC / test。既存 mode SSR ADR を supersede | candidate ごとの generated server artifact | CN01 / RC01 | pending |
 | CP01 | mode 非依存の candidate compiler facade | transformer: `src/compile/` | 同 directory の SPEC / integration test | coordinator から candidate artifact graph までの compile entry | CG01 / SR01 | pending |
 | BR01 | module/contract graph と build tool の bridge | plugin: `src/buildCoordinator/` | 同 directory の SPEC / test | contract discovery、resolver bridge、graph-completeness barrier | CP01 / EG02 / SC03 | pending |
-| RR01 | compiled registry の runtime role validation | runtime: `src/runtimeRegistry/` | 同 directory の SPEC / test | environment/role projection、policy input、conformance | SC01 / SC03 / PJ01 | pending |
+| RR01 | registry catalog の runtime role validation | runtime: `src/runtimeRegistry/` | 同 directory の SPEC / test | authenticated local catalog、pair commitment、fixed-point projection conformance | SC01 / SC03 / PJ01 | pending |
 | MT01 | graph-table decode と materialization transaction | runtime: `src/materialization/` | 同 directory の SPEC / test | strict wire validation、codec preflight、budget、allocate/populate/commit | RR01 / MP01 / PJ01 | pending |
 | SE01 | server-side graph-table payload encoder | runtime: `src/ssr/payloadEncoder/` | 同 directory の SPEC / test | canonical carrier、codec enforcement、budget | MT01 / MP02 / RC01 | pending |
 | SR02 | RenderOperation、retry、cancel、header、stream | runtime: `src/ssr/renderOperation/` | 同 directory の SPEC / test | RenderOperation state machine と writer | RC01 / SR01 / SE01 | pending |
@@ -126,9 +126,9 @@ package 間で使う internal export、package export map、build entry は、�
 | OP02 | remote admission、wire、authorization、receipt、recovery | runtime: `src/remoteOperation/` | 同 directory の SPEC / race/authority test | private object、wire DTO、verified receipt state machine | OP01 / RP02 / LC01 / CP02 | pending |
 | ST01 | store snapshot API を新 materialization transport へ接続 | store: 既存 `src/defineAtomStoreSnapshot/`、runtime payload/materialization | store SPEC / replacement integration test | `AtomStoreSnapshot.hydrate()` は保持し、`data-dh-store` transport を置換 | MT01 / SE01 | pending |
 | CE01 | client semantic unit と runtime import artifact | transformer: `src/clientArtifactEmitter/` | 同 directory の SPEC / test | ClientScopeGraph から request-reachable module graph を生成 | CG01 / CR02 / DA04 / SP02 / OP02 | pending |
-| AF01 | candidate ごとの final bytes と integrity table | plugin: `src/artifactFinalizer/` | 同 directory の SPEC / deterministic fixture test | SCC collapse、address、exact bytes、manifest core integrity、metrics | BR01 / AR01 / CE01 / SR02 | pending |
+| AF01 | candidate ごとの final bytes と integrity table | plugin: `src/artifactFinalizer/` | 同 directory の SPEC / deterministic fixture test | address、exact bytes、registry catalog/pair/fixed point、manifest core integrity、metrics | BR01 / AR01 / CE01 / SR02 / PJ01 / SC01 | pending |
 | SL01 | finalization 後の cost selection と plan ID | transformer: `src/finalPlanSelector/` | 同 directory の SPEC / optimality/reproducibility test | semantic subset、cost vector、plan identity、witness | CN01 / AF01 / PI01 / OC01 | pending |
-| PE01 | selected projection の manifest/envelope/bootstrap emission | plugin: `src/projectionEmitter/` | 同 directory の SPEC / artifact test | fixed envelope、plan-bound manifest、zero-bootstrap output | SL01 / PJ01 / CR02 | pending |
+| PE01 | selected projection の manifest/envelope/bootstrap emission | plugin: `src/projectionEmitter/` | 同 directory の SPEC / artifact test | AF01 finalized core/projection の再生成なし emission、fixed envelope、zero-bootstrap output | SL01 / PJ01 / CR02 / SC01 | pending |
 | BO01 | cross-build candidate orchestration | plugin: `src/buildOrchestrator/` | 同 directory の SPEC / integration test | bridge、candidate finalization、selection、projection publication | BR01 / AF01 / SL01 / PE01 | pending |
 | BA01 | bundler-native finalization | plugin: `src/{vite,rollup,webpack,esbuild}/` | 各 adapter SPEC / real build fixture test | generateBundle、processAssets、onEnd integration | BO01 | pending |
 | AS01 | shared contract export surface の最終監査 | shared: `src/index.ts`、`package.json`、`tsdown.config.ts` | contract integration/type test | role-scoped subpath の固定と不要な root exposure の除去 | OC01 / SC02 / MP01 / RC01 / RP01 / SP01 / OP01 / PI01 / PJ01 | pending |
@@ -188,13 +188,13 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 
 ### SC01 execution registry contract
 
-- **設計要件**：source-local `RegistryId` と namespace-qualified identity を分離し、10種類の registry descriptor、許可された environment/role、同一環境 dependency、remote request-response protocol binding を closed discriminated schema として表す。
+- **設計要件**：source-local `RegistryId` と `registry:${Kind}` domain の qualified identity を分離し、10種類の descriptor、25個の合法 role tuple、symbolic/final catalog、exact seed、同一環境 dependency、remote protocol、owner-grouped projection を closed schema として表す。
 - **変更範囲**：`packages/shared/src/executionRegistry/` に `AGENTS.md`、`SPEC.typ`、`implementation.test.ts`、`implementation.ts` を追加し、`packages/shared/src/index.ts` から後続 compiler/runtime slice が使う contract と validator を公開する。
-- **SPEC と ADR**：`dathra.registry/1` descriptor、`dathra.registry-role/*/1` interface schema、`dathra.registry-protocol/1`、`dathra.registry-environment-projection/1` の closed schema と role matrix を新規 ADR で固定する。既存 Accepted ADR の変更はない。
-- **先行 test**：10 descriptor kind、local/qualified ID、role requirement、implementation binding、same-environment dependency、remote protocol binding、environment projection の成功系を追加する。unknown/extra/accessor field、kind/reference mismatch、illegal environment/role、interface schema mismatch、cross-environment import、non-remote protocol、delivery/server deployment mismatch、重複 binding を失敗系として追加する。
-- **影響範囲**：shared の pure contract/validation API と export surface だけを変更する。SC03 が source contract を qualification し、RR01 が runtime projection を検証するまで compiler/runtime の既存挙動は変更しない。
+- **SPEC と ADR**：`dathra.registry/1`、role interface、symbolic universe、environment catalog、catalog pair、protocol、projection seed、`dathra.registry-environment-projection/2` の closed schema、self digest、生成 DAG、fixed-point rule を新規 ADR で固定する。既存 Accepted ADR の変更はない。
+- **先行 test**：10 descriptor kind、local/qualified identity、25 legal role tuple、symbolic/final catalog、definition seed、required/request-reachable activation、dependency cycle、remote protocol expansion、pair commitment、projection fixed point の成功系を追加する。closed record違反、kind/reference mismatch、295 illegal role tuple、cross-environment import、noncanonical order、duplicate、missing/extra fixed-point record、protocol self-selection、deployment/digest mismatch を失敗系として追加する。
+- **影響範囲**：shared の pure contract、derivation、validation API と export surface だけを変更する。SC03 は artifact 非依存 universe、AF01 は final catalog/projection/core、PE01 は selected emission、RR01 は authenticated local conformance を後続 slice で接続する。
 - **依存順の理由**：SC01 は Phase 2 の contract だが、Phase 1 の OC01 が registry identity を参照する。独立レビュー済み matrix の依存順に従い、ID01 の直後、OC01 より前に実装する。
-- **edge case**：descriptor と binding は getter を実行せず closed data record として snapshot する。`build` は runtime role location に含めず、same-environment import の両 environment を一致させる。cross-environment edge は remote-operation の protocol binding だけに限定し、delivery environment と deployment identity の整合を検証する。
+- **edge case**：descriptor と binding は getter を実行せず closed data record として snapshot する。`build` role、cross-environment import、remote role の protocol 外 selection、arbitrary seed、catalog/projection の追加と欠落を拒否する。dependency cycle は finite owner/role fixed point で収束させ、self digest の生成 DAG に後段参照を入れない。
 - **完了証拠**：shared の test、typecheck、lint、build、root export、全 role matrix と closed-schema failure の coverage、独立レビュー、commit、push を必要とする。
 
 ## 完了した Slice の証拠
@@ -230,7 +230,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | A11 | source、manifest、contract conflict diagnostic | SC03 / PE01 | `packages/transformer/src/contractCompiler/implementation.test.ts` | pending | 未取得 |
 | A12 | semantic ID と registry ID の namespace 衝突検査 | SC01 / SC02 / SC03 | `packages/transformer/src/contractCompiler/implementation.test.ts` | pending | 未取得 |
 | A13 | module map、import map、integrity、redirect の host profile 適合性 | RR01 / CR02 / PE01 / BA01 | `packages/plugin/src/projectionEmitter/implementation.test.ts` | pending | 未取得 |
-| A14 | compiled registry projection と environment closure | SC03 / RR01 / CE01 | `packages/runtime/src/runtimeRegistry/implementation.test.ts` | pending | 未取得 |
+| A14 | qualified universe、final/environment catalog、fixed-point projection、runtime local closure | SC03 / AF01 / PE01 / RR01 | `packages/transformer/src/contractCompiler/implementation.test.ts`、`packages/plugin/src/artifactFinalizer/implementation.test.ts`、`packages/plugin/src/projectionEmitter/implementation.test.ts`、`packages/runtime/src/runtimeRegistry/implementation.test.ts` | pending | 未取得 |
 | A15 | GraphPathWitness と private grant/reference identity の事前検証 | SC03 / MT01 / RP02 | `packages/runtime/src/reference/implementation.test.ts` | pending | 未取得 |
 | A16 | codec graph edge slot table の materialization 前検証 | MT01 | `packages/runtime/src/materialization/implementation.test.ts` | pending | 未取得 |
 | A17 | BootAuthority の事前注入と capability binding | PJ01 / CR02 | `packages/runtime/src/bootstrap/implementation.test.ts` | pending | 未取得 |
@@ -271,7 +271,8 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | MATRIX-01 | completed | package/API/SPEC/test/implementation と acceptance owner を確定する | 59 row、未定義 dependency 0、cycle 0、AX01 閉包外 0 | 3回目の独立レビュー `ACCEPT` | この記録を matrix commit に含める |
 | VG01 | completed | docs と全 playground に実処理の build/fmt/test gate を設ける | 全 app production workflow、root aggregate、CI format/build/test | 5回目の独立レビュー `ACCEPT` | `8fe6c60` / push 済み |
 | ID01 | completed | canonical preimage、digest、qualified ID の共通 primitive | shared test/typecheck/lint/build と artifact inspection | 2回目の独立レビュー `ACCEPT` | `3816c34` / push 済み |
-| SC01 | in-progress | closed registry schema と environment/role/protocol binding | shared test/typecheck/lint/build と role matrix coverage | 実装後に新しい reviewer へ依頼する | 未 commit |
+| SC01-DESIGN | in-progress | flat projection と artifact 順序の矛盾を解消する | design type/prose、matrix、生成 DAG の整合確認 | proposal review と final actual diff review は `ACCEPT` | 文書 commit 待ち |
+| SC01 | in-progress | closed registry schema、catalog、fixed-point projection | shared test/typecheck/lint/build と exhaustive schema/derivation coverage | design review は `ACCEPT`。実装後に新しい reviewer へ依頼する | 未 commit |
 
 ## Review Log
 
@@ -288,6 +289,22 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | VG01 5回目 | Hilbert (`019f5240-f9b5-79e3-8523-3551bbebfe23`) | ACCEPT | 実質的な問題は残っていない。VG01 の全要件、既往リスク、tracked/untracked 差分、lockfile の変更範囲を確定した |
 | ID01 初回 | Kierkegaard (`019f525f-03b5-7da2-aa37-86fc578aac96`) | CHANGES REQUIRED | `Uint8Array.from()` が overridable iterator を実行する問題、qualified input の field 再読と accessor 実行、non-zero pad bit test の不足を採用した。SPEC と失敗 test を先に追加し、intrinsic typed-array copy、closed descriptor snapshot、同長 invalid vector へ修正した |
 | ID01 2回目 | Heisenberg (`019f526c-208a-7591-995c-ed105f435ee9`) | ACCEPT | 初回3件の根本解消、JCS、digest pad bit、domain separation、typed failure、public export、browser-compatible artifact を確認した。残余リスクは契約外の Proxy と cross-engine smoke test に限定される |
+| SC01 前提調査 | Plato (`019f5273-c284-7043-a6b3-eb435c8df012`) | CHANGES REQUIRED | identity domain、flat projection owner、canonical order、digest型、requirement意味、descriptor/executable境界、artifact順序の未決定を検出した |
+| SC01 projection | Euler (`019f5277-ddaf-7743-b2fd-7513f91422ab`) | DESIGN CHANGE REQUIRED | flat binding arrayがownerを失うことを確認し、owner-grouped projection `/2` を採用した |
+| SC01 design 初回 | Averroes (`019f527f-0c37-7531-ac5a-d50c6f8d1691`) | CHANGES REQUIRED | empty target group、requirement activation、source-local由来のruntime過剰保証、remote deployment closureを修正した |
+| SC01 design 2回目 | Mencius (`019f5286-9578-7e03-af6d-99de3d42507a`) | CHANGES REQUIRED | projectionにactive requirementを追加し、dependency先ownerのrequired roleまでfinite fixed pointで閉じるようにした |
+| SC01 design 3回目 | Wegener (`019f528c-9261-7970-bac6-19e97c80f3cf`) | CHANGES REQUIRED | arbitrary seedと不完全catalogを拒否するため、definition seedとenvironment catalogからprojectionを再計算する契約へ変更した |
+| SC01 design 4回目 | Banach (`019f5294-42a0-7792-94c6-72bc4ddfec11`) | CHANGES REQUIRED | catalogのexact owner/record、remote seed限定、implementation一意性、SC03とAF01のartifact責務、projection self digestを修正した |
+| SC01 design 5回目 | Turing (`019f52a7-91bb-7972-86b1-7d3a1eea47e6`) | CHANGES REQUIRED | global universeと`U_E`を分離し、全record exact projection、build pair validationとruntime local validationの境界を固定した |
+| SC01 design 6回目 | Faraday (`019f52ab-c66c-7680-8999-c2b2e9589ead`) | CHANGES REQUIRED | deployment、protocol catalog、pair commitmentのdigest生成順に残った循環を除去した |
+| SC01 design 7回目 | Euclid (`019f52ad-f5bc-77c3-8682-0f61a65c2106`) | ACCEPT | qualified descriptorからmanifest/planまでの生成 DAG、catalog completeness、seed、fixed point、artifact ordering、cross-environment boundaryにblocking findingがないことを確認した |
+| SC01 actual diff 初回 | Hume (`019f52b5-1e2f-7332-bbfa-4e4f9f90090f`) | CHANGES REQUIRED | protocol catalog schema、symbolic/final artifact ordering、runtime local validation、deployment equality、A14 ownerを正本へ転記した |
+| SC01 actual diff 2回目 | Lorentz (`019f52bc-bfb6-7ea1-8faa-afc64bfb9f63`) | CHANGES REQUIRED | endpoint identity導出、environment catalog入力、4 catalog digest、record別self digest、seed/template canonical tupleを追加した |
+| SC01 actual diff 3回目 | Zeno (`019f52c4-4e24-7ce3-ae94-435bba71e049`) | CHANGES REQUIRED | candidate coreをAF01へ移し、protocol/catalog順、required role、seed重複、self digest fieldを修正した |
+| SC01 actual diff 全文 | Carver (`019f52d1-3f01-7f32-a5f9-5835b31eac05`) | CHANGES REQUIRED | runtime brand、distributive role union、protocol-owned endpoint-handler relation、stale責務文、進捗状態を修正した |
+| SC01 actual diff 型閉包 | Gibbs (`019f52e1-d492-7e80-9098-22b92afe19d8`) | CHANGES REQUIRED | role locationを25個の完全なliteral tupleへ展開し、残っていたdigest/qualified IDのbrand漏れと再開スコープを修正した |
+| SC01 actual diff 最終精査 | Franklin (`019f52ee-aa86-7283-b5c0-2bc9abffaa23`) | CHANGES REQUIRED | `RealizationWitnessPreimage.targetHostProfileId`をqualified IDへ変更し、selection domainとenvironment catalogへの所属を必須にした。8個のtargeted probeと14個のTypeScript block結合はstrict diagnostics 0だった |
+| SC01 actual diff 最終 | Linnaeus (`019f52f7-4b4a-7500-bf0e-152e620e1a10`) | ACCEPT | 前回指摘の解消、14個のTypeScript block、targeted probe、digest DAG、責務分担、進捗台帳、actual diff全文にblocking findingがないことを確認した |
 
 ## Commit / Push Log
 
