@@ -2614,9 +2614,66 @@ unknownな依存をfull client moduleへ含めるfallbackとしても使わな�
 server-onlyはexecution placement、graph-tableはrequest-specific data carrierであり、mechanism kindではない。
 no-transferの意味、成立条件、ownerはcandidate legalityとplannerの独立決定へ残す。
 
-SC02 `TransferBinding`、SC01 registry、trustとのbridgeは後続MP01-DK2が所有する。
+#### transfer admission の owner pipeline
+
+MP01-DK2という独立したshared bridge APIは作らない。
+source claimのqualification、full execution analysisのacceptance、candidate admission、plan生成、finalization、selectionを、それぞれの既存ownerへ配置する。
+
+| stage | owner | output boundary |
+| --- | --- | --- |
+| registry schemaとsymbolic catalog | SC01 | trust acceptanceではないregistry contract |
+| source-local transfer claim | SC02A | 未信頼な`TransferBinding` |
+| qualifiedまたはcompiled transfer claim | SC02B | acceptanceではないqualified structural claim |
+| registry qualification | SC03-Q | kind、qualified ID、version、artifact-independent symbolic registry closureを検証したtransformer-local evidence |
+| source/module conflict | SC03-C | module signature、locator、source analysisとのnon-conflict evidence |
+| proof-domain trust admission | SC03-T | SC03-Q/C evidenceとtrusted proof acceptanceを束縛したcaller-unforgeable qualification evidence |
+| module closure | PL01 | native module closure evidence |
+| execution analysis claim | PL02-A | graph、SC03 evidence、PL01 closure、completeness scope、producer profile、proof domainを束縛したclaim |
+| full analysis acceptance | PL02-V | caller-unforgeableな`AcceptedExecutionAnalysis` |
+| candidate derivation | CN01-G | full accepted analysisから導出したfinite candidate set |
+| candidate legality | CN01-L | mechanism legality、candidate固有のroleとprotocol template、target capability、behavior summary、ObservationContract適合を束縛したclosed accepted candidate set |
+| candidate-specific plan | MP02 | accepted set内のcandidateごとにevidence identityを保持するplan |
+| finalized candidate evidence | AF01 | final artifact address、export、implementation、deployment-bound protocol binding、canonical evidence ID |
+| final selection | SL01 | finalized candidate集合から選んだcandidateとselection evidence |
+| runtime conformance | RR01 | authenticated local catalogまたはprojectionとcanonical evidence IDのruntime検証 |
+
+`AcceptedExecutionAnalysis`のownerはSC03ではない。
+SC03はPL02のgraph completenessを待たず、PL02がSC03 evidenceを消費する。
+この向きにすることでqualificationとfull analysisのdependency cycleを作らない。
+
+SC03-Q、SC03-C、SC03-T、PL02-A、PL02-V、CN01-G、CN01-Lは、それぞれ独立したreview unitとする。
+一つのSC03またはCN01 revisionへ複数validator、trust boundary、candidate solverを束ねない。
+
+bindingまたはmechanismごとの責務は次のとおりとする。
+
+| bindingまたはmechanism | SC03 | CN01 |
+| --- | --- | --- |
+| `none` | registryを解決せず、structural claimをqualification evidenceへ保持する | このbindingからpositive mechanismを生成しない |
+| `snapshot` | registryを解決せず、source/module conflictとproof scopeだけを束縛する | capture legality、cost、ObservationContract適合を検証する |
+| `codec` | exact codec kind、qualified ID、version、symbolic registry closureを検証する | candidate固有のcodec role、target capability、behavior legalityを検証する |
+| `reference` | exact resolverまたはpolicy kind、qualified ID、version、symbolic closureを検証する | candidate固有のrole、grantまたはprotocol template、target capability、behavior legalityを検証する |
+| `subscription` | exact subscription-source kind、qualified ID、version、symbolic closureを検証する | candidate固有のrole、protocol template、continuity requirement、behavior legalityを検証する |
+| `remote` | exact remote-operation kind、qualified ID、version、symbolic closureを検証する | candidate固有のrole、protocol template、target capability、behavior legalityを検証する |
+| `inline` | raw bindingからmappingしない | accepted semantics、equivalence、exposure、artifact capabilityからだけ導出する |
+| `target-native` | raw bindingからmappingしない | accepted semantics、native closure、target capabilityからだけ導出する |
+
+registry IDまたはversionを持たない`none`と`snapshot`へregistry field requirementを適用しない。
 kind文字列の一致だけで未信頼なclaimをadmitしてはならない。
-candidate behaviorとObservationContractの接続はCN01が所有する。
+
+SC03はartifact-independentなsymbolic registry universeだけを検証する。
+CN01はcandidate固有のrequired role、protocol template、target capabilityを検証する。
+AF01はfinal implementation、artifact address、deployment identityへ束縛したprotocol bindingを検証する。
+RR01はfinalized artifactのcanonical evidence IDとauthenticated local catalogまたはprojectionを使ってruntime conformanceを再検証する。
+
+transformer-private brand、raw `TransferBinding`、bare registry record、`AcceptedExecutionAnalysis`をbrowserへ配送して再admissionしない。
+
+CN01-Lはclosedかつcaller-unforgeableなaccepted candidate setを返す。
+MP02はそのset内の各candidateについてplanを生成し、candidate evidence identityを保持する。
+MP02へselected candidateを渡さず、MP02はfinal selectionを行わない。
+AF01がcandidateごとにfinalizeした後、SL01だけが最終candidateを選択する。
+
+variantごとに必要なqualification、proof、analysis、candidate legality evidenceが欠ける場合はtyped build diagnosticとする。
+別kind、full client module、runtime admission、eager hydration、runtime ignoreへfallbackしない。
 
 実装時は7 literalの双方向exact type fixture、除外literal、package-local facadeのruntime空性、明示的なtype-only consumer entryのemitを直接検査する。
 root未到達のbuild artifactだけをtype-only境界の証拠にしない。
