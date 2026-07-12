@@ -5,3 +5,4 @@ export type {
   ArtifactEntryBinding,
 } from "./entryBindingModel";
 export type { ArtifactDependencyBinding } from "./dependencyBindingModel";
+export type { ArtifactExportBinding } from "./exportBindingModel";

@@ -130,7 +130,7 @@ describe("artifact contract type domains", () => {
     expect(Object.keys(artifactContractApi)).toEqual([]);
   });
 
-  it("exports exactly five package-local types from their model modules", () => {
+  it("exports exactly six package-local types from five focused models", () => {
     const relativePath = "./implementation.ts";
     const source = readFileSync(new URL(relativePath, import.meta.url), "utf8");
     const sourceFile = createSourceFile(
@@ -213,10 +213,20 @@ describe("artifact contract type domains", () => {
           },
         ],
       },
+      {
+        isTypeOnly: true,
+        moduleSpecifier: "./exportBindingModel",
+        exports: [
+          {
+            exportedName: "ArtifactExportBinding",
+            localName: "ArtifactExportBinding",
+          },
+        ],
+      },
     ]);
   });
 
-  it("emits the facade and all four models only as module markers", () => {
+  it("emits the facade and all five models only as module markers", () => {
     expect(emitTypeScriptModule("./implementation.ts").trim()).toBe(
       "export {};",
     );
@@ -228,6 +238,9 @@ describe("artifact contract type domains", () => {
       "export {};",
     );
     expect(emitTypeScriptModule("./dependencyBindingModel.ts").trim()).toBe(
+      "export {};",
+    );
+    expect(emitTypeScriptModule("./exportBindingModel.ts").trim()).toBe(
       "export {};",
     );
   });
@@ -261,12 +274,15 @@ describe("artifact contract type domains", () => {
           join(outputDirectory, declarationFile),
         );
 
+        expect(exportedNames).toContain("Sha256Digest");
         expect(exportedNames).not.toContain("ArtifactAddressId");
         expect(exportedNames).not.toContain("ArtifactFinalizationTemplate");
         expect(exportedNames).not.toContain("ArtifactEntryRole");
         expect(exportedNames).not.toContain("ArtifactEntryBinding");
         expect(exportedNames).not.toContain("ArtifactDependencyBinding");
         expect(exportedNames).not.toContain("ArtifactDependencyKind");
+        expect(exportedNames).not.toContain("ArtifactExportBinding");
+        expect(exportedNames).not.toContain("ArtifactExportRole");
       }
     } finally {
       rmSync(outputDirectory, { force: true, recursive: true });

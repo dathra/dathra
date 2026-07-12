@@ -10,17 +10,22 @@ import type {
   ArtifactEntryRole as _RootArtifactEntryRoleMustNotExist,
   // @ts-expect-error Root publication belongs to AS01.
   ArtifactDependencyBinding as _RootArtifactDependencyBindingMustNotExist,
+  // @ts-expect-error Root publication belongs to AS01.
+  ArtifactExportBinding as _RootArtifactExportBindingMustNotExist,
+  // @ts-expect-error The accepted contract has no export role alias.
+  ArtifactExportRole as _RootArtifactExportRoleMustNotExist,
 } from "../index";
 import type {
   ArtifactAddressId,
   ArtifactDependencyBinding,
   ArtifactEntryBinding,
   ArtifactEntryRole,
+  ArtifactExportBinding,
   ArtifactFinalizationTemplate,
   // @ts-expect-error The accepted contract has no dependency kind alias.
   ArtifactDependencyKind as _ArtifactDependencyKindMustNotExist,
-  // @ts-expect-error Export binding belongs to the later AR01-XB revision.
-  ArtifactExportBinding as _ArtifactExportBindingMustNotExist,
+  // @ts-expect-error The accepted contract has no export role alias.
+  ArtifactExportRole as _ArtifactExportRoleMustNotExist,
   // @ts-expect-error Artifact kinds belong to the aggregate AR01-P revision.
   ArtifactKind as _ArtifactKindMustNotExist,
   // @ts-expect-error The artifact address preimage belongs to a later AR01 unit.
@@ -242,10 +247,12 @@ type ArtifactEntryBindingConsumer = readonly [
   ArtifactEntryBinding,
 ];
 type ArtifactDependencyBindingConsumer = ArtifactDependencyBinding;
+type ArtifactExportBindingConsumer = ArtifactExportBinding;
 
 export type {
   ArtifactAddressIdTypeFixture,
   ArtifactDependencyBindingConsumer,
   ArtifactEntryBindingConsumer,
+  ArtifactExportBindingConsumer,
   ArtifactFinalizationTemplateTypeFixture,
 };
