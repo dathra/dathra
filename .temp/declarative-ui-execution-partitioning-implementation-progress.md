@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: 収束確認が `ACCEPT` になった EG03 ExecutionGraph を検証済み scope で commit、push し、exact remote OID を確認する。
+- 次の作業: SC02 semantic fact、relation、source/compiled execution contract の設計要件と既存 shared package を調査し、high-cost 判定後に slice contract を確定する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -27,7 +27,7 @@
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
-| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01、EG01、EG02 は completed。EG03 ExecutionGraph は blocker 修正後の収束確認中 |
+| P01 | ExecutionGraph foundation | completed | ID01、SC01、OC01、EG01、EG02、EG03 の検証、独立レビュー、commit、push が完了した |
 | P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02 と SC03 は未着手 |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
@@ -87,7 +87,7 @@ package 間で使う internal export、package export map、build entry は、�
 | OC01 | ObservationContract、canonical trace language、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | canonical DFA、relation projection/inclusion、claim、instance witness の pure implementation | SC01 / ID01 | completed |
 | EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | completed |
 | EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | completed |
-| EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | in-progress |
+| EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | completed |
 | SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / test | qualification 前後の contract schema | SC01 / ID01 | pending |
 | SC03 | contract qualification、conflict、dangling、kind diagnostic | transformer: `src/diagnostic/`、`src/contractCompiler/` | 各 directory の SPEC / test | diagnostic path、artifact 非依存の QualifiedRegistryUniverse、policy proof-domain verifier profile admission | EG02 / SC01 / SC02 / OC01 | pending |
 | PL01 | function extraction、capture、mutable state、module closure | transformer: `src/moduleClosure/` | 同 directory の SPEC / test | NativeModuleClosure と client closure evidence | EG03 / SC03 | pending |
@@ -184,7 +184,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - 現行 solver は final bytes を持たないため、candidate generation と finalization 後 selection を CN01 と SL01 に分離した。
 - Phase 5 の finalization は Phase 6〜8 の client runtime semantic unit を実際に bundle してからでなければ cost を確定できないため、設計正本の dependency を根拠に AF01 と SL01 を runtime/activation/protocol 後へ配置した。
 
-## 現在の Slice
+## 直前に完了した Slice
 
 ### EG03 ExecutionGraph
 
@@ -215,8 +215,8 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - **収束 blocker 修正**：creator と parser の両方で descriptor-only graph cardinality preflight を `snapshotClosed` より前に実行し、invalidation edge ID と可変長 reference work を probe 前に課金した。SCC と final index は可変長 map、sort、output、candidate allocation の前に operation-local ledger を課金し、課金前の collection spread を除去した。getter 非実行、exact boundary、boundary-minus-one の test を追加し、設計正本の relation 列挙へ `scheduler-sequence` を追加した。
 - **収束確認結果**：同じ Banach が固定 hash の修正後 revision を限定再確認し、三つの blocker と `scheduler-sequence` follow-up の解消、新しい correctness blocker の不在を確認して `ACCEPT` とした。
 - **follow-up**：複数要素の invalidation path を使い、validation step の差分課金を固定値で検証する fixture は将来の回帰検出を強める。現 slice の correctness と完了を妨げないため、blocker にはしない。
-- **次の手順**：slice scope と staged file list を確認し、commit、push、exact remote OID の一致を記録する。
-- **完了証拠**：targeted red test、transformer test/typecheck/lint/type-aware lint/format/build、root/registration/scheduler/cycle fixture、独立実装レビュー、commit、push、exact remote OID を必要とする。
+- **commit と push**：並列レビューとhigh-cost分割規則を文書commit `84515f14a2ae54f2b458fc47a858ba4ac16aa8f6`、ExecutionGraph実装と設計正本をimplementation commit `4ebd2204e504c21d34e50db6e0b89b55e2c3df41` としてpushした。push後のlocal HEADとtracking branchは後者のexact OIDで一致した。
+- **完了証拠**：targeted 33 tests、transformer全14 files、709 tests、typecheck、通常lint 0件、type-aware lintの新規warning 0件、format、build、artifact非公開境界、root/registration/scheduler/cycle/budget fixture、独立実装レビュー、収束確認が成功した。commit、push、exact remote OIDも確認済みである。
 
 #### EG03 decomposition gate
 
@@ -239,7 +239,7 @@ EG03 は untrusted parser、many-to-many relation、fixed point、SCC を扱う�
 | reactive support | collector から record cap まで | updater root は複数 support から参照可能 | collector node ID | EG03 static support |
 | seed reachability | seed から root 数まで | root は seed 数まで | root support adjacency | EG03 derivation |
 
-## 直前に完了した Slice
+## その前に完了した Slice
 
 ### EG02 ModuleCoordinator
 
