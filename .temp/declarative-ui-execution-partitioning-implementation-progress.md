@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: EG02 の実装 commit を作成して push し、exact remote OID を記録する。
+- 次の作業: EG03 ExecutionGraph の qualification、TemplateNode/Occurrence identity、root/edge/fixed-point contract を調査し、独立設計レビュー後に SPEC/test を先行追加する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -27,7 +27,7 @@
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
-| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01、EG01 は completed。EG02 ModuleCoordinator の SPEC/test 先行へ移行 |
+| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01、EG01、EG02 は completed。EG03 ExecutionGraph の設計調査へ移行 |
 | P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02 と SC03 は未着手 |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
@@ -86,8 +86,8 @@ package 間で使う internal export、package export map、build entry は、�
 | SC01 | RegistryId、descriptor、symbolic/final catalog、environment projection | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema、role matrix、fixed-point derivation と validation | ID01 | completed |
 | OC01 | ObservationContract、canonical trace language、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | canonical DFA、relation projection/inclusion、claim、instance witness の pure implementation | SC01 / ID01 | completed |
 | EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | completed |
-| EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | in-progress |
-| EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | pending |
+| EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | completed |
+| EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | in-progress |
 | SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / test | qualification 前後の contract schema | SC01 / ID01 | pending |
 | SC03 | contract qualification、conflict、dangling、kind diagnostic | transformer: `src/diagnostic/`、`src/contractCompiler/` | 各 directory の SPEC / test | diagnostic path、artifact 非依存の QualifiedRegistryUniverse、policy proof-domain verifier profile admission | EG02 / SC01 / SC02 / OC01 | pending |
 | PL01 | function extraction、capture、mutable state、module closure | transformer: `src/moduleClosure/` | 同 directory の SPEC / test | NativeModuleClosure と client closure evidence | EG03 / SC03 | pending |
@@ -186,6 +186,16 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 
 ## 現在の Slice
 
+### EG03 ExecutionGraph
+
+- **設計要件**：immutable module graph と ObservationContract を基礎に、TemplateNode、Occurrence、qualified location/instance、root obligation、typed relation edge を deterministic graph として表現する。
+- **変更範囲**：`packages/transformer/src/executionGraph/` に四点セットを追加する。source AST からの具体的解析は PL02、semantic contract qualification は SC03 に残し、EG03 は graph schema、builder、canonical validation、fixed-point derivation に限定する。
+- **主要論点**：TemplateNode と動的 Occurrence の identity DAG、HostInstance/AgentCluster/Agent/Realm/Global/Principal qualification、multi-epoch membership、scheduler event、registration/materialization/root derivation、alias/ownership/lifetime/transfer/capability edge を閉じる。
+- **次の手順**：設計正本、EG02 snapshot、OC01 ObservationContract、後続 PL01/PL02 consumer を調査し、実装可能な API と failure contract を提案して独立レビューを収束させる。
+- **完了証拠**：targeted red test、transformer test/typecheck/lint/type-aware lint/format/build、root/registration/scheduler/cycle fixture、独立実装レビュー、commit、push、exact remote OID を必要とする。
+
+## 直前に完了した Slice
+
 ### EG02 ModuleCoordinator
 
 - **設計要件**：resolver/load/transform/extract を一つの observed transaction として実行し、multi-domain module graph を deterministic fixed point まで閉じ、stable observation の atomic commit 後だけ immutable snapshot を公開する。
@@ -206,9 +216,9 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - **artifact 検査**：ESM/CJS build に `node:`、`createHash`、`Buffer` はない。declaration は public constructor/factory、adapter transaction、commit/cache/observation 型を公開し、built ESM から `createModuleCoordinator`、`ModuleCoordinator`、`ModuleCoordinatorError` を function として実行確認した。
 - **独立設計レビュー**：entry metadata、profile-to-graph binding、closed stage key、owner reverse index、commit/cancel race、external evidence timing、domain injectivity、alias phase join、cache effect replay の指摘を反映し、Halley の3回目レビューは `ACCEPT` である。
 - **独立実装レビュー**：1回目の queue snapshot、cross-graph cache lineage、lint、実 delay fixture の4指摘をすべて回帰 test 付きで修正した。Parfit の2回目レビューは全指摘の解消と最新49 tests/gate を確認し `ACCEPT` である。
-- **完了証拠**：targeted red test、transformer test/typecheck/lint/type-aware lint/format/build、transaction race fixture、cache/invalidation fixture、独立実装レビューは成功した。残りは commit、push、exact remote OID 記録である。
+- **完了証拠**：targeted red test、transformer test/typecheck/lint/type-aware lint/format/build、transaction race fixture、cache/invalidation fixture、独立実装レビューが成功した。実装 commit `dd54efc3c2d3957a3301a4598e778c35995a9fe8` を push し、local と tracking branch の exact OID が一致することを確認した。
 
-## 直前に完了した Slice
+## 以前に完了した Slice
 
 ### EG01 immutable module graph snapshot
 
@@ -230,7 +240,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - **独立レビュー**：単一 graph、URL-only identity、site-bound request、opaque domain evidence の不足を指摘した設計レビューを取り込み、definition/runtime/cache identity、resolution evidence、source phase、loader namespace を分離した。ResolvedModuleRequest、二段階 external contract、request-site coverage evidence まで設計正本へ追記し、Kepler の最終 design review は `ACCEPT` である。実装レビューで condition sequence の重複/order を包含判定で失う問題を修正し、Bacon の2回目の独立実装レビューは `ACCEPT` である。
 - **完了証拠**：transformer test、typecheck、lint、type-aware lint、format、build、canonical vector、cycle/source-phase fixture、独立実装レビューが成功した。実装 commit `4efc445af301512fb627af6c7d568fee5a06de0f` を `origin/feature/declarative-ui-execution-partitioning` へ push した。
 
-## 以前に完了した Slice
+## さらに以前に完了した Slice
 
 ### OC01 observation contract
 
@@ -249,7 +259,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - **artifact 検査**：shared ESM/CJS build に `node:`、`createHash`、`Buffer` はなく、declaration は policy requirement、relation composition context、proof acceptance input、equality input を公開する。
 - **完了証拠**：shared test、typecheck、lint、format、build、browser-compatible artifact inspection、known canonical vector、独立実装レビュー、commit、push を必要とする。
 
-## さらに以前に完了した Slice
+## 過去の Slice
 
 ### SC01 execution registry contract
 
