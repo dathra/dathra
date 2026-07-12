@@ -1,4 +1,4 @@
-= source execution contract identity, subject, fact, relation, export, registry, and envelope model
+= source execution contract identity, subject, fact, relation, export, registry, envelope, and budget model
 
 #import "/SPEC/functions.typ": *
 #import "/SPEC/settings.typ": *
@@ -22,7 +22,9 @@ SC02A6は10種類のregistry source collectionをtype-only modelとして追加�
 
 SC02A7はSC02A1からSC02A6のtypeを束ねる未信頼なsource envelopeをtype-only modelとして追加する。
 
-unknown input preflight、budget、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
+SC02A8Aは15種類のframework hard capを狭めるbudget contractと、一つのoperation内だけで使用するinternal ledgerを追加する。
+
+unknown input preflight、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
 
@@ -143,6 +145,24 @@ unknown input preflight、budget、strict parser、closure、creator、freeze、
     - SC02A8からSC02A13がdescriptor preflight、budget、strict parse、canonical order、duplicate rule、closure、creator、freeze、digestを所有する
     - qualified、compiled、accepted、trust、authority、root publicationはこのsliceで追加しない
     - SC02A7はruntime operation、runtime value、browser behaviorを追加しない
+  ],
+)
+
+#adr(
+  header("budget contractとoperation-local ledgerをhostile data traversalから分離する", Status.Accepted, "2026-07-13"),
+  [
+    budget validation、descriptor capture、cycle detection、source profile、clone、freeze、canonical measurementを一つのrevisionへ含めると、独立してgreenにできるruntime責務が結合し、failure時のcounter semanticsと公開境界を単独で検査できない。
+  ],
+  [
+    `ExecutionContractBudget`は15個のoptional readonly fieldだけを持つnarrow-only overrideとする。
+    internal ledgerはdepth以外をoverflow-safeなcumulative total、depthを1-based active depthのpeakとして扱い、一つのpublic operation内でresetしない。
+    SC02A8Aはbudget record validationとledgerだけを所有し、descriptor以降のhostile data traversalを後続revisionへ残す。
+  ],
+  [
+    - package-local facadeへ追加するsurfaceはtype-only `ExecutionContractBudget`だけとする
+    - ledger、factory、counter type、default hard capはinternal moduleだけに保持する
+    - shared root、generated root declaration、runtime facadeへbudget runtime valueを公開しない
+    - descriptor、profile、clone、freeze、meter、parser、public source operationを追加しない
   ],
 )
 
@@ -612,6 +632,44 @@ unknown input preflight、budget、strict parser、closure、creator、freeze、
   ],
 )
 
+#interface_spec(
+  name: "Source execution contract budget override",
+  summary: [
+    source execution contract operationが共有するframework hard capをcallerが狭めるためのtype-only contractを提供する。
+  ],
+  format: [
+    ```typescript
+    interface ExecutionContractBudget {
+      readonly maximumInputDepth?: number
+      readonly maximumInputDataNodes?: number
+      readonly maximumInputProperties?: number
+      readonly maximumInputArrayLength?: number
+      readonly maximumInputStringCodeUnits?: number
+      readonly maximumFacts?: number
+      readonly maximumRelations?: number
+      readonly maximumExports?: number
+      readonly maximumRegistryEntries?: number
+      readonly maximumRegistryImplementations?: number
+      readonly maximumReferences?: number
+      readonly maximumSemanticPathSegments?: number
+      readonly maximumCanonicalBytes?: number
+      readonly maximumCanonicalWorkSteps?: number
+      readonly maximumValidationSteps?: number
+    }
+    ```
+  ],
+  constraints: [
+    - exactに上記15 fieldだけをoptionalかつreadonlyで持ち、各present valueはnumberとする
+    - default hard capは順に64、200,000、1,000,000、200,000、20,000,000、200,000、200,000、200,000、200,000、400,000、10,000,000、2,000,000、200,000,000、20,000,000、20,000,000とする
+    - runtime overrideは`undefined`、current `Object.prototype`を持つrecord、またはnull-prototype recordだけを受理する
+    - present valueは0以上、対応するdefault hard cap以下のsafe integerとする
+    - extra string field、symbol、hidden property、accessorを拒否する
+    - budget argument全体のfailure pathは`["budget"]`、field failure pathは`["budget", field]`とする
+    - package-local facadeへ`ExecutionContractBudget`だけをtype-only exportする
+    - ledger、factory、counter type、default hard capをruntime facadeまたはshared rootへ公開しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -653,6 +711,50 @@ unknown input preflight、budget、strict parser、closure、creator、freeze、
   ],
   postconditions: [
     - error codeとpath snapshotは変化しない
+  ],
+)
+
+#behavior_spec(
+  name: "budget overrideをoperation-local ledgerへ解決する",
+  summary: "closedなnarrow-only overrideとframework hard capからfresh ledgerを作成する。",
+  preconditions: [
+    - budget argumentは`undefined`またはclosedなplain/null-prototype recordである
+  ],
+  steps: [
+    - own keyとdescriptorをgetter実行なしで検査する
+    - present overrideを対応するframework hard capと比較する
+    - defaultとoverrideを解決してfresh ledgerを作成する
+  ],
+  postconditions: [
+    - operationごとにusageを共有しないfresh ledgerを返す
+    - overrideがないcounterにはframework hard capを適用する
+  ],
+  errors: [
+    - invalidなroot recordを`invalid-closed-record`と`["budget"]`で拒否する
+    - extra fieldまたはinvalid valueを`invalid-field`とfield pathで拒否する
+    - hidden propertyまたはaccessorを`invalid-closed-record`とfield pathで拒否する
+  ],
+)
+
+#behavior_spec(
+  name: "operation-local budget usageを課金する",
+  summary: "一つのoperationにおけるcumulative workとpeak depthをhard limit内に制限する。",
+  preconditions: [
+    - callerは一つのpublic operation用に作成したfresh ledgerを保持している
+  ],
+  steps: [
+    - depth以外の14 counterを`chargeTotal(counter, amount)`でcumulativeに課金する
+    - `maximumInputDepth`を`observePeak("maximumInputDepth", depth)`で1-based peakとして観測する
+  ],
+  postconditions: [
+    - exact limitまでのtotalまたはpeakを受理する
+    - failed incrementをusageへ適用せず、後続の合法な課金を継続できる
+    - ledgerはnested phase用のreset operationを提供しない
+  ],
+  errors: [
+    - overflowまたはlimit超過を`budget-exceeded`で拒否する
+    - error messageにcounter、limit、attempted valueを含める
+    - failure pathは課金callerが渡したcurrent operation pathを保持する
   ],
 )
 
@@ -767,6 +869,23 @@ unknown input preflight、budget、strict parser、closure、creator、freeze、
     - source modelがexactに2 typeだけをexportし、source modelとtype fixtureがexport marker以外のruntime codeまたはruntime import edgeを生成しないことを検査する
     - package-local facadeがsource modelから2 typeだけをtype-only exportし、runtime valueは`ExecutionContractError`と`factId`だけであることを検査する
     - package rootのsourceとbuild declarationへ公開されず、SC01の`RegistrySourceEntry`が存在するpositive controlと対比して検査する
-    - SC02A8からSC02A13のparser、validator、budget、preflight、canonical、duplicate、closure、creator、freeze、digest APIと、qualified、compiled、accepted、trust、authority APIを追加しないことを検査する
+    - source model自体にはSC02A8からSC02A13のparser、validator、budget、preflight、canonical、duplicate、closure、creator、freeze、digest APIと、qualified、compiled、accepted、trust、authority APIを追加しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Budget contract and operation-local ledger",
+  summary: [
+    後続のsource operationが共有するhard cap contractと、operation間でusageを共有しないinternal ledgerを提供する。
+  ],
+  test_cases: [
+    - 15個のexact optional readonly number fieldを双方向type fixtureで検査する
+    - default hard cap、0 override、exact limit、limit+1を全15 counterで検査する
+    - current `Object.prototype`とnull-prototype recordを受理し、custom prototype、extra、symbol、hidden、accessor、invalid safe integer、hard cap拡張を拒否する
+    - budget root pathとfield path、counter、limit、attempted valueを持つfailureを検査する
+    - depth以外のcumulative total、depthの1-based peak、overflow-safe failure、failed incrementの非適用を検査する
+    - fresh ledgerのoperation isolationとreset API不在を検査する
+    - package-local facadeへtypeだけを追加し、ledger、factory、counter type、default hard capがruntime facade、shared root、generated root declarationへ公開されないことを検査する
+    - descriptor、profile、clone、freeze、meter、parser、public source operationが追加されないことを検査する
   ],
 )

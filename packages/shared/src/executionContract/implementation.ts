@@ -17,3 +17,4 @@ export type {
   ExecutionContractSourceInput,
   ExecutionContractSource,
 } from "./sourceModel";
+export type { ExecutionContractBudget } from "./budget";

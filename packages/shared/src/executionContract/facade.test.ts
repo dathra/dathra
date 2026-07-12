@@ -104,6 +104,11 @@ describe("execution contract facade", () => {
         typeOnly: true,
         names: ["ExecutionContractSourceInput", "ExecutionContractSource"],
       },
+      {
+        moduleSpecifier: "./budget",
+        typeOnly: true,
+        names: ["ExecutionContractBudget"],
+      },
     ]);
   });
 

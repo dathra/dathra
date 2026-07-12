@@ -2,6 +2,8 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
   // @ts-expect-error AS01 owns shared-root publication.
+  type ExecutionContractBudget as _RootExecutionContractBudgetMustNotExist,
+  // @ts-expect-error AS01 owns shared-root publication.
   type ExportExecutionContract as _RootExportExecutionContractMustNotExist,
   // @ts-expect-error AS01 owns shared-root publication.
   type FactEndpoint as _RootFactEndpointMustNotExist,
@@ -32,6 +34,7 @@ import {
   // @ts-expect-error SC01 owns registry entries; this facade does not re-export them.
   type RegistrySourceEntry as _RegistrySourceEntryMustNotExist,
   factId,
+  type ExecutionContractBudget,
   type ExecutionContractErrorCode,
   type FactId,
 } from "./implementation";
@@ -352,7 +355,7 @@ describe("ExecutionContractError", () => {
     );
   });
 
-  it("keeps the subject, fact, relation, and export models type-only at the package-local facade", () => {
+  it("keeps schema models and budget type-only at the package-local facade", () => {
     expectTypeOf<SemanticFact["kind"]>().toEqualTypeOf<SemanticFactKind>();
     expectTypeOf<FactEndpoint<"read">>().toEqualTypeOf<{
       readonly factId: FactId;
@@ -370,7 +373,15 @@ describe("ExecutionContractError", () => {
     expectTypeOf<
       ExportExecutionContract["transfer"]
     >().toEqualTypeOf<TransferBinding>();
+    expectTypeOf<
+      Required<ExecutionContractBudget>[keyof ExecutionContractBudget]
+    >().toEqualTypeOf<number>();
     expect("fail" in executionContractApi).toBe(false);
+    expect("BudgetLedger" in executionContractApi).toBe(false);
+    expect("createBudgetLedger" in executionContractApi).toBe(false);
+    expect("DEFAULT_EXECUTION_CONTRACT_BUDGET" in executionContractApi).toBe(
+      false,
+    );
   });
 });
 
