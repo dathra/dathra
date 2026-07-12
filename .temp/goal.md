@@ -71,7 +71,8 @@ historical または superseded と明記された過去案も、現行の決定
 ## 4. 独立レビューを並列実行する
 
 提案を作ったセッション自身だけで評価を完結させてはいけません。
-同一 revision の提案を、互いに独立した新しい sub-agent へ並列に渡してください。
+同一 revision の提案を、後述するrisk tierで定めた一人以上の新しい独立sub-agentへ渡してください。
+reviewerが複数の場合は、互いに独立したsessionへ並列に渡してください。
 レビュー中に提案を変更せず、全 reviewer が同じ入力を評価できる状態を維持してください。
 dependencyとwrite setが独立した複数のreview unitは、unitごとにrevisionとreviewer setを固定したうえで同時にレビューして構いません。
 異なるunitの指摘と収束状態を混ぜず、各unitの結果を別々に統合してください。
@@ -86,8 +87,14 @@ manifestは次の入力を固定します。
 - decision excerptごとのcanonical source path、stable decision IDまたは決定的な抽出command、抽出結果のSHA-256とGit blob OID
 - 上記blobをcurrent dependency baseへ重ねて作ったsynthetic Git treeまたはcommit OID
 
+manifestの機械的整合性は、reviewerごとに同じhash、blob、dependency、decision anchorを再計算させず、メインセッションが一回の決定的なreview attestationとして検証してください。
+attestationは、manifest自身のSHA-256、proposal、write set、dependency、decision anchor、synthetic treeまたはcommit、実行したgate commandと終了状態をmanifest revisionへ束縛します。
+reviewerはmanifest hash、synthetic commit、attestationのbindingを確認し、担当論点に関係する入力だけをspot checkしてください。
+attestationに不整合がある場合、またはreviewerが具体的な疑義を示した場合だけ、対象を限定して再計算またはtestを再実行してください。
+semantic correctness、owner boundary、実装可能性の評価を、機械的OID照合の重複で置き換えてはいけません。
+
 共有文書から本文をmanifestへcopyするだけではdecision anchorになりません。
-review開始時、結果統合直前、commit直前に同じ抽出commandをsource pathへ再実行し、抽出結果をmanifestと照合してください。
+メインセッションはreview開始前、結果統合直前、commit直前に同じ抽出commandをsource pathへ再実行し、抽出結果をmanifestと照合してattestationを更新してください。
 共有文書全体のhashは固定せず、関連excerptの変更だけを検出してください。
 
 workerは実装と検証を終え、実行中commandを終了し、対象fileのwrite ownershipをメインセッションへ返してからmanifestを発行します。
@@ -110,25 +117,42 @@ proposal、write-set membership、対象file content、dependency content、deci
 提案本文と主要なfixtureの合計が大きくなる見込み、または reviewer が互いに独立した parser、validator、solver、state machine、identity operation を三つ以上追う必要がある場合は、review unit の再判定を必須とします。
 文章量やsource file数だけを分割理由にはしませんが、この再判定を省略してはいけません。
 
-通常は二人の reviewer を使ってください。
-次のいずれかに該当する提案では三人の reviewer を使ってください。
+proposalを固定する前に、`low`、`medium`、`high`のrisk tierと判定根拠を明記してください。
+このrisk tier、attestation、output limit、delta convergence規則は、新たに固定するrevisionから適用し、すでにreviewを開始したrevisionへ遡及適用しません。
+
+`low`は一人のreviewerを使います。
+次のすべてを満たす提案だけを`low`にできます。
+
+- 一つのpackage-local contractまたはtype-only surfaceだけを変更する
+- runtime behavior、parser、validator、state transitionを変更しない
+- public API、wire schema、永続identity、trustまたはauthority boundaryを変更しない
+- 既存のAccepted decisionを適用し、新しい不可逆な意味判断を追加しない
+
+`medium`は二人のreviewerを使います。
+`low`にも`high`にも該当しないproposalを`medium`とします。
+
+`high`は三人のreviewerを使います。
+次のいずれかに該当する提案を`high`とします。
 
 - 複数 package の責務境界を変更する
 - identity、trust boundary、authority を扱う
 - concurrency、race、state machine を扱う
+- untrustedな可変長inputのparserまたはserializerを扱う
+- server/client artifact inclusionまたはruntime admissionを変更する
 - 公開 API、wire schema、永続 identity を決定する
 - 後から変更するコストが特に高い
 
 reviewer には提案、設計文書のパス、関連コードの場所、評価基準を渡し、特定の結論へ誘導してはいけません。
 各 reviewer 自身にも、設計文書と関連コードを確認させてください。
 
-reviewer の役割は次のように分け、同じ論点だけを重複して調査させないでください。
+reviewer の役割は次のように分け、全員へ同じgeneral reviewを依頼しないでください。
 
-1. contract、identity、trust boundary、合意済み事項との整合性
-2. 実装可能性、性能、budget、test、実コードとの接続
-3. 最終目標への適合性、責務境界、過剰設計（reviewer が三人の場合）
+1. primary reviewer：contract correctness、合意済み事項、blocker全体
+2. implementation reviewer：実装可能性、性能、budget、test、実コードとの接続（`medium`と`high`）
+3. boundary reviewer：identity、trust、authority、最終目標、package boundary、過剰設計（`high`）
 
-reviewer には、担当範囲に加えて次の共通事項を評価させてください。
+primary reviewerには次の共通事項をすべて評価させてください。
+implementation reviewerとboundary reviewerは担当範囲と交差する項目だけを評価し、primaryの前提に具体的な矛盾を見つけた場合は担当外でも報告してください。
 
 - 提案内部に矛盾がないか
 - 現行実装、最終目標、外部仕様に関する前提が正しいか
@@ -141,6 +165,13 @@ reviewer には、担当範囲に加えて次の共通事項を評価させて�
 
 各指摘には、重大度、根拠、影響、推奨する修正を含めさせてください。
 根拠のない一般論や好みだけの指摘は受け入れないでください。
+
+reviewerへ渡すreview capsuleは、決定内容、変更された不変条件、担当論点、関連diff、decision anchor、attestationへの参照を2,000 tokens以内の目安でまとめてください。
+canonical proposal、manifest、diff、test artifactはcapsuleへ全文転記せず、固定pathまたはOIDから必要な箇所を読ませてください。
+reviewerの通常出力は800 tokens以内を目安とし、`verdict`、blocker最大3件、follow-up最大3件、必要最小限の根拠だけを返させてください。
+4件以上の指摘がある場合は省略せず、同じroot causeの指摘を最大3 groupへまとめてください。安全にまとめられない場合は上限を超え、理由を明記してください。
+成功したhash照合、test、build結果を長文で再掲せず、attestationのIDまたは固定revisionを参照させてください。
+criticalな証明をこの上限内で表せない場合だけ超過を許可し、超過理由を明記させてください。
 
 ## 5. 評価結果を統合する
 
@@ -175,7 +206,9 @@ reviewer 同士の結論が対立した場合は、メインセッションが�
 `blocker` を取り込んで提案を意味上変更した場合は、最初の並列レビューに参加していない一人の独立した sub-agent へ収束確認を依頼してください。
 収束確認は原則一回とし、文章表現または `follow-up` だけを変更した場合は実施しないでください。
 
-収束確認では、採用した `blocker` が解消され、新しい correctness blocker が生じていないことだけを確認させてください。
+収束確認用capsuleは、初期revision、採用したblocker、変更したblobとhunk、影響するdependency closure、targeted gate attestationだけを含めてください。
+収束reviewerには、採用した`blocker`の解消と変更範囲に新しいcorrectness blockerが生じていないことだけをdelta reviewさせ、初期snapshot全体を最初から再評価させないでください。
+write set、owner、public contract、trust boundaryがblocker解消範囲を越えて変わった場合はdelta convergenceを使わず、risk tierを再判定した新しい初期revisionとしてreviewしてください。
 新しい疑問が出た場合も、同じ提案に対する全面レビューを繰り返してはいけません。
 設計判断を変え得る疑問は、対象を限定した調査、一次資料、test、または最小の実行可能な probe で検証してください。
 収束確認を待つ間に停止するのは、対象unitとそのdownstream dependencyだけです。

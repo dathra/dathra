@@ -219,6 +219,11 @@ API directory内のSPEC、test、production moduleは担当laneだけが編集�
 decision anchorはcanonical source path、stable decision IDまたは決定的な抽出command、抽出結果のSHA-256とGit blob OIDを持ちます。
 共有文書からcopyした抜粋だけをanchorとしてはいけません。
 
+manifestの全path、mode、hash、blob、dependency、decision anchor、synthetic commit、gate commandを一回の決定的なreview attestationで検証してください。
+attestationはmanifest SHA-256とsynthetic commitへ束縛し、メインセッションがreview開始前、結果統合直前、commit直前に再生成または再検証してください。
+reviewerごとに全OID照合とfull gateを重複実行させず、reviewerはattestation bindingと担当論点に必要な対象だけをspot checkします。
+具体的な不整合またはcorrectness上の疑義がある場合は、対象を限定したhash照合、test、artifact inspectionを追加できます。
+
 workerは実装と検証を終え、実行中commandを終了し、write ownershipをメインセッションへ返してからreviewへ移ります。
 メインセッションは固定blobをGit object databaseへ保存し、current dependency baseへ重ねたsynthetic commitをbranch移動なしで作成します。
 reviewerはそのisolated snapshotを評価し、shared worktreeを正本にしません。
@@ -420,18 +425,23 @@ write setとdependencyが独立した複数sliceは、それぞれのrevisionを
 
 reviewerにはslice-local manifestを渡し、manifestに含まれないbranch HEADの前進やdisjoint write setの変更を`REVIEW INVALID`にしないよう明示してください。
 共有設計文書を参照させる場合は文書全体のhashではなく、source pathと決定的な抽出規則を持つdecision anchorをmanifestへ固定してください。
-reviewerはmanifestのsynthetic commitをisolated worktreeで読み、開始時と終了時にmanifest自身と固定OIDを確認してください。
+reviewerはmanifestのsynthetic commitをisolated worktreeで読み、manifest hash、synthetic commit、review attestationのbindingを確認してください。
 
-通常は二人の reviewer を使ってください。
-複数 package の責務境界、identity、trust boundary、authority、concurrency、race、state machine、公開 API、wire schema、永続 identity のいずれかを変更する slice では三人を使ってください。
+review開始前にrisk tierと根拠をproposalと進捗文書へ記録してください。
+このrisk tier、attestation、output limit、delta convergence規則は、新たに固定するrevisionから適用し、すでにreviewを開始したrevisionへ遡及適用しません。
+
+- `low`：一package内のtype-onlyまたはpackage-local contractで、runtime behavior、parser、public API、wire、identity、trust、authorityを変更しないslice。reviewerは一人
+- `medium`：`low`と`high`のどちらにも該当しないslice。reviewerは二人
+- `high`：複数package境界、identity、trust、authority、concurrency、race、state machine、untrusted可変長parser/serializer、server/client artifact inclusion、runtime admission、公開API、wire schema、永続identityのいずれかを変更するslice。reviewerは三人
 
 reviewer の役割は次のように分けてください。
 
-1. correctness、race、failure、cleanup、型安全性
-2. SPEC / test / implementation の整合性、artifact、性能、公開 API
-3. 最終目標への適合性、package boundary、暗黙 fallback、過剰設計（reviewer が三人の場合）
+1. primary：correctness、failure、型安全性、既決定事項との整合性
+2. implementation：SPEC / test / implementation、artifact、性能、budget、公開 API（`medium`と`high`）
+3. boundary：最終目標、identity、trust、authority、race、package boundary、暗黙fallback、過剰設計（`high`）
 
-すべての reviewer には、少なくとも次を確認させてください。
+primary reviewerには、少なくとも次をすべて確認させてください。
+implementation reviewerとboundary reviewerは担当範囲と交差する項目だけを確認し、primaryの前提に具体的な矛盾を見つけた場合は担当外でも報告してください。
 
 - 設計正本、SPEC、test、implementation が一致するか
 - old hydration semantics または暗黙 fallback が残っていないか
@@ -443,6 +453,11 @@ reviewer の役割は次のように分けてください。
 - test が implementation detail ではなく契約を検証しているか
 - unrelated change や未完了 placeholder が混入していないか
 
+reviewerへ渡すreview capsuleは2,000 tokens以内を目安とし、sliceの決定、変更した不変条件、担当論点、関連diff、decision anchor、attestation参照だけを含めてください。
+proposal、manifest、source、test outputをcapsuleへ全文転記せず、固定pathまたはOIDから必要な箇所を読ませてください。
+reviewerの通常出力は800 tokens以内、blocker最大3件、follow-up最大3件を目安とし、成功した機械検証を繰り返し列挙させないでください。
+4件以上の指摘は省略せず同じroot causeの最大3 groupへまとめ、安全にまとめられない場合は上限超過理由を明記させてください。
+
 メインセッションは全 review result の重複を除き、根拠とコードを照合して、正しい指摘だけを採用してください。
 一人がblockerを報告しても、同じfixed revisionの初期reviewer setを停止せず、全roleの結果を回収してから修正してください。
 外部変更でfixed inputが無効になった場合だけ早期停止でき、その場合は新revisionへ通常人数の初期reviewer setを再実行してください。
@@ -453,7 +468,10 @@ reviewer の役割は次のように分けてください。
 レビュー上の `blocker` は修正必須の指摘を表し、「自律実行と blocker」で定義する外部 blocker や goal の停止状態を意味しません。
 
 `blocker` を修正した場合は、最初の並列レビューに参加していない一人の独立した sub-agent に収束確認を依頼してください。
-収束確認は原則一回とし、残る不確実性は追加の全面レビューではなく、SPEC、test、最小実装、または artifact inspection で検証してください。
+収束確認は原則一回とし、初期revision、採用blocker、変更blobとhunk、影響dependency closure、targeted gate attestationだけを渡すdelta reviewにしてください。
+収束reviewerはblocker解消と変更範囲のregressionだけを確認し、初期snapshot全体を再評価しません。
+write set、owner、public contract、trust boundaryがblocker解消範囲を越えて変わった場合は、risk tierを再判定した新しい初期reviewを実行してください。
+残る不確実性は追加の全面レビューではなく、SPEC、test、最小実装、または artifact inspection で検証してください。
 収束確認を待つ間に停止するのは、そのrevisionとdownstream dependencyだけです。
 ready queueの無関係なlaneは停止せず、手順2の再計算結果に従って進めてください。
 
