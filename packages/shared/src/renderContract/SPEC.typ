@@ -97,6 +97,53 @@ content identity operation、brand発行、public creator/parser、返却definit
   ],
 )
 
+#adr(
+  header("DI2Bをsanitized snapshotだけで完結させる", Status.Accepted, "2026-07-12"),
+  [
+    scalar validationがcaller recordやdescriptorを再読すると、DI2Aの同期snapshot境界を破り、validation結果へ後続mutationを混入できる。
+    一方、canonical digestとbrand発行まで同じsliceへ含めると、pure scalar validationとidentity authorityを独立検証できない。
+  ],
+  [
+    DI2Bは`RenderDefinitionDescriptorSnapshot`だけを入力し、DI2Aが投影したkind、path、own key、field stateだけでexpected string budget、missing、extra、literal、digestを検証する。
+    DI2Aがdeferしたpresent nested fieldのprimitive stateは、R5 descriptor phaseの完了としてscalar budgetより前に`invalid-closed-record`へ分類する。
+    全検証成功後だけ、captured stringからfreshかつdeep-frozenなpreimageまたはgeneric digest IDを持つunbranded wrapperを構築する。
+  ],
+  [
+    - DI2Bはcaller object、Map、PropertyDescriptor、reflectionを必要としない
+    - 256 code-unit capとR3 failure precedenceをDI2A resource workから独立検証できる
+    - outputはcanonical digest、self-digest equality、brand、accepted evidenceを表さない
+    - DI3はvalidated fresh snapshotだけをcanonicalizeし、identity authorityを発行できる
+  ],
+  alternatives: [
+    1. *caller recordを再入力する*: DI2A snapshot後のmutationとaccessorを再観測するため採用しない
+    2. *DI2Bでdescriptor snapshotを再実装する*: resource orderとalias cacheを重複させるため採用しない
+    3. *DI2Bでcanonical digestまで生成する*: scalar contractとidentity authorityを再結合するため採用しない
+  ],
+)
+
+#adr(
+  header("validated preimageをdigest前にfreezeする", Status.Accepted, "2026-07-13"),
+  [
+    RC01-DI-R5はdigest成功後にnested recordからrootまでを一度だけdeep freezeするとしていた。
+    しかしDI3のcanonical digestは非同期であり、digest inputを呼び出し中のmutationから隔離するにはvalidated preimageをdigest開始前にimmutableにする必要がある。
+  ],
+  [
+    DI2Bはfreshなunbranded preimageをdeep freezeしてから返す。
+    DI3はそのpreimageを再構築または再freezeせずcanonical digestへ使い、digest成功後にbranded IDを持つfreshなreturned `RenderDefinition` rootだけを構築してfreezeする。
+  ],
+  [
+    - 非同期digest中にvalidated contentを変更できない
+    - nested preimageのfreezeはDI2B、identity authorityを持つreturned rootのfreezeはDI3へ分離される
+    - canonicalization、digest、self-digest equality、brand発行はDI3に残る
+  ],
+  alternatives: [
+    1. *digest成功後までpreimageをmutableにする*: 非同期digestとcaller mutationが競合するため採用しない
+    2. *DI3でpreimageをcloneしてfreezeする*: validated snapshotを再構築し、DI2B outputとのidentityと責務を曖昧にするため採用しない
+    3. *DI2Bでdigestとreturned rootまで生成する*: scalar validationとidentity authorityを再結合するため採用しない
+  ],
+  supersedes: ("RC01-DI-R5 descriptor resource boundaryのdigest成功後にnested recordからrootまでを一度だけdeep freezeするtiming",),
+)
+
 == インターフェース仕様
 
 #interface_spec(
@@ -295,6 +342,47 @@ content identity operation、brand発行、public creator/parser、返却definit
   ],
 )
 
+#behavior_spec(
+  name: "Validated scalar snapshot",
+  summary: [
+    DI2A occurrence snapshotへfixed resource completionとR5/R3 scalar precedenceを適用する。
+  ],
+  preconditions: [
+    - inputはDI2Aが生成した`RenderDefinitionDescriptorSnapshot`である
+    - creator operationへcreator snapshot、parser operationへparser snapshotを渡す
+  ],
+  steps: [
+    1. presentなexpected nested fieldがobject stateであることをschema preorderで検査する
+    2. presentなexpected string fieldをrecord preorderとfield orderで走査し、256 UTF-16 code units以下であることを検査する
+    3. 全recordをpreorderで走査し、expected key orderで最初のmissing fieldを検査する
+    4. 全recordをpreorderで走査し、raw UTF-16順の最初のextra keyを検査する
+    5. schemaとroleをrecord preorderとfield orderでexpected literalと比較する
+    6. creator digest、parser wrapper ID、claim digestを規定field orderで字句検査する
+  ],
+  postconditions: [
+    - nested primitiveは`invalid-closed-record`とnested field pathになる
+    - 257 code units以上のexpected stringは`budget-exceeded`とfield pathになる
+    - missing、extra、wrong schema、wrong roleは`invalid-field`とfield pathになる
+    - creator digestとclaim `claimedId`のnoncanonical valueは`invalid-reference`とfield pathになる
+    - parser wrapper `id`のnoncanonical valueは`invalid-field`と`["id"]`になる
+    - canonicalization、digest equality、WebCrypto、brand発行を実行しない
+  ],
+)
+
+#behavior_spec(
+  name: "Fresh immutable validated construction",
+  summary: [
+    全scalar validation成功後だけ、captured primitiveからDI3用domain recordを構築する。
+  ],
+  postconditions: [
+    - creator operationはfreshかつdeep-frozenな`RenderDefinitionPreimage`を返す
+    - parser operationはgeneric `Sha256Digest`の`id`と同じfresh preimageを持つdeep-frozenなunbranded wrapperを返す
+    - 二回のoperationは値が等しくてもrootと全nested recordのidentityを共有しない
+    - input snapshotとcaller recordをoutputへ保持しない
+    - returned `RenderDefinition`、`RenderDefinitionId` brand、self-digest equalityを提供しない
+  ],
+)
+
 == 機能仕様
 
 #feature_spec(
@@ -388,14 +476,49 @@ content identity operation、brand発行、public creator/parser、返却definit
   ],
 )
 
+#feature_spec(
+  name: "RC01-DI2B package-internal validated snapshot",
+  summary: [
+    sanitized DI2A snapshotだけからscalar validation済みのfresh immutable recordを構築する。
+  ],
+  api: [
+    ```typescript
+    interface UnbrandedRenderDefinitionSnapshot {
+      readonly id: Sha256Digest
+      readonly preimage: RenderDefinitionPreimage
+    }
+
+    function validateRenderDefinitionCreatorSnapshot(
+      snapshot: RenderDefinitionDescriptorSnapshot,
+    ): RenderDefinitionPreimage
+
+    function validateRenderDefinitionParserSnapshot(
+      snapshot: RenderDefinitionDescriptorSnapshot,
+    ): UnbrandedRenderDefinitionSnapshot
+    ```
+  ],
+  test_cases: [
+    - DI2A snapshot後にcaller propertyとreflectionを利用不能にしてもvalidationとconstructionが成功する
+    - 全expected string fieldで256/257 boundaryとexact budget pathを検査する
+    - 全fieldのmissing、全recordのfirst extra、全schema/role、全digest roleのexact code/pathを検査する
+    - 複数違反でnested structure、budget、missing、extra、literal、digestのprecedenceを検査する
+    - alias occurrenceをpathごとにvalidationする
+    - outputのfresh identityとdeep freezeを検査する
+    - WebCrypto、canonicalization、wrapper digest equalityを実行しないことを検査する
+    - package-local facade、shared root、generated declaration、runtime bundleへDI2B APIを公開しない
+    - internal typeと二functionのexact signatureをtype fixtureで検査する
+  ],
+)
+
 == 責務境界
 
 - record key cap、property key cap、descriptor preflight、identity cache、schema occurrence projectionはDI2Aが所有する
 - expected string cap、missing/extra classification、schema/role/digest validation、fresh preimageとunbranded wrapper構築はDI2Bが所有する
 - DI2AとDI2Bのhard limitはcaller optionにせず、package-local facadeとshared rootへAPIを追加しない
-- creator、verified parser、canonical digest、brand発行、returned recordのdeep freeze、crypto error変換はDI3が所有する
+- creator、verified parser、canonical digest、brand発行、freshなreturned `RenderDefinition` rootの構築とfreeze、crypto error変換はDI3が所有する
 - referent closureとaccepted definitionは後続RC01 unitが所有する
 - `RenderEnvelope`、generation、publication、writer、authority、runtime conformanceは後続unitが所有する
 - shared package rootまたはrole-scoped subpathへの公開はAS01が所有する
 - DI1はdescriptorを読み取らず、recordを生成またはfreezeせず、WebCryptoとcanonical identity operationを呼び出さない
 - DI2Aはscalar semantic validation、domain record構築、canonicalization、content digest、wrapper ID equality、WebCrypto、brand発行、public creator/parser、deep freezeを実行しない
+- DI2Bはvalidated preimageとunbranded wrapperだけをdeep freezeし、caller record、reflection、descriptor、canonicalization、content digest、wrapper ID equality、WebCrypto、brand発行、public creator/parser、returned `RenderDefinition`を扱わない
