@@ -178,11 +178,42 @@ packages/{package-name}/src/{api-name}/
 implementation matrix は、依存先のない foundation から user-visible workflow へ向かう順に並べてください。
 package 単位で横に実装するのではなく、観測可能な振る舞いを一つずつ完成させる vertical slice に分割してください。
 
-## 手順 2：次の vertical slice を選ぶ
+## 手順 2：ready queue と並列 lane を更新する
 
-未完了の implementation matrix から、ほかの slice の前提になる項目を一つ選んでください。
+implementation matrix を dependency DAG として扱い、未完了項目を一つずつ直列に選んではいけません。
+依存条件を満たし、write set が重ならず、互いの未確定契約を前提にしない vertical slice の集合を ready queue としてください。
+通常は四本、利用可能な独立実行枠と統合余力がある場合は最大六本の implementation、review、verification lane を同時に進めてください。
 一度に複数の密結合 slice を開始してはいけません。
-write set が重ならない調査、fixture、検証は sub-agent と並行して構いません。
+
+次の事象が起きるたびに、phase の完了を待たず ready queue と lane assignment を再計算してください。
+
+- dependency slice の contract が固定された
+- implementation と slice gate が完了した
+- review が開始、収束、または blocker によって再開された
+- 設計変更によって dependency または write set が変わった
+- implementation、review、verification lane のいずれかが空いた
+
+slice の実行状態は次の意味で使ってください。
+
+- `pending`：dependency が未完了で開始できない
+- `ready`：production implementation を開始するdependencyが完了している
+- `contract-ready`：SPEC、先行test、公開または内部contractが固定され、実装待ちである
+- `implementing`：宣言済みwrite setでproduction implementationとtargeted gateを進めている
+- `reviewing`：同一revisionを固定して独立reviewを進めている
+- `merge-ready`：既知のblockerがなく、commitとpushを待っている
+- `completed`：検証、review、commit、push、local/remote同期が完了している
+- `blocked`：未解決dependencyまたは外部blockerがあり、そのslice自身を進められない
+- `reopened`：completed後の監査で不足が見つかり、再作業が必要である
+
+`contract-ready` のdependencyからはdownstreamの調査、SPEC案、fixture、red test準備だけを開始できます。
+downstreamのproduction implementationは、dependencyが`completed`になるか、review済みのexact revisionを同じisolated laneへ明示的に取り込んだ後だけ開始してください。
+
+ready queueでは、最長のdownstream dependency chain上にあるslice、後続sliceを多く解放するslice、長時間の独立検証を持つsliceの順で優先してください。
+あるsliceのreview、blocker修正、収束確認は、そのsliceへ依存せずwrite setも重ならないlaneを停止する理由になりません。
+
+各laneのowner、状態、dependency OID、write set、固定contract、次のgateを進捗文書へ記録してください。
+API directory内のSPEC、test、production moduleは担当laneだけが編集し、進捗文書、root barrel、package export、共通config、複数laneの統合箇所はメインセッションだけが編集してください。
+担当laneは共有統合ファイルを変更せず、メインセッションがslice revisionを固定する前に必要なexport変更を統合してください。
 
 slice 開始前に次を明文化してください。
 
@@ -193,6 +224,22 @@ slice 開始前に次を明文化してください。
 - compiler、runtime、SSR、browser、plugin、公開 API への影響
 - failure、race、authority、budget、cleanup の edge case
 - slice 完了を証明する command と artifact inspection
+
+続いて、slice に含まれる契約を、観測可能な振る舞い、owner、依存先、変更するmodule、先行test、単独でgreenにできるかの表へ分解してください。
+別々に仕様化して検証でき、一方を実装しても他方の契約を仮実装で固定せず、repositoryを整合したgreen状態にできる契約は、別のvertical sliceにしてください。
+public APIへまだ公開しないfoundationでも、後続実装なしに自身の契約を直接検証でき、placeholderではない場合は独立したvertical sliceとして扱えます。
+
+次のいずれかに該当した場合は、実装を開始せずslice分割を再判定してください。
+
+- 一つのsliceが、互いに独立したparser、normalizer、semantic validator、closure validator、solver、state machine、identity operationを三つ以上含む
+- 一つのsliceが、別々に検証できるpublic schema、trust boundary、authority boundary、永続identityを複数変更する
+- 一つのsliceの先行test計画に、単独でgreenにできる契約群が三つ以上ある
+- 手書きのSPEC、test、production codeの予定差分が合計1,500行を超える、または一つの手書きfileが1,000行を超える見込みである
+
+行数条件は自動的な分割境界ではなく、意味的な分割を再判定するための停止条件です。
+再判定の結果、分割しない場合は、各責務を別sliceへ分けると成立しない同一不変条件と、reviewerが一つのrevisionとして評価できる根拠を進捗文書へ記録してください。
+実装後にこの条件へ到達した場合も、そのままレビューへ進まず、未commit変更を保持したままreview unitを再編してください。
+後続sliceのtestはそのsliceの開始時に追加し、現在のsliceへ意図的に失敗する将来testを混在させてはいけません。
 
 次のいずれかを扱う slice は high-cost slice とし、実装前に責務と module の対応表を作成してください。
 
@@ -205,6 +252,8 @@ high-cost slice では、各 relation または処理について owner、左右
 該当しない欄は、理由を付けた `N/A` として構いません。
 この表から独立した parser、validator、derivation、index、state machine が見つかった場合は、同じ vertical slice 内でも internal module を分けてください。
 一つの vertical slice であることを、一つの source file であることと同一視してはいけません。
+internal moduleへ分けるだけでは前述のreview-unit admission gateを満たしません。
+別々にgreenにできる責務は、source fileだけでなくvertical sliceとreview revisionも分けてください。
 
 この内容を進捗文書と session plan に反映してください。
 
@@ -351,6 +400,8 @@ coverage は可能な限り 100% を維持してください。
 
 各 vertical slice の実装と検証が完了した後、実装を担当していない新しい独立した sub-agent に同一 revision を並列レビューさせてください。
 同じ agent session に提案、実装、最終評価を完結させてはいけません。
+write setとdependencyが独立した複数sliceは、それぞれのrevisionを固定し、sliceごとのreviewer setを混同せず同時にreviewして構いません。
+一つのsliceが`reviewing`である間も、無関係なsliceのimplementation、verification、reviewを継続してください。
 
 通常は二人の reviewer を使ってください。
 複数 package の責務境界、identity、trust boundary、authority、concurrency、race、state machine、公開 API、wire schema、永続 identity のいずれかを変更する slice では三人を使ってください。
@@ -381,6 +432,8 @@ reviewer の役割は次のように分けてください。
 
 `blocker` を修正した場合は、最初の並列レビューに参加していない一人の独立した sub-agent に収束確認を依頼してください。
 収束確認は原則一回とし、残る不確実性は追加の全面レビューではなく、SPEC、test、最小実装、または artifact inspection で検証してください。
+収束確認を待つ間に停止するのは、そのrevisionとdownstream dependencyだけです。
+ready queueの無関係なlaneは停止せず、手順2の再計算結果に従って進めてください。
 
 sub-agent は調査、fixture、独立した write set の実装にも使えます。
 ただし、メインセッションは各変更の統合、SPEC/test/implementation の整合、最終判断に責任を持ってください。
