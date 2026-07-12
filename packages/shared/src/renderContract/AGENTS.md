@@ -25,6 +25,14 @@ RC01-DI2B owns expected-string budgets, missing and extra classification,
 literals, lexical digests, and fresh immutable scalar construction from the
 DI2A surface only.
 
-Do not add caller-record inputs, reflection, canonicalization, content digests,
-brand issuance, public creator or parser APIs, returned `RenderDefinition`,
-facade or root exports, or publication in DI2B.
+RC01-DI3A owns the package-local `createRenderDefinition` facade value. It
+synchronously composes DI2A and DI2B, computes exactly one canonical digest,
+maps canonical identity failures into the domain error, and issues the private
+ID brand only after digest success. It reuses the DI2B-frozen preimage and
+freezes only a fresh returned root.
+
+Do not add `parseRenderDefinition`, wrapper ID equality, digest mismatch,
+referent closure, accepted evidence, generation, envelope, authority, shared
+root publication, hard-limit options, ID helpers, or automatic browser/runtime
+placement in DI3A. DI2A and DI2B remain package-internal and are not facade
+exports.

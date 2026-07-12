@@ -15,6 +15,8 @@ import type {
   // @ts-expect-error Render contract publication belongs to AS01.
   RenderDefinitionPreimage as _RootPreimageMustNotExist,
   // @ts-expect-error Render contract publication belongs to AS01.
+  createRenderDefinition as _RootCreateDefinitionMustNotExist,
+  // @ts-expect-error Render contract publication belongs to AS01.
   RenderExposureReferenceClaim as _RootExposureClaimMustNotExist,
   // @ts-expect-error Render contract publication belongs to AS01.
   RenderObservationReferenceClaim as _RootObservationClaimMustNotExist,
@@ -24,8 +26,7 @@ import type {
 import type {
   // @ts-expect-error Accepted definition belongs to a later closure unit.
   AcceptedRenderDefinition as _AcceptedDefinitionMustNotExist,
-  // @ts-expect-error Brand creation belongs to DI3.
-  createRenderDefinition as _CreateDefinitionMustNotExist,
+  createRenderDefinition,
   // @ts-expect-error A lexical guard cannot establish definition identity.
   isRenderDefinitionId as _IdGuardMustNotExist,
   // @ts-expect-error A lexical parser cannot establish definition identity.
@@ -35,9 +36,11 @@ import type {
   // @ts-expect-error A lexical cast cannot establish definition identity.
   renderDefinitionId as _IdCastMustNotExist,
   RenderBodyReferenceClaim,
+  RenderDefinition,
   RenderDefinitionError,
   RenderDefinitionErrorCode,
   RenderDefinitionId,
+  RenderDefinitionInput,
   RenderExposureReferenceClaim,
   RenderObservationReferenceClaim,
   RenderResponseReferenceClaim,
@@ -133,8 +136,14 @@ type ErrorCodeIsExact = ExpectTrue<
 type ErrorPathIsExact = ExpectTrue<
   Equal<RenderDefinitionError["path"], readonly (string | number)[]>
 >;
+type CreateRenderDefinitionIsExact = ExpectTrue<
+  Equal<
+    typeof createRenderDefinition,
+    (input: RenderDefinitionInput) => Promise<RenderDefinition>
+  >
+>;
 
-/** Compile-time evidence for the DI1 nominal and role assignment boundaries. */
+/** Compile-time evidence for render-contract type and creator boundaries. */
 type RenderContractTypeFixture = readonly [
   IdIsNotNever,
   IdExtendsDigest,
@@ -146,6 +155,7 @@ type RenderContractTypeFixture = readonly [
   ErrorFieldsAreReadonly,
   ErrorCodeIsExact,
   ErrorPathIsExact,
+  CreateRenderDefinitionIsExact,
 ];
 
 export type { RenderContractTypeFixture };

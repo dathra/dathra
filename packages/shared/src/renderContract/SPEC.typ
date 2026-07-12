@@ -11,7 +11,8 @@ render outputを構成する四つのreference claimを、一つのversioned pre
 DI1はnominal ID、role-specific claim、definition record、creator input、domain errorを提供する。
 DI2Aはcreator inputとparser inputのdescriptor occurrenceを同期的にsnapshotするpackage-internal APIを提供する。
 DI2Bはそのsnapshotへscalar validationを適用し、fresh preimageとunbranded wrapperを構築する。
-content identity operation、brand発行、public creator/parser、返却definitionのdeep freeze、shared package rootへの公開は後続sliceが所有する。
+DI3Aはcreator snapshotからcontent identityを発行し、freshなreturned definition rootを構築するpackage-local creatorを提供する。
+verified parser、wrapper ID equality、digest mismatch、shared package rootへの公開は後続sliceが所有する。
 
 == 設計判断
 
@@ -142,6 +143,30 @@ content identity operation、brand発行、public creator/parser、返却definit
     3. *DI2Bでdigestとreturned rootまで生成する*: scalar validationとidentity authorityを再結合するため採用しない
   ],
   supersedes: ("RC01-DI-R5 descriptor resource boundaryのdigest成功後にnested recordからrootまでを一度だけdeep freezeするtiming",),
+)
+
+#adr(
+  header("creatorのbrand authorityをdigest成功後に限定する", Status.Accepted, "2026-07-13"),
+  [
+    genericな`Sha256Digest`へ字句検査だけで`RenderDefinitionId` brandを付与すると、render definition preimageとのcontent identity関係を証明できない。
+    また、canonical digestは非同期に失敗し得るため、digest完了前のbrandまたはreturned root発行は失敗operationにもauthorityを与える。
+  ],
+  [
+    DI3A creatorはDI2A descriptor snapshotとDI2B scalar validationを最初の非同期境界より前に同期実行し、得られたdeep-frozen preimageへ`digestCanonicalJson`をexactly once開始する。
+    canonical identity failureをdomain errorへ変換し、digest成功後だけprivate identity-authority boundaryで`RenderDefinitionId`を発行する。
+    DI2B preimageを再構築または再freezeせず、その同じidentityを持つfreshな`{ id, preimage }` rootだけをfreezeする。
+  ],
+  [
+    - validation failureはWebCrypto、brand、returned rootを開始しない
+    - crypto failureはbrandとreturned rootを発行しない
+    - caller mutationと非同期digestの競合をDI2A/DI2Bの同期captureで遮断できる
+    - brand発行の型assertionをdomain-specific digest成功後のprivateな一点へ限定できる
+  ],
+  alternatives: [
+    1. *digest開始前にbrandを付与する*: failed operationにもidentity authorityを与えるため採用しない
+    2. *digest成功後にpreimageをcloneまたはdeep freezeする*: DI2B validated outputのidentityとfreeze責務を破るため採用しない
+    3. *generic ID castまたはguardを公開する*: preimage検証なしでbrandを発行できるため採用しない
+  ],
 )
 
 == インターフェース仕様
@@ -383,12 +408,37 @@ content identity operation、brand発行、public creator/parser、返却definit
   ],
 )
 
+#behavior_spec(
+  name: "Render definition creator identity",
+  summary: [
+    creator inputを同期captureして検証し、validated preimageのcanonical digestを持つfreshなdefinitionを返す。
+  ],
+  steps: [
+    1. `snapshotRenderDefinitionCreatorDescriptors(input)`を同期的に呼ぶ
+    2. `validateRenderDefinitionCreatorSnapshot(snapshot)`を同期的に呼び、freshかつdeep-frozenなpreimageを得る
+    3. 同じpreimage identityへ`digestCanonicalJson(preimage)`をexactly once開始する
+    4. `CanonicalIdentityError`が`crypto-unavailable`なら`crypto-unavailable`とroot path、それ以外なら`invalid-field`とcanonical preimage内の元pathを持つfresh immutable `RenderDefinitionError`へ変換する
+    5. digest成功後だけ、返されたdomain-specific digestをprivateな境界で`RenderDefinitionId`として発行する
+    6. exact same preimageを持つfreshな`{ id, preimage }` rootを構築し、そのrootだけをfreezeする
+  ],
+  postconditions: [
+    - `id`は`digestCanonicalJson(preimage)`と等しい
+    - inputのstructuralまたはscalar failureではcanonical digestとWebCryptoを開始しない
+    - callerがoperation返却直後にinputを変更してもcaptured preimageと結果は変わらない
+    - `CanonicalIdentityError`をcallerへ公開しない
+    - canonical identityの非`crypto-unavailable` failureは`invalid-field`となり、creatorがhashするpreimage rootに相対な元pathを保つ
+    - digest失敗ではbrandとreturned rootを発行しない
+    - digest成功後にrootだけが追加でfreezeされ、preimageとnested claimはDI2Bがfreezeした同一objectである
+    - 値が等しい二回の呼び出しはroot、preimage、全nested claimのidentityを共有しない
+  ],
+)
+
 == 機能仕様
 
 #feature_spec(
-  name: "RC01-DI1 package-local facade",
+  name: "RC01-DI1 model and error baseline",
   summary: [
-    render definitionの型modelとdomain errorだけをpackage-local facadeから公開する。
+    render definitionの型modelとdomain errorをpackage-local facadeの基礎surfaceとして公開する。
   ],
   api: [
     ```typescript
@@ -411,10 +461,8 @@ content identity operation、brand発行、public creator/parser、返却definit
     - 四つのclaim typeが全方向で交差代入できないことを検査する
     - claim、preimage、definition、inputのexact readonly shapeを検査する
     - error codeのexact unionとerrorのcopy、freeze、継承を検査する
-    - facadeのsource ASTでexport名、type-only区分、module specifierを検査する
-    - facadeのruntime keyが`RenderDefinitionError`だけであることを検査する
-    - facade emitがerror以外のruntime dependencyを持たないことを検査する
-    - creator、parser、ID parser、ID guard、ID cast、accepted definitionがfacadeに存在しないことをnegative type fixtureで検査する
+    - facadeのsource ASTでDI1 export名、type-only区分、module specifierを検査する
+    - parser、ID parser、ID guard、ID cast、accepted definitionがfacadeに存在しないことをnegative type fixtureで検査する
     - DI1の全exportをshared package rootからimportできないことをnegative type fixtureで検査する
   ],
 )
@@ -510,15 +558,45 @@ content identity operation、brand発行、public creator/parser、返却definit
   ],
 )
 
+#feature_spec(
+  name: "RC01-DI3A package-local creator identity",
+  summary: [
+    DI2A/DI2B capture済みpreimageへcontent identityを発行するcreatorだけをpackage-local facadeへ追加する。
+  ],
+  api: [
+    ```typescript
+    function createRenderDefinition(
+      input: RenderDefinitionInput,
+    ): Promise<RenderDefinition>
+
+    export { createRenderDefinition }
+    ```
+  ],
+  test_cases: [
+    - functionのexact signature、英語JSDoc、operations export、facade runtime inventoryを検査する
+    - `parseRenderDefinition`とID guard/parser/castがfacadeに存在しないことを維持する
+    - returned IDがexact same preimage identityのcanonical digestと等しく、digest callがexactly onceであることを検査する
+    - structural failureとscalar failureがcanonical digestおよびWebCryptoより前に完了することを検査する
+    - deferred digest中のcaller mutationがcaptured preimageと結果を変更しないことを検査する
+    - WebCrypto不在とその他のcanonical identity failureをexact domain code/pathへ変換し、canonical error instanceを漏らさないことを検査する
+    - digest成功後のroot freeze、preimage identity reuse、DI2B済みnested freezeを検査する
+    - 値が等しい反復callでroot、preimage、nested claimのidentityを共有しないことを検査する
+    - package-local facadeだけがcreatorを公開し、shared root source、ESM/CJS declaration、runtime bundleへ含めないことを検査する
+    - focused browser emitがNode builtinと`Buffer`を含まず、browser activationまたはruntime placementを追加しないことを検査する
+  ],
+)
+
 == 責務境界
 
 - record key cap、property key cap、descriptor preflight、identity cache、schema occurrence projectionはDI2Aが所有する
 - expected string cap、missing/extra classification、schema/role/digest validation、fresh preimageとunbranded wrapper構築はDI2Bが所有する
 - DI2AとDI2Bのhard limitはcaller optionにせず、package-local facadeとshared rootへAPIを追加しない
-- creator、verified parser、canonical digest、brand発行、freshなreturned `RenderDefinition` rootの構築とfreeze、crypto error変換はDI3が所有する
+- creator、canonical digest、brand発行、freshなreturned `RenderDefinition` rootの構築とfreeze、crypto error変換はDI3Aが所有する
+- verified parser、wrapper ID equality、digest mismatchはDI3Bが所有する
 - referent closureとaccepted definitionは後続RC01 unitが所有する
 - `RenderEnvelope`、generation、publication、writer、authority、runtime conformanceは後続unitが所有する
 - shared package rootまたはrole-scoped subpathへの公開はAS01が所有する
 - DI1はdescriptorを読み取らず、recordを生成またはfreezeせず、WebCryptoとcanonical identity operationを呼び出さない
 - DI2Aはscalar semantic validation、domain record構築、canonicalization、content digest、wrapper ID equality、WebCrypto、brand発行、public creator/parser、deep freezeを実行しない
 - DI2Bはvalidated preimageとunbranded wrapperだけをdeep freezeし、caller record、reflection、descriptor、canonicalization、content digest、wrapper ID equality、WebCrypto、brand発行、public creator/parser、returned `RenderDefinition`を扱わない
+- DI3AはDI2A/DI2Bをfacadeへexportせず、parser、wrapper ID equality、digest mismatch、referent closure、accepted evidence、generation、envelope、authority、shared root publicationを扱わない
