@@ -26,6 +26,8 @@ SC02A8Aは15種類のframework hard capを狭めるbudget contractと、一つ�
 
 SC02A8Bはdistinct container identityごとのoperation-localな二段階descriptor captureをinternal APIとして追加する。
 
+SC02A8Cは同時にactiveなcontainer identityだけをcycleとして拒否するoperation-local trackerをinternal APIとして追加する。
+
 unknown input preflight、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
@@ -203,6 +205,27 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - hostile trapがarray iteratorまたはinherited index setterを変更してもdescriptorを省略せずsanitized viewを構築する
     - success pathではcaller path iteratorを実行しない
     - failure pathのimmutable snapshot作成は`ExecutionContractError`が所有する
+  ],
+)
+
+#adr(
+  header("active ancestorだけをoperation-localなLIFO stateで追跡する", Status.Accepted, "2026-07-13"),
+  [
+    traversal全体のvisited identity setはleave済みのshared aliasまでcycleとして拒否する。
+    recursive call stackまたはpath sequenceをactive stateへ保存すると、host call-stack limitまたは成功経路のdepth比例path allocationへ依存する。
+  ],
+  [
+    freshなtrackerはactive identityの`WeakSet`と、identityとparentだけを持つtop-linked LIFO stateを所有する。
+    `enter()`は同じidentityがactiveな場合だけcurrent occurrence pathの`invalid-closed-record`で拒否し、成功時だけidentityとtopを追加する。
+    `leave()`はexactなcurrent top identityだけを受理し、active setから削除してparentを復元する。
+  ],
+  [
+    - failed enterとout-of-order、duplicate、unknown leaveはtracker stateを変更しない
+    - leave後の同じidentityは合法なshared aliasとして再enterできる
+    - success pathではpathを反復、copy、保存せず、cycle failure時だけ既存`fail()`へcurrent occurrence pathを渡す
+    - tracker stateはactive depthに比例し、recursive traversalまたはmutableなArray prototypeのstack behaviorへ依存しない
+    - descriptor、budget、walker、profile、clone、freeze、parser、meterを追加しない
+    - trackerとfactoryはpackage-local facadeまたはshared rootへ公開しない
   ],
 )
 
@@ -754,6 +777,35 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   ],
 )
 
+#interface_spec(
+  name: "Operation-local active ancestor tracker",
+  summary: [
+    traversal中に同時にactiveなobject identityだけをcycleとして識別するinternal APIを提供する。
+  ],
+  format: [
+    ```typescript
+    interface ActiveAncestorTracker {
+      enter(value: object, path: readonly (string | number)[]): void
+      leave(value: object): void
+    }
+
+    function createActiveAncestorTracker(): ActiveAncestorTracker
+    ```
+  ],
+  constraints: [
+    - factoryはfreshなoperation-local trackerを毎回作成する
+    - successful enterはidentityをactive `WeakSet`へ追加し、identityとparentだけを持つnew topを作成する
+    - 同じidentityがactiveなdirectまたはindirect cycleはcurrent occurrence pathの`invalid-closed-record`で拒否し、tracker stateを変更しない
+    - leaveはexactなcurrent top identityだけを受理し、active identityを削除してparent topを復元する
+    - out-of-order、duplicate、unknown leaveはinternal `TypeError`で拒否し、tracker stateを変更しない
+    - leave後の同じidentityはshared aliasとして再enterできる
+    - enterとleaveはiterativeであり、12,000 depthをJavaScript call stackに依存せず処理する
+    - successful enterはpathを反復、copy、保存せず、cycle failureだけが既存`fail()`によるimmutable path snapshotを作る
+    - active stateにmutable arrayまたはmutableな`Array.prototype` traversalを使用しない
+    - internal moduleだけがexportし、package-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -865,6 +917,28 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - symbol、hidden、accessor、disappearing descriptor、array extra key、sparse slot、unsupported descriptor valueをaccepted pathの`invalid-closed-record`で拒否する
     - descriptor reflection exceptionをaccepted property pathの`invalid-closed-record`へ変換する
     - failedまたはreentrant incomplete captureをcomplete viewとしてcacheしない
+  ],
+)
+
+#behavior_spec(
+  name: "active ancestorをstrictなenter/leave順で追跡する",
+  summary: "同時にactiveなidentityだけをcycleとして拒否し、leave済みaliasの再出現を受理する。",
+  preconditions: [
+    - callerは一つのiterative traversal用に作成したfresh trackerを保持している
+  ],
+  steps: [
+    - object occurrenceを処理する直前に`enter(value, path)`を呼ぶ
+    - child occurrenceを処理した後にexactなreverse orderで`leave(value)`を呼ぶ
+  ],
+  postconditions: [
+    - directまたはindirect cycleではないenterだけがactive stateへ追加される
+    - successful leave後は同じidentityをshared aliasとして再enterできる
+    - success pathでpathを反復、copy、保存しない
+    - 12,000 depthのenterとleaveをrecursive call stackなしで完了する
+  ],
+  errors: [
+    - active identityの再enterを`invalid-closed-record`とcurrent occurrence pathで拒否し、failed enter前のstateを保持する
+    - out-of-order、duplicate、unknown leaveをinternal `TypeError`で拒否し、failure前のstateを保持する
   ],
 )
 
@@ -1017,5 +1091,23 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - reentrant trapが最初のfailureを再送出しても別のreflection failureへwrapしないことを検査する
     - exact internal type signatureとfrozen sanitized outputを検査する
     - budget、walker、cycle、profile、clone、final freeze、parser、meter、public source operationを追加せず、facade、shared root、generated root declarationにdescriptor internalが公開されないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Operation-local active-ancestor cycle policy",
+  summary: [
+    後続のiterative occurrence walkerが、合法なshared aliasを保持しながらactive ancestor cycleだけを拒否するinternal trackerを提供する。
+  ],
+  test_cases: [
+    - direct cycleとindirect cycleをcurrent occurrence pathで拒否することを検査する
+    - failed enterがactive stateを変更せず、その後のstrict leaveと再利用を妨げないことを検査する
+    - out-of-order、duplicate、unknown leaveを`TypeError`で拒否し、LIFO stateを破壊しないことを検査する
+    - leave済みidentityのsibling/shared alias再enterとfresh operation isolationを検査する
+    - 12,000 depthをiterativeにenter/leaveできることを検査する
+    - success pathでpathを反復または保存せず、cycle failure時だけimmutable path snapshotを作ることを検査する
+    - mutableなArray prototype traversal/stateへ依存しないことを検査する
+    - exact internal signatureとtype fixtureのruntime code不在を検査する
+    - descriptor、budget、walker、profile、clone、freeze、parser、meterを追加せず、facade、shared root、generated root declarationにtrackerを公開しないことを検査する
   ],
 )

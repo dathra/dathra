@@ -1,6 +1,8 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
+  // @ts-expect-error SC02A8C active ancestor tracking remains internal.
+  type ActiveAncestorTracker as _RootActiveAncestorTrackerMustNotExist,
   // @ts-expect-error SC02A8B descriptor capture remains internal.
   type ClosedContainerHeader as _RootClosedContainerHeaderMustNotExist,
   // @ts-expect-error AS01 owns shared-root publication.
@@ -21,6 +23,8 @@ import {
 import { fail } from "./identity";
 import * as executionContractApi from "./implementation";
 import {
+  // @ts-expect-error SC02A8C active ancestor tracking remains internal.
+  type ActiveAncestorTracker as _ActiveAncestorTrackerMustNotExist,
   // @ts-expect-error SC02A8B descriptor capture remains internal.
   type ClosedDescriptorCapture as _ClosedDescriptorCaptureMustNotExist,
   // @ts-expect-error SC02A8B descriptor capture remains internal.
@@ -386,6 +390,8 @@ describe("ExecutionContractError", () => {
     expect("BudgetLedger" in executionContractApi).toBe(false);
     expect("createBudgetLedger" in executionContractApi).toBe(false);
     expect("createClosedDescriptorCapture" in executionContractApi).toBe(false);
+    expect("createActiveAncestorTracker" in executionContractApi).toBe(false);
+    expect("ActiveAncestorTracker" in executionContractApi).toBe(false);
     expect("ClosedDescriptorCapture" in executionContractApi).toBe(false);
     expect("ClosedContainerHeader" in executionContractApi).toBe(false);
     expect("ClosedContainerView" in executionContractApi).toBe(false);
