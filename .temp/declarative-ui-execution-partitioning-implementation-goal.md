@@ -215,6 +215,21 @@ ready queueでは、最長のdownstream dependency chain上にあるslice、後�
 API directory内のSPEC、test、production moduleは担当laneだけが編集し、進捗文書、root barrel、package export、共通config、複数laneの統合箇所はメインセッションだけが編集してください。
 担当laneは共有統合ファイルを変更せず、メインセッションがslice revisionを固定する前に必要なexport変更を統合してください。
 
+各laneの固定revisionは、proposal、割当write setの完全なpath inventoryと全fileのmode、SHA-256、Git blob OID、直接dependency OID、decision anchor、synthetic review commit OIDを持つslice-local manifestで表してください。
+decision anchorはcanonical source path、stable decision IDまたは決定的な抽出command、抽出結果のSHA-256とGit blob OIDを持ちます。
+共有文書からcopyした抜粋だけをanchorとしてはいけません。
+
+workerは実装と検証を終え、実行中commandを終了し、write ownershipをメインセッションへ返してからreviewへ移ります。
+メインセッションは固定blobをGit object databaseへ保存し、current dependency baseへ重ねたsynthetic commitをbranch移動なしで作成します。
+reviewerはそのisolated snapshotを評価し、shared worktreeを正本にしません。
+
+review proposal、slice-local manifest、進捗文書はメインセッションだけが編集します。
+review中のproposal、manifest、割当write setはfreezeし、workerとreviewerに編集させてはいけません。
+
+別laneのcommitでbranch HEADが進んだことや、共有文書の無関係な節が変わったことだけをreview無効化の理由にしてはいけません。
+proposal content、write-set membership、対象file content、dependency content、またはdecision anchorが変わった場合だけ、そのsliceのrevisionを無効にしてください。
+外部sessionの変更は保持し、対象reviewを無効にして新revisionへ固定してください。
+
 slice 開始前に次を明文化してください。
 
 - この slice が実現する設計要件
@@ -403,6 +418,10 @@ coverage は可能な限り 100% を維持してください。
 write setとdependencyが独立した複数sliceは、それぞれのrevisionを固定し、sliceごとのreviewer setを混同せず同時にreviewして構いません。
 一つのsliceが`reviewing`である間も、無関係なsliceのimplementation、verification、reviewを継続してください。
 
+reviewerにはslice-local manifestを渡し、manifestに含まれないbranch HEADの前進やdisjoint write setの変更を`REVIEW INVALID`にしないよう明示してください。
+共有設計文書を参照させる場合は文書全体のhashではなく、source pathと決定的な抽出規則を持つdecision anchorをmanifestへ固定してください。
+reviewerはmanifestのsynthetic commitをisolated worktreeで読み、開始時と終了時にmanifest自身と固定OIDを確認してください。
+
 通常は二人の reviewer を使ってください。
 複数 package の責務境界、identity、trust boundary、authority、concurrency、race、state machine、公開 API、wire schema、永続 identity のいずれかを変更する slice では三人を使ってください。
 
@@ -425,6 +444,9 @@ reviewer の役割は次のように分けてください。
 - unrelated change や未完了 placeholder が混入していないか
 
 メインセッションは全 review result の重複を除き、根拠とコードを照合して、正しい指摘だけを採用してください。
+一人がblockerを報告しても、同じfixed revisionの初期reviewer setを停止せず、全roleの結果を回収してから修正してください。
+外部変更でfixed inputが無効になった場合だけ早期停止でき、その場合は新revisionへ通常人数の初期reviewer setを再実行してください。
+結果統合直前にmanifest、proposal、全write-set blob、dependency OID、decision anchorを再照合し、不一致なら`REVIEW INVALID`としてください。
 指摘は `.temp/goal.md` の規則に従って `blocker` と `follow-up` に分類してください。
 `blocker` はまとめて修正し、targeted test と slice gate を再実行してください。
 `follow-up` は進捗文書へ記録し、現在の slice を停止する理由にしないでください。
@@ -443,8 +465,11 @@ sub-agent は調査、fixture、独立した write set の実装にも使えま�
 review が収束した slice だけを stage してください。
 無関係な変更、生成 cache、coverage output、debug log を commit に含めてはいけません。
 
-commit 前に `git diff --check` と staged file list を確認してください。
+commit直前にmanifest自身、proposal、全dependency OID、decision anchorを再照合してください。
+staged path inventory、file mode、blob OIDがmanifestの割当write setと完全一致しない場合はcommitしてはいけません。
+commit 前に `git diff --check` と staged file listを確認してください。
 変更内容を特定できる commit message で commit し、`feature/declarative-ui-execution-partitioning` へ push してください。
+commit後にcommit treeの対象path、mode、blob OIDをmanifestへ再照合してください。
 push 後は local HEAD と tracking branch が同じ commit を指すことを確認してください。
 
 進捗文書へ commit hash と検証証拠を記録してください。

@@ -76,6 +76,32 @@ historical または superseded と明記された過去案も、現行の決定
 dependencyとwrite setが独立した複数のreview unitは、unitごとにrevisionとreviewer setを固定したうえで同時にレビューして構いません。
 異なるunitの指摘と収束状態を混ぜず、各unitの結果を別々に統合してください。
 
+固定revisionはreview-unit manifestとimmutable review snapshotで表してください。
+
+manifestは次の入力を固定します。
+
+- proposalのpath、SHA-256、Git blob OID
+- 割当write setの完全なpath inventory、file mode、SHA-256、Git blob OID
+- 直接dependencyのpathとGit blob OID
+- decision excerptごとのcanonical source path、stable decision IDまたは決定的な抽出command、抽出結果のSHA-256とGit blob OID
+- 上記blobをcurrent dependency baseへ重ねて作ったsynthetic Git treeまたはcommit OID
+
+共有文書から本文をmanifestへcopyするだけではdecision anchorになりません。
+review開始時、結果統合直前、commit直前に同じ抽出commandをsource pathへ再実行し、抽出結果をmanifestと照合してください。
+共有文書全体のhashは固定せず、関連excerptの変更だけを検出してください。
+
+workerは実装と検証を終え、実行中commandを終了し、対象fileのwrite ownershipをメインセッションへ返してからmanifestを発行します。
+review開始から結果統合まで、proposal、manifest、割当write setはメインセッションがfreezeし、workerとreviewerは編集しません。
+進捗文書、proposal、manifestは常にメインセッションだけが編集します。
+
+メインセッションは固定blobをGit object databaseへ保存し、branchを動かさないsynthetic commitを作ります。
+reviewerはmutableなshared worktreeを正本として読まず、synthetic commitのisolated worktreeまたはmanifest指定のGit blobを評価します。
+testも原則としてisolated review snapshotで実行し、shared worktree上のtestは補助証拠としてだけ扱います。
+
+別review unitのcommitによるbranch HEADの前進、割当外fileの変更、共有設計文書の無関係な節の変更だけでreviewを無効にしてはいけません。
+proposal、write-set membership、対象file content、dependency content、decision excerptのいずれかが固定入力と異なる場合だけ、そのreview resultを`REVIEW INVALID`として破棄してください。
+外部sessionまたはユーザー変更は破棄または上書きせず、対象unitの新revisionとして再評価してください。
+
 レビューへ渡す前に、提案に含まれる決定を、決定内容、owner、依存先、独立した検証方法の表へ分解してください。
 別々に仕様化して検証でき、一方を確定しても他方の選択肢を不当に固定せず、途中状態を整合したまま保存できる決定は、独立した review unit とします。
 独立した review unit を複数含む提案は、依存順に分割してからレビューしてください。
@@ -121,6 +147,13 @@ reviewer には、担当範囲に加えて次の共通事項を評価させて�
 メインセッションは review result をそのまま採用せず、重複を除き、根拠と設計文書を照合してください。
 正しいと判断できる指摘だけを提案へ取り込み、採用しない指摘には理由を記録してください。
 
+一人のreviewerがblockerを報告しても、同じfixed revisionを評価中のほかのreviewerを停止してはいけません。
+初期reviewer setの全role結果を回収してから、blockerをまとめて修正してください。
+固定入力が外部変更によって無効になった場合だけ残るreviewerを早期停止でき、その場合は新revisionを通常人数の初期reviewer setへ渡し直してください。
+
+結果を統合する直前に、manifest自身、proposal、write-set inventoryと全blob、dependency OID、decision anchorを再照合してください。
+一件でも一致しない場合は、その結果をcurrent revisionへ適用せず`REVIEW INVALID`とします。
+
 採用する指摘は、次の二種類に分類してください。
 
 - `blocker`：correctness、security、実装可能性、不可逆な契約に影響する指摘
@@ -165,11 +198,14 @@ reviewer 同士の結論が対立した場合は、メインセッションが�
 
 文書の編集には `japanese-tech-writing` skill を使用してください。
 編集後は Markdown、コードフェンス、`git diff --check`、文書内の矛盾を検証してください。
-検証後は、ユーザーへ確認を求めず、変更の commit と push へ進んでください。
+proposalとcommit対象文書が異なる場合は、commit対象excerptと固定decisionの対応をactual-integration manifestへ固定し、一人の独立reviewerに転記漏れと矛盾だけを確認させてください。
+検証とactual integration reviewの後は、ユーザーへ確認を求めず、変更の commit と push へ進んでください。
 
 ## 8. 決定を commit して push する
 
 今回の決定に関係する文書だけを stage し、無関係な変更を commit に含めないでください。
+commit直前にmanifestとdecision anchorを再照合し、staged path inventory、file mode、blob OIDがactual-integration manifestと完全一致することを確認してください。
+commit後もcommit treeの対象pathとblob OIDを同じmanifestへ照合してください。
 決定内容を特定できる commit message で commit し、現在の作業ブランチへ push してください。
 push 後は、local HEAD と追跡先の remote branch が同じ commit を指していることを確認してください。
 
