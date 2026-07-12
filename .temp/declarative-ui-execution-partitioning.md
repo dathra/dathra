@@ -2628,9 +2628,17 @@ source claimのqualification、full execution analysisのacceptance、candidate 
 | source/module conflict | SC03-C | module signature、locator、source analysisとのnon-conflict evidence |
 | proof-domain trust admission | SC03-T | SC03-Q/C evidenceとtrusted proof acceptanceを束縛したcaller-unforgeable qualification evidence |
 | module closure | PL01 | native module closure evidence |
+| state observation contract | OC02-SD/ST/SV/SI/SR | design、type、closed validation、content identity、behavioral integrationを分離したstate observation contract |
+| state semantics lowering | PL02-SL | compiler derivationまたはSC03-T accepted author policyから作るprovenance付きunaccepted lowering claim |
+| state authority admission | PL02-SA | exact contract、graph、source、qualification、proof scopeへ束縛した`AcceptedStateObservationSemantics` |
 | execution analysis claim | PL02-A | graph、SC03 evidence、PL01 closure、completeness scope、producer profile、proof domainを束縛したclaim |
 | full analysis acceptance | PL02-V | caller-unforgeableな`AcceptedExecutionAnalysis` |
-| candidate derivation | CN01-G | full accepted analysisから導出したfinite candidate set |
+| materialization demand projection | CN01-DM | accepted analysisから独立導出したunbranded raw materialization claim |
+| emission demand projection | CN01-DE | accepted analysisから独立導出したunbranded raw emission claim |
+| raw demand closure | CN01-DVP | 両raw claimをdescriptor-basedに閉じたfresh immutable snapshot |
+| demand acceptance | CN01-DVA | accepted analysisから再投影して完全一致とcross-demand closureを検証したcaller-unforgeable set |
+| demand identity | CN01-DI | accepted demand setをgraph、analysis、state evidence、projection versionへ束縛したidentity |
+| candidate derivation | CN01-G | identified accepted demand setから導出したfinite candidate set |
 | candidate legality | CN01-L | mechanism legality、candidate固有のroleとprotocol template、target capability、behavior summary、ObservationContract適合を束縛したclosed accepted candidate set |
 | candidate-specific plan | MP02 | accepted set内のcandidateごとにevidence identityを保持するplan |
 | finalized candidate evidence | AF01 | final artifact address、export、implementation、deployment-bound protocol binding、canonical evidence ID |
@@ -2641,8 +2649,114 @@ source claimのqualification、full execution analysisのacceptance、candidate 
 SC03はPL02のgraph completenessを待たず、PL02がSC03 evidenceを消費する。
 この向きにすることでqualificationとfull analysisのdependency cycleを作らない。
 
-SC03-Q、SC03-C、SC03-T、PL02-A、PL02-V、CN01-G、CN01-Lは、それぞれ独立したreview unitとする。
+OC02-SD/ST/SV/SI/SR、SC03-Q/C/T、PL02-SD/SL/SA/A/V、MP01-DR-M/E、AS01-MP/EP、CN01-DM/DE/DVP/DVA/DI/G/Lは、それぞれ独立したreview unitとする。
 一つのSC03またはCN01 revisionへ複数validator、trust boundary、candidate solverを束ねない。
+
+#### state semantics と demand admission の dependency DAG
+
+MaterializationRequirementのstate payloadはまだ固定しない。
+既存ObservationContractにauthoritativeなstate update semanticsが存在しないため、先にstate observationとauthority admissionを次の依存順で完成させる。
+
+```text
+OC02-SD design
+  -> OC02-ST package-internal type schema
+  -> OC02-SV descriptor-based closed validation
+  -> OC02-SI content identity and ObservationContract integration
+  -> OC02-SR trace/relation/composition integration
+
+OC02-SD -> PL02-SD state authority-admission design
+
+SC02A/B author policy claim
+  -> SC03-Q/C/T qualified and trusted policy evidence
+  -> PL02-SL state semantics lowering
+
+OC02-SV/SI/SR + PL02-SD + SC03-T + graph/source evidence
+  -> PL02-SL
+  -> PL02-SA state authority admission
+  -> PL02-A
+  -> PL02-V
+
+OC02-ST + PL02-SD
+  -> MP01-DR-M
+  -> AS01-MP
+
+MP01-DR-E
+  -> AS01-EP
+
+PL02-V + AS01-MP -> CN01-DM --+
+PL02-V + AS01-EP -> CN01-DE --+-> CN01-DVP
+                                      |
+PL02-V -------------------------------+-> CN01-DVA
+
+CN01-DVP -> CN01-DVA -> CN01-DI -> CN01-G -> CN01-L
+  -> MP02 -> AF01 -> SL01
+```
+
+このDAGからMP01、CN01、candidate、plan、selectionをOC02、SC03、PL02へ戻すedgeを作らない。
+
+OC02のreview unitは次の責務だけを持つ。
+
+| unit | owner responsibility | 禁止する責務 |
+| --- | --- | --- |
+| OC02-SD | state observationの存在条件、subject、visibility、consistency cut、order、terminal、update vocabulary、mode cardinality、provenance、migrationを設計する | production implementation |
+| OC02-ST | package-internalなexact readonly state preimage型を定義する | public union、parser、identity、behavior |
+| OC02-SV | unknown inputをdescriptor-based hard budgetでfresh deep-frozen unbranded preimageへ閉じる | digest、authority、relation/composition |
+| OC02-SI | SV outputへcontent identityを付け、superseding ObservationContract schemaとcreator/parserへ統合する | trust、lowering、demand projection |
+| OC02-SR | identified state constraintのtrace、relation、composition、refinement、equalityへの効果を実装する | parser、identity、authority |
+
+OC02-SDはcompiler-derivedとauthor-policyの表現、policy reference、診断を含め、state observationの存在条件からschema migrationまでを決定する。
+OC02-SDは既存Accepted ADRの意味を書き換えず、superseding ADRを追加する。
+OC02-STはexact readonly shapeとnon-vacuous type fixtureだけを追加し、public union、unknown parser、identity、behaviorを変更しない。
+OC02-SVはunknown inputを同期的に処理し、accessor、symbol、hidden field、custom prototype、cycle、許可外alias、budget excessをcaller code実行なしで拒否する。
+OC02-SVはfresh deep-frozen unbranded preimageだけを返し、digestまたはaccepted brandを発行しない。
+content identityは内容の同一性だけを証明し、state semanticsを採用するauthorityを証明しない。
+
+author state policyをfree string、bare digest、raw registry ID、update-mode stringからacceptしない。
+author-facing APIはsemantic optionを受け取り、それらの低水準値の手動指定を要求しない。
+author policyはSC02A/Bの未信頼なsource-local claimとし、SC03-Q/C/Tがsource/module conflict、qualified policy、proof-domain trustを検証する。
+
+PL02-SLはcompiler由来またはauthor policy由来のstate semanticsをloweringするが、自身のoutputをacceptできない。
+compiler由来ではexact source analysis、graph/root、ObservationContract、producer profile、completeness scopeを束縛する。
+author policy由来ではexactなSC03-T accepted declarationとpolicy evidenceを要求する。
+どちらのformも、起点となるcontract constraintまたはaccepted policy identityへのprovenanceを保持する。
+
+PL02-SDはstate authority admissionのinput、output、identity preimage、failure、caller-unforgeable representationを先に設計する。
+PL02-SAはPL02-SL claimをOC02-SI/SR、graph/root、ObservationContract、source analysis、producer profile、completeness scope、およびauthor-policy formで該当するSC03-T evidenceへ照合する。
+compiler-derived formではcompiler derivation evidence、author-policy formではauthor-policy provenanceを検証した後だけ`AcceptedStateObservationSemantics`を発行する。
+PL02-Aはそのevidenceをclaimへ含め、PL02-Vがidentityを再検証して`AcceptedExecutionAnalysis`のclosureへ取り込む。
+
+MP01-DR-MはOC02-STと収束済みPL02-SD decisionだけをdesign dependencyにする。
+shared production codeからtransformer-privateな`AcceptedStateObservationSemantics`またはtransformer moduleをimportしない。
+このpackage boundaryをfixtureで直接検査する。
+
+materializationとemissionのatomic vocabularyは別review unit、別subpathとする。
+
+```text
+@dathra/shared/materialization-contract
+@dathra/shared/emission-contract
+```
+
+AS01-MPとAS01-EPはpackage exports、build entry、generated declaration、runtime-empty emit、type-only consumer、shared root非公開をそれぞれ独立して検査する。
+
+CN01-DMとCN01-DEは同じexact `AcceptedExecutionAnalysis`から独立にraw claimを導出する。
+DMとDEはclosed parse、completeness acceptance、cross-demand consistency、identity、candidate selectionを所有しない。
+
+CN01-DVPは両raw claimをunknown inputとして受ける。
+equality、sort、semantic lookup、projection comparisonより先にdescriptor-based preflightとhard budgetを適用し、accessor、custom prototype、symbol、hidden field、malformed collection、cycle、不正aliasをcaller code実行なしで拒否する。
+caller objectを保持せず、fresh deep-frozen joint snapshotだけを返す。
+
+CN01-DVAはcaller-unforgeableな`AcceptedExecutionAnalysis`とimmutable DVP snapshotだけを受け、raw claim objectを受けない。
+accepted analysis identity、DVP provenance、parser versionを検証した後、DM/DEを再投影し、安全なsnapshotとcanonical structural equalityで比較する。
+graph/root/evidence/state semantics reference、materialization/emission completeness、cross-demand consistency、canonical order、duplicate ruleを検証してからfresh setとprivate `AcceptedDemandSet` brandを発行する。
+
+CN01-DIだけがaccepted demand setをgraph、analysis、state evidence、projection versionへidentity-bindする。
+CN01-GはCN01-DI outputだけを消費し、新しいdemandを生成しない。
+
+SL01はobservationally legalかつfinalizedなcandidateからserver-first preferenceを適用して最終選択する。
+candidate enumeration orderをselection policyにせず、SL01の独立revisionでserver/client cost order、同順位のdeterministic tie-break、selection evidenceへの束縛を検査する。
+
+admission失敗またはlegal candidate不在はtyped build diagnosticとする。
+full client module、eager hydration、runtime admission、runtime ignore、first-success fallbackへ移行しない。
 
 bindingまたはmechanismごとの責務は次のとおりとする。
 
