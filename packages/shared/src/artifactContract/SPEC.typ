@@ -18,6 +18,8 @@ artifactが公開するexport name、member semantic ID、export責務のclaim�
 
 deployment identityのpersistent identity inputをexactなclosed productとして固定し、欠落したfield、別domainのdigest、変更されたproperty modifierを後続のdeployment snapshot、validation、digest operationへ混入させないpackage-localなtypeを定義する。
 
+artifact addressのpersistent identity inputをcanonical schema順序のexactなclosed productとして固定し、unsupportedなkind、欠落したfield、変更されたproperty modifierを後続のvalidationとidentity operationへ混入させないpackage-localなtypeを定義する。
+
 これらのAPIはtype-only foundationであり、runtime operationとshared package rootの公開面を増やさない。
 
 == 設計判断
@@ -169,6 +171,33 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
     1. *deployment固有digestまたはID brandを追加する*: preimage schemaと後続digest operationを同じtype-only unitへ混在させるため採用しない
     2. *digest fieldをplain stringにする*: generic SHA-256 digest contractを失うため採用しない
     3. *artifact address preimageと同時に提供する*: 独立して検証できるpersistent identity schemaと共有facade更新を一つのrevisionへ束ねるため採用しない
+    4. *validatorまたはdigest operationを同時に提供する*: untrustedなtype-level vocabularyへcanonicalityまたはidentityの証明責務を混入させるため採用しない
+  ],
+)
+
+#adr(
+  header("artifact address preimageをcanonical順序のclosed productにする", Status.Accepted, "2026-07-13"),
+  [
+    artifact addressはdeployment identity、公開base URL、bundler profile、artifact kind、finalization template、entry、member、dependency、exportのclaimを一つのpersistent identity inputとして区別する必要がある。
+    optionalまたはmutableなfield、openなkind、source aliasを持つrecordでは、canonical schemaと後続validatorの責務境界が曖昧になる。
+  ],
+  [
+    `ArtifactAddressPreimage`をcanonical schema順序の10個のrequiredかつreadonlyなpropertyからなるinterfaceとして定義する。
+    `kind`は`javascript`、`wasm`、`data`のdirect inline unionとし、`ArtifactKind`またはsource aliasを追加しない。
+    collection fieldは既存bindingからなるreadonlyなstructural sequenceとして保持し、empty、duplicate、unsorted、dangling、role mismatch、kind/template mismatchをtype levelでは表現可能なままにする。
+    focused modelからpackage-local facadeへtype-onlyで提供する。
+    validator、normalizer、parser、creator、digest operation、address issuance、URL、integrity、trust、provenance、closure、root publication、runtime behaviorは追加しない。
+  ],
+  [
+    - 後続contractはartifact addressのexactなpersistent identity inputを再利用できる
+    - type fixtureはkeys、property types、canonical declaration order、required modifier、readonly modifier、closed kind unionの変更を検出できる
+    - collection全体のsemantic invariantとreferent existenceはAR01-PV以降のvalidatorが判定できる
+    - typeへの適合はcanonicality、provenance、trust、placement、artifactの実在、address issuanceを証明しない
+  ],
+  alternatives: [
+    1. *`ArtifactKind`またはsource aliasを追加する*: 採択済みschemaに存在しないtype surfaceを増やすため採用しない
+    2. *kindをopenなstringにする*: unsupportedなartifact kindをidentity inputから拒否できないため採用しない
+    3. *collection invariantをtypeへ埋め込む*: ordering、duplicates、referent existence、cross-field consistencyをstructural typeだけでは証明できないため採用しない
     4. *validatorまたはdigest operationを同時に提供する*: untrustedなtype-level vocabularyへcanonicalityまたはidentityの証明責務を混入させるため採用しない
   ],
 )
@@ -372,6 +401,49 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
   ],
 )
 
+#interface_spec(
+  name: "Artifact address preimage",
+  summary: [
+    artifact addressのpersistent identity inputを、canonical schema順序のrequiredかつreadonlyなclosed productとして表す。
+  ],
+  format: [
+    ```typescript
+    import type { Sha256Digest } from "../canonicalIdentity/implementation"
+    import type { ArtifactDependencyBinding } from "./dependencyBindingModel"
+    import type { ArtifactEntryBinding } from "./entryBindingModel"
+    import type { ArtifactExportBinding } from "./exportBindingModel"
+    import type { ArtifactFinalizationTemplate } from "./finalizationTemplateModel"
+
+    interface ArtifactAddressPreimage {
+      readonly schema: "dathra.artifact-address/1"
+      readonly deploymentIdentityDigest: Sha256Digest
+      readonly artifactBaseUrl: string
+      readonly bundlerProfileDigest: Sha256Digest
+      readonly kind: "javascript" | "wasm" | "data"
+      readonly finalizationTemplate: ArtifactFinalizationTemplate
+      readonly entryBindings: readonly ArtifactEntryBinding[]
+      readonly memberSemanticIds: readonly string[]
+      readonly dependencyBindings: readonly ArtifactDependencyBinding[]
+      readonly exportTable: readonly ArtifactExportBinding[]
+    }
+
+    export type { ArtifactAddressPreimage }
+    ```
+  ],
+  constraints: [
+    - `keyof ArtifactAddressPreimage`は記載した10個のpropertyだけである
+    - 全propertyはrequiredかつreadonlyであり、index signatureを持たない
+    - property declarationは記載したcanonical schema順序を維持する
+    - 各property typeは記載したliteral、plain `string`、genericな`Sha256Digest`、既存model、またはreadonly arrayと双方向に一致する
+    - `kind`は記載した3個のliteralからなるdirect inline unionであり、`ArtifactKind` aliasを追加しない
+    - `ArtifactAddressPreimageSource`または別のsource aliasを追加しない
+    - readonly arrayはstructural sequenceであり、empty、duplicate、unsorted、dangling、role mismatch、kind/template mismatchを拒否しない
+    - `ArtifactAddressPreimage`は`artifactAddressPreimageModel`内部で定義し、package-local facadeの末尾からtype-onlyで提供する
+    - facade、artifact address preimage model、type fixture、type-only consumerはruntime import edge、runtime value、top-level effectを持たない
+    - shared package rootへの公開はAS01が所有する
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -497,6 +569,29 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
   ],
 )
 
+#behavior_spec(
+  name: "Artifact address preimage structural boundary",
+  summary: [
+    artifact address preimage自身のkeys、property types、canonical declaration order、required modifier、readonly modifier、direct inline kind unionを型検査とAST検査で固定する。
+  ],
+  preconditions: [
+    - 比較対象が採択済みpreimageまたはmissing、extra、optional、mutable、wrong schema、widened digest、widened kind、mutable collection variantである
+    - semanticにはinvalidだが10個のproperty typeには適合するcollectionまたはcross-field stateが入力される
+  ],
+  steps: [
+    1. preimageのkeysと各property typeが採択済み10 propertyと双方向に一致することを検査する
+    2. 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
+    3. model ASTがcanonical schema順序と3 literalのdirect inline `kind` unionを持ち、type aliasを持たないことを検査する
+    4. missing、extra、optional、mutable、wrong schema、widened digest、widened kind、mutable collection variantがexact contractと一致しないことを検査する
+    5. empty、duplicate、unsorted、dangling、role mismatch、kind/template mismatch stateがstructural typeへ代入可能であることを検査する
+  ],
+  postconditions: [
+    - package-local type contractのclosed product shapeまたはcanonical declaration orderを変更する差分を検出できる
+    - semanticにinvalidなstateをtypeだけで誤って拒否または承認せず、後続validatorへ残せる
+    - validation、digest operation、runtime value、runtime behaviorは追加されない
+  ],
+)
+
 == 機能仕様
 
 #feature_spec(
@@ -522,9 +617,9 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
     - plain string、generic digest、別nominal digest subtypeからの代入拒否を検査する
     - `ArtifactAddressId`からgeneric digestとstringへの代入成功を検査する
     - 別brandとの直接代入を両方向で拒否することを検査する
-    - creator、parser、guard、preimage typeがfacadeに存在しないことを検査する
-    - facadeのASTが6個のfocused modelから現行の7 typeだけを採択済み順序でtype-only exportすることを検査する
-    - facade、全6 model、全type fixtureのmemory emitがmodule marker `export {};`だけであることを検査する
+    - creator、parser、guardがfacadeに存在しないことを検査する
+    - facadeのASTが7個のfocused modelから現行の8 typeだけを採択済み順序でtype-only exportすることを検査する
+    - facade、全7 model、全type fixtureのmemory emitがmodule marker `export {};`だけであることを検査する
     - type-only consumerのmemory emitにruntime import edgeがないことを検査する
     - shared package rootから`ArtifactAddressId`をimportできないことを検査する
   ],
@@ -566,11 +661,11 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
     - `keyof`と全property typeが期待型と双方向に一致することを検査する
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing、extra、optional、mutable、widened variantがexact contractと一致しないことを検査する
-    - facadeのASTが6個のfocused modelから現行の`ArtifactAddressId`、`ArtifactFinalizationTemplate`、`ArtifactEntryRole`、`ArtifactEntryBinding`、`ArtifactDependencyBinding`、`ArtifactExportBinding`、`DeploymentIdentityPreimage`だけをこの順でtype-only exportすることを検査する
+    - facadeのASTが7個のfocused modelから現行の`ArtifactAddressId`、`ArtifactFinalizationTemplate`、`ArtifactEntryRole`、`ArtifactEntryBinding`、`ArtifactDependencyBinding`、`ArtifactExportBinding`、`DeploymentIdentityPreimage`、`ArtifactAddressPreimage`だけをこの順でtype-only exportすることを検査する
     - facade、全model、全type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
-    - 後続aggregate、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
+    - validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared package rootから`ArtifactFinalizationTemplate`をimportできないことを検査する
-    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の7 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の8 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
   ],
 )
 
@@ -605,11 +700,11 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
     - `keyof`と全property typeが期待型と双方向に一致することを検査する
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing、extra、optional、mutable、widened、role変更、ordinal変更variantがexact contractと一致しないことを非空なnegative fixtureで検査する
-    - facadeのASTが6個のfocused modelから現行の7 typeだけを採択済み順序でtype-only exportすることを検査する
+    - facadeのASTが7個のfocused modelから現行の8 typeだけを採択済み順序でtype-only exportすることを検査する
     - facade、全model、type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
-    - 後続aggregate、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
+    - validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared package rootから`ArtifactEntryRole`と`ArtifactEntryBinding`をimportできないことを検査する
-    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の7 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の8 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
   ],
 )
 
@@ -649,11 +744,11 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
     - kind unionが期待する4 literalと双方向に一致することを検査する
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing、extra、optional、mutable、widened、kind変更、target address変更、target export nullability変更variantがexact contractと一致しないことを非空なnegative fixtureで検査する
-    - facadeのASTが6個のfocused modelから採択済み7 typeだけを採択済み順序でtype-only exportし、禁止されたhelper aliasをexportしないことを検査する
-    - facade、全6 model、全type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
-    - validator、aggregate、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
+    - facadeのASTが7個のfocused modelから採択済み8 typeだけを採択済み順序でtype-only exportし、禁止されたhelper aliasをexportしないことを検査する
+    - facade、全7 model、全type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared package rootから`ArtifactDependencyBinding`をimportできないことを検査する
-    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の7 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の8 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
   ],
 )
 
@@ -693,10 +788,10 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing `memberSemanticId`、extra `integrity`、optional、all-mutable、両string fieldの`string | null` widening、unsupported role variantがexact contractと一致しないことを非空なnegative fixtureで検査する
     - model ASTが1個のinterface、`exportName`、`memberSemanticId`、`exportRole`の順の3 property、directな6-string-literal role union、0個のtype alias、`ArtifactExportBinding`だけのnamed type-only exportを持つことを検査する
-    - facadeのASTが6個のfocused modelから採択済み7 typeだけを採択済み順序でtype-only exportし、追加statementを持たないことを検査する
+    - facadeのASTが7個のfocused modelから採択済み8 typeだけを採択済み順序でtype-only exportし、追加statementを持たないことを検査する
     - facade、export binding model、type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
     - package-local facadeから`ArtifactExportBinding`をtype-only importでき、shared package rootからはimportできないことを検査する
-    - export table、aggregate、preimage、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
+    - standalone export table、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに`ArtifactExportBinding`と`ArtifactExportRole`が存在せず、positive controlとして`Sha256Digest`が存在することを検査する
   ],
 )
@@ -704,7 +799,7 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
 #feature_spec(
   name: "Type-only deployment identity preimage",
   summary: [
-    snapshot、validator、digest operation、artifact address preimageを仮実装せず、`DeploymentIdentityPreimage`だけをcurrent revisionのpackage-local facadeへ追加する。
+    snapshot、validator、digest operationを仮実装せず、`DeploymentIdentityPreimage`をcurrent revisionのpackage-local facadeでartifact address preimageと共存させる。
   ],
   api: [
     ```typescript
@@ -735,23 +830,69 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing、extra、optional、mutable、wrong schema、widened digest、widened string variantがexact contractと一致しないことを非空なnegative fixtureで検査する
     - model ASTが1個のinterface、採択済み順序の7 property、0個のtype alias、`Sha256Digest`だけのtype-only import、`DeploymentIdentityPreimage`だけのnamed type-only exportを持つことを検査する
-    - facadeのASTが6個のfocused modelから採択済み7 typeだけを採択済み順序でtype-only exportし、追加statementを持たないことを検査する
+    - facadeのASTが7個のfocused modelから採択済み8 typeだけを採択済み順序でtype-only exportし、追加statementを持たないことを検査する
     - facade、deployment identity model、type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
     - package-local facadeから`DeploymentIdentityPreimage`をtype-only importでき、shared package rootからはimportできないことを検査する
-    - deployment identity alias、brand、snapshot、validator、parser、creator、digest operation、URL、artifact address preimageがfacadeに存在しないことを検査する
+    - deployment identity alias、brand、snapshot、validator、parser、creator、digest operation、URLがfacadeに存在しないことを検査する
     - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに`DeploymentIdentityPreimage`、`DeploymentIdentityDigest`、`DeploymentIdentityId`が存在せず、positive controlとして`Sha256Digest`が存在することを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Type-only artifact address preimage",
+  summary: [
+    validator、digest operation、address issuanceを仮実装せず、`ArtifactAddressPreimage`だけをcurrent revisionのpackage-local facadeへ追加する。
+  ],
+  api: [
+    ```typescript
+    interface ArtifactAddressPreimage {
+      readonly schema: "dathra.artifact-address/1"
+      readonly deploymentIdentityDigest: Sha256Digest
+      readonly artifactBaseUrl: string
+      readonly bundlerProfileDigest: Sha256Digest
+      readonly kind: "javascript" | "wasm" | "data"
+      readonly finalizationTemplate: ArtifactFinalizationTemplate
+      readonly entryBindings: readonly ArtifactEntryBinding[]
+      readonly memberSemanticIds: readonly string[]
+      readonly dependencyBindings: readonly ArtifactDependencyBinding[]
+      readonly exportTable: readonly ArtifactExportBinding[]
+    }
+
+    export type { ArtifactAddressPreimage }
+    ```
+  ],
+  edge_cases: [
+    - schema literalを`string`または別versionへwidenしない
+    - digest fieldをplain string、別digest domain、artifact address brandまたはdeployment固有aliasへ変更しない
+    - kind unionに未定義の値を追加せず、`string`へwidenしない
+    - `ArtifactKind`、`ArtifactAddressPreimageSource`または別のhelper aliasを追加しない
+    - propertyまたはcollectionをoptional、mutable、nullableへ変更しない
+    - empty、duplicate、unsorted、dangling、role mismatch、kind/template mismatch stateをtype levelで拒否しない
+    - typeへの適合をcanonicality、provenance、trust、placement、referent existence、artifact existence、address issuanceの証拠として扱わない
+  ],
+  test_cases: [
+    - `keyof`と全property typeが期待型と双方向に一致することを検査する
+    - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
+    - missing、extra、optional、mutable、wrong schema、widened digest、widened kind、mutable collection variantがexact contractと一致しないことを非空なnegative fixtureで検査する
+    - empty、duplicate、unsorted、dangling、role mismatch、kind/template mismatch stateが`ArtifactAddressPreimage`へ代入可能であることを検査する
+    - model ASTが1個のinterface、canonical schema順序の10 property、directな3-string-literal `kind` union、0個のtype alias、必要なtypeだけのtype-only import、`ArtifactAddressPreimage`だけのnamed type-only exportを持つことを検査する
+    - facadeのASTが7個のfocused modelから採択済み8 typeだけを採択済み順序でtype-only exportし、追加statementを持たないことを検査する
+    - facade、artifact address preimage model、type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - package-local facadeから`ArtifactAddressPreimage`をtype-only importでき、shared package rootからはimportできないことを検査する
+    - `ArtifactKind`、source alias、validator、normalizer、parser、creator、digest operation、address issuance、URL、integrity、trust、provenance、closureがfacadeに存在しないことを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに`ArtifactAddressPreimage`、`ArtifactKind`、`ArtifactAddressPreimageSource`が存在せず、positive controlとして`Sha256Digest`が存在することを検査する
   ],
 )
 
 == 責務境界
 
 - canonical snapshot validator、artifact address identity operation、creator、parser、guard、castは後続AR01 unitが所有する
-- export table、artifact address preimage aggregateは後続AR01 unitが所有する
+- standalone export tableは追加せず、artifact address preimageのsemantic canonical validatorはAR01-PVが所有する
 - entry bindingのsemantic canonical validatorは後続AR01 unitが所有する
 - dependency bindingのsemantic validation、target existence、ordering、duplicatesは後続AR01 unitが所有する
 - export bindingのname syntaxとexistence、member-role validation、canonical ordering、duplicatesは後続AR01 unitが所有する
 - deployment identityのhostile input snapshotはAR01-DS、semantic canonical validationはAR01-DV、validated preimage全体のcanonical digestはAR01-DDが所有する
-- artifact address preimage aggregateはAR01-Pが所有し、AR01-DDのgeneric digestを入力として受け取る
+- artifact address preimageのtype-only aggregateはAR01-Pが所有し、AR01-DDのgeneric digestを入力として受け取る
 - artifact URL、exact-byte integrity、artifact closureは後続unitが所有する
 - SC01 migrationはAR01-I後のintegration unitが所有する
 - このunitはcanonicality、provenance acceptance、trust admission、referent closure、artifact existence、exact-byte integrityを表さない

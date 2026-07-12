@@ -14,10 +14,17 @@ import type {
   ArtifactExportBinding as _RootArtifactExportBindingMustNotExist,
   // @ts-expect-error Root publication belongs to AS01.
   DeploymentIdentityPreimage as _RootDeploymentIdentityPreimageMustNotExist,
+  // @ts-expect-error Root publication belongs to AS01.
+  ArtifactAddressPreimage as _RootArtifactAddressPreimageMustNotExist,
+  // @ts-expect-error The accepted contract has no artifact kind alias.
+  ArtifactKind as _RootArtifactKindMustNotExist,
+  // @ts-expect-error The accepted contract has no source alias.
+  ArtifactAddressPreimageSource as _RootArtifactAddressPreimageSourceMustNotExist,
   // @ts-expect-error The accepted contract has no export role alias.
   ArtifactExportRole as _RootArtifactExportRoleMustNotExist,
 } from "../index";
 import type {
+  ArtifactAddressPreimage,
   ArtifactAddressId,
   ArtifactDependencyBinding,
   ArtifactEntryBinding,
@@ -29,17 +36,15 @@ import type {
   ArtifactDependencyKind as _ArtifactDependencyKindMustNotExist,
   // @ts-expect-error The accepted contract has no export role alias.
   ArtifactExportRole as _ArtifactExportRoleMustNotExist,
-  // @ts-expect-error Artifact kinds belong to the aggregate AR01-P revision.
+  // @ts-expect-error The accepted aggregate uses a direct inline kind union.
   ArtifactKind as _ArtifactKindMustNotExist,
-  // @ts-expect-error The artifact address preimage belongs to a later AR01 unit.
-  ArtifactAddressPreimage as _ArtifactAddressPreimageMustNotExist,
   // @ts-expect-error AR01-DD owns the deployment identity digest operation and result.
   DeploymentIdentityDigest as _DeploymentIdentityDigestMustNotExist,
   // @ts-expect-error The accepted deployment contract has no ID brand.
   DeploymentIdentityId as _DeploymentIdentityIdMustNotExist,
   // @ts-expect-error The accepted deployment contract has no source alias.
   DeploymentIdentityPreimageSource as _DeploymentIdentityPreimageSourceMustNotExist,
-  // @ts-expect-error The source aggregate belongs to the later AR01-P revision.
+  // @ts-expect-error The accepted aggregate has no source alias.
   ArtifactAddressPreimageSource as _ArtifactAddressPreimageSourceMustNotExist,
   // @ts-expect-error Artifact closure belongs to a later graph contract.
   ArtifactClosure as _ArtifactClosureMustNotExist,
@@ -262,8 +267,10 @@ type ArtifactEntryBindingConsumer = readonly [
 type ArtifactDependencyBindingConsumer = ArtifactDependencyBinding;
 type ArtifactExportBindingConsumer = ArtifactExportBinding;
 type DeploymentIdentityPreimageConsumer = DeploymentIdentityPreimage;
+type ArtifactAddressPreimageConsumer = ArtifactAddressPreimage;
 
 export type {
+  ArtifactAddressPreimageConsumer,
   ArtifactAddressIdTypeFixture,
   ArtifactDependencyBindingConsumer,
   ArtifactEntryBindingConsumer,

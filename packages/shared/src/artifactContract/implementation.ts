@@ -7,3 +7,4 @@ export type {
 export type { ArtifactDependencyBinding } from "./dependencyBindingModel";
 export type { ArtifactExportBinding } from "./exportBindingModel";
 export type { DeploymentIdentityPreimage } from "./deploymentIdentityModel";
+export type { ArtifactAddressPreimage } from "./artifactAddressPreimageModel";

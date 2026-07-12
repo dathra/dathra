@@ -18,6 +18,10 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import { type Sha256Digest } from "../canonicalIdentity/implementation";
 import * as artifactContractApi from "./implementation";
 import {
+  type ArtifactAddressPreimage,
+  type ArtifactDependencyBinding,
+  type ArtifactEntryBinding,
+  type ArtifactExportBinding,
   type ArtifactFinalizationTemplate,
   type DeploymentIdentityPreimage,
 } from "./implementation";
@@ -60,6 +64,19 @@ type ExpectedDeploymentIdentityPreimage = {
   readonly canonicalPublicOrigin: string;
   readonly contractNamespaceGraphDigest: Sha256Digest;
   readonly hostProfileSetDigest: Sha256Digest;
+};
+
+type ExpectedArtifactAddressPreimage = {
+  readonly schema: "dathra.artifact-address/1";
+  readonly deploymentIdentityDigest: Sha256Digest;
+  readonly artifactBaseUrl: string;
+  readonly bundlerProfileDigest: Sha256Digest;
+  readonly kind: "javascript" | "wasm" | "data";
+  readonly finalizationTemplate: ArtifactFinalizationTemplate;
+  readonly entryBindings: readonly ArtifactEntryBinding[];
+  readonly memberSemanticIds: readonly string[];
+  readonly dependencyBindings: readonly ArtifactDependencyBinding[];
+  readonly exportTable: readonly ArtifactExportBinding[];
 };
 
 function emitTypeScriptModule(relativePath: string): string {
@@ -145,11 +162,16 @@ describe("artifact contract type domains", () => {
     expectTypeOf<ExpectedDeploymentIdentityPreimage>().toEqualTypeOf<DeploymentIdentityPreimage>();
   });
 
+  it("provides the exact artifact address preimage through the facade", () => {
+    expectTypeOf<ArtifactAddressPreimage>().toEqualTypeOf<ExpectedArtifactAddressPreimage>();
+    expectTypeOf<ExpectedArtifactAddressPreimage>().toEqualTypeOf<ArtifactAddressPreimage>();
+  });
+
   it("exposes no runtime values from the package-local facade", () => {
     expect(Object.keys(artifactContractApi)).toEqual([]);
   });
 
-  it("exports exactly seven package-local types from six focused models", () => {
+  it("exports exactly eight package-local types from seven focused models", () => {
     const relativePath = "./implementation.ts";
     const source = readFileSync(new URL(relativePath, import.meta.url), "utf8");
     const sourceFile = createSourceFile(
@@ -252,10 +274,20 @@ describe("artifact contract type domains", () => {
           },
         ],
       },
+      {
+        isTypeOnly: true,
+        moduleSpecifier: "./artifactAddressPreimageModel",
+        exports: [
+          {
+            exportedName: "ArtifactAddressPreimage",
+            localName: "ArtifactAddressPreimage",
+          },
+        ],
+      },
     ]);
   });
 
-  it("emits the facade and all six models only as module markers", () => {
+  it("emits the facade and all seven models only as module markers", () => {
     expect(emitTypeScriptModule("./implementation.ts").trim()).toBe(
       "export {};",
     );
@@ -276,7 +308,15 @@ describe("artifact contract type domains", () => {
       "export {};",
     );
     expect(
+      emitTypeScriptModule("./artifactAddressPreimageModel.ts").trim(),
+    ).toBe("export {};");
+    expect(
       emitTypeScriptModule("./deploymentIdentityModel.type-fixture.ts").trim(),
+    ).toBe("export {};");
+    expect(
+      emitTypeScriptModule(
+        "./artifactAddressPreimageModel.type-fixture.ts",
+      ).trim(),
     ).toBe("export {};");
   });
 
@@ -321,6 +361,9 @@ describe("artifact contract type domains", () => {
         expect(exportedNames).not.toContain("DeploymentIdentityPreimage");
         expect(exportedNames).not.toContain("DeploymentIdentityDigest");
         expect(exportedNames).not.toContain("DeploymentIdentityId");
+        expect(exportedNames).not.toContain("ArtifactAddressPreimage");
+        expect(exportedNames).not.toContain("ArtifactAddressPreimageSource");
+        expect(exportedNames).not.toContain("ArtifactKind");
       }
     } finally {
       rmSync(outputDirectory, { force: true, recursive: true });
