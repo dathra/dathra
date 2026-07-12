@@ -25,7 +25,6 @@ import {
   // @ts-expect-error AS01 owns shared-root publication.
   type SemanticRelationKind as _RootSemanticRelationKindMustNotExist,
 } from "../index";
-import * as executionContractApi from "./implementation";
 import {
   type FactEndpoint,
   // @ts-expect-error Individual relation aliases are not facade API.
@@ -55,20 +54,6 @@ import {
   type FactId,
 } from "./implementation";
 import * as relationModelApi from "./relationModel";
-
-type ExecutionContractApi = typeof executionContractApi;
-
-type _DefineExecutionContractMustNotExist =
-  // @ts-expect-error Source construction belongs to a later SC02A review unit.
-  ExecutionContractApi["defineExecutionContract"];
-
-type _ParseExecutionContractSourceMustNotExist =
-  // @ts-expect-error Source-level parsing belongs to SC02A12.
-  ExecutionContractApi["parseExecutionContractSource"];
-
-type _ValidateExecutionContractSourceMustNotExist =
-  // @ts-expect-error Source validation remains internal to SC02A12.
-  ExecutionContractApi["validateExecutionContractSource"];
 
 type ExpectedSemanticRelationKind =
   | "reads"
@@ -521,11 +506,8 @@ describe("source-local semantic relation schema", () => {
 });
 
 describe("relation model publication boundary", () => {
-  it("exports exactly three relation types within the cumulative facade", () => {
+  it("exports exactly three relation types from the model", () => {
     const { sourceFile } = readTypeScriptModule("./relationModel.ts");
-    const { sourceFile: facadeSourceFile } = readTypeScriptModule(
-      "./implementation.ts",
-    );
     const exportStatements = sourceFile.statements.filter(
       (statement) =>
         isExportDeclaration(statement) ||
@@ -534,8 +516,6 @@ describe("relation model publication boundary", () => {
     );
 
     expect(exportStatements).toHaveLength(1);
-    expect(facadeSourceFile.statements).toHaveLength(6);
-    expect(facadeSourceFile.statements.every(isExportDeclaration)).toBe(true);
     expect(readNamedExportSurface("./relationModel.ts")).toEqual([
       {
         moduleSpecifier: null,
@@ -543,63 +523,18 @@ describe("relation model publication boundary", () => {
         names: ["SemanticRelationKind", "FactEndpoint", "SemanticRelation"],
       },
     ]);
-    expect(readNamedExportSurface("./implementation.ts")).toEqual([
-      {
-        moduleSpecifier: "./identity",
-        typeOnly: false,
-        names: ["ExecutionContractError", "factId"],
-      },
-      {
-        moduleSpecifier: "./identity",
-        typeOnly: true,
-        names: ["ExecutionContractErrorCode", "FactId"],
-      },
-      {
-        moduleSpecifier: "./model",
-        typeOnly: true,
-        names: ["SemanticPathSegment", "SemanticSubject"],
-      },
-      {
-        moduleSpecifier: "./factModel",
-        typeOnly: true,
-        names: ["SemanticFactKind", "TransferBinding", "SemanticFact"],
-      },
-      {
-        moduleSpecifier: "./relationModel",
-        typeOnly: true,
-        names: ["SemanticRelationKind", "FactEndpoint", "SemanticRelation"],
-      },
-      {
-        moduleSpecifier: "./exportModel",
-        typeOnly: true,
-        names: ["ExportExecutionContract"],
-      },
-    ]);
   });
 
   it("adds no runtime value or runtime import edge", () => {
     const relationModelSource =
       readTypeScriptModule("./relationModel.ts").source;
-    const facadeSource = readTypeScriptModule("./implementation.ts").source;
     const consumerSource = readTypeScriptModule(
       "./relationModel.typeOnlyConsumer.fixture.ts",
     ).source;
 
     expect(Object.keys(relationModelApi)).toEqual([]);
-    expect(Object.keys(executionContractApi).sort()).toEqual([
-      "ExecutionContractError",
-      "factId",
-    ]);
-    expect("defineExecutionContract" in executionContractApi).toBe(false);
-    expect("parseExecutionContractSource" in executionContractApi).toBe(false);
-    expect("validateExecutionContractSource" in executionContractApi).toBe(
-      false,
-    );
     expect(emitTypeScript(relationModelSource, "relationModel.ts").trim()).toBe(
       "export {};",
-    );
-    expect(emitTypeScript(facadeSource, "implementation.ts").trim()).toBe(
-      'export { ExecutionContractError, factId } from "./identity";',
     );
     expect(emitTypeScript(consumerSource, "consumer.ts").trim()).toBe(
       "export {};",

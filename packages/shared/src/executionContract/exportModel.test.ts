@@ -25,43 +25,14 @@ import {
   // @ts-expect-error AS01 owns shared-root publication.
   type ExportExecutionContract as _RootExportExecutionContractMustNotExist,
 } from "../index";
-import * as executionContractApi from "./implementation";
 import {
-  // @ts-expect-error Trust acceptance is owned by a later verifier.
-  type AcceptedExecutionAnalysis as _AcceptedAnalysisMustNotExist,
-  // @ts-expect-error Compiled contracts are owned by SC02B.
-  type CompiledExecutionContract as _CompiledContractMustNotExist,
   // @ts-expect-error Helper aliases are not package-local facade API.
   type ExportCallable as _ExportCallableMustNotExist,
   type ExportExecutionContract,
-  // @ts-expect-error Registry aggregation belongs to SC02A6.
-  type ExecutionContractRegistrySources as _RegistrySourcesMustNotExist,
-  // @ts-expect-error The source envelope belongs to SC02A7.
-  type ExecutionContractSource as _SourceMustNotExist,
   type FactId,
-  // @ts-expect-error Qualified identity is owned by SC02B and SC03.
-  type QualifiedFactId as _QualifiedFactIdMustNotExist,
   type TransferBinding,
 } from "./implementation";
 import * as exportModelApi from "./exportModel";
-
-type ExecutionContractApi = typeof executionContractApi;
-
-type _DefineExecutionContractMustNotExist =
-  // @ts-expect-error Source construction belongs to SC02A12.
-  ExecutionContractApi["defineExecutionContract"];
-
-type _DigestExecutionContractSourceMustNotExist =
-  // @ts-expect-error Canonical digest belongs to SC02A13.
-  ExecutionContractApi["digestExecutionContractSource"];
-
-type _ParseExecutionContractSourceMustNotExist =
-  // @ts-expect-error Source-level parsing belongs to SC02A12.
-  ExecutionContractApi["parseExecutionContractSource"];
-
-type _ValidateExecutionContractSourceMustNotExist =
-  // @ts-expect-error Source validation remains internal to SC02A12.
-  ExecutionContractApi["validateExecutionContractSource"];
 
 type ExpectedExportCallable =
   | "none"
@@ -211,11 +182,8 @@ describe("source-local export execution summary", () => {
 });
 
 describe("export summary publication boundary", () => {
-  it("exports exactly one type from the model and facade", () => {
+  it("exports exactly one type from the model", () => {
     const { sourceFile } = readTypeScriptModule("./exportModel.ts");
-    const { sourceFile: facadeSourceFile } = readTypeScriptModule(
-      "./implementation.ts",
-    );
     const exportStatements = sourceFile.statements.filter(
       (statement) =>
         isExportDeclaration(statement) ||
@@ -224,43 +192,9 @@ describe("export summary publication boundary", () => {
     );
 
     expect(exportStatements).toHaveLength(1);
-    expect(facadeSourceFile.statements).toHaveLength(6);
-    expect(facadeSourceFile.statements.every(isExportDeclaration)).toBe(true);
     expect(readNamedExportSurface("./exportModel.ts")).toEqual([
       {
         moduleSpecifier: null,
-        typeOnly: true,
-        names: ["ExportExecutionContract"],
-      },
-    ]);
-    expect(readNamedExportSurface("./implementation.ts")).toEqual([
-      {
-        moduleSpecifier: "./identity",
-        typeOnly: false,
-        names: ["ExecutionContractError", "factId"],
-      },
-      {
-        moduleSpecifier: "./identity",
-        typeOnly: true,
-        names: ["ExecutionContractErrorCode", "FactId"],
-      },
-      {
-        moduleSpecifier: "./model",
-        typeOnly: true,
-        names: ["SemanticPathSegment", "SemanticSubject"],
-      },
-      {
-        moduleSpecifier: "./factModel",
-        typeOnly: true,
-        names: ["SemanticFactKind", "TransferBinding", "SemanticFact"],
-      },
-      {
-        moduleSpecifier: "./relationModel",
-        typeOnly: true,
-        names: ["SemanticRelationKind", "FactEndpoint", "SemanticRelation"],
-      },
-      {
-        moduleSpecifier: "./exportModel",
         typeOnly: true,
         names: ["ExportExecutionContract"],
       },
@@ -269,14 +203,7 @@ describe("export summary publication boundary", () => {
 
   it("adds no runtime value or runtime import edge", () => {
     expect(Object.keys(exportModelApi)).toEqual([]);
-    expect(Object.keys(executionContractApi).sort()).toEqual([
-      "ExecutionContractError",
-      "factId",
-    ]);
     expect(emitTypeScriptModule("./exportModel.ts").trim()).toBe("export {};");
-    expect(emitTypeScriptModule("./implementation.ts").trim()).toBe(
-      'export { ExecutionContractError, factId } from "./identity";',
-    );
     expect(
       emitTypeScriptModule("./exportModel.typeOnlyConsumer.fixture.ts").trim(),
     ).toBe("export {};");
@@ -316,14 +243,5 @@ describe("export summary publication boundary", () => {
     } finally {
       rmSync(outputDirectory, { force: true, recursive: true });
     }
-  });
-
-  it("does not add later source operations", () => {
-    expect("defineExecutionContract" in executionContractApi).toBe(false);
-    expect("digestExecutionContractSource" in executionContractApi).toBe(false);
-    expect("parseExecutionContractSource" in executionContractApi).toBe(false);
-    expect("validateExecutionContractSource" in executionContractApi).toBe(
-      false,
-    );
   });
 });

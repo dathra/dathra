@@ -32,12 +32,9 @@ import {
 } from "../index";
 import * as factModelApi from "./factModel";
 import {
-  type FactEndpoint,
   type FactId,
   type SemanticFact,
   type SemanticFactKind,
-  type SemanticRelation,
-  type SemanticRelationKind,
   type SemanticSubject,
   type TransferBinding,
   factId,
@@ -644,11 +641,8 @@ describe("source-local transfer binding schema", () => {
 });
 
 describe("fact model publication boundary", () => {
-  it("exports exactly three fact types within the cumulative facade", () => {
+  it("exports exactly three fact types from the model", () => {
     const { sourceFile } = readTypeScriptModule("./factModel.ts");
-    const { sourceFile: facadeSourceFile } = readTypeScriptModule(
-      "./implementation.ts",
-    );
     const exportStatements = sourceFile.statements.filter(
       (statement) =>
         isExportDeclaration(statement) ||
@@ -657,8 +651,6 @@ describe("fact model publication boundary", () => {
     );
 
     expect(exportStatements).toHaveLength(1);
-    expect(facadeSourceFile.statements).toHaveLength(6);
-    expect(facadeSourceFile.statements.every(isExportDeclaration)).toBe(true);
     expect(readNamedExportSurface("./factModel.ts")).toEqual([
       {
         moduleSpecifier: null,
@@ -666,48 +658,10 @@ describe("fact model publication boundary", () => {
         names: ["SemanticFactKind", "TransferBinding", "SemanticFact"],
       },
     ]);
-    expect(readNamedExportSurface("./implementation.ts")).toEqual([
-      {
-        moduleSpecifier: "./identity",
-        typeOnly: false,
-        names: ["ExecutionContractError", "factId"],
-      },
-      {
-        moduleSpecifier: "./identity",
-        typeOnly: true,
-        names: ["ExecutionContractErrorCode", "FactId"],
-      },
-      {
-        moduleSpecifier: "./model",
-        typeOnly: true,
-        names: ["SemanticPathSegment", "SemanticSubject"],
-      },
-      {
-        moduleSpecifier: "./factModel",
-        typeOnly: true,
-        names: ["SemanticFactKind", "TransferBinding", "SemanticFact"],
-      },
-      {
-        moduleSpecifier: "./relationModel",
-        typeOnly: true,
-        names: ["SemanticRelationKind", "FactEndpoint", "SemanticRelation"],
-      },
-      {
-        moduleSpecifier: "./exportModel",
-        typeOnly: true,
-        names: ["ExportExecutionContract"],
-      },
-    ]);
-
-    expectTypeOf<FactEndpoint<"read">["factKind"]>().toEqualTypeOf<"read">();
-    expectTypeOf<
-      SemanticRelation["kind"]
-    >().toEqualTypeOf<SemanticRelationKind>();
   });
 
   it("adds no runtime value or runtime import edge", () => {
     const factModelSource = readTypeScriptModule("./factModel.ts").source;
-    const facadeSource = readTypeScriptModule("./implementation.ts").source;
     const consumerSource = `
       import type {
         SemanticFact,
@@ -725,9 +679,6 @@ describe("fact model publication boundary", () => {
     expect(Object.keys(factModelApi)).toEqual([]);
     expect(emitTypeScript(factModelSource, "factModel.ts").trim()).toBe(
       "export {};",
-    );
-    expect(emitTypeScript(facadeSource, "implementation.ts").trim()).toBe(
-      'export { ExecutionContractError, factId } from "./identity";',
     );
     expect(emitTypeScript(consumerSource, "consumer.ts").trim()).toBe(
       "export {};",

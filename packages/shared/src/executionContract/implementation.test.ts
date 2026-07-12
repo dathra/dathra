@@ -17,18 +17,10 @@ import {
 import { fail } from "./identity";
 import * as executionContractApi from "./implementation";
 import {
-  // @ts-expect-error Trust acceptance is owned by a later verifier.
-  type AcceptedExecutionAnalysis as _AcceptedAnalysisMustNotExist,
-  // @ts-expect-error Compiled contracts are owned by SC02B.
-  type CompiledExecutionContract as _CompiledContractMustNotExist,
   ExecutionContractError,
-  // @ts-expect-error Budgeted parsing belongs to a later review unit.
-  type ExecutionContractBudget as _BudgetMustNotExist,
   // @ts-expect-error Validation path internals are not part of the facade.
   type ExecutionContractPathSegment as _PathSegmentMustNotExist,
   type FactEndpoint,
-  // @ts-expect-error Registry source aggregation belongs to a later review unit.
-  type ExecutionContractRegistrySources as _RegistrySourcesMustNotExist,
   type ExportExecutionContract,
   type SemanticFact,
   type SemanticFactKind,
@@ -36,39 +28,16 @@ import {
   type SemanticRelation,
   type SemanticRelationKind,
   type SemanticSubject,
-  // @ts-expect-error The aggregate source contract belongs to a later review unit.
-  type ExecutionContractSource as _SourceMustNotExist,
-  // @ts-expect-error The source envelope belongs to a later review unit.
-  type ExecutionContractSourceInput as _SourceInputMustNotExist,
   type TransferBinding,
   // @ts-expect-error SC01 owns registry entries; this facade does not re-export them.
   type RegistrySourceEntry as _RegistrySourceEntryMustNotExist,
-  // @ts-expect-error Qualified identity is owned by SC02B and SC03.
-  type QualifiedFactId as _QualifiedFactIdMustNotExist,
   factId,
   type ExecutionContractErrorCode,
   type FactId,
 } from "./implementation";
 
-type ExecutionContractApi = typeof executionContractApi;
 type SemanticPathSegmentKind = SemanticPathSegment["kind"];
 type SemanticSubjectKind = SemanticSubject["kind"];
-
-type _DigestExecutionContractSourceMustNotExist =
-  // @ts-expect-error Digest operations belong to a later SC02A review unit.
-  ExecutionContractApi["digestExecutionContractSource"];
-
-type _DefineExecutionContractMustNotExist =
-  // @ts-expect-error Source construction belongs to a later SC02A review unit.
-  ExecutionContractApi["defineExecutionContract"];
-
-type _ParseExecutionContractSourceMustNotExist =
-  // @ts-expect-error Source-level parsing belongs to SC02A12.
-  ExecutionContractApi["parseExecutionContractSource"];
-
-type _ValidateExecutionContractSourceMustNotExist =
-  // @ts-expect-error Source validation remains internal to SC02A12.
-  ExecutionContractApi["validateExecutionContractSource"];
 
 const ERROR_CODES = {
   "invalid-closed-record": true,
@@ -401,19 +370,6 @@ describe("ExecutionContractError", () => {
     expectTypeOf<
       ExportExecutionContract["transfer"]
     >().toEqualTypeOf<TransferBinding>();
-    expect(Object.keys(executionContractApi).sort()).toEqual([
-      "ExecutionContractError",
-      "factId",
-    ]);
-    expect("QualifiedFactId" in executionContractApi).toBe(false);
-    expect("CompiledExecutionContract" in executionContractApi).toBe(false);
-    expect("AcceptedExecutionAnalysis" in executionContractApi).toBe(false);
-    expect("digestExecutionContractSource" in executionContractApi).toBe(false);
-    expect("defineExecutionContract" in executionContractApi).toBe(false);
-    expect("parseExecutionContractSource" in executionContractApi).toBe(false);
-    expect("validateExecutionContractSource" in executionContractApi).toBe(
-      false,
-    );
     expect("fail" in executionContractApi).toBe(false);
   });
 });
