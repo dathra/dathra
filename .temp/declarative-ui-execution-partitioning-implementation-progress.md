@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: EG02 ModuleCoordinator の resolver/load/transform adapter、graph-completeness barrier、fixed point、incremental invalidation と cache contract を調査し、設計レビュー後に SPEC/test を先行追加する。
+- 次の作業: EG02 の実装 commit を作成して push し、exact remote OID を記録する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -27,7 +27,7 @@
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
-| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01、EG01 は completed。次は EG02 ModuleCoordinator |
+| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01、EG01 は completed。EG02 ModuleCoordinator の SPEC/test 先行へ移行 |
 | P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02 と SC03 は未着手 |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
@@ -86,7 +86,7 @@ package 間で使う internal export、package export map、build entry は、�
 | SC01 | RegistryId、descriptor、symbolic/final catalog、environment projection | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema、role matrix、fixed-point derivation と validation | ID01 | completed |
 | OC01 | ObservationContract、canonical trace language、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | canonical DFA、relation projection/inclusion、claim、instance witness の pure implementation | SC01 / ID01 | completed |
 | EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | completed |
-| EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | pending |
+| EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | in-progress |
 | EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | pending |
 | SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / test | qualification 前後の contract schema | SC01 / ID01 | pending |
 | SC03 | contract qualification、conflict、dangling、kind diagnostic | transformer: `src/diagnostic/`、`src/contractCompiler/` | 各 directory の SPEC / test | diagnostic path、artifact 非依存の QualifiedRegistryUniverse、policy proof-domain verifier profile admission | EG02 / SC01 / SC02 / OC01 | pending |
@@ -186,6 +186,30 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 
 ## 現在の Slice
 
+### EG02 ModuleCoordinator
+
+- **設計要件**：resolver/load/transform/extract を一つの observed transaction として実行し、multi-domain module graph を deterministic fixed point まで閉じ、stable observation の atomic commit 後だけ immutable snapshot を公開する。
+- **変更範囲**：設計正本に coordinator transaction、adapter profile、attempt-specific domain、stage cache、phase join、reverse invalidation、atomic commit/cancel を追記し、`packages/transformer/src/moduleCoordinator/` に四点セットを追加する。plugin/bundler bridge は BR01 に残す。
+- **domain/profile**：build input は stable domain config を持ち、attempt の describe stage が current transcript/profile observation から final domain ID を生成する。別 stable key が同じ domain ID へ collapse する場合は拒否する。resolver/load/transform/extract profile は EG01 graph record の既存 field に完全一致させる。
+- **adapter transaction**：`describePipeline`、`describeDomain`、`resolve`、`load`、`transform`、`extract`、`replayCachedStage`、`tryCommit`、`rollback` を closed operation input と positive/negative observation で契約化する。
+- **fixed point**：resolve 後の loader unit と load 後の runtime unit を分離し、alias merge 後に `source < evaluation` phase を join する。evaluation 初回遷移で extract 済み site を一度だけ queue し、source-only target は outgoing request を resolve しない。
+- **cache/invalidation**：stage key は profile、domain、complete operation input の canonical digest とする。cache effect は pure/replayable/transaction-local に分類し、hit observation と全 owner を current attempt に再登録する。watch change は observation owner と previous target-to-importer reverse closureから一 transaction で invalidate する。
+- **atomicity**：final validation と publication は `tryCommit` の単一 linearization point とする。commit 呼び出し後は abort せず、committed receipt 後は必ず prepared state を swap する。失敗/cancel/invalidated attempt は previous snapshot/cache を変更しない。
+- **budget**：retry、round、domain/entry/module/request/site/candidate/observation、persistent cache entry/byte を hard limit にする。current graph evidence を pin できない場合は commit しない。
+- **先行 test**：entry/domain validation、cycle、source-only/alias phase upgrade、external alias evidence、deterministic order、observation conflict、mid-build invalidation/retry、atomic commit/abort race、rollback、cache hit/replay/uncacheable、reverse invalidation、profile/domain refresh、全 budget failure を追加する。
+- **red test 証拠**：`pnpm --filter @dathra/transformer exec vitest run src/moduleCoordinator/implementation.test.ts` は `./implementation` 不在で失敗し、SPEC と test が production implementation より先に追加されたことを確認した。
+- **実装済み API**：single-writer `ModuleCoordinator`、observed adapter transaction、attempt-specific domain、native/CommonJS entry/request、resolve/load/transform/extract、pure/replayable/transaction-local cache、atomic `tryCommit`/rollback、hard budget と typed diagnostic を root export へ追加した。
+- **fixed point**：temporary loader unit と load 後の runtime unit を分離し、runtime identity alias、`source < evaluation` phase join、cycle、source-only extraction、evaluation promotion、external exact alias evidence を graph-completeness barrier 前に閉じる。
+- **cache/invalidation**：complete immutable operation input と stage profile から key を作り、cache hit の observation/effect/owner を current transaction へ再登録する。pending invalidation は successful commit まで保持し、reverse lineage を保持しない unpinned cross-graph cache は deterministic eviction する。
+- **atomicity**：queued input は invocation 時に snapshot し、prepared coordinator state と result を `tryCommit` 前に完成させる。commit 中 abort の後に exact receipt が返る場合は必ず state を swap し、invalidated/throw/cancel は publication なしで rollback する。
+- **現在の検証**：transformer 全13 files、676 tests が成功した。ModuleCoordinator は49 tests、statement 88.84%、branch 78.53%、function 97.03%、line 89.51% である。typecheck、通常 lint 0件、format check、build が成功した。type-aware lint は ModuleCoordinator の warning/error 0件で、既存 transform/rlse の warning 14件だけを報告した。
+- **artifact 検査**：ESM/CJS build に `node:`、`createHash`、`Buffer` はない。declaration は public constructor/factory、adapter transaction、commit/cache/observation 型を公開し、built ESM から `createModuleCoordinator`、`ModuleCoordinator`、`ModuleCoordinatorError` を function として実行確認した。
+- **独立設計レビュー**：entry metadata、profile-to-graph binding、closed stage key、owner reverse index、commit/cancel race、external evidence timing、domain injectivity、alias phase join、cache effect replay の指摘を反映し、Halley の3回目レビューは `ACCEPT` である。
+- **独立実装レビュー**：1回目の queue snapshot、cross-graph cache lineage、lint、実 delay fixture の4指摘をすべて回帰 test 付きで修正した。Parfit の2回目レビューは全指摘の解消と最新49 tests/gate を確認し `ACCEPT` である。
+- **完了証拠**：targeted red test、transformer test/typecheck/lint/type-aware lint/format/build、transaction race fixture、cache/invalidation fixture、独立実装レビューは成功した。残りは commit、push、exact remote OID 記録である。
+
+## 直前に完了した Slice
+
 ### EG01 immutable module graph snapshot
 
 - **設計要件**：server、browser、worker など複数の resolution domain を一つの immutable snapshot に束縛し、content definition、runtime module identity、loader cache identity、semantic request、source site を混同しない module graph foundation を作る。
@@ -206,7 +230,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - **独立レビュー**：単一 graph、URL-only identity、site-bound request、opaque domain evidence の不足を指摘した設計レビューを取り込み、definition/runtime/cache identity、resolution evidence、source phase、loader namespace を分離した。ResolvedModuleRequest、二段階 external contract、request-site coverage evidence まで設計正本へ追記し、Kepler の最終 design review は `ACCEPT` である。実装レビューで condition sequence の重複/order を包含判定で失う問題を修正し、Bacon の2回目の独立実装レビューは `ACCEPT` である。
 - **完了証拠**：transformer test、typecheck、lint、type-aware lint、format、build、canonical vector、cycle/source-phase fixture、独立実装レビューが成功した。実装 commit `4efc445af301512fb627af6c7d568fee5a06de0f` を `origin/feature/declarative-ui-execution-partitioning` へ push した。
 
-## 直前に完了した Slice
+## 以前に完了した Slice
 
 ### OC01 observation contract
 
@@ -225,7 +249,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - **artifact 検査**：shared ESM/CJS build に `node:`、`createHash`、`Buffer` はなく、declaration は policy requirement、relation composition context、proof acceptance input、equality input を公開する。
 - **完了証拠**：shared test、typecheck、lint、format、build、browser-compatible artifact inspection、known canonical vector、独立実装レビュー、commit、push を必要とする。
 
-## 以前に完了した Slice
+## さらに以前に完了した Slice
 
 ### SC01 execution registry contract
 

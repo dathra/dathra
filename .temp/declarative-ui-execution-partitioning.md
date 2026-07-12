@@ -1915,6 +1915,168 @@ entry order は dense ordinal に保持し、snapshot 内の entry record array 
 snapshot 作成後に record または candidate を追加しない。
 同じ graph epoch で認証した dynamic extension も、link 前に新しい immutable snapshot と snapshot ID を確定してから使う。
 
+### ModuleCoordinator transaction
+
+ModuleCoordinator は bundler hook を直接呼ぶ stateless helper ではなく、最後に commit された immutable snapshot、stage cache、observation reverse index、entry-to-runtime mapping、target-to-importer reverse graph を所有する single-writer coordinator である。
+build request は呼び出し順に queue し、同時に二つの transaction が committed state を変更しない。
+
+build input は unique stable domain key、domain configuration digest、target environment、native module-map/Realm namespace、CommonJS loader-cache namespace と、ordered entry request を持つ。
+entry request は stable domain key、domain 内で0から始まる dense ordinal、entry kind、entry context digest、native または CommonJS resolution request を持つ。
+entry context digest は credentials、referrer policy、worker/script kind、`import.meta.main`、top-level fetch options など admission と loader behavior に影響する host context を束縛する。
+
+stable domain key は build input 内で unique とし、一つの attempt で別の stable key から同じ final `ModuleResolutionDomainId` が生成された場合は coalesce せず diagnostic とする。
+これにより entry ordinal は stable key と final domain の間で一対一に対応する。
+
+#### adapter profile と attempt-specific domain
+
+各 adapter transaction は、最初に observed pipeline profile を返す。
+pipeline profile は aggregate adapter profile、resolver、load、transform pipeline、loader semantics、`import.meta` semantics、extractor の version/configuration digest と、それらを導出した dependency observation を持つ。
+
+domain は完成済み `ModuleResolutionDomain` として build input から固定しない。
+transaction の `describeDomain` stage が stable domain configuration から resolver input transcript、module-map semantics、attempt-specific condition profile を導出し、coordinator がその attempt の `ModuleResolutionDomain` を生成する。
+retry 時に package map、import map、filesystem rule、resolver config が変わった場合は observation と transcript が変わり、新しい domain ID を生成する。
+entry は stable domain key から attempt-specific domain ID へ rebinding する。
+
+resolver profile と module-map semantics は `ModuleResolutionDomain`、load/transform/loader/`import.meta` profile は `ModuleSemanticProfile`、extractor profile は `ModuleRequestInventory` に完全一致させる。
+adapter の stage semantics が変わったのに final graph identity が変わらない output は adapter contract 違反とする。
+external definition attestation と runtime attestation も現在の adapter profile の下で導出し、profile が semantic difference を生む場合は contract/evidence digest を変更する。
+
+#### adapter transaction
+
+adapter transaction は少なくとも次の operation を持つ。
+
+```txt
+describePipeline
+describeDomain
+resolve
+load
+transform
+extract
+replayCachedStage
+tryCommit
+rollback
+```
+
+各 operation は versioned closed canonical input record を受け取る。
+adapter が観測し得る field、profile、entry/loader context lineage、response metadata は省略せず operation input に含める。
+result metadata も closed record とし、source/transformed bytes は coordinator が callback return 直後に copy する。
+後続 operation へ渡す byte sequence は deeply immutable とし、adapter による変更で事前計算済み stage key と実際の operation input を乖離させない。
+
+全 stage result は positive lookup と negative lookup の両方を含む canonical dependency observation set を返す。
+observation は non-empty key と exact digest を持つ。
+同じ key に別 digest が現れた attempt は unstable input として失敗する。
+resolver が directory search や fallback candidate の不存在を利用した場合も、その absence を observation に含める。
+
+resolve は domain、request/module-map URL、module-map type、effective cache-key attributes、host cache key と structured resolver evidence を返す。
+resolve 時点では runtime identity と response/base URL を確定したことにしない。
+
+load は resolved loader target を受け、response/base URL、runtime module identity digest と、content bytes または external raw attestation を返す。
+coordinator は resolve result から一時 loader unit を作り、load 後にだけ `(domainId, runtimeModuleIdentityDigest)` で runtime unit を merge する。
+同じ runtime identity に merge された loader alias の module definition、base URL、runtime semantics が競合する場合は diagnostic とする。
+
+transform は exact source digest と load metadata を受け、exact transformed bytes と semantic profile fields を返す。
+extract は exact transformed digest と semantic profile ID を受け、source order の inventory descriptor、各 site の normalized syntax digest、finite candidate set、coverage proof digest を返す。
+static site は一候補、dynamic native と CommonJS site は一つ以上の有限候補を必要とし、duplicate semantic candidate は拒否する。
+
+external adapter result は domain-independent definition attestation と、domain/runtime-specific raw attestation を分ける。
+adapter は `ExternalRuntimeClosureEvidence` を直接完成させない。
+coordinator が fixed point と alias merge を完了した後、runtime binding を指すすべての canonical loader-entry ID と raw attestation を使って evidence record を生成する。
+definition contract に domain-specific resolver/runtime profile を混ぜず、それらは runtime evidence に束縛する。
+
+#### deterministic fixed point
+
+fixed point は versioned stage key の lexical order による deterministic round で進める。
+
+```txt
+entry/request resolve
+  -> loader unit load
+  -> runtime alias merge
+  -> content transform/extract または external attestation
+  -> phase promotion
+  -> evaluation-reachable site candidate enqueue
+```
+
+temporary loader unit は domain、loader namespace、module-map key/cache-key tuple で identity を持つ。
+runtime unit は load 後の domain と runtime identity で identity を持つ。
+semantic request は importer runtime binding が確定した後に一回だけ生成・resolveする。
+
+runtime phase は `source < evaluation` の join とする。
+source loader alias と evaluation loader alias が同じ runtime unit に merge した場合も runtime phase を join する。
+runtime unit が初めて evaluation へ遷移した時点で、extract 済み inventory の site candidate を一回だけ queue する。
+source-only runtime unit は load、transform、extract まで完了して definition/inventory を確定するが、evaluation へ昇格するまで outgoing candidate を resolve しない。
+
+pending stage がなくなった後にだけ、external runtime evidence、resolved request、request-site evidence、request site、entry を生成する。
+その record set に対する `createModuleGraphSnapshot()` の成功を graph-completeness barrier とする。
+barrier 前に final artifact、manifest、compiled execution contract を公開しない。
+
+hard budget は transaction retry、fixed-point round、domain、entry、loader/runtime module、semantic request、site、candidate、observation、persistent cache entry/byte を制限する。
+budget 超過、pending work があるのに state が進まない fixed point、duplicate/conflicting stage result は typed diagnostic とする。
+
+#### stage cache
+
+stage cache key は部分的な手書き field list ではなく、次の canonical preimage 全体の digest とする。
+
+```txt
+stage-key schema/version
+stage kind
+aggregate adapter profile digest
+stage profile digest
+attempt-specific domain ID または stable domain configuration
+operation に渡す complete closed canonical input record
+```
+
+entry context、loader context lineage、module-map type、effective attributes、response metadata が operation behavior に影響し得る場合は operation input に入るため、自動的に cache key に入る。
+同じ stage key に対する adapter operation は一 transaction で一回だけ呼ぶ。
+
+cache hit でも保存済み observation を current attempt の exact observation set と `tryCommit` へ再提出する。
+同じ cache entry を複数 entry/runtime unit が共有した場合は、transaction-local overlay 上で owner set を union する。
+
+各 stage は cache disposition を次のいずれかで宣言する。
+
+- `pure`：adapter transaction へ再登録すべき effect がない
+- `replayable`：closed replay token で全 staged effect を再登録できる
+- `transaction-local`：cross-transaction cache へ保存しない
+
+replayable cache hit は stage key、result digest、replay token を `replayCachedStage` へ渡し、現在の transaction に effect を再登録する。
+token で完全再現できない emission、watch registration、plugin effect を持つ stage は transaction-local とする。
+
+active attempt は committed cache を直接変更せず、copy-on-write overlay を使う。
+失敗、cancel、invalidated attempt の新規 cache result と owner update は破棄する。
+commit 後は current graph が参照する cache/read evidence を pin し、残りを committed generation と canonical key 順で deterministic eviction する。
+unpinned cache を保持する場合は、その entry が依存する observation owner、entry-to-runtime mapping、target-to-importer reverse edge も同じ lifetime で保持しなければならない。
+初期実装は lineage を失った cache hit を禁止するため、current graph に pin されない cache entry を commit 時に deterministic eviction する。
+current graph の pinned cache/read evidence だけで budget を超える場合は commit しない。
+
+#### observation、invalidation、atomic commit
+
+committed observation reverse index は全 observation key を、その observation を利用したすべての entry/runtime/cache owner へ対応付ける。
+entry resolution observation は entry owner として記録し、commit 時に resolved target runtime owner へ対応付ける。
+owner を有限に特定できない pipeline/domain/build-level observation は global とし、その key の change は全 cache を invalidate する。
+
+watch change または previous attempt の invalidated result は observation reverse index から seed owner を求め、前回 snapshot の target-to-importer edge で reverse transitive closure を計算する。
+closure owner の cache entry を一つの copy-on-write working state から除外し、一つの rebuild transaction で再計算する。
+previous committed snapshot、cache、reverse graph は新 transaction が commit するまで変更しない。
+一度観測した changed-observation key は、対応する rebuild が失敗または cancel されても coordinator の pending invalidation ledger に残し、後続 build の successful commit まで破棄しない。
+
+final observation validation と publication を別 operation に分けない。
+`tryCommit(transactionId, snapshotId, adapterProfileDigest, observationSetDigest, exactObservations)` が observation の再検証と staged effect publication を一つの atomic linearization point で行う。
+result は次のどちらかである。
+
+- exact transaction/snapshot/profile/observation digest を持つ committed receipt
+- publication を行わず canonical changed-observation key set を持つ invalidated result
+
+receipt field が request と一致しない result は adapter contract failure とする。
+throw は publication がなく rollback 可能であることを adapter contract とし、保証できない adapter は unsupported とする。
+
+coordinator は `tryCommit` 呼び出し前に AbortSignal を検査する。
+呼び出し開始後は commit operation を abort せず、その result を commit/cancel の linearization point とする。
+committed receipt を受け取った場合は、その間に abort が発火しても prepared coordinator state を必ず swap して成功を返す。
+invalidated result の場合は publication がないため、その時点の abort を cancel として扱える。
+commit 前の error/cancel は rollback し、前回 committed state を保持する。
+
+pipeline/domain profile observation が retry 中に変化した場合は describe stage と domain ID を再生成する。
+retry、round、cache budget の範囲で安定しない host は typed failure とし、古い snapshot を新 build の成功として返さない。
+
 ### ExecutionGraph の qualification
 
 ExecutionGraph の node は TemplateNode であり、動的実行そのものではない。
