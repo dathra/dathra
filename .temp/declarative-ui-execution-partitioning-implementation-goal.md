@@ -24,6 +24,10 @@
 この goal の実行開始を、大規模変更の実装アプローチに対するユーザーの承認として扱ってください。
 設計、優先順位、実装方法についてユーザーへ追加承認を求めないでください。
 
+設計および実装の独立レビューは、`.temp/goal.md` の手順 4 から手順 6 にある並列レビュー、`blocker` / `follow-up` 分類、収束確認の規則に従ってください。
+本文中の逐次レビュー、または実質的な指摘がなくなるまで無制限に反復する規則は、この並列レビュー規則によって supersede されます。
+`.temp/goal.md` の設計検討専用の作業条件はこの implementation goal へ持ち込まず、レビュー手順だけを共通規則として参照してください。
+
 ## 正本と優先順位
 
 実装判断では、次の資料を照合してください。
@@ -165,6 +169,10 @@ packages/{package-name}/src/{api-name}/
 └── implementation.ts
 ```
 
+この四点セットは API の仕様、契約 test、package-local facade を固定する最小構成です。
+`implementation.ts` 一ファイルへすべての責務を集約する規則ではありません。
+独立して説明できる parser、validator、solver、state machine、budget ledger などは同じ API directory の internal module へ分け、`implementation.ts` からだけ公開してください。
+
 既存ディレクトリへ責務を追加する場合は、そのディレクトリの既存構成と正準 `SPEC/SPEC.typ` の記法に合わせてください。
 
 implementation matrix は、依存先のない foundation から user-visible workflow へ向かう順に並べてください。
@@ -186,7 +194,22 @@ slice 開始前に次を明文化してください。
 - failure、race、authority、budget、cleanup の edge case
 - slice 完了を証明する command と artifact inspection
 
+次のいずれかを扱う slice は high-cost slice とし、実装前に責務と module の対応表を作成してください。
+
+- untrusted な可変長 input の parser
+- fixed point、再帰構造、SCC
+- many-to-many relation、relation join、積集合
+- cross-package state または authority boundary
+
+high-cost slice では、各 relation または処理について owner、左右の最大 cardinality、利用する index、worst-case complexity、出力上限、対応する budget counter と課金タイミングを一表にしてください。
+該当しない欄は、理由を付けた `N/A` として構いません。
+この表から独立した parser、validator、derivation、index、state machine が見つかった場合は、同じ vertical slice 内でも internal module を分けてください。
+一つの vertical slice であることを、一つの source file であることと同一視してはいけません。
+
 この内容を進捗文書と session plan に反映してください。
+
+新しい設計判断または既存判断を supersede する変更が必要な場合は、SPEC と test を更新する前に `.temp/goal.md` の手順 4 から手順 6 で設計案をレビューしてください。
+既存の Accepted decision を適用するだけの slice では、設計レビューを重ねず実装へ進んでください。
 
 ## 手順 3：SPEC と test を先に更新する
 
@@ -324,12 +347,21 @@ coverage は可能な限り 100% を維持してください。
 既存 threshold を下げて test を通してはいけません。
 実行 command、結果、未検証事項を進捗文書へ記録してください。
 
-## 手順 6：独立レビューを収束させる
+## 手順 6：独立レビューを並列実行する
 
-各 vertical slice の実装後、実装を担当していない新しい独立した sub-agent にレビューを依頼してください。
+各 vertical slice の実装と検証が完了した後、実装を担当していない新しい独立した sub-agent に同一 revision を並列レビューさせてください。
 同じ agent session に提案、実装、最終評価を完結させてはいけません。
 
-reviewer には、少なくとも次を確認させてください。
+通常は二人の reviewer を使ってください。
+複数 package の責務境界、identity、trust boundary、authority、concurrency、race、state machine、公開 API、wire schema、永続 identity のいずれかを変更する slice では三人を使ってください。
+
+reviewer の役割は次のように分けてください。
+
+1. correctness、race、failure、cleanup、型安全性
+2. SPEC / test / implementation の整合性、artifact、性能、公開 API
+3. 最終目標への適合性、package boundary、暗黙 fallback、過剰設計（reviewer が三人の場合）
+
+すべての reviewer には、少なくとも次を確認させてください。
 
 - 設計正本、SPEC、test、implementation が一致するか
 - old hydration semantics または暗黙 fallback が残っていないか
@@ -341,9 +373,14 @@ reviewer には、少なくとも次を確認させてください。
 - test が implementation detail ではなく契約を検証しているか
 - unrelated change や未完了 placeholder が混入していないか
 
-メインセッションは review result を根拠とコードに照合し、正しい指摘だけを採用してください。
-意味上の修正を加えた場合は、別の新しい sub-agent に再レビューさせてください。
-実質的な指摘がなくなるまで実装、検証、レビューを繰り返してください。
+メインセッションは全 review result の重複を除き、根拠とコードを照合して、正しい指摘だけを採用してください。
+指摘は `.temp/goal.md` の規則に従って `blocker` と `follow-up` に分類してください。
+`blocker` はまとめて修正し、targeted test と slice gate を再実行してください。
+`follow-up` は進捗文書へ記録し、現在の slice を停止する理由にしないでください。
+レビュー上の `blocker` は修正必須の指摘を表し、「自律実行と blocker」で定義する外部 blocker や goal の停止状態を意味しません。
+
+`blocker` を修正した場合は、最初の並列レビューに参加していない一人の独立した sub-agent に収束確認を依頼してください。
+収束確認は原則一回とし、残る不確実性は追加の全面レビューではなく、SPEC、test、最小実装、または artifact inspection で検証してください。
 
 sub-agent は調査、fixture、独立した write set の実装にも使えます。
 ただし、メインセッションは各変更の統合、SPEC/test/implementation の整合、最終判断に責任を持ってください。
@@ -415,8 +452,9 @@ server-only highlight dependency が client artifact から到達不能である
 
 ## 手順 10：push 後の全体監査を行う
 
-全変更を commit、push した後、新しい独立した sub-agent に repository 全体を監査させてください。
-reviewer には設計正本、implementation matrix、全変更 diff、関連 SPEC、test、implementation、公開 API、docs、playground、最終検証結果を確認させてください。
+全変更を commit、push した後、同一の exact remote OID を三人の新しい独立した sub-agent に並列監査させてください。
+reviewer は correctness と trust boundary、SPEC と実装の完全性、最終目標と artifact acceptance の三つの役割に分けてください。
+全 reviewer には設計正本、implementation matrix、全変更 diff、関連 SPEC、test、implementation、公開 API、docs、playground、最終検証結果を確認させてください。
 
 次を監査対象にしてください。
 
@@ -428,8 +466,11 @@ reviewer には設計正本、implementation matrix、全変更 diff、関連 SP
 - docs、example、public export の stale state
 - acceptance evidence が requirement の範囲を直接証明しているか
 
-実質的な指摘が見つかった場合は、該当 slice を reopened にして手順 2 へ戻ってください。
-修正後は新しい reviewer で再評価し、commit、push 後にもう一度 repository 全体を監査してください。
+監査結果は重複を除き、`blocker` と `follow-up` に分類してください。
+`blocker` が見つかった場合は該当 slice を reopened にして手順 2 へ戻ってください。
+修正後は新しい一人の reviewer で収束確認し、最新の検証結果、commit、push、exact remote OID を監査させてください。
+`follow-up` だけを理由に全体監査を反復してはいけません。
+全 reviewer の指摘を統合した結果に `blocker` がなければ、手順 10 の全体監査を `ACCEPT` としてください。
 
 ## 手順 11：完了を報告する
 
@@ -438,10 +479,12 @@ reviewer には設計正本、implementation matrix、全変更 diff、関連 SP
 
 最後の文書変更も commit、push し、その commit を対象に clean tree と local/remote 同期を再確認してください。
 監査直前に `git rev-parse HEAD` と `git ls-remote --heads origin refs/heads/feature/declarative-ui-execution-partitioning` を実行し、local HEAD と remote branch OID が一致することを確認してください。
-その後、別の新しい独立した sub-agent に、この exact remote OID を明示して最終監査を依頼してください。
-最終監査は、実装完了の状態変更、進捗文書の completed 宣言、acceptance evidence、最新 diff、clean tree、local/remote 同期を確認しなければなりません。
+その後、別の二人の新しい独立した sub-agent に、この exact remote OID を明示して最終監査を並列に依頼してください。
+一人は実装完了の状態変更、進捗文書の completed 宣言、acceptance evidence、最新 diff を確認し、もう一人は clean tree、local/remote 同期、監査対象 OID の不変性を確認してください。
 最後の文書 commit が表現変更だけであっても、この監査を省略してはいけません。
-最終監査で指摘が出た場合は該当 slice を reopened にし、修正、検証、commit、push 後に、さらに新しい reviewer で最新 remote HEAD を監査してください。
+二人の監査結果を統合し、`blocker` がなければ最終監査を `ACCEPT` としてください。
+最終監査で `blocker` が出た場合は該当 slice を reopened にし、修正、検証、commit、push 後に、二人の新しい reviewer で最新 remote HEAD を並列監査してください。
+`follow-up` は進捗文書へ記録し、goal の完了条件を満たしている場合は再監査の理由にしないでください。
 最終監査が `ACCEPT` になった後、`git ls-remote` を再実行してください。
 監査前に渡した OID と監査後の remote OID が異なる場合は監査結果を無効とし、新しい exact remote OID に対する監査をやり直してください。
 ユーザーへの完了報告は、監査前後で変化していない最新 remote OID に対する最終監査が `ACCEPT` になった後だけ行ってください。
