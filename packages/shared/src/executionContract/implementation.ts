@@ -12,3 +12,4 @@ export type {
   SemanticRelation,
 } from "./relationModel";
 export type { ExportExecutionContract } from "./exportModel";
+export type { ExecutionContractRegistrySources } from "./registrySourceModel";

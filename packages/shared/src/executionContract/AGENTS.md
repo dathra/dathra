@@ -6,11 +6,12 @@
 
 1. [SPEC.typ](./SPEC.typ) - Contains the source execution contract and validation contract
 2. [implementation.test.ts](./implementation.test.ts) - Contains the required behavior and failure cases
+3. [registrySourceModel.test.ts](./registrySourceModel.test.ts) - Contains the registry source collection contract
 
 These files are the source of truth for this API. Keep `SPEC.typ`, `implementation.test.ts`, and `implementation.ts` mutually consistent.
 
 ## Scope
 
-This directory owns the untrusted source-local execution contract schema, including subject, fact, relation, and export-summary models, plus later canonical normalization, strict parsing, local closure validation, resource budgets, and source digest. Qualified and compiled contracts belong to the later SC02B slice, while namespace qualification, module-signature validation, evidence admission, and compiler diagnostics belong to SC03.
+This directory owns the untrusted source-local execution contract schema, including subject, fact, relation, export-summary, and registry-source collection models, plus later canonical normalization, strict parsing, local closure validation, resource budgets, and source digest. Qualified and compiled contracts belong to the later SC02B slice, while namespace qualification, module-signature validation, evidence admission, and compiler diagnostics belong to SC03.
 
-`implementation.ts` is the package-local facade. Keep subject, fact, relation, export summary, budget accounting, canonical parsing, semantic parsing, and source closure concerns in focused internal modules.
+`implementation.ts` is the package-local facade. Keep subject, fact, relation, export summary, registry source collection, budget accounting, canonical parsing, semantic parsing, and source closure concerns in focused internal modules.

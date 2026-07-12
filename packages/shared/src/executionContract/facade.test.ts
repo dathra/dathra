@@ -94,6 +94,11 @@ describe("execution contract facade", () => {
         typeOnly: true,
         names: ["ExportExecutionContract"],
       },
+      {
+        moduleSpecifier: "./registrySourceModel",
+        typeOnly: true,
+        names: ["ExecutionContractRegistrySources"],
+      },
     ]);
   });
 

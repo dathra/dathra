@@ -1,4 +1,4 @@
-= source execution contract identity, subject, fact, relation, and export model
+= source execution contract identity, subject, fact, relation, export, and registry source model
 
 #import "/SPEC/functions.typ": *
 #import "/SPEC/settings.typ": *
@@ -17,6 +17,8 @@ SC02A3はsemantic factとtransfer bindingをtype-only modelとして追加する
 SC02A4はsemantic relationをtype-only modelとして追加する。
 
 SC02A5はmodule exportごとのexecution summaryをtype-only modelとして追加する。
+
+SC02A6は10種類のregistry source collectionをtype-only modelとして追加する。
 
 source envelope、unknown input parser、budget、closure、digestは後続の独立review unitが追加する。
 
@@ -104,6 +106,23 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
     - SC02A5はparser、validator、source envelope、registry aggregate、digestを追加しない
     - qualified、compiled、accepted contractは後続sliceだけが定義する
     - typeへの適合だけではmodule exportの実在、trust acceptance、client exclusionを証明しない
+  ],
+)
+
+#adr(
+  header("registry source collectionをkindごとのexact mappingとして固定する", Status.Accepted, "2026-07-13"),
+  [
+    source contractがkindなしのregistry entry collectionを共有すると、異なるregistry domainのentryを誤ったcollectionへ配置してもtype boundaryで検出できない。
+    aggregateへparserやcanonical semanticsを埋め込むと、source shapeと後続validation operationの責務が混在する。
+  ],
+  [
+    `ExecutionContractRegistrySources`は10個のrequired readonly fieldを持ち、各fieldを対応する`RegistrySourceEntry<Kind>`のreadonly arrayへexactに対応付ける。
+    このmodelは未信頼なsource-local structural claimだけを表し、runtime operationまたはcollection semanticsを追加しない。
+  ],
+  [
+    - SC01の`RegistrySourceEntry`を再利用し、entry shapeやregistry kind taxonomyを複製しない
+    - non-empty、order、duplicate、registry closureは後続SC02A operationだけが検証する
+    - SC02A6はsource envelope、parser、validator、freeze、digestを追加しない
   ],
 )
 
@@ -507,6 +526,38 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
   ],
 )
 
+#interface_spec(
+  name: "Source-local registry source collections",
+  summary: [
+    source contractが参照する10種類のregistry declaration collectionをkind-safeな一つのstructural claimで表す。
+  ],
+  format: [
+    ```typescript
+    interface ExecutionContractRegistrySources {
+      readonly codecs: readonly RegistrySourceEntry<"codec">[]
+      readonly resolvers: readonly RegistrySourceEntry<"resolver">[]
+      readonly remoteOperations: readonly RegistrySourceEntry<"remote-operation">[]
+      readonly remoteDeliveryAdapters: readonly RegistrySourceEntry<"remote-delivery-adapter">[]
+      readonly subscriptionSources: readonly RegistrySourceEntry<"subscription-source">[]
+      readonly brands: readonly RegistrySourceEntry<"brand">[]
+      readonly valueDomains: readonly RegistrySourceEntry<"value-domain">[]
+      readonly policies: readonly RegistrySourceEntry<"policy">[]
+      readonly hostProfiles: readonly RegistrySourceEntry<"host-profile">[]
+      readonly failureSchemas: readonly RegistrySourceEntry<"failure-schema">[]
+    }
+    ```
+  ],
+  constraints: [
+    - exactに`codecs`、`resolvers`、`remoteOperations`、`remoteDeliveryAdapters`、`subscriptionSources`、`brands`、`valueDomains`、`policies`、`hostProfiles`、`failureSchemas`の10 fieldをrequiredかつreadonlyで持つ
+    - 各fieldは対応するregistry kindの`RegistrySourceEntry`だけを要素に持つreadonly arrayとし、異なるkindのentryを相互代入できない
+    - collectionはemptyを許容し、このsliceではnon-empty、canonical order、duplicate、entry closureを証明しない
+    - SC01の`RegistrySourceEntry` typeを直接importし、entry shape、registry kind、helper aliasを複製しない
+    - `ExecutionContractRegistrySources`だけをregistry source modelからpackage-local facadeへtype-only exportする
+    - runtime parser、validator、envelope、operation、freezeを追加せず、runtime valueまたはruntime import edgeを生成しない
+    - package rootへ公開せず、shared rootへの公開はAS01が所有する
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -628,6 +679,22 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
     - brandとvalue-domainの`RegistryId`を相互代入できないことを検査する
     - export model、package-local facade、type-only consumerがruntime import edgeを生成しないことを検査する
     - package-local facadeがexport modelから`ExportExecutionContract`だけを公開し、helper aliasまたはruntime valueを追加しないことを検査する
-    - package rootのsourceとbuild declarationへ公開されず、parser、validator、source envelope、registry aggregate、digest、qualified、compiled、accepted APIが存在しないことを検査する
+    - package rootのsourceとbuild declarationへ公開されず、parser、validator、source envelope、digest、qualified、compiled、accepted APIが存在しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Source-local registry source collection schema",
+  summary: [
+    後続のsource envelope、strict parser、registry closureが扱う10種類のregistry source collectionをtype-only schemaとして提供する。
+  ],
+  test_cases: [
+    - 10個のexact key、required readonly field、readonly array propertyを双方向fixtureで検査する
+    - 各collectionを対応する`RegistrySourceEntry<Kind>`へexactに対応付けることを全10 kindで検査する
+    - wrong kind、mutable field、mutable array、optional field、missing field、extra fieldをnon-vacuous negative fixtureで拒否する
+    - registry source modelとtype fixtureがruntime codeまたはruntime import edgeを生成しないことを検査する
+    - package-local facadeがregistry source modelから`ExecutionContractRegistrySources`だけをtype-only exportし、runtime valueを追加しないことを検査する
+    - package rootのsourceとbuild declarationへ公開されず、SC01の`RegistrySourceEntry`が存在するpositive controlと対比して検査する
+    - parser、validator、source envelope、operation、helper alias、freeze、non-empty、order、duplicate semanticsを追加しないことを検査する
   ],
 )
