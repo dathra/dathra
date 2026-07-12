@@ -44,15 +44,18 @@ describe("artifact address nominal domain", () => {
     );
 
     expect(sourceFile.statements).toHaveLength(1);
-    const [statement] = sourceFile.statements;
-    if (!statement || !isExportDeclaration(statement)) {
+    const statement = sourceFile.statements.at(0);
+    if (statement === undefined || !isExportDeclaration(statement)) {
       throw new TypeError("Expected one export declaration");
     }
-    if (!statement.exportClause || !isNamedExports(statement.exportClause)) {
+    if (
+      statement.exportClause === undefined ||
+      !isNamedExports(statement.exportClause)
+    ) {
       throw new TypeError("Expected one named export clause");
     }
     if (
-      !statement.moduleSpecifier ||
+      statement.moduleSpecifier === undefined ||
       !isStringLiteral(statement.moduleSpecifier)
     ) {
       throw new TypeError("Expected one string module specifier");
