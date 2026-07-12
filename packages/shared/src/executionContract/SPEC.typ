@@ -1,4 +1,4 @@
-= source execution contract identity
+= source execution contract identity and subject model
 
 #import "/SPEC/functions.typ": *
 #import "/SPEC/settings.typ": *
@@ -6,11 +6,13 @@
 
 == 目的
 
-source execution contractが、qualification前のfactを一つのcontract内で参照するためのlocal identityとstable failureを提供する。
+source execution contractが、qualification前のfactを一つのcontract内で参照するためのlocal identity、stable failure、source-local subjectとvalue pathを提供する。
 
 SC02A1は`FactId`、`factId()`、`ExecutionContractError`だけをpackage-local facadeから公開する。
 
-semantic modelはSC02A2、unknown inputのparser、budget、closure、digestはSC02A3以降が追加する。
+SC02A2はsemantic subjectとpath segmentをtype-only modelとして追加する。
+
+fact、transfer binding、relation、source envelope、unknown input parser、budget、closure、digestは後続の独立review unitが追加する。
 
 == 設計判断
 
@@ -105,6 +107,42 @@ semantic modelはSC02A2、unknown inputのparser、budget、closure、digestはS
   ],
 )
 
+#interface_spec(
+  name: "Semantic subject and path model",
+  summary: [
+    semantic factの対象を7種類のclosed discriminated union、nested value pathを3種類のsequence elementで表す。
+  ],
+  format: [
+    ```typescript
+    type SemanticPathSegment =
+      | { readonly kind: "property"; readonly key: string }
+      | { readonly kind: "tuple-index"; readonly index: number }
+      | { readonly kind: "element" }
+
+    type SemanticSubject =
+      | { readonly kind: "module-evaluation" }
+      | { readonly kind: "export-value"; readonly exportName: string }
+      | { readonly kind: "receiver"; readonly exportName: string }
+      | { readonly kind: "parameter"; readonly exportName: string; readonly index: number; readonly path: readonly SemanticPathSegment[] }
+      | { readonly kind: "return"; readonly exportName: string; readonly path: readonly SemanticPathSegment[] }
+      | { readonly kind: "callback-invocation"; readonly exportName: string; readonly parameterIndex: number; readonly path: readonly SemanticPathSegment[] }
+      | { readonly kind: "allocated-resource"; readonly exportName: string; readonly allocationSiteId: string }
+    ```
+  ],
+  constraints: [
+    - pathはsetではなくsequenceであり、同じsegmentを複数回含めることができる
+    - callback pathのrootは`parameterIndex`で選んだtop-level parameter valueとする
+    - top-level parameter自体がcallback slotなら空path、nested callback slotなら`property`、`tuple-index`、`element`を順に並べたrequired pathで表す
+    - `element`はhomogeneous collectionに共通する静的element domainであり、個々のruntime elementやcallback occurrenceを識別しない
+    - callback subject identityはruntime function instanceではなく、source-localな静的semantic locationに対して一意とする
+    - subjectは未信頼なsource-local location claimであり、型への適合は実module signatureとの一致を証明しない
+    - 後続SC02A strict parserはindex、path segment scalar、closed structural ruleを検証する
+    - SC03はcompiler-ownedでpath traversal可能なmodule signatureまたはsource-analysis evidenceを使い、export、parameter、callback path、callable location、allocation siteの実在を検証する
+    - SC03 evidenceのschemaと生成はSC03の先行review unitが定義し、evidenceがないclaimはfallbackせずdiagnosticにする
+    - fact kind、behavioral relation、trust acceptanceをこのmodelへ埋め込まない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -137,5 +175,21 @@ semantic modelはSC02A2、unknown inputのparser、budget、closure、digestはS
     - empty、lone surrogate、非string runtime valueを検査する
     - errorとpathのimmutabilityを検査する
     - qualified、compiled、accepted APIがfacadeに存在しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Source-local subject model",
+  description: [
+    後続のfact modelとstrict parserが共有するlocationとnested pathのtype-only taxonomyを提供する。
+  ],
+  validation: [
+    - 7 subject kindと3 path segment kindを双方向のexact type fixtureで検査する
+    - 各variantのkeyとproperty typeを双方向のexact type fixtureで検査する
+    - direct callbackの空path、object property callback、tuple callback、element callbackを区別できることを検査する
+    - pathの順序とrepeated path segmentを保持できることを検査する
+    - wrong property type、extra property、callback pathの省略をnegative type fixtureで検査する
+    - fact、transfer binding、relation、aggregate source、source envelope、qualified、compiled、accepted、digest APIが存在しないことを検査する
+    - facadeのruntime valueが`ExecutionContractError`と`factId`だけであることを検査する
   ],
 )
