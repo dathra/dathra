@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: EG01 の確定済み identity DAG と phase-aware closure を transformer の `src/moduleGraph/SPEC.typ` と先行 test へ反映する。
+- 次の作業: EG02 ModuleCoordinator の resolver/load/transform adapter、graph-completeness barrier、fixed point、incremental invalidation と cache contract を調査し、設計レビュー後に SPEC/test を先行追加する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -27,7 +27,7 @@
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
-| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01 は completed。EG01 immutable module graph snapshot の設計レビューを収束し、SPEC/test 先行へ移行 |
+| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01、EG01 は completed。次は EG02 ModuleCoordinator |
 | P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02 と SC03 は未着手 |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
@@ -85,7 +85,7 @@ package 間で使う internal export、package export map、build entry は、�
 | ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | completed |
 | SC01 | RegistryId、descriptor、symbolic/final catalog、environment projection | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema、role matrix、fixed-point derivation と validation | ID01 | completed |
 | OC01 | ObservationContract、canonical trace language、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | canonical DFA、relation projection/inclusion、claim、instance witness の pure implementation | SC01 / ID01 | completed |
-| EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | in-progress |
+| EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | completed |
 | EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | pending |
 | EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | pending |
 | SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / test | qualification 前後の contract schema | SC01 / ID01 | pending |
@@ -204,7 +204,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - **現在の検証**：transformer 全12 files、627 tests が成功した。moduleGraph は20 tests、statement 88.49%、branch 74.84%、function 100%、line 89.71% である。typecheck、lint 0件、format check、build が成功した。type-aware lint は moduleGraph の warning/error 0件で、既存 transform/rlse の warning 14件だけを報告した。
 - **artifact 検査**：ESM/CJS build に `node:`、`createHash`、`Buffer` はない。declaration は snapshot creator/parser/error と全 producer type を公開する。build artifact で `abc` digest、URL canonicalization、creator/parser の function export を実行確認した。
 - **独立レビュー**：単一 graph、URL-only identity、site-bound request、opaque domain evidence の不足を指摘した設計レビューを取り込み、definition/runtime/cache identity、resolution evidence、source phase、loader namespace を分離した。ResolvedModuleRequest、二段階 external contract、request-site coverage evidence まで設計正本へ追記し、Kepler の最終 design review は `ACCEPT` である。実装レビューで condition sequence の重複/order を包含判定で失う問題を修正し、Bacon の2回目の独立実装レビューは `ACCEPT` である。
-- **完了証拠**：transformer test、typecheck、lint、type-aware lint、format、build、canonical vector、cycle/source-phase fixture、独立実装レビュー、commit、push を必要とする。
+- **完了証拠**：transformer test、typecheck、lint、type-aware lint、format、build、canonical vector、cycle/source-phase fixture、独立実装レビューが成功した。実装 commit `4efc445af301512fb627af6c7d568fee5a06de0f` を `origin/feature/declarative-ui-execution-partitioning` へ push した。
 
 ## 直前に完了した Slice
 
@@ -332,7 +332,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | OC01-DESIGN-REVISION | completed | contract conformance、derived relation、proof DAG、result contract、coverage closure | composition `/4`、class-local policy closure、contract/application `/3` coalescing requirement の superseding ADR と interface specification を更新した | cycle proposal は Archimedes、coalescing requirement は Pauli が評価し、指摘を反映済み | `86204da` / origin tracking branch |
 | OC01 | completed | canonical contract、relation、composition、realization | shared 8 files・165 tests、typecheck、lint、fmt、build、browser artifact inspection が成功 | Cicero の focused 最終レビューは `ACCEPT` | `86204da` / origin tracking branch |
 | EG01-DESIGN | completed | multi-domain module graph、非循環 identity DAG、phase-aware exact closure | 設計正本、EG01 SPEC、先行 contract test、targeted red failure | 複数回の proposal/actual diff review を収束し、Kepler の最終レビューは `ACCEPT` | この slice の implementation commit に含める |
-| EG01 | in-progress | canonical immutable module graph snapshot と strict exact-use validation | transformer 12 files・627 tests、typecheck、lint、type-aware lint、fmt、build、artifact inspection が成功 | condition sequence の指摘を修正し、Bacon の2回目レビューは `ACCEPT` | commit / push 待ち |
+| EG01 | completed | canonical immutable module graph snapshot と strict exact-use validation | transformer 12 files・627 tests、typecheck、lint、type-aware lint、fmt、build、artifact inspection が成功 | condition sequence の指摘を修正し、Bacon の2回目レビューは `ACCEPT` | `4efc445` / push 済み |
 
 ## Review Log
 
