@@ -10,15 +10,41 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: SC02 semantic fact、relation、source/compiled execution contract の設計要件と既存 shared package を調査し、high-cost 判定後に slice contract を確定する。
+- 次のscheduler action: SC02A1をcommit、pushしてcompletedへ移し、MP01-DK、AR01-I、RC01-Aの独立design review unitを並列に進める。
 - 外部 blocker: なし
 
 ## 状態の意味
 
-- `pending`: 未着手である。
-- `in-progress`: 現在の slice で作業している。
-- `completed`: 直接的な検証証拠、独立レビュー、commit、push が揃っている。
-- `reopened`: 完了後の監査で不足が見つかり、再作業が必要である。
+- `pending`: dependencyが未完了で開始できない。
+- `ready`: production implementationを開始するdependencyが完了している。
+- `contract-ready`: SPEC、先行test、公開または内部contractが固定され、実装待ちである。
+- `implementing`: 宣言済みwrite setでproduction implementationとtargeted gateを進めている。
+- `reviewing`: 同一revisionを固定して独立reviewを進めている。
+- `merge-ready`: 既知のblockerがなく、commitとpushを待っている。
+- `completed`: 検証、review、commit、push、local/remote同期が完了している。
+- `blocked`: 未解決dependencyまたは外部blockerによって、そのslice自身を進められない。
+- `reopened`: completed後の監査で不足が見つかり、再作業が必要である。
+- `in-progress`: phaseまたは複数sliceを集約した行だけに使う。
+
+## Dynamic scheduler
+
+sliceのcontract固定、実装完了、review開始または収束、dependency変更、lane解放のたびにready queueを再計算する。
+優先順位はcritical path、後続解放数、独立した長時間検証の順とし、write setが重ならない四laneを通常上限、統合余力がある場合は六laneを最大上限とする。
+あるsliceのreviewまたはblockerは、そのsliceへ依存せずwrite setも重ならないlaneを停止しない。
+
+| Lane | Slice | Owner | 状態 | 完了dependency OID | 専有write set | 固定contract | 次のgate |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| L1 | SC02A1 | main session | merge-ready | `98585c9c95bc1a02f71e26a764a67e9882519738` | `packages/shared/src/executionContract/` | source-local `FactId`とstable error | staged file監査、commit、push、OID同期 |
+| L2 | MP01-DK | Hilbert `019f55a3-3f5c-7592-bd19-0049330130a2` | ready | `98585c9c95bc1a02f71e26a764a67e9882519738` | 設計proposalはread-only。実装予定は`packages/shared/src/materializationContract/` | materialization kind taxonomyとowner境界 | proposal作成、三人並列design review |
+| L3 | AR01-I | Noether `019f55a3-454b-7fd3-84c6-b4d4d50c0a03` | ready | `98585c9c95bc1a02f71e26a764a67e9882519738` | 設計proposalはread-only。実装予定は`packages/shared/src/artifactContract/` | `ArtifactAddressId` identity surface | proposal作成、三人並列design review |
+| L4 | RC01-A | Ptolemy `019f55a3-4dcd-7cf1-860d-1a9d5efd1430` | ready | `98585c9c95bc1a02f71e26a764a67e9882519738` | 設計proposalはread-only。実装予定は`packages/shared/src/renderContract/` | envelope identityとversioned preimage | proposal作成、三人並列design review |
+
+MP01、AR01、RC01はdependency上readyだが、read-only admission調査で具体schema、identity、budget、owner境界の未決定を確認したため、production implementationを開始しない。
+MP01は`DK → DR → DG → DP`、AR01は`I → C → U → B`、RC01は`A → B → C → D → E → F`の独立design revisionへ分ける。
+各design unitが収束した後だけ、同じlaneの最小implementation unitを`contract-ready`へ進める。
+
+進捗文書、`packages/shared/src/index.ts`、package export、共通config、複数laneの統合箇所はメインセッションだけが編集する。
+各laneは専有write setだけを変更し、メインセッションがreview revisionを固定する前にroot exposureと統合gateを追加する。
 
 ## 手順の進捗
 
@@ -28,7 +54,7 @@
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
 | P01 | ExecutionGraph foundation | completed | ID01、SC01、OC01、EG01、EG02、EG03 の検証、独立レビュー、commit、push が完了した |
-| P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02 と SC03 は未着手 |
+| P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02Aの設計reviewは収束済みであり、実装はSC02A1からSC02A8へ再分割した |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
 | P05 | materialization と projection | pending | 未着手 |
@@ -88,16 +114,16 @@ package 間で使う internal export、package export map、build entry は、�
 | EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | completed |
 | EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | completed |
 | EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | completed |
-| SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / test | qualification 前後の contract schema | SC01 / ID01 | pending |
-| SC03 | contract qualification、conflict、dangling、kind diagnostic | transformer: `src/diagnostic/`、`src/contractCompiler/` | 各 directory の SPEC / test | diagnostic path、artifact 非依存の QualifiedRegistryUniverse、policy proof-domain verifier profile admission | EG02 / SC01 / SC02 / OC01 | pending |
+| SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / focused test | SC02A1からSC02A8のsource-local契約、SC02B qualified compiled schema | SC01 / ID01 | in-progress |
+| SC03 | contract qualification、source conflict、qualification後のdangling/kind diagnostic | transformer: `src/diagnostic/`、`src/contractCompiler/` | 各 directory の SPEC / test | diagnostic path、artifact 非依存の QualifiedRegistryUniverse、policy proof-domain verifier profile admission | EG02 / SC01 / SC02 / OC01 | pending |
 | PL01 | function extraction、capture、mutable state、module closure | transformer: `src/moduleClosure/` | 同 directory の SPEC / test | NativeModuleClosure と client closure evidence | EG03 / SC03 | pending |
 | PL02 | root、read、effect、callback、module evaluation の導出 | transformer: `src/executionAnalysis/` | 同 directory の SPEC / test。既存 `transform/SPEC.typ` に superseding ADR | component-transparent semantic analysis | EG03 / SC03 / PL01 | pending |
 | DX01 | `render:client`、`activate:*`、`dom:external` lowering | transformer: `src/executionDirectives/` | 同 directory の SPEC / test。既存 JSX/tree ADR を supersede | reserved prop validation と root/region binding | PL02 | pending |
-| MP01 | materialization requirement、kind、plan schema | shared: `src/materializationContract/` | 同 directory の SPEC / test | snapshot、codec、graph-table、reference、subscription、remote kind | SC01 / OC01 | pending |
-| AR01 | artifact address、exact bytes、integrity schema | shared: `src/artifactContract/` | 同 directory の SPEC / test | canonical address、URL、integrity table | ID01 | pending |
+| MP01 | materialization requirement、kind、plan schema | shared: `src/materializationContract/` | 同 directory の SPEC / test | snapshot、codec、graph-table、reference、subscription、remote kind | SC01 / OC01 | ready |
+| AR01 | artifact address、exact bytes、integrity schema | shared: `src/artifactContract/` | 同 directory の SPEC / test | canonical address、URL、integrity table | ID01 | ready |
 | PI01 | cost metric と plan identity schema | shared: `src/planIdentity/` | 同 directory の SPEC / test | metric vector、integrity-bound plan identity | AR01 / OC01 | pending |
 | PJ01 | request class、projection definition/instance、manifest、BootAuthority | shared: `src/projectionContract/` | 同 directory の SPEC / test | request partition、ProjectionManifestCore、envelope、budget、trusted boot schema | AR01 / PI01 / MP01 | pending |
-| RC01 | RenderEnvelope、publication、writer contract | shared: `src/renderContract/` | 同 directory の SPEC / test | render/writer closed schema | ID01 / OC01 | pending |
+| RC01 | RenderEnvelope、publication、writer contract | shared: `src/renderContract/` | 同 directory の SPEC / test | render/writer closed schema | ID01 / OC01 | ready |
 | RP01 | reference protocol schema | shared: `src/referenceProtocol/` | 同 directory の SPEC / test | grant、lease、release、wire DTO | SC01 / MP01 | pending |
 | SP01 | subscription protocol schema | shared: `src/subscriptionProtocol/` | 同 directory の SPEC / test | continuity、incarnation、pair fence、resync、ack schema | RP01 | pending |
 | OP01 | remote operation protocol schema | shared: `src/remoteProtocol/` | 同 directory の SPEC / test | admission、canonical wire、receipt、recovery schema | RP01 / PJ01 | pending |
@@ -183,6 +209,184 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - `@dathra/store` の snapshot schema にある `hydrate()` は UI hydration ではなく、RM01 の削除対象外である。
 - 現行 solver は final bytes を持たないため、candidate generation と finalization 後 selection を CN01 と SL01 に分離した。
 - Phase 5 の finalization は Phase 6〜8 の client runtime semantic unit を実際に bundle してからでなければ cost を確定できないため、設計正本の dependency を根拠に AF01 と SL01 を runtime/activation/protocol 後へ配置した。
+
+## 現在の Slice
+
+### SC02A1 Source identity
+
+SC02Aの設計判断は変更しない。
+従来のSC02Aは、独立してgreenにできるidentity、model、入力境界、semantic parser、registry/export parser、local closure、source closure、digest/publicationを一つのreview revisionへ束ねていた。
+先行testが3,068行、modelが767行となり、新しいreview-unit admission gateの停止条件へ到達したため、未commit変更を保持したまま次の八つのvertical sliceへ再編する。
+最初の再編ではidentityとmodelをSC02A1へ残したが、手書き差分が1,522行となって停止条件へ再到達した。
+`FactId`とstable errorはsemantic unionなしでgreenにできるため、例外扱いせずSC02A1とSC02A2へ分けた。
+
+| slice | 観測可能な契約 | ownerとmodule | 先行test | 単独greenの根拠 | 状態 |
+| --- | --- | --- | --- | --- | --- |
+| SC02A1 | source-local `FactId`とstable error | `identity.ts`、`implementation.ts` | `factId()`、Unicode、error immutability、facade boundary | semantic modelなしでidentity boundaryとして完結する | merge-ready |
+| SC02A2 | source-local semantic model | `model.ts`、`implementation.ts` | 16 fact、8 relation、7 subject、3 pathのtype fixture | parserを公開せずclosed schemaだけで完結する | pending |
+| SC02A3 | untrusted closed-data preflight、operation-local budget、immutable snapshot | `budget.ts`、`canonical.ts` | descriptor rejection、alias/cycle、全input budget、freeze | semantic recordを解釈せずunknown data boundaryとして検証できる | pending |
+| SC02A4 | subject、fact、relationのstrict parseとcanonical normalization | `semantic.ts` | 全semantic variantとcanonical order | registry、export、cross-record closureなしでstructural parserを検証できる | pending |
+| SC02A5 | registry source、transfer binding、export recordのstrict parse | `registrySource.ts`、`exportSource.ts` | 10 registry kind、25 legal role tuple、transfer/export shape | semantic graph closureと独立したSC01 integrationとして検証できる | pending |
+| SC02A6 | fact/relation local closure、ownership DAG、ordering semantics | `semanticClosure.ts` | endpoint/subject表、nested fact reference、ownership/order | parsed semantic recordsだけを入力にするpure validatorとして完結する | pending |
+| SC02A7 | source assembly、registry/version/export/host closure、creator/parser | `source.ts` | registry reference、version、export direct summary、host assumption | A1からA6のvalidated partsを統合し、source snapshot APIを完成させる | pending |
+| SC02A8 | canonical digestとpackage root publication | `digest.ts`、`implementation.ts`、shared root | permutation digest、crypto failure、artifact/export boundary | 完成したsource parserへidentity operationを追加するだけで完結する | pending |
+
+各sliceは、その時点で実装する契約だけをSPECとtestへ追加し、後続sliceの失敗testを混在させない。
+SC02A全体の設計review結果、relation表、reference表、budget表は親契約の制約として維持し、各sliceの実装reviewは`.temp/goal.md`の手順4から手順6を別revisionで適用する。
+
+- **設計要件**：opaque boundary と author declaration を、source-local `FactId`、typed `SemanticFact`、typed `SemanticRelation`、export contract、SC01 registry source entry から成る closed `ExecutionContractSource` として表現する。
+- **親slice境界**：SC02A1からSC02A8はsource-local契約だけを完成させる。SC02Bはqualified/compiled typeとstructural parserを追加し、SC03だけがSCC namespaceを計算してsource-local IDをqualified IDへ変換する。SC02Bのstructural brandもtrust acceptanceを意味しない。
+- **変更範囲**：`packages/shared/src/executionContract/` に四点セットと focused internal module を追加し、source authoring API を `@dathra/shared` root から公開する。既存 canonical identity と execution registry の意味は変更しない。
+- **public API**：`factId(value: string): FactId`、`defineExecutionContract(input: ExecutionContractSourceInput, budget?: ExecutionContractBudget): ExecutionContractSource`、`parseExecutionContractSource(value: unknown, budget?: ExecutionContractBudget): ExecutionContractSource`、`digestExecutionContractSource(value: unknown, budget?: ExecutionContractBudget): Promise<Sha256Digest>`、`ExecutionContractError`、`ExecutionContractBudget` と source-local semantic type だけを公開する。`digestExecutionContractSource()` は unknown input をstrict parserで再検証してからdigestする。低水準 shared API は AO01 が後で author-facing facade から再公開し、SC02A は qualified type や acceptance API を先行公開しない。
+- **trust boundary**：creator と parser の出力は、構造と source-local closure を満たす未信頼 claim である。`integrity.source = "compiler"`、`trust-boundary`、host assumption、canonical digest は evidence admission、host enforcement、placement permission を作らない。SC03 の qualified evidence と後続の `AcceptedExecutionAnalysis` がない source contract を client exclusion に利用できない。
+- **behavioral edge**：`SemanticRelation` をbehavioral cross-fact edgeの唯一の正本にする。`read.readEffectFactId`、`write.writeEffectFactId`、`effect.readFactIds`、`effect.writeFactIds`、`effect.invocationFactIds`、`ownership.ownerFactId`、`ownership.lifetimeFactId`、`ordering.memberFactIds` はsource/compiled fact schemaから削除する。read/writeのenvironment/exposureはfactのattribute referenceとして残し、behavioral relationとは扱わない。
+- **ownership と ordering**：ownership factはretentionだけを保持する。`owns` relationはoptionalなidentityまたはownership ownerを最大1件、lifetimeをexactly 1件結ぶ。ordering factはrelation kindだけを保持し、`orders-before` relationがmemberを結ぶ。`before`と`serial`では`ordinal`を0から始まるgap-free sequence、`exclusive`と`commutative`では`ordinal: null`のsetとする。
+- **source-local closure**：FactId は contract 内で一意とし、read/write の environment と exposure、relation endpoint、export fact、host assumption を同じ contract の fact indexへ解決する。すべての semantic relation は異なる FactId を結ぶ。nested field と endpoint tag は exact reference-kind table と一致させる。host assumption は任意の local fact を未信頼 claim として参照できる。
+- **registry closure**：すべての registry reference は同じ source contract の expected kind entry に解決する。version を持つ codec、resolver、subscription、remote transfer は `(kind, id, version)` を source entry と完全一致させる。registry implementation は SC01 の25 legal role tupleだけを許可する。
+- **export closure**：export の `factIds` は同じ export name を持つ subject だけを参照し、module-evaluation subject を含めない。直接fieldとの照合対象はexactな`{ kind: "export-value", exportName }` subjectだけとする。`callable = none` は対象invocation fact 0件、その他はcallableとreceiver brandが一致する対象invocation fact 1件を要求する。`transfer.kind = none` は対象transfer fact 0件、その他はbindingが一致する対象transfer fact 1件を要求する。parameter callback、return、allocated resourceのinvocation/transfer factはこの件数へ含めない。value domainとreceiver brandはexact registry kindへ解決する。
+- **SC03へ残す検証**：export name、parameter index、path、callback index、allocation site が実際の module signature と一致するか、source解析とcontractが衝突しないか、locator exportがdescriptor/implementation interfaceを満たすか、dependency contract SCCをどうqualificationするかだけを残す。`factId()` と `registryId()` の build-time literal 制約も SC03 が検証する。
+- **identity**：source contractはdigest fieldを持たない。`digestExecutionContractSource()`は正規化済みsource snapshot全体のcanonical JCS SHA-256を返す。FactIdとRegistryIdはlocal domainに残し、qualified IDはSC02B/SC03より前に生成しない。
+- **hard budget**：overrideはframework capを狭めるだけとし、一つのoperation-local ledgerをschema-aware descriptor preflight、closed snapshot、normalization、index、closure validation、canonical measurement、freeze、digestへ共有する。nested collectionはcloneより前に総数を課金する。getter、custom prototype、hidden/symbol property、sparse array、cycleはcallback実行なしで拒否する。
+- **alias と stack**：shared alias は出現ごとに input budget へ課金して許可し、active ancestor だけを cycle として拒否する。descriptor preflight と deep freeze は iterative にし、canonicalizer の再帰は maximum depth 64 以下の snapshot だけへ一度適用する。
+- **初回並列設計レビュー**：contract、budget、最終目標の三 reviewer は全員 `REJECT` であった。trust acceptance、qualified type owner、relation subject、SemanticPath、canonical order、全 reference/version closure、host assumption、semantic edge 二重表現、ordering semantics、pre-clone budget、complexity table、API/error/test contract の指摘を blocker として採用し、この修正版へまとめた。
+- **収束確認**：新しい一人のreviewerは12 blockerのうち7件を解消、5件を未解消として`REJECT`した。ownership/orderの残る二重表現、export照合subject、自己relation、reference-kind表、budget cap/counter名、exact API signatureを採用し、この最終修正版へ反映した。追加の全面reviewは行わず、SPEC tableと独立fixtureを収束証拠にする。
+- **設計正本**：最終修正版を設計正本の「source execution contract の canonical boundary」へsuperseding decisionとして追加し、untrusted source、behavioral relation一元化、source closure、API、budget、failureを固定した。
+- **親契約の先行draft**：61 test declaration（`it.each`展開後79 cases）と541行のSPECは、review-unit再編で`.temp/sc02a-review-unit-draft/`へそのまま保持した。後続sliceは該当するcontract fixtureだけをdraftから戻し、将来testを現在のsuiteへ混在させない。
+- **red test 証拠**：再編前の`pnpm --filter @dathra/shared exec vitest run src/executionContract/implementation.test.ts`は`./implementation`不在の`Cannot find module`で失敗し、SPEC/testがproduction facadeより先に追加されたことを確認した。
+- **SC02A1 SPEC/test/implementation**：141行のSPEC、focused identity/error test、`identity.ts`、6行のpackage-local facadeへ縮小した。手書き差分はAGENTSを含めても400行未満であり、後続parser、model、budget、closure、digestを含まない。
+- **SC02A1 current validation**：targeted 15 testsとshared全9 files、180 testsが成功した。typecheckと通常lint 0件も成功し、type-aware lintは既存`rlse.config.ts`のwarning 1件だけを報告した。
+- **SC02A1 initial parallel review**：同一hash manifestをcorrectness、SPEC/test/artifact、最終目標/package boundaryの三reviewerへ並列に渡した。最終目標と実装境界のreviewerはblockerなしで`ACCEPT`した。残るreviewerの重複指摘から、type-only facade境界の未検査、stable error codeの片方向fixture、digest形状と`FactId`戻り型の未検査をblockerとして採用した。
+- **SC02A1 blocker correction**：facadeからinternal path segment typeを除き、qualified、compiled、accepted type-only importのnegative fixture、`Record<ExecutionContractErrorCode, true>`による双方向完全性、digest形状の受理、exact `FactId` return typeを追加した。文章表現だけの指摘はなく、修正後revisionを新しい一人で一回だけ収束確認する。
+- **SC02A1 convergence review**：fresh reviewerはerror code完全性とFactId identity fixtureの解消、新しいcorrectness blockerの不在を確認した。internal path segment typeはfacadeから削除済みだが、その再公開を拒否するnegative fixtureがない一点だけを未解消としたため、`ExecutionContractPathSegment`のtype-only import failureを追加した。収束確認は規則どおり一回で終了し、この限定修正はtypecheckで直接検証する。
+- **SC02A1 final slice gate**：限定fixture追加後、targeted 15 testsとidentity statement、branch、function、line coverage 100%、shared全9 filesと180 tests、typecheck、通常lint 0件、format、buildが成功した。type-aware lintは既存`rlse.config.ts`のwarning 1件だけであり、build artifactとshared rootにexecutionContract runtime/type APIが存在しないことをnegative inspectionで確認した。
+- **dynamic scheduler migration**：worktree変更を保持し、実行中command 0件、read-only planning agent 3件を成果回収済みとしてcheckpointを作った。更新済みgoal、review手順、進捗文書を現行worktreeから再読し、L2からL4が設計レビュー先行であることをready queueへ反映した。
+- **process rule commit**：review-unit admission gateとready queue、parallel lane規則を`98585c9c95bc1a02f71e26a764a67e9882519738`としてpushし、localとtracking branchのexact OID一致を確認した。このcommitはscheduler移行指示を受け取る前に完了しており、revertしない。
+- **follow-up**：AO01 では10 registry collectionの空配列を省略できる author helperを検討する。SC02A の strict output schema は固定collectionを維持する。
+- **baseline**：shared全8 files、165 tests、typecheck、通常lint 0件、format、buildが成功した。type-aware lintは既存`rlse.config.ts`のwarning 1件だけを報告した。
+
+#### SC02A relation and subject table
+
+string比較はUnicode normalizationを行わないraw UTF-16 code-unit順とし、enumはこの表とtype unionに記載した固定rankを使う。
+
+| relation | from fact/subject | to fact/subject | 追加制約 |
+| --- | --- | --- | --- |
+| `reads` | effectまたはinvocation / activeまたはcallable subject | read / module-evaluationまたはvalue subject | N/A |
+| `writes` | effectまたはinvocation / activeまたはcallable subject | write / module-evaluationまたはvalue subject | N/A |
+| `invokes` | effectまたはinvocation / activeまたはcallable subject | invocation / callable subject | N/A |
+| `returns` | invocation / callable subject | any fact / return subject | exportNameを一致させる |
+| `owns` | ownership / any subject | identity、ownership、lifetime / any subject | lifetime targetだけをsource ownershipとexact subject一致させる |
+| `orders-before` | ordering / any subject | any fact / any subject | sourceとtargetを異なるIDにし、variantに応じたordinalを持つ |
+| `transfers-as` | transfer以外のfact / value subject | transfer / 同じsubject | sourceとtargetを異なるIDにし、subjectをexact equalityで一致させる |
+| `fails-with` | effectまたはinvocation / activeまたはcallable subject | failure / 同じsubject | subjectをexact equalityで一致させる |
+
+active subject は module-evaluation、export-value、receiver、callback-invocation、allocated-resource とする。
+callable subject は export-value、receiver、parameter、return、callback-invocation、allocated-resource とする。
+value subject は export-value、receiver、parameter、return、allocated-resource とする。
+SC02A はこの pure table と subject shapeを検証し、SC03 は実module signatureとの一致を検証する。
+`orders-before` variantだけがrequiredな`ordinal: number | null`を持ち、ほかのrelation variantはordinal fieldを受理しない。
+すべてのrelationはsourceとtargetに異なるFactIdを要求する。
+一つのownership factは同じsubjectのlifetime targetをexactly 1件、identityまたは別ownershipのowner targetを0件または1件持ち、それ以外の`owns` relationを持てない。
+ownershipからownershipへのowner relationはDAGとし、owner cycleを拒否する。
+`before`と`serial`のordering factは、targetが重複しない`orders-before` relationを1件以上持ち、ordinalを0から件数未満までgap-freeに使う。
+`exclusive`と`commutative`のordering factは、targetが重複しない`orders-before` relationを1件以上持ち、ordinalをすべてnullにする。
+
+#### SC02A exact fact reference table
+
+| owner field | 許可fact kind | nullable | cardinality/semantic |
+| --- | --- | --- | --- |
+| `read.environmentFactId` | environment | no | exactly 1 |
+| `read.exposureFactId` | exposure | no | exactly 1 |
+| `write.environmentFactId` | environment | no | exactly 1 |
+| `write.exposureFactId` | exposure | no | exactly 1 |
+| relation `from` / `to` | relation and subject table | no | endpointごとにexactly 1 |
+| export `factIds` | any semantic fact | no | raw UTF-16順のset。subjectをexport closureへ一致させる |
+| `hostAssumptionFactIds` | any semantic fact | no | raw UTF-16順の未信頼set |
+
+ownershipとorderingのmember referenceはnested fieldに保持せず、`owns`と`orders-before` relationだけに保持する。
+
+#### SC02A canonical collection table
+
+| collection | semantic | creator | strict parser |
+| --- | --- | --- | --- |
+| SemanticPath | sequence | 入力順と反復を保持 | 同じsequenceを受理 |
+| fact、host assumption、export fact、registry reference set | set | raw UTF-16 ID順へsort | strictly sortedを要求 |
+| callback parameter index | set | number昇順へsort | strictly sortedを要求 |
+| environment | fixed-order set | build、server-request、browserの順へsort | fixed rank順を要求 |
+| relation | set | relation kind、from kind、from ID、ordinal null-first、to kind、to IDの固定tuple順へsort | tupleのstrict orderを要求 |
+| registry entry | kind-local set | RegistryId順へsort | strictly sortedを要求 |
+| registry implementation | role set | browser、server-request、roleの固定rank順へsort | strictly sortedを要求 |
+| export record property | unordered map | property setを保持 | insertion orderを要求しない。JCS key orderをidentityに使う |
+
+#### SC02A parent decomposition and complexity gate
+
+SC02Aはuntrustedな可変長input parserとmany-to-many local referenceを扱うためhigh-cost sliceに該当する。
+
+| 責務 | internal module | owner | dependency |
+| --- | --- | --- | --- |
+| type、taxonomy、subject/relation table、error | `model.ts` | SC02A schema | SC01/ID01 typeのみ |
+| hard cap、schema-aware descriptor preflight、ledger | `budget.ts` | public operation | `model.ts` |
+| closed snapshot、scalar、set、JCS byte measurement、freeze | `canonical.ts` | canonical boundary | `budget.ts`、`model.ts` |
+| subject、fact、relation、transfer、export parse | `semantic.ts` | semantic schema | `canonical.ts`、`model.ts` |
+| registry source、source assembly、local closure、digest | `source.ts` | ExecutionContractSource | `semantic.ts`、SC01 public API |
+| package-local orchestration | `implementation.ts` | public facade | 上記全module |
+
+| phaseまたはrelation | owner | input最大cardinality | index | worst-case | output上限 | counterと課金時点 |
+| --- | --- | --- | --- | --- | --- | --- |
+| descriptor preflight/snapshot | canonical boundary | data node `200,000`、property `1,000,000` | active ancestor、alias map | `O(N)` | data node cap以下 | `maximumInputDepth`、`maximumInputDataNodes`、`maximumInputProperties`、`maximumInputArrayLength`、`maximumInputStringCodeUnits`をdescriptor/container読取前 |
+| fact/registry index | source closure | fact `200,000`、registry `200,000` | FactId map、kind/RegistryId map | `O(F + G)` | `F + G` | `maximumFacts`、`maximumRegistryEntries`をclone前、`maximumValidationSteps`をmap insertion前 |
+| nested fact/export/host reference | source closure | reference `10,000,000` | FactId map | `O(F + Rf)` | input fact数以下 | `maximumReferences`をclone前に一度、`maximumValidationSteps`をlookup前にprobeごと |
+| relation endpoint/subject | semantic schema | relation `200,000`、endpoint `400,000` | FactId map、closed subject table | `O(F + R)` | relation cap以下 | `maximumRelations`とendpoint分の`maximumReferences`をclone前、`maximumValidationSteps`をlookup/subject判定前 |
+| ownership DAG | source closure | ownership factとowner relationを各`200,000`以下 | ownership FactIdからoptional owner | `O(F + R)` | base relation以外の出力なし | `maximumValidationSteps`をadjacency insertionとiterative DFS edge probe前 |
+| registry reference/version | source closure | reference `10,000,000` | kind/RegistryId map | `O(G + Rg)` | registry cap以下 | `maximumReferences`をclone前に一度、`maximumValidationSteps`をlookup/version比較前 |
+| registry implementation | registry source | implementation `400,000` | kind/environment/role key | `O(I log I)` | implementation cap以下 | `maximumRegistryImplementations`をclone前、`maximumCanonicalWorkSteps`をsort前、`maximumValidationSteps`をtuple判定前 |
+| normalization | semantic/source creator | 各collection hard cap以下 | fixed comparator | `O(N log N)` | input record数以下 | `maximumCanonicalWorkSteps`のworst-case upper boundをsort前、`maximumValidationSteps`をduplicate判定前 |
+| local closure | source closure | `F + G + Rf + Rg` | 上記二map | `O(F + G + Rf + Rg)` | 一つのsource snapshot | `maximumValidationSteps`を各probe前 |
+| canonical measurement/JCS | canonical boundary | normalized data node cap以下 | iterative frame | `O(N + P log P)` | canonical byte `200,000,000` | `maximumCanonicalBytes`と`maximumCanonicalWorkSteps`をfull text生成前 |
+| deep freeze | canonical boundary | output data node cap以下 | visited set、iterative stack | `O(N)` | 同じsnapshot | `maximumValidationSteps`をstack push前 |
+| SHA-256 digest | source identity | canonical byte cap以下 | N/A | `O(B)` | 43文字digest一件 | `maximumCanonicalBytes`検査後にcanonicalizeJsonを一回だけ呼び、そのbytesをsha256Digestへ渡す |
+
+#### SC02A budget proposal
+
+`ExecutionContractBudget` は次のfieldを持ち、default値をframework hard capとする。
+
+| field | default hard cap |
+| --- | ---: |
+| `maximumInputDepth` | 64 |
+| `maximumInputDataNodes` | 200,000 |
+| `maximumInputProperties` | 1,000,000 |
+| `maximumInputArrayLength` | 200,000 |
+| `maximumInputStringCodeUnits` | 20,000,000 |
+| `maximumFacts` | 200,000 |
+| `maximumRelations` | 200,000 |
+| `maximumExports` | 200,000 |
+| `maximumRegistryEntries` | 200,000 |
+| `maximumRegistryImplementations` | 400,000 |
+| `maximumReferences` | 10,000,000 |
+| `maximumSemanticPathSegments` | 2,000,000 |
+| `maximumCanonicalBytes` | 200,000,000 |
+| `maximumCanonicalWorkSteps` | 20,000,000 |
+| `maximumValidationSteps` | 20,000,000 |
+
+schema-aware preflightはnested reference、SemanticPath、registry implementationをclosed snapshotより前にdescriptorだけで数える。
+exact canonical byte lengthはallocation-freeに測定し、canonical workはobject property sortのworst-case upper boundを先に課金する。
+上限内と確認した後だけ`canonicalizeJson()`を一回呼び、返されたexact bytesを`sha256Digest()`へ渡す。
+
+#### SC02A failure and test contract
+
+`ExecutionContractError` は immutable な `(string | number)[]` path と、`invalid-closed-record`、`invalid-field`、`invalid-fact-id`、`invalid-registry-id`、`noncanonical-order`、`duplicate-record`、`dangling-reference`、`kind-mismatch`、`version-mismatch`、`semantic-mismatch`、`budget-exceeded`、`crypto-unavailable` のstable codeを持つ。
+SC01/ID01 failureは元のpathへ現在のfield prefixを付けてこのerrorへ変換し、別error classをpublic operationから漏らさない。
+
+先行testは次を独立fixtureで検証する。
+
+- 16 fact kind、8 relation kind、7 subject kind、3 path segment kindの全variant
+- fact kind、relation endpoint、subject pair、nested reference kindの正準表と全swap rejection
+- 10 registry kind、25 legal role tuple、295 illegal tuple、transfer version mismatch
+- cross-fact relationの唯一性とexport callable/receiver/transfer exact closure
+- creator permutationの同一snapshot/digestとstrict parserのnoncanonical rejection
+- repeated SemanticPath、shared alias、direct/indirect cycle、getter/hidden/symbol/custom prototype/sparse array
+- 全budget counterのzero、exact boundary、boundary-minus-oneとnested collectionのpre-clone failure
+- deep inputのtyped failure、iterative freeze、caller mutation不変性
+- `@dathra/shared` root exportとqualified/accepted APIの不在
 
 ## 直前に完了した Slice
 

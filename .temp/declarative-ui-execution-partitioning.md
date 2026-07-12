@@ -7141,6 +7141,171 @@ source から直接証明できた事実を contract で上書きできない。
 imperative library が所有する DOM region は、author-facing `dom:external` reserved JSX directive と execution contract の ownership/effect fact を組み合わせる。
 この contract は Dathra の mutation と reconciliation を禁止するが、server と client の placement directive にはならない。
 
+### source execution contract の canonical boundary
+
+この節は、先に記載した `SemanticFact` の behavioral reference、`SemanticRelation`、ownership、ordering、`ExecutionContractSource` の canonical validation を supersede する。
+SC02A は source-local contract の schema、creator、strict parser、canonical digest、local closure だけを所有する。
+SC02B は qualified/compiled schema と structural parser を所有し、SC03 だけが contract SCC namespace を計算して source-local ID を qualified ID へ変換する。
+
+SC02A の creator と parser が返す `ExecutionContractSource` は、構造と source-local closure を満たす未信頼 claim である。
+author が `integrity.source = "compiler"`、trust boundary、host assumption を宣言しても、compiler evidence、host enforcement、placement permission にはならない。
+canonical digest と qualified ID も identity だけを表し、trust acceptance を表さない。
+SC03 の qualified evidence と後続の `AcceptedExecutionAnalysis` がない contract を client exclusion に利用できない。
+
+#### behavioral relation の一意性
+
+`SemanticRelation` を behavioral cross-fact edge の唯一の正本とする。
+次の field は source と compiled の `SemanticFact` から削除する。
+
+- `read.readEffectFactId`
+- `write.writeEffectFactId`
+- `effect.readFactIds`
+- `effect.writeFactIds`
+- `effect.invocationFactIds`
+- `ownership.ownerFactId`
+- `ownership.lifetimeFactId`
+- `ordering.memberFactIds`
+
+read と write の `environmentFactId` と `exposureFactId` は fact attribute の参照であり、behavioral relation ではないため保持する。
+effect fact は `retainsCallbacks`、`reentrant`、`schedulesWork`、`allocatesResource` だけを持つ。
+ownership fact は `retention` だけを持ち、ordering fact は `relation` だけを持つ。
+
+`orders-before` relation だけが required な `ordinal: number | null` を持つ。
+ほかの relation は `ordinal` field を受理しない。
+すべての relation は異なる二つの FactId を結ぶ。
+
+relation の fact kind と subject kind は次の閉じた表に従う。
+
+| relation | from fact / subject | to fact / subject | 追加制約 |
+| --- | --- | --- | --- |
+| `reads` | effect または invocation / active または callable | read / module-evaluation または value | なし |
+| `writes` | effect または invocation / active または callable | write / module-evaluation または value | なし |
+| `invokes` | effect または invocation / active または callable | invocation / callable | なし |
+| `returns` | invocation / callable | 任意の fact / return | exportName を一致させる |
+| `owns` | ownership / 任意 | identity、ownership、lifetime / 任意 | lifetime target だけを source と exact subject 一致させる |
+| `orders-before` | ordering / 任意 | 任意の fact / 任意 | ordering variant に応じた ordinal を持つ |
+| `transfers-as` | transfer 以外の fact / value | transfer / 同じ subject | subject を exact equality で一致させる |
+| `fails-with` | effect または invocation / active または callable | failure / 同じ subject | subject を exact equality で一致させる |
+
+active subject は module-evaluation、export-value、receiver、callback-invocation、allocated-resource とする。
+callable subject は export-value、receiver、parameter、return、callback-invocation、allocated-resource とする。
+value subject は export-value、receiver、parameter、return、allocated-resource とする。
+SC02A はこの pure table と subject shape を検証し、SC03 は subject が実際の module signature に存在するかを検証する。
+
+一つの ownership fact は、同じ subject を持つ lifetime target を exactly 1件、identity または別 ownership の owner target を0件または1件持つ。
+ownership から ownership への relation は DAG とし、owner cycle を拒否する。
+
+`before` と `serial` の ordering fact は、target が重複しない `orders-before` relation を1件以上持つ。
+ordinal は0から件数未満までを gap-free に使う。
+`exclusive` と `commutative` の ordering factもtargetが重複しないrelationを1件以上持つが、ordinalはすべて`null`とする。
+
+#### source-local closure
+
+FactId は source contract 内で一意とする。
+source contract 内の FactReference は次の表に従う。
+
+| owner field | 許可 fact kind | cardinality |
+| --- | --- | --- |
+| `read.environmentFactId` | environment | exactly 1 |
+| `read.exposureFactId` | exposure | exactly 1 |
+| `write.environmentFactId` | environment | exactly 1 |
+| `write.exposureFactId` | exposure | exactly 1 |
+| relation `from` と `to` | relation table の kind | endpoint ごとに exactly 1 |
+| export `factIds` | 任意の semantic fact | set |
+| `hostAssumptionFactIds` | 任意の semantic fact | 未信頼 set |
+
+host assumption の許可kindをsource schemaで狭めない。
+SC03 と RR01 が host profile、proof domain、evidence admission に基づいて、どの assumption を受理できるかを決める。
+
+すべての RegistryReference は、同じ source contract の expected kind にある RegistrySourceEntry へ解決する。
+version を持つ codec、resolver、subscription、remote transfer は、`(kind, id, version)` を source entry と完全一致させる。
+registry implementation は SC01 の25個の合法な kind、environment、role tuple だけを使う。
+
+export の `factIds` は、module-evaluation 以外で同じ exportName を持つ subject だけを参照する。
+`ExportExecutionContract` の direct field と照合する fact は、subject が exact に `{ kind: "export-value", exportName }` であるものだけとする。
+parameter callback、return、allocated resource の fact はこの照合件数へ含めない。
+
+`callable = "none"` は対象 invocation fact 0件とする。
+それ以外は `callable` と `receiverBrandId` が一致する対象 invocation fact を exactly 1件要求する。
+`transfer.kind = "none"` は対象 transfer fact 0件とする。
+それ以外は binding が一致する対象 transfer fact を exactly 1件要求する。
+value domain と receiver brand は source registry の expected kind に解決する。
+
+SC03 は、export name、parameter index、path、callback index、allocation site が実 module signature に存在するか、source analysis と contract が衝突しないか、locator export が descriptor と implementation interface を満たすかを検証する。
+`factId()` と `registryId()` の引数が build-time string literal であることも SC03 が検証する。
+
+#### canonical source API
+
+SC02A は次の synchronous creator/parser と asynchronous digest を提供する。
+
+```ts
+interface ExecutionContractBudget {
+  readonly maximumInputDepth?: number;
+  readonly maximumInputDataNodes?: number;
+  readonly maximumInputProperties?: number;
+  readonly maximumInputArrayLength?: number;
+  readonly maximumInputStringCodeUnits?: number;
+  readonly maximumFacts?: number;
+  readonly maximumRelations?: number;
+  readonly maximumExports?: number;
+  readonly maximumRegistryEntries?: number;
+  readonly maximumRegistryImplementations?: number;
+  readonly maximumReferences?: number;
+  readonly maximumSemanticPathSegments?: number;
+  readonly maximumCanonicalBytes?: number;
+  readonly maximumCanonicalWorkSteps?: number;
+  readonly maximumValidationSteps?: number;
+}
+
+declare function factId(value: string): FactId;
+
+declare function defineExecutionContract(
+  input: ExecutionContractSourceInput,
+  budget?: ExecutionContractBudget,
+): ExecutionContractSource;
+
+declare function parseExecutionContractSource(
+  value: unknown,
+  budget?: ExecutionContractBudget,
+): ExecutionContractSource;
+
+declare function digestExecutionContractSource(
+  value: unknown,
+  budget?: ExecutionContractBudget,
+): Promise<Sha256Digest>;
+```
+
+`defineExecutionContract()` は set-like collection を正規化した deep-frozen snapshot を返す。
+`parseExecutionContractSource()` は exact field set と canonical order を要求する。
+`digestExecutionContractSource()` は unknown input を strict parser で再検証し、source snapshot 全体の canonical JCS SHA-256 を返す。
+source contract 自体は digest field を持たない。
+
+string は Unicode normalization を行わず、raw UTF-16 code-unit 順で比較する。
+enum は schema に記載した固定 rank を使う。
+SemanticPath は反復を許す sequence として入力順を保持する。
+callback parameter index は number 昇順の set とする。
+environment は build、server-request、browser の固定順とする。
+relation は relation kind、from kind、from ID、ordinal null-first、to kind、to ID の tuple 順とする。
+registry entry は kind 内の RegistryId 順、implementation は browser、server-request、role の固定 tuple 順とする。
+export record の property insertion order は要求せず、JCS key order を identity に使う。
+
+caller の budget override は framework hard cap を狭めることだけができる。
+default hard cap は depth 64、data node 200,000、property 1,000,000、array length 200,000、string code unit 20,000,000、fact 200,000、relation 200,000、export 200,000、registry entry 200,000、registry implementation 400,000、reference 10,000,000、SemanticPath segment 2,000,000、canonical byte 200,000,000、canonical work 20,000,000、validation step 20,000,000 とする。
+
+一つの public operation は一つの operation-local ledger を使う。
+schema-aware descriptor preflight は、nested reference、SemanticPath、registry implementation を closed snapshot より前に数える。
+reference cardinality は `maximumReferences` へ clone 前に一度だけ課金し、各 lookup work は `maximumValidationSteps` へ probe 前に課金する。
+shared alias は出現ごとに input budget へ課金して許可し、active ancestor だけを cycle として拒否する。
+descriptor preflight、ownership DAG、deep freeze は iterative に処理する。
+
+exact canonical byte length は full canonical text を生成する前に allocation-free で測定する。
+object property sort の worst-case upper bound も `maximumCanonicalWorkSteps` へ先に課金する。
+上限内と確認した後だけ `canonicalizeJson()` を一回呼び、返された exact bytes を `sha256Digest()` へ渡す。
+
+`ExecutionContractError` は immutable な path と stable code を持つ。
+code は `invalid-closed-record`、`invalid-field`、`invalid-fact-id`、`invalid-registry-id`、`noncanonical-order`、`duplicate-record`、`dangling-reference`、`kind-mismatch`、`version-mismatch`、`semantic-mismatch`、`budget-exceeded`、`crypto-unavailable` とする。
+SC01 と ID01 の failure は current field prefix を付けてこの error へ変換し、別 error class を public operation から漏らさない。
+
 ### manual activation
 
 通常利用では `hydrate()` または manual activation を要求しない。
