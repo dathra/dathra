@@ -4,14 +4,16 @@ import type {
   ArtifactAddressId as _RootArtifactAddressIdMustNotExist,
   // @ts-expect-error Root publication belongs to AS01.
   ArtifactFinalizationTemplate as _RootFinalizationTemplateMustNotExist,
+  // @ts-expect-error Root publication belongs to AS01.
+  ArtifactEntryBinding as _RootArtifactEntryBindingMustNotExist,
+  // @ts-expect-error Root publication belongs to AS01.
+  ArtifactEntryRole as _RootArtifactEntryRoleMustNotExist,
 } from "../index";
 import type {
   ArtifactAddressId,
+  ArtifactEntryBinding,
+  ArtifactEntryRole,
   ArtifactFinalizationTemplate,
-  // @ts-expect-error Entry binding belongs to the later AR01-EB revision.
-  ArtifactEntryBinding as _ArtifactEntryBindingMustNotExist,
-  // @ts-expect-error Entry roles belong to the later AR01-EB revision.
-  ArtifactEntryRole as _ArtifactEntryRoleMustNotExist,
   // @ts-expect-error Dependency binding belongs to the later AR01-DB revision.
   ArtifactDependencyBinding as _ArtifactDependencyBindingMustNotExist,
   // @ts-expect-error Export binding belongs to the later AR01-XB revision.
@@ -232,7 +234,13 @@ type ArtifactFinalizationTemplateTypeFixture = readonly [
   WidenedFieldFinalizationTemplateIsRejected,
 ];
 
+type ArtifactEntryBindingConsumer = readonly [
+  ArtifactEntryRole,
+  ArtifactEntryBinding,
+];
+
 export type {
   ArtifactAddressIdTypeFixture,
+  ArtifactEntryBindingConsumer,
   ArtifactFinalizationTemplateTypeFixture,
 };

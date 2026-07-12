@@ -10,6 +10,8 @@ artifact addressをgenericなSHA-256 digestや他のdigest domainから区別し
 
 artifact finalizationの決定項目をexactなclosed productとして固定し、unsupportedなliteral、欠落したfield、変更されたproperty modifierを後続のaddress preimageへ混入させないpackage-localなtypeを定義する。
 
+artifact内のentry責務とentry invocation順序のclaimをexactなclosed productとして固定し、unsupportedなrole、欠落したfield、変更されたproperty modifierを後続のaddress preimageへ混入させないpackage-localなtypeを定義する。
+
 これらのAPIはtype-only foundationであり、runtime operationとshared package rootの公開面を増やさない。
 
 == 設計判断
@@ -58,6 +60,31 @@ artifact finalizationの決定項目をexactなclosed productとして固定し�
     1. *openなstring record*: unsupportedな方式とliteral wideningを拒否できないため採用しない
     2. *runtime enum object*: type-only contractにruntime valueとinitializationを追加するため採用しない
     3. *address preimage aggregateと同時に提供する*: 後続bindingとidentity inputをplaceholderとして公開するため採用しない
+  ],
+)
+
+#adr(
+  header("artifact entry bindingをrole unionとclosed productで表す", Status.Accepted, "2026-07-12"),
+  [
+    artifact address preimageは、各entryの責務、semantic identity claim、finalized module上のexport name claim、canonical invocation sequence上のordinal claimを区別する必要がある。
+    openなstring role、optional field、mutable fieldを許すrecordでは、未定義のentry責務や暗黙のdefaultがidentity inputへ入る。
+  ],
+  [
+    `ArtifactEntryRole`を3個のliteralからなるunion、`ArtifactEntryBinding`を4個のrequiredかつreadonlyなpropertyからなるinterfaceとして定義する。
+    二つのtypeを同じfocused modelに置き、package-local facadeからtype-onlyで提供する。
+    parser、creator、validator、aggregate、dependency binding、export binding、URL、integrity、closure、identity operation、shared package root exportは追加しない。
+  ],
+  [
+    - 後続contractはentry roleとbindingのclosed vocabularyを再利用できる
+    - type fixtureはrole union、keys、property types、required modifier、readonly modifierの変更を検出できる
+    - typeへの適合はsemantic IDまたはexportの実在、ordinalのsafe integer、nonnegative、gap-free、一意性、canonical order、provenance、trustを証明しない
+    - semantic canonical validationとidentity operationは後続unitに残る
+  ],
+  alternatives: [
+    1. *roleをinline unionだけにする*: 採択済みschemaが要求する`ArtifactEntryRole` surfaceを失うため採用しない
+    2. *runtime enum object*: type-only contractにruntime valueとinitializationを追加するため採用しない
+    3. *ordinal validationを同時に提供する*: collection全体なしではgap-freeまたはuniqueを判定できないため採用しない
+    4. *dependency、export、aggregateと同時に提供する*: 独立して検証できる後続contractを束ねるため採用しない
   ],
 )
 
@@ -125,6 +152,37 @@ artifact finalizationの決定項目をexactなclosed productとして固定し�
   ],
 )
 
+#interface_spec(
+  name: "Artifact entry binding",
+  summary: [
+    artifact内のentry責務とidentity、export、invocation ordinalのclaimを、closed role unionとrequiredかつreadonlyなclosed productとして表す。
+  ],
+  format: [
+    ```typescript
+    type ArtifactEntryRole =
+      | "runtime-entry"
+      | "integration-entry"
+      | "definition-entry"
+
+    interface ArtifactEntryBinding {
+      readonly role: ArtifactEntryRole
+      readonly entrySemanticId: string
+      readonly exportedName: string
+      readonly invocationOrdinal: number
+    }
+    ```
+  ],
+  constraints: [
+    - `ArtifactEntryRole`は記載した3個のliteralと双方向に一致する
+    - `keyof ArtifactEntryBinding`は記載した4個のpropertyだけである
+    - 全propertyはrequiredかつreadonlyであり、index signatureを持たない
+    - 各property typeは記載したtypeと双方向に一致する
+    - `ArtifactEntryRole`と`ArtifactEntryBinding`は`entryBindingModel`内部で定義し、package-local facadeからtype-onlyで提供する
+    - facade、entry binding model、type-only consumerはruntime import edge、runtime value、top-level effectを持たない
+    - shared package rootへの公開はAS01が所有する
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -162,6 +220,28 @@ artifact finalizationの決定項目をexactなclosed productとして固定し�
   ],
   postconditions: [
     - package-local type contractのclosed product shapeを変更する差分を検出できる
+    - runtime value、runtime validation、identity operationは追加されない
+  ],
+)
+
+#behavior_spec(
+  name: "Entry binding structural boundary",
+  summary: [
+    entry role unionとentry binding自身のkeys、property types、required modifier、readonly modifierを型検査で固定する。
+  ],
+  preconditions: [
+    - 比較対象が採用済みroleまたは追加、欠落、widened role variantである
+    - 比較対象が採用済みbindingまたはmissing、extra、optional、mutable、widened、role変更、ordinal変更variantである
+  ],
+  steps: [
+    1. role unionが採用済み3 literalと双方向に一致することを検査する
+    2. bindingのkeysが採用済み4 propertyと双方向に一致することを検査する
+    3. 各property typeが採用済みtypeと双方向に一致することを検査する
+    4. 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
+    5. missing、extra、optional、mutable、widened、role変更、ordinal変更variantがexact contractと一致しないことを検査する
+  ],
+  postconditions: [
+    - package-local type contractのclosed unionまたはclosed product shapeを変更する差分を検出できる
     - runtime value、runtime validation、identity operationは追加されない
   ],
 )
@@ -243,10 +323,50 @@ artifact finalizationの決定項目をexactなclosed productとして固定し�
   ],
 )
 
+#feature_spec(
+  name: "Type-only artifact entry binding",
+  summary: [
+    後続dependency binding、export binding、aggregate、validatorを仮実装せず、`ArtifactEntryRole`と`ArtifactEntryBinding`だけをcurrent revisionのpackage-local facadeへ追加する。
+  ],
+  api: [
+    ```typescript
+    type ArtifactEntryRole =
+      | "runtime-entry"
+      | "integration-entry"
+      | "definition-entry"
+
+    interface ArtifactEntryBinding {
+      readonly role: ArtifactEntryRole
+      readonly entrySemanticId: string
+      readonly exportedName: string
+      readonly invocationOrdinal: number
+    }
+    ```
+  ],
+  edge_cases: [
+    - role unionに未定義の値を追加せず、`string`へwidenしない
+    - propertyをoptionalまたはmutableにしない
+    - string propertyまたはordinal propertyを他のtypeへwidenしない
+    - typeへの適合をsemantic IDまたはexportの実在、ordinalのsafe integer、nonnegative、gap-free、一意性、canonical order、provenance、trustの証拠として扱わない
+  ],
+  test_cases: [
+    - role unionが期待する3 literalと双方向に一致することを検査する
+    - `keyof`と全property typeが期待型と双方向に一致することを検査する
+    - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
+    - missing、extra、optional、mutable、widened、role変更、ordinal変更variantがexact contractと一致しないことを非空なnegative fixtureで検査する
+    - facadeのASTが`./model`、`./finalizationTemplateModel`、`./entryBindingModel`から採択済み4 typeだけをtype-only exportすることを検査する
+    - facade、全model、type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - 後続dependency binding、export binding、aggregate、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
+    - shared package rootから`ArtifactEntryRole`と`ArtifactEntryBinding`をimportできないことを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに採択済み4 typeが存在しないことを検査する
+  ],
+)
+
 == 責務境界
 
 - canonical snapshot validator、artifact address identity operation、creator、parser、guard、castは後続AR01 unitが所有する
-- entry binding、dependency binding、export binding、artifact address preimage aggregateは後続AR01 unitが所有する
+- dependency binding、export binding、artifact address preimage aggregateは後続AR01 unitが所有する
+- entry bindingのsemantic canonical validatorは後続AR01 unitが所有する
 - artifact URL、exact-byte integrity、artifact closureは後続unitが所有する
 - SC01 migrationはAR01-I後のintegration unitが所有する
 - このunitはcanonicality、provenance acceptance、trust admission、referent closure、artifact existence、exact-byte integrityを表さない
