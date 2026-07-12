@@ -54,6 +54,44 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
 )
 
 #adr(
+  header("Canonical JSON builder を反復処理と明示的な上限で構成する", Status.Accepted, "2026-07-13"),
+  [
+    canonicalization は後続の hostile-input boundary でも使われるため、host の sort 実装と JavaScript call stack の深さへ依存できない。
+    一方、ID01 は standalone canonicalizer であり、execution contract の budget API や byte meter を公開しない。
+  ],
+  [
+    record key は raw UTF-16 code unit comparator を使う bottom-up stable merge sort で並べる。
+    property count を `p`、最大 key 長を `m`、`levels = ceil(log2(max(1, p)))` とするとき、comparison は `p * levels` 以下、一 comparison の code unit scan は `2 * m + 1` 以下、move は `2 * p * levels` 以下とする。
+    serialization は明示的な frame stack と chunk list で構成し、data node occurrence、property occurrence、array slot occurrence、string code unit の合計に対して linear step とする。
+    active ancestor だけを cycle として拒否し、leave 後の shared alias は出現箇所ごとに再 serialize する。
+  ],
+  [
+    - public `canonicalizeJson()` の signature、failure code、path、prototype と descriptor の規則、text、bytes は変わらない
+    - native `Array.prototype.sort()` と recursive value serialization に依存しない
+    - counter instrumentation は internal focused test だけから参照し、shared root へ公開しない
+    - canonical byte/work budget と allocation-free meter は後続 revision の責務とする
+  ],
+)
+
+#adr(
+  header("反復builderのactive scratchとfailure precedenceを追加制約する", Status.Accepted, "2026-07-13"),
+  [
+    前のADRが定めた反復serializationを実装するとき、frameごとにfull pathを保持すると深い単項入力のactive storageとpath copyが二次増加する。
+    また、arrayの全sparse slotを子処理前に検査すると、既存canonicalizerのfailure codeとpathの優先順位が変わる。
+  ],
+  [
+    前のADRを継承し、成功経路のpathはparent-linked cursorとしてsegmentを一つずつ保持し、failure時だけ反復的にfull pathをmaterializeする。
+    record entry、merge scratch、array descriptorをactive property scratchへ含める。
+    array slotはindex順の子処理直前に検査し、先行childのfailureを後続sparse slotより先に報告する。
+  ],
+  [
+    - active pathのsegment数とproperty scratchをinternal instrumentationで別々に検査する
+    - 通常のcall stack限界を超える単項入力でもactive pathとproperty scratchをlinearに保つ
+    - public signature、failure、canonical text、bytes、budgetとmeterのownerは変更しない
+  ],
+)
+
+#adr(
   header("Qualified ID は domain-separated preimage の digest とする", Status.Accepted, "2026-07-12"),
   [
     namespace、semantic kind、local ID を delimiter で連結すると escaping と別表現の問題が生じる。
@@ -100,6 +138,7 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
   ],
   edge_cases: [
     - object key は未 escape の UTF-16 code unit 昇順に並べる
+    - key sort は iterative stable merge sort、value serialization は iterative frame/chunk builder で行う
     - array order と Unicode code point sequence は変更しない
     - current-realm `Object.prototype` と null prototype の record を受理する
     - standard `Array.prototype` を持つ dense array だけを受理する
@@ -109,6 +148,9 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
   test_cases: [
     - insertion order が異なる同値 object が同じ text と bytes になる
     - RFC 8785 の number、string、property order 規則に従う
+    - property count の2冪境界、reverse insertion、最大長 common-prefix で sort work bound を満たす
+    - depth 64 と通常のcall stack限界を超えるrecordまたはarrayを再帰なし、linear active scratchでencodeする
+    - invalidな先行elementと後続sparse slotが共存しても既存failure優先順位を維持する
     - shared reference を許可し、direct cycle と indirect cycle を拒否する
     - unsupported primitive、number、Unicode、object property、array shape を typed error と path 付きで拒否する
     - accessor を拒否するとき getter を実行しない
