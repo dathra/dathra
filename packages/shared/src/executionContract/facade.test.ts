@@ -99,6 +99,11 @@ describe("execution contract facade", () => {
         typeOnly: true,
         names: ["ExecutionContractRegistrySources"],
       },
+      {
+        moduleSpecifier: "./sourceModel",
+        typeOnly: true,
+        names: ["ExecutionContractSourceInput", "ExecutionContractSource"],
+      },
     ]);
   });
 

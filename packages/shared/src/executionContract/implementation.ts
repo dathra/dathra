@@ -13,3 +13,7 @@ export type {
 } from "./relationModel";
 export type { ExportExecutionContract } from "./exportModel";
 export type { ExecutionContractRegistrySources } from "./registrySourceModel";
+export type {
+  ExecutionContractSourceInput,
+  ExecutionContractSource,
+} from "./sourceModel";

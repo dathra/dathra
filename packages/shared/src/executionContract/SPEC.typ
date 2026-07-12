@@ -1,4 +1,4 @@
-= source execution contract identity, subject, fact, relation, export, and registry source model
+= source execution contract identity, subject, fact, relation, export, registry, and envelope model
 
 #import "/SPEC/functions.typ": *
 #import "/SPEC/settings.typ": *
@@ -6,7 +6,7 @@
 
 == 目的
 
-source execution contractが、qualification前のfactを一つのcontract内で参照するためのlocal identity、stable failure、source-local subjectとvalue path、closed fact schemaを提供する。
+source execution contractが、qualification前のfactを一つのcontract内で参照するためのlocal identity、stable failure、source-local subjectとvalue path、closed fact schema、未信頼なsource envelopeを提供する。
 
 SC02A1は`FactId`、`factId()`、`ExecutionContractError`だけをpackage-local facadeから公開する。
 
@@ -20,7 +20,9 @@ SC02A5はmodule exportごとのexecution summaryをtype-only modelとして追�
 
 SC02A6は10種類のregistry source collectionをtype-only modelとして追加する。
 
-source envelope、unknown input parser、budget、closure、digestは後続の独立review unitが追加する。
+SC02A7はSC02A1からSC02A6のtypeを束ねる未信頼なsource envelopeをtype-only modelとして追加する。
+
+unknown input preflight、budget、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
 
@@ -123,6 +125,24 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
     - SC01の`RegistrySourceEntry`を再利用し、entry shapeやregistry kind taxonomyを複製しない
     - non-empty、order、duplicate、registry closureは後続SC02A operationだけが検証する
     - SC02A6はsource envelope、parser、validator、freeze、digestを追加しない
+  ],
+)
+
+#adr(
+  header("source envelopeを未信頼な構造集約として分離する", Status.Accepted, "2026-07-13"),
+  [
+    source envelopeの型へversion検査、duplicate排除、reference closure、canonical orderを含めると、source-local author inputとvalidation済みsnapshotの境界が型だけでは区別できなくなる。
+    parserやcreatorを同時に追加すると、8 fieldのcomposition contractと後続operationの責務を独立して検査できない。
+  ],
+  [
+    `ExecutionContractSourceInput`はSC02A1からSC02A6のtypeをexactに8個のrequired readonly fieldへ束ねる。
+    `ExecutionContractSource`はbrandを加えず`ExecutionContractSourceInput`と同一のaliasとし、未信頼なsource-local structural claimだけを表す。
+  ],
+  [
+    - empty ID、任意version、empty collection、duplicate、dangling reference、closure不整合はこの型だけでは拒否しない
+    - SC02A8からSC02A13がdescriptor preflight、budget、strict parse、canonical order、duplicate rule、closure、creator、freeze、digestを所有する
+    - qualified、compiled、accepted、trust、authority、root publicationはこのsliceで追加しない
+    - SC02A7はruntime operation、runtime value、browser behaviorを追加しない
   ],
 )
 
@@ -558,6 +578,40 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
   ],
 )
 
+#interface_spec(
+  name: "Untrusted source execution contract envelope",
+  summary: [
+    source-local fact、relation、export summary、registry source collection、host assumptionを一つの未信頼なstructural claimへ束ねる。
+  ],
+  format: [
+    ```typescript
+    interface ExecutionContractSourceInput {
+      readonly schema: "dathra.execution/1"
+      readonly id: string
+      readonly version: string
+      readonly facts: readonly SemanticFact[]
+      readonly relations: readonly SemanticRelation[]
+      readonly exports: Readonly<Record<string, ExportExecutionContract>>
+      readonly registries: ExecutionContractRegistrySources
+      readonly hostAssumptionFactIds: readonly FactId[]
+    }
+
+    type ExecutionContractSource = ExecutionContractSourceInput
+    ```
+  ],
+  constraints: [
+    - exactに`schema`、`id`、`version`、`facts`、`relations`、`exports`、`registries`、`hostAssumptionFactIds`の8 fieldをrequiredかつreadonlyで持つ
+    - `schema`はexactに`"dathra.execution/1"`とし、`id`と`version`はexactに`string`としてnullableにしない
+    - `facts`、`relations`、`hostAssumptionFactIds`はそれぞれ`SemanticFact`、`SemanticRelation`、`FactId`のreadonly arrayとする
+    - `exports`は`Readonly<Record<string, ExportExecutionContract>>`、`registries`は`ExecutionContractRegistrySources`をそのまま再利用する
+    - `ExecutionContractSource`と`ExecutionContractSourceInput`は同一typeであり、validated、canonical、qualified、compiled、accepted、trusted、authoritativeであることを示すbrandを持たない
+    - empty ID、invalid version、empty collection、duplicate、dangling reference、fact kind mismatch、export closure、registry closure、host assumption closureを型への適合だけでは拒否または証明しない
+    - source modelは`ExecutionContractSourceInput`と`ExecutionContractSource`だけをexportし、package-local facadeはこの2 typeだけをtype-only exportする
+    - parser、validator、budget、descriptor preflight、canonical order、duplicate rule、closure、creator、freeze、digest、identityを追加せず、runtime codeまたはruntime import edgeを生成しない
+    - package rootへ公開せず、shared rootへの公開はAS01が所有し、runtime operation、runtime value、browser behaviorを追加しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -628,7 +682,7 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
     - direct callbackの空path、object property callback、tuple callback、element callbackを区別できることを検査する
     - pathの順序とrepeated path segmentを保持できることを検査する
     - wrong property type、extra property、callback pathの省略をnegative type fixtureで検査する
-    - aggregate source、source envelope、qualified、compiled、accepted、digest APIが存在しないことを検査する
+    - qualified、compiled、accepted、digest APIが存在しないことを検査する
     - facadeのruntime valueが`ExecutionContractError`と`factId`だけであることを検査する
   ],
 )
@@ -664,7 +718,7 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
     - kind、endpoint、ordinalのreadonly mutation、`ordinal: undefined`、raw string endpoint、extra endpoint fieldをnon-vacuous negative type fixtureで検査する
     - relation modelと実ファイルのtype-only consumerがruntime codeを生成しないことを検査する
     - package-local facadeがrelation modelから3 typeだけを公開し、runtime valueまたはruntime import edgeを追加しないことを検査する
-    - package rootへ公開されず、individual relation、parser、validator、closure、source、order-semantic APIが存在しないことを検査する
+    - package rootへ公開されず、individual relation、parser、validator、closure、order-semantic APIが存在しないことを検査する
   ],
 )
 
@@ -679,14 +733,14 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
     - brandとvalue-domainの`RegistryId`を相互代入できないことを検査する
     - export model、package-local facade、type-only consumerがruntime import edgeを生成しないことを検査する
     - package-local facadeがexport modelから`ExportExecutionContract`だけを公開し、helper aliasまたはruntime valueを追加しないことを検査する
-    - package rootのsourceとbuild declarationへ公開されず、parser、validator、source envelope、digest、qualified、compiled、accepted APIが存在しないことを検査する
+    - package rootのsourceとbuild declarationへ公開されず、parser、validator、digest、qualified、compiled、accepted APIが存在しないことを検査する
   ],
 )
 
 #feature_spec(
   name: "Source-local registry source collection schema",
   summary: [
-    後続のsource envelope、strict parser、registry closureが扱う10種類のregistry source collectionをtype-only schemaとして提供する。
+    SC02A7のsource envelopeと後続のstrict parser、registry closureが扱う10種類のregistry source collectionをtype-only schemaとして提供する。
   ],
   test_cases: [
     - 10個のexact key、required readonly field、readonly array propertyを双方向fixtureで検査する
@@ -695,6 +749,24 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
     - registry source modelとtype fixtureがruntime codeまたはruntime import edgeを生成しないことを検査する
     - package-local facadeがregistry source modelから`ExecutionContractRegistrySources`だけをtype-only exportし、runtime valueを追加しないことを検査する
     - package rootのsourceとbuild declarationへ公開されず、SC01の`RegistrySourceEntry`が存在するpositive controlと対比して検査する
-    - parser、validator、source envelope、operation、helper alias、freeze、non-empty、order、duplicate semanticsを追加しないことを検査する
+    - parser、validator、operation、helper alias、freeze、non-empty、order、duplicate semanticsを追加しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Untrusted source execution contract envelope schema",
+  summary: [
+    SC02A1からSC02A6のsource-local typeを、後続operationが受け取る未信頼なtype-only aggregateへ束ねる。
+  ],
+  test_cases: [
+    - 8個のexact key、required readonly modifier、exact property typeを双方向fixtureで検査する
+    - `ExecutionContractSourceInput`と`ExecutionContractSource`が同一typeであることを検査する
+    - missing、extra、optional、mutable、widened、wrong schema、raw string host ID、mutable arrayを実装定数に依存しないnon-vacuous negative fixtureで拒否する
+    - fact、relation、export、registry、host assumptionの全collectionがemptyな値も未信頼なstructural typeへ適合することを検査する
+    - non-emptyなfact、relation、export、host assumptionを持ちながら、empty ID、invalid version、duplicate、dangling reference、registry closure不整合を含む値が未信頼なstructural typeへ適合することを検査する
+    - source modelがexactに2 typeだけをexportし、source modelとtype fixtureがexport marker以外のruntime codeまたはruntime import edgeを生成しないことを検査する
+    - package-local facadeがsource modelから2 typeだけをtype-only exportし、runtime valueは`ExecutionContractError`と`factId`だけであることを検査する
+    - package rootのsourceとbuild declarationへ公開されず、SC01の`RegistrySourceEntry`が存在するpositive controlと対比して検査する
+    - SC02A8からSC02A13のparser、validator、budget、preflight、canonical、duplicate、closure、creator、freeze、digest APIと、qualified、compiled、accepted、trust、authority APIを追加しないことを検査する
   ],
 )
