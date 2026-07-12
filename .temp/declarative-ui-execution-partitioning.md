@@ -1593,7 +1593,7 @@ interface ArtifactEntryBinding {
 interface ArtifactDependencyBinding {
   readonly slot: string;
   readonly kind: "static-import" | "dynamic-import" | "wasm-import" | "data-reference";
-  readonly targetArtifactAddressId: string;
+  readonly targetArtifactAddressId: ArtifactAddressId;
   readonly targetExportName: string | null;
 }
 
@@ -1608,6 +1608,12 @@ interface ArtifactExportBinding {
     | "data-handle"
     | "wasm-binding";
 }
+
+declare const artifactAddressIdBrand: unique symbol;
+
+type ArtifactAddressId = Sha256Digest & {
+  readonly [artifactAddressIdBrand]: true;
+};
 
 interface ArtifactAddressPreimage {
   readonly schema: "dathra.artifact-address/1";
@@ -1663,6 +1669,16 @@ interface PlanIdentityPreimage {
   readonly metricVector: PartitioningMetricVector;
 }
 ```
+
+ArtifactAddressIdはgenericなSha256Digestと異なるnominal domainである。
+plain string、generic digest、別のmandatory unique-symbol brandをArtifactAddressIdへ直接代入できない。
+ArtifactAddressIdはSha256Digestまたはstringへwideningできるが、基礎型へwideningした後のdomain separationは保証しない。
+
+このtypeだけではpreimage、provenance、referent closure、exact-byte integrityを証明しない。
+brandを発行するidentity operation、preimage validator、parser、canonical URL、integrity tableは後続AR01 unitが所有する。
+任意のcanonical digestを字句検査だけでArtifactAddressIdへ変換するAPIは提供しない。
+後続producerは、ArtifactAddressPreimageを検証するidentity operationからだけArtifactAddressIdを発行する。
+package-local type-only foundationはruntime JavaScriptを生成せず、shared rootへの公開はAS01が所有する。
 
 memberSemanticIds は canonical semantic ID 昇順であり、member ordinal はその index である。
 dependencyBindings は `slot`、`kind`、target ArtifactAddressId、target export の順、exportTable は exportName 順に canonicalize し、重複する slot と exportName を拒否する。
@@ -2553,6 +2569,57 @@ client recomputation は、同値性と cost の両方が成立するときだ�
 
 plan は一つの enum を順に試す first-match 方式ではない。
 複数 step と route variant を持つ finite DAG または decision graph として構成する。
+
+### materialization mechanism taxonomy
+
+materialization mechanismの分類は、次のclosed unionとする。
+
+```ts
+type MaterializationMechanismKind =
+  | "inline"
+  | "snapshot"
+  | "target-native"
+  | "codec"
+  | "reference"
+  | "subscription"
+  | "remote";
+```
+
+kindは、mechanismがdemandへ直接提供する結果、またはmechanismを直接支配するcontractで決める。
+mechanism内部のcodec、locator、policy、initial payload、transport dependencyを推移的にたどって外側のmechanismを再分類しない。
+
+各kindの分類条件は次のとおりである。
+
+- **inline**：build時に完全確定したrepresentationをcompiler-owned literalとしてtarget artifactへ直接含める。
+- **snapshot**：inlineまたは継続contractを使わず、source stateの有限なstandalone captureを直接materializeする。
+- **target-native**：source-derived representation、locator、codec、reference、subscription、remote contractを直接消費せず、target moduleまたはhost bindingから値を得る。
+- **codec**：declared codec contractによるrepresentation変換またはreconstructionを直接のmechanismとする。
+- **reference**：declared resolver contractとlocatorによるreferentまたはhandle解決を直接のmechanismとし、remote-operation bindingを含めない。
+- **subscription**：initial snapshot revisionとlog-boundary cursorのjoint consistency point、および継続revisionを一体で提供するdeclared subscription contractを直接消費する。
+- **remote**：declared remote-operation contractからauthor-visibleなexplicit async operation bindingを直接得る。
+
+subscriptionのinitial snapshotは、外側のmechanismをsnapshotへ再分類しない。
+subscriptionのrevision codecとremote operationのinput、output、failure codecは、外側のmechanismをcodecへ再分類しない。
+remote operationがtarget側でhandleまたはbindingを使っても、外側のmechanismをreferenceまたはtarget-nativeへ再分類しない。
+
+inlineはrequest-specific carrierを必要としないが、artifact bytesを通じたemissionである。
+したがって、exposure、integrity、artifact closureの検査を省略しない。
+
+subscriptionのopen、継続revision適用、resync、acknowledgementはsubscription protocolとstate machineが所有する。
+remote callのdispatch、authorization、receipt、recoveryはremote protocol rootが所有する。
+
+このtaxonomyへの所属は、placement、legality、equivalence、native closure、trust acceptance、client inclusionを証明しない。
+unknownな依存をfull client moduleへ含めるfallbackとしても使わない。
+
+server-onlyはexecution placement、graph-tableはrequest-specific data carrierであり、mechanism kindではない。
+no-transferの意味、成立条件、ownerはcandidate legalityとplannerの独立決定へ残す。
+
+SC02 `TransferBinding`、SC01 registry、trustとのbridgeは後続MP01-DK2が所有する。
+kind文字列の一致だけで未信頼なclaimをadmitしてはならない。
+candidate behaviorとObservationContractの接続はCN01が所有する。
+
+実装時は7 literalの双方向exact type fixture、除外literal、package-local facadeのruntime空性、明示的なtype-only consumer entryのemitを直接検査する。
+root未到達のbuild artifactだけをtype-only境界の証拠にしない。
 
 ### materialization state
 
@@ -3663,12 +3730,175 @@ operation の primary terminal は、`completed`、`failed`、`cancelled`、`tim
 generation の terminal は、`published`、`publicationUnknown`、`superseded`、`failed`、`cancelled` である。
 primary terminal は後から書き換えない。
 
+### RenderDefinition content identity
+
+RenderDefinitionは、render outputを構成する四つのreferent claimを一つのcontent-addressed identityへ束縛する。
+
+```ts
+declare const renderDefinitionIdBrand: unique symbol;
+
+type RenderDefinitionId = Sha256Digest & {
+  readonly [renderDefinitionIdBrand]: true;
+};
+
+interface RenderObservationReferenceClaim {
+  readonly schema: "dathra.render-definition-observation-reference/1";
+  readonly role: "observation-contract";
+  readonly claimedId: Sha256Digest;
+}
+
+interface RenderResponseReferenceClaim {
+  readonly schema: "dathra.render-definition-response-reference/1";
+  readonly role: "response-contribution-set";
+  readonly claimedId: Sha256Digest;
+}
+
+interface RenderBodyReferenceClaim {
+  readonly schema: "dathra.render-definition-body-reference/1";
+  readonly role: "ordered-body-plan";
+  readonly claimedId: Sha256Digest;
+}
+
+interface RenderExposureReferenceClaim {
+  readonly schema: "dathra.render-definition-exposure-reference/1";
+  readonly role: "exposure-contract";
+  readonly claimedId: Sha256Digest;
+}
+
+interface RenderDefinitionPreimage {
+  readonly schema: "dathra.render-definition/1";
+  readonly observationContract: RenderObservationReferenceClaim;
+  readonly responseContributions: RenderResponseReferenceClaim;
+  readonly orderedBodyPlan: RenderBodyReferenceClaim;
+  readonly exposure: RenderExposureReferenceClaim;
+}
+
+interface RenderDefinition {
+  readonly id: RenderDefinitionId;
+  readonly preimage: RenderDefinitionPreimage;
+}
+
+interface RenderDefinitionInput {
+  readonly observationContractId: Sha256Digest;
+  readonly responseContributionSetId: Sha256Digest;
+  readonly orderedBodyPlanId: Sha256Digest;
+  readonly exposureContractId: Sha256Digest;
+}
+
+type RenderDefinitionErrorCode =
+  | "invalid-closed-record"
+  | "invalid-field"
+  | "invalid-reference"
+  | "digest-mismatch"
+  | "budget-exceeded"
+  | "crypto-unavailable";
+
+class RenderDefinitionError extends TypeError {
+  readonly code: RenderDefinitionErrorCode;
+  readonly path: readonly (string | number)[];
+}
+
+interface RenderDefinitionHardLimits {
+  readonly maximumOwnKeysPerRecord: 16;
+  readonly maximumPropertyKeyCodeUnits: 128;
+  readonly maximumInputStringCodeUnits: 256;
+}
+
+declare function createRenderDefinition(
+  input: RenderDefinitionInput,
+): Promise<RenderDefinition>;
+
+declare function parseRenderDefinition(
+  value: unknown,
+): Promise<RenderDefinition>;
+```
+
+createRenderDefinitionは四つのdigestをrole-specificなclosed claimへ配置し、RenderDefinitionPreimageのcanonical digestをRenderDefinitionIdとする。
+parseRenderDefinitionはwrapperとpreimageをstrictにsnapshotし、同じdigestを再計算してidと照合する。
+両operationはcaller objectを保持せず、freshでdeep-frozenなrecordを返す。
+
+RenderDefinitionIdが証明するのは、closed preimageとself digestの一致だけである。
+claimedIdの字句妥当性はtargetの実在、target schema、self digest、role compatibility、cross-reference closureを証明しない。
+accepted definition、actual SSRまたはDSD output、ObservationContract conformance、runtime trustも後続validatorが所有する。
+generic digestまたはcanonical digest stringだけからRenderDefinitionIdを発行するparser、guard、cast helperは提供しない。
+RenderDefinitionIdを発行できるのは、createRenderDefinitionと、full recordをstrict parseしてself digestを再計算するparseRenderDefinitionだけである。
+
+creator input、parser wrapper、preimage、四つのclaimは、current-realmのordinary plain recordまたはnull-prototype recordだけを受理する。
+Proxyは入力契約外であり、標準ECMAScript APIではtrapを実行せず識別できないため、Proxy trap非実行を保証しない。
+ordinary recordのaccessorはdescriptorから検出し、getterとsetterを実行せず拒否する。
+
+schema record occurrenceは、creator input、またはparserのwrapper、preimage、observation、response、body、exposureの固定preorderで処理する。
+各recordはnon-recordとprototype、ownKeys、16-key cap、128-code-unit key cap、descriptor snapshot、structural ruleの順に検証する。
+同じobject identityは一度だけsnapshotし、schema pathごとのrole validationは別々に行う。
+expected nested recordの発見に必要なancestor data descriptorは、nested budget failureより前にsnapshot済みでよい。
+key countまたはproperty key lengthに違反したrecordではdescriptorを取得せず、後続recordも処理しない。
+descriptor取得後にaccessor、hidden property、symbol propertyの違反を検出した場合は、残りの処理と後続recordの処理を行わない。
+いずれの違反でもextra property valueを読み出さず、canonical digestを開始しない。
+
+全reachable recordをsnapshotした後、expected string fieldを固定record orderとfield orderで検査する。
+string fieldは256 code unitsを上限とし、その後にmissing、raw UTF-16順のextra、schemaとrole、digest、hash、wrapper comparisonを検証する。
+budget failureは`budget-exceeded`とし、key違反はrecord path、string違反はfield pathを返す。
+hard limitはversioned implementationの固定値であり、callerは緩和できない。
+
+valid parser inputは最大6 schema occurrenceと19 propertyである。
+per-record capからdescriptor対象は最大96 keysとなり、operation-wide total key counterは持たない。
+各distinct recordのhost own-key result allocationは、already-materialized object APIではper-record cap適用前にcaller-controlledなkey列挙を必要とするため、framework budgetでは事前停止できない。
+各own-key resultの返却直後に16-key capを適用し、その後のdescriptor scan、nested traversal、snapshot、digestを固定上限内に制限する。
+wire、network、fileからobjectを作るownerは、object construction前のbyte length、depth、key count admissionを別に行う。
+RC01-DIはraw byte parserを所有しない。
+
+creatorとparserは次のfailure mappingを共有する。
+
+| Failure | Code | Path |
+| --- | --- | --- |
+| non-record、custom prototype、accessor、hidden property、symbol property | `invalid-closed-record` | 違反recordへのpath |
+| missing key | `invalid-field` | expected keyまでのpath |
+| extra key | `invalid-field` | extra keyまでのpath |
+| schemaまたはroleがexpected literal以外（非stringを含む） | `invalid-field` | 違反fieldへのpath |
+| creator inputまたはnested claimedIdの非string、malformed string、noncanonical digest | `invalid-reference` | digest fieldへのpath |
+| parser wrapperの`id`の非string、malformed string、noncanonical digest | `invalid-field` | `id` fieldへのpath |
+| lexicalに正しいwrapper `id`と再計算値の不一致 | `digest-mismatch` | `id` fieldへのpath |
+| WebCrypto不在 | `crypto-unavailable` | root path |
+| snapshot済みpreimageのその他のcanonicalization failure | `invalid-field` | 元failure pathにoperationのpathをprefixしたpath |
+
+schemaとroleは、非stringを含むexpected literal以外の値を`invalid-field`とする。
+CanonicalIdentityErrorはRenderDefinitionErrorへ変換し、public operationから漏らさない。
+RenderDefinitionError constructorはpathをcopyしてfreezeし、error object自身もfreezeする。
+
+複数違反がある場合は、次の順序で最初の一件だけを返す。
+
+1. schema record occurrenceをpreorderで走査し、non-record、prototype、per-record key count、property key length、descriptor structural ruleを検査する。
+2. 全reachable occurrenceのsnapshot後、expected string fieldのlengthを固定field orderで検査する。
+3. 各recordでexpected key listの順にmissing keyを検査する。
+4. 各recordでraw UTF-16 key順にextra keyを検査する。
+5. schemaとroleを固定field orderで検査する。
+6. digest fieldを固定field orderで検査する。
+7. snapshot済みpreimageをcanonicalizeしてdigestする。
+8. parserだけがwrapper `id`と再計算値を比較する。
+
+creator inputのfield orderは、observationContractId、responseContributionSetId、orderedBodyPlanId、exposureContractIdとする。
+parserはwrapperのid、preimageの順で処理する。
+preimageのfield orderは、schema、observationContract、responseContributions、orderedBodyPlan、exposureとする。
+四つのclaimはobservation、response、body、exposureの順に処理し、各claimのfield orderはschema、role、claimedIdとする。
+
+RenderDefinition preimage、ID、creator、verified parser、domain errorはRC01-DIが所有する。
+ObservationContractのpure structural validationとwitness semanticsはOC01が所有する。
+referent closureとaccepted definitionは後続RC01 unitが所有する。
+static exact bytesとreproduction recordの生成はAF01が所有し、reproduction recordだけではstatic actual-output acceptanceにならない。
+post-finalization reproduction verificationとwitnessまたはadmission sidecar bindingはSL01が所有する。
+dynamic output claim、witness、writer、FinalHeaderCommit state machineはSR02が所有する。
+authenticated runtime conformanceはRR01が所有する。
+generation、envelope、publication、authorityは後続RC01 unitとSR02が所有する。
+shared rootまたはrole-scoped subpathへの公開はAS01が所有する。
+RenderDefinitionのparserとreferent closureをbrowser runtimeへ自動配置しない。
+hard limitとProxy exclusionはclient inclusion permissionを作らない。
+
 RenderEnvelope と operation publication は次の identity を持つ。
 
 ```ts
 interface RenderEnvelope {
   readonly id: string;
-  readonly definitionId: string;
+  readonly definitionId: RenderDefinitionId;
   readonly generationId: string;
   readonly observationContractDigest: Sha256Digest;
   readonly responseContributionDigest: Sha256Digest;
@@ -3695,7 +3925,8 @@ interface PublicationLedgerEntry {
 }
 ```
 
-RenderEnvelope definition ID は、全 response contribution、ordered body plan、exposure を content-addressed に束縛する。
+RenderEnvelope definition ID は、四つのrole-specific reference claimを含むclosed preimageとself digestの一致だけをcontent-addressedに束縛する。
+actual response contribution、ordered body plan、exposureとのreferent closureは、後続validatorが別に証明する。
 RenderEnvelope ID は definition ID と generation ID を束縛する。
 PublicationClaim の header は host profile の parser で正規化し、header name、field value、target URL、fetch mode、credentials、referrer policy を canonical form にする。
 compatibleEnvelopeDefinitionIds は重複のない ID 昇順とし、claim 作成時の live candidate definition set の subset でなければならない。
@@ -4975,6 +5206,7 @@ type SemanticSubject =
       readonly kind: "callback-invocation";
       readonly exportName: string;
       readonly parameterIndex: number;
+      readonly path: readonly SemanticPathSegment[];
     }
   | {
       readonly kind: "allocated-resource";
@@ -7231,8 +7463,27 @@ parameter callback、return、allocated resource の fact はこの照合件数�
 それ以外は binding が一致する対象 transfer fact を exactly 1件要求する。
 value domain と receiver brand は source registry の expected kind に解決する。
 
-SC03 は、export name、parameter index、path、callback index、allocation site が実 module signature に存在するか、source analysis と contract が衝突しないか、locator export が descriptor と implementation interface を満たすかを検証する。
+SC03 は、export name、parameter index、parameter-local callback path、allocation site が実 module signature に存在するか、source analysis と contract が衝突しないか、locator export が descriptor と implementation interface を満たすかを検証する。
 `factId()` と `registryId()` の引数が build-time string literal であることも SC03 が検証する。
+
+#### nested callback の semantic location
+
+この決定は、`callback-invocation`が`exportName`と`parameterIndex`だけを持つ旧shapeを supersede する。
+
+`callback-invocation`はrequiredな`path: readonly SemanticPathSegment[]`を持つ。
+pathのrootは`parameterIndex`で選択したtop-level parameter valueとし、parameter自体がcallback slotである場合は空pathを使う。
+object property、tuple member、homogeneous collectionのelement domainにあるcallback slotは、既存の`property`、`tuple-index`、`element` segmentを順に並べて表す。
+
+subject identityはruntime function instanceではなく、source-localな静的semantic locationに対して一意である。
+`element`はhomogeneous collectionの全要素が共有するelement domainを表し、個々のruntime elementまたはcallback occurrenceを区別しない。
+runtime occurrence identityはExecutionGraphとruntime generationが所有する。
+
+同じpathを持つ`parameter` subjectはcallback function valueを表し、`callback-invocation` subjectはその静的callback slotが実行されるactive siteを表す。
+SC02Aのstrict parserはparameter index、tuple index、path segmentのscalarとclosed structural ruleを検証する。
+SC03はcompiler-ownedでpath traversal可能なmodule signatureまたはsource-analysis evidenceを使い、export、parameter、path、callable locationの実在を検証する。
+このevidenceのschemaと生成方法はSC03の先行review unitで決定し、evidenceがないclaimはfallbackせずdiagnosticにする。
+
+SC02A2の公開実装はtype-onlyだが、後続source snapshot、compiled contract、canonical digestはpath sequenceを変更せず保持する。
 
 #### canonical source API
 
