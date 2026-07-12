@@ -12,6 +12,8 @@ import type {
   ArtifactDependencyBinding as _RootArtifactDependencyBindingMustNotExist,
   // @ts-expect-error Root publication belongs to AS01.
   ArtifactExportBinding as _RootArtifactExportBindingMustNotExist,
+  // @ts-expect-error Root publication belongs to AS01.
+  DeploymentIdentityPreimage as _RootDeploymentIdentityPreimageMustNotExist,
   // @ts-expect-error The accepted contract has no export role alias.
   ArtifactExportRole as _RootArtifactExportRoleMustNotExist,
 } from "../index";
@@ -22,6 +24,7 @@ import type {
   ArtifactEntryRole,
   ArtifactExportBinding,
   ArtifactFinalizationTemplate,
+  DeploymentIdentityPreimage,
   // @ts-expect-error The accepted contract has no dependency kind alias.
   ArtifactDependencyKind as _ArtifactDependencyKindMustNotExist,
   // @ts-expect-error The accepted contract has no export role alias.
@@ -30,6 +33,12 @@ import type {
   ArtifactKind as _ArtifactKindMustNotExist,
   // @ts-expect-error The artifact address preimage belongs to a later AR01 unit.
   ArtifactAddressPreimage as _ArtifactAddressPreimageMustNotExist,
+  // @ts-expect-error AR01-DD owns the deployment identity digest operation and result.
+  DeploymentIdentityDigest as _DeploymentIdentityDigestMustNotExist,
+  // @ts-expect-error The accepted deployment contract has no ID brand.
+  DeploymentIdentityId as _DeploymentIdentityIdMustNotExist,
+  // @ts-expect-error The accepted deployment contract has no source alias.
+  DeploymentIdentityPreimageSource as _DeploymentIdentityPreimageSourceMustNotExist,
   // @ts-expect-error The source aggregate belongs to the later AR01-P revision.
   ArtifactAddressPreimageSource as _ArtifactAddressPreimageSourceMustNotExist,
   // @ts-expect-error Artifact closure belongs to a later graph contract.
@@ -48,6 +57,10 @@ import type {
   parseArtifactAddressId as _ParseArtifactAddressIdMustNotExist,
   // @ts-expect-error Validation belongs to a later canonical snapshot contract.
   validateArtifactAddressPreimage as _ValidateArtifactAddressPreimageMustNotExist,
+  // @ts-expect-error AR01-DD owns deployment identity digesting.
+  digestDeploymentIdentity as _DigestDeploymentIdentityMustNotExist,
+  // @ts-expect-error AR01-DV owns deployment identity validation.
+  validateDeploymentIdentityPreimage as _ValidateDeploymentIdentityPreimageMustNotExist,
 } from "./implementation";
 
 declare const otherNominalDigestBrand: unique symbol;
@@ -248,6 +261,7 @@ type ArtifactEntryBindingConsumer = readonly [
 ];
 type ArtifactDependencyBindingConsumer = ArtifactDependencyBinding;
 type ArtifactExportBindingConsumer = ArtifactExportBinding;
+type DeploymentIdentityPreimageConsumer = DeploymentIdentityPreimage;
 
 export type {
   ArtifactAddressIdTypeFixture,
@@ -255,4 +269,5 @@ export type {
   ArtifactEntryBindingConsumer,
   ArtifactExportBindingConsumer,
   ArtifactFinalizationTemplateTypeFixture,
+  DeploymentIdentityPreimageConsumer,
 };

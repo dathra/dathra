@@ -6,3 +6,4 @@ export type {
 } from "./entryBindingModel";
 export type { ArtifactDependencyBinding } from "./dependencyBindingModel";
 export type { ArtifactExportBinding } from "./exportBindingModel";
+export type { DeploymentIdentityPreimage } from "./deploymentIdentityModel";

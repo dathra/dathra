@@ -15,8 +15,12 @@ import {
 } from "typescript";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
+import { type Sha256Digest } from "../canonicalIdentity/implementation";
 import * as artifactContractApi from "./implementation";
-import { type ArtifactFinalizationTemplate } from "./implementation";
+import {
+  type ArtifactFinalizationTemplate,
+  type DeploymentIdentityPreimage,
+} from "./implementation";
 
 type ExpectedArtifactFinalizationTemplate = {
   readonly schema: "dathra.artifact-finalization/1";
@@ -47,6 +51,16 @@ type ExpectedArtifactFinalizationTemplateKey =
   | "sourceSeparator"
   | "wasmBinding"
   | "dataBinding";
+
+type ExpectedDeploymentIdentityPreimage = {
+  readonly schema: "dathra.deployment-identity/1";
+  readonly applicationNamespaceDigest: Sha256Digest;
+  readonly releaseIdentity: string;
+  readonly targetEnvironmentId: string;
+  readonly canonicalPublicOrigin: string;
+  readonly contractNamespaceGraphDigest: Sha256Digest;
+  readonly hostProfileSetDigest: Sha256Digest;
+};
 
 function emitTypeScriptModule(relativePath: string): string {
   const source = readFileSync(new URL(relativePath, import.meta.url), "utf8");
@@ -126,11 +140,16 @@ describe("artifact contract type domains", () => {
     expectTypeOf<ExpectedArtifactFinalizationTemplate>().toEqualTypeOf<ArtifactFinalizationTemplate>();
   });
 
+  it("provides the exact deployment identity preimage through the facade", () => {
+    expectTypeOf<DeploymentIdentityPreimage>().toEqualTypeOf<ExpectedDeploymentIdentityPreimage>();
+    expectTypeOf<ExpectedDeploymentIdentityPreimage>().toEqualTypeOf<DeploymentIdentityPreimage>();
+  });
+
   it("exposes no runtime values from the package-local facade", () => {
     expect(Object.keys(artifactContractApi)).toEqual([]);
   });
 
-  it("exports exactly six package-local types from five focused models", () => {
+  it("exports exactly seven package-local types from six focused models", () => {
     const relativePath = "./implementation.ts";
     const source = readFileSync(new URL(relativePath, import.meta.url), "utf8");
     const sourceFile = createSourceFile(
@@ -223,10 +242,20 @@ describe("artifact contract type domains", () => {
           },
         ],
       },
+      {
+        isTypeOnly: true,
+        moduleSpecifier: "./deploymentIdentityModel",
+        exports: [
+          {
+            exportedName: "DeploymentIdentityPreimage",
+            localName: "DeploymentIdentityPreimage",
+          },
+        ],
+      },
     ]);
   });
 
-  it("emits the facade and all five models only as module markers", () => {
+  it("emits the facade and all six models only as module markers", () => {
     expect(emitTypeScriptModule("./implementation.ts").trim()).toBe(
       "export {};",
     );
@@ -243,6 +272,12 @@ describe("artifact contract type domains", () => {
     expect(emitTypeScriptModule("./exportBindingModel.ts").trim()).toBe(
       "export {};",
     );
+    expect(emitTypeScriptModule("./deploymentIdentityModel.ts").trim()).toBe(
+      "export {};",
+    );
+    expect(
+      emitTypeScriptModule("./deploymentIdentityModel.type-fixture.ts").trim(),
+    ).toBe("export {};");
   });
 
   it("emits the type-only consumer without a runtime import edge", () => {
@@ -283,6 +318,9 @@ describe("artifact contract type domains", () => {
         expect(exportedNames).not.toContain("ArtifactDependencyKind");
         expect(exportedNames).not.toContain("ArtifactExportBinding");
         expect(exportedNames).not.toContain("ArtifactExportRole");
+        expect(exportedNames).not.toContain("DeploymentIdentityPreimage");
+        expect(exportedNames).not.toContain("DeploymentIdentityDigest");
+        expect(exportedNames).not.toContain("DeploymentIdentityId");
       }
     } finally {
       rmSync(outputDirectory, { force: true, recursive: true });
