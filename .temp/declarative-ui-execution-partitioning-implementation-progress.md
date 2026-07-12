@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: EG03 ExecutionGraph の qualification、TemplateNode/Occurrence identity、root/edge/fixed-point contract を調査し、独立設計レビュー後に SPEC/test を先行追加する。
+- 次の作業: 収束確認が `ACCEPT` になった EG03 ExecutionGraph を検証済み scope で commit、push し、exact remote OID を確認する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -27,7 +27,7 @@
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
-| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01、EG01、EG02 は completed。EG03 ExecutionGraph の設計調査へ移行 |
+| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01、EG01、EG02 は completed。EG03 ExecutionGraph は blocker 修正後の収束確認中 |
 | P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02 と SC03 は未着手 |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
@@ -188,11 +188,56 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 
 ### EG03 ExecutionGraph
 
-- **設計要件**：immutable module graph と ObservationContract を基礎に、TemplateNode、Occurrence、qualified location/instance、root obligation、typed relation edge を deterministic graph として表現する。
-- **変更範囲**：`packages/transformer/src/executionGraph/` に四点セットを追加する。source AST からの具体的解析は PL02、semantic contract qualification は SC03 に残し、EG03 は graph schema、builder、canonical validation、fixed-point derivation に限定する。
-- **主要論点**：TemplateNode と動的 Occurrence の identity DAG、HostInstance/AgentCluster/Agent/Realm/Global/Principal qualification、multi-epoch membership、scheduler event、registration/materialization/root derivation、alias/ownership/lifetime/transfer/capability edge を閉じる。
-- **次の手順**：設計正本、EG02 snapshot、OC01 ObservationContract、後続 PL01/PL02 consumer を調査し、実装可能な API と failure contract を提案して独立レビューを収束させる。
+- **設計要件**：immutable module graph と ObservationContract を基礎に、TemplateNode、symbolic-qualified static vertex、StaticExecutionOccurrenceTemplate、root obligation、typed relation edge を deterministic base graph として表現する。concrete Occurrence は runtime に残す。
+- **変更範囲**：`packages/transformer/src/executionGraph/` に四点セットを追加する。source AST 解析は PL02、semantic completeness acceptance と host/authority qualification は SC03 と PL02 に残し、EG03 は canonical graph schema、strict validator、potential-root fixed point、非直列化 index に限定する。
+- **canonical identity**：analysis profile、primitive root anchor、symbolic location requirement、static occurrence template、source/generated TemplateNode、generation domain、QualifiedExecutionNode、edge、support、RootObligation、snapshot の非循環 DAG とする。root-bound generated node は anchor と exact contract を参照し、RootObligation ID は参照しない。
+- **root derivation**：seed root の explicit entry fact から `may-execute | may-materialize` だけを走査し、`IntraRootFact`、`PotentialRootSupport`、`SeedReachability` を分離する。registration と reactive support は child obligation、trigger constraint、node、edge/path を完全一致させる。unseeded support SCC は fact を生成しない。
+- **trust boundary**：bare graph と missing edge は client exclusion の permission ではない。後続の trusted verifier が graph、module、contract、profile、qualified evidence、completeness scope を束縛した exact claim を一意に受理し、branded `AcceptedExecutionAnalysis` を返した場合だけ CN01 が使用できる。
+- **独立設計レビュー**：1回目は location trust、runtime binding、generic activation、root-specific fact、derived identity、edge algebra、exact-use、anchor cycle、analysis profile、runtime boundary、PL02 direction を指摘した。2回目は superseding decision、entry fact、contract field binding、generated contract sensitivity、module/location consistency、support coupling、completeness acceptance、index determinism を指摘した。3回目は generation environment、root-bound generated closure、reactive trigger、trusted acceptance を指摘した。全指摘を反映した4回目の Ptolemy レビューは `ACCEPT` である。
+- **変更前 baseline**：transformer 全13 files、676 tests、typecheck、lint 0件、format check、build が成功した。worktree は clean で local と upstream は `c369dae91b5093504544b3ba49976f3a6c6ee3c8` に一致した。
+- **先行 SPEC/test**：canonical identity、dependency context、root-contract closure、edge algebra、registration/reactive support、fixed point、derived index、hard budget、package-local facade boundary を `packages/transformer/src/executionGraph/SPEC.typ` と `implementation.test.ts` に追加した。
+- **red test 証拠**：`pnpm --filter @dathra/transformer exec vitest run src/executionGraph/implementation.test.ts` は `./implementation` 不在で失敗し、SPEC と test が production implementation より先に追加されたことを確認した。
+- **実装済み API**：analysis profile、root anchor、location requirement、static occurrence template、source/generated TemplateNode、generation domain、QualifiedExecutionNode、typed edge、registration/reactive support、RootObligation、snapshot creator/parser、ExecutionGraphIndex を package-local facade として実装した。npm root の最終 compiler facade は AT01 が所有する。
+- **cross-record validation**：strict ModuleGraphSnapshot と selected ObservationContract、content definition、RuntimeModuleBinding、resolution environment、generation domain、operation role、edge endpoint、root-kind table、trigger/owner/terminal constraint、support path、auxiliary exact-use を publication 前に検証する。unreachable primary node/edge は保守的上限として許可する。
+- **derived index**：fixed profile `dathra.execution-graph-derivation/1` で seed root だけから `may-execute | may-materialize` を走査し、root-specific fact、potential support、seed reachability、shortest justification、support chain、traversal SCC/condensation を非直列化 index に生成する。unseeded support cycle は fact を生成しない。
+- **hard budget**：getter を実行しない descriptor preflight、framework hard cap を狭める override、operation-local BudgetLedger、dependency pre-parse cardinality、canonical byte の事前計測、validation、fact、traversal、support probe、derived support、path、SCC、index の hard limit を追加した。
+- **初回実装の検証**：transformer 全14 files、697 tests が成功した。ExecutionGraph は21 tests、statement 86.68%、branch 67.26%、function 92.06%、line 87.54% であった。typecheck、通常 lint 0件、format check、build が成功した。type-aware lint は ExecutionGraph の warning/error 0件で、既存 transform/rlse の warning 14件だけを報告した。
+- **初回 artifact 検査**：初回 revision の ESM/CJS build に `node:`、`createHash`、`Buffer` はなかった。
+- **初回並列実装レビュー**：同一 revision を三人で評価した。registration site の callback fan-out 拒否、recursive template DAG と未課金 support probe、under-specified identity edge を blocker として採用した。SPEC table、fixture、JSDoc、npm root exposure は関連する correctness 修正と package boundary 修正へ統合した。
+- **corrective design review**：identity slot、registration fan-out、full taxonomy、hard budget、internal module 分割、npm root 非公開、decomposition gate の同一案を三人で評価した。contract と package boundary は `ACCEPT` であった。budget reviewer が SCC 前処理と最終 index work の未課金を blocker としたため、全 phase で共有する operation-local BudgetLedger と `maximumIndexSteps` を追加した。
+- **corrective red test**：更新後の25 tests は旧実装に対して7件失敗した。失敗は registration fan-out、identity slot、new budget field、npm root boundary であり、test fixture 自体の scheduler occurrence 重複を修正後に production code を変更した。
+- **corrective implementation**：identity edge を exact occurrence slot を持つ discriminated union にし、同じ registration node の同一 option tuple から複数 support を許可した。support derivation は registration node と reactive collector の index を使い、candidate probe を課金する。template DAG は iterative DFS に変更した。
+- **internal module 分割**：`implementation.ts` を4,743行の monolith から274行の package-local facade へ縮小した。`model.ts`、`budget.ts`、`canonical.ts`、`validation.ts`、`derivation.ts` は一方向の import graph を持ち、循環 import はない。
+- **追加 fixture**：41 operation kind の正準 role と role swap、full edge-role table、reactive operation table、scheduler 16 pair、identity slot と cross-location assertion、registration fan-out と option mismatch、不成立 support probe、support-chain tie-break、12,000 node の generated-template DAG、全主要 budget counter、npm root negative boundary を追加した。
+- **現在の検証**：transformer 全14 files、709 tests が成功した。ExecutionGraph は33 tests、statement 89.24%、branch 71.02%、function 94.36%、line 90.35% である。typecheck、通常 lint 0件、format check、build が成功した。type-aware lint は ExecutionGraph の warning/error 0件で、既存 transform/rlse の warning 14件だけを報告した。
+- **corrective artifact 検査**：built ESM/CJS/DTS と runtime export に snapshot creator/parser、index creator、ExecutionGraphError、ExecutionGraph schema text は含まれない。ExecutionGraph source に Node.js 固有の crypto API、`createHash`、`Buffer` dependency はない。
+- **初回収束確認**：初回並列レビューに参加していない Banach は、graph record cardinality が canonical clone より後に検査されること、reactive invalidation path の可変長 work が未課金であること、final index が課金前に spread allocation を行うことを blocker として `REJECT` した。設計正本の relation 列挙に `scheduler-sequence` がない点は follow-up とした。
+- **収束 blocker 修正**：creator と parser の両方で descriptor-only graph cardinality preflight を `snapshotClosed` より前に実行し、invalidation edge ID と可変長 reference work を probe 前に課金した。SCC と final index は可変長 map、sort、output、candidate allocation の前に operation-local ledger を課金し、課金前の collection spread を除去した。getter 非実行、exact boundary、boundary-minus-one の test を追加し、設計正本の relation 列挙へ `scheduler-sequence` を追加した。
+- **収束確認結果**：同じ Banach が固定 hash の修正後 revision を限定再確認し、三つの blocker と `scheduler-sequence` follow-up の解消、新しい correctness blocker の不在を確認して `ACCEPT` とした。
+- **follow-up**：複数要素の invalidation path を使い、validation step の差分課金を固定値で検証する fixture は将来の回帰検出を強める。現 slice の correctness と完了を妨げないため、blocker にはしない。
+- **次の手順**：slice scope と staged file list を確認し、commit、push、exact remote OID の一致を記録する。
 - **完了証拠**：targeted red test、transformer test/typecheck/lint/type-aware lint/format/build、root/registration/scheduler/cycle fixture、独立実装レビュー、commit、push、exact remote OID を必要とする。
+
+#### EG03 decomposition gate
+
+EG03 は untrusted parser、many-to-many relation、fixed point、SCC を扱うため high-cost slice に該当する。
+四点セットは package-local facade と正本であり、内部責務を一つの source file へ集約しない。
+
+| 責務 | internal module | owner | cardinality と index | budget charge |
+| --- | --- | --- | --- | --- |
+| record、ID、taxonomy | `model.ts` | EG03 schema | finite record kind | record cap、validation step |
+| hard cap と operation ledger | `budget.ts` | EG03 operation | counter ごとに1 ledger | 全 counter の事前課金 |
+| closed parse と canonical identity | `canonical.ts` | creator/parser | input node と record の1:N | input、dependency、record、canonical byte |
+| cross-record invariant | `validation.ts` | snapshot publication | reference と edge のN:1、support path の1:N | validation step |
+| root closure と topology index | `derivation.ts` | nonserialized index | node から edge/support の1:N index | fact、traversal、support、path、SCC、index |
+| operation orchestration | `implementation.ts` | package-local facade | 一つの call に一つの ledger | phase 間で同じ ledger を共有 |
+
+| relation | source 最大 cardinality | target 最大 cardinality | index | owner |
+| --- | --- | --- | --- | --- |
+| traversal edge | node から record cap まで | node へ record cap まで | source node ID | EG03 derivation |
+| registration support | registration node から record cap まで | callback root は複数 site から参照可能 | registration node ID | EG03 static support、PL02 producer normalization |
+| reactive support | collector から record cap まで | updater root は複数 support から参照可能 | collector node ID | EG03 static support |
+| seed reachability | seed から root 数まで | root は seed 数まで | root support adjacency | EG03 derivation |
 
 ## 直前に完了した Slice
 

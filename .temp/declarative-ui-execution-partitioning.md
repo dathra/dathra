@@ -2240,6 +2240,176 @@ chunk をまとめても、activation policy、ownership、module identity を�
 最終 bundler transform 後に client closure を再検証する。
 server-only dependency、unrelated unit、version mismatch、integrity mismatch が混入した場合は artifact を失敗させる。
 
+### ExecutionGraph kernel の canonical boundary
+
+この節は、先に記載した TemplateNode vertex、generated operation identity、Occurrence、`happens-before`、`synchronizes-with` の扱いを supersede する。
+TemplateNode は source または compiler-generated operation の静的 identity とする。
+ExecutionGraph の vertex は、TemplateNode に symbolic location、semantic role、static occurrence shape、module または generation binding を結合した `QualifiedExecutionNode` とする。
+
+EG03 は canonical base graph と deterministic な非直列化 index だけを所有する。
+source 解析は PL02、semantic fact と host、authority qualification は SC03、concrete Occurrence と mutable state は runtime が所有する。
+PL02 は EG03 の依存先ではなく、後から closed `ExecutionGraphInput` を生成する producer である。
+
+base graph は実行許可や client 除外の証明ではない。
+後続の SC03 と PL02 は、graph snapshot、module graph、contract 集合、analysis profile 集合、qualified evidence 集合、completeness scope、producer profile、proof domain を一つの `ExecutionAnalysisClaim` に束縛する。
+trusted verifier は exact claim に対する decision を一つだけ受理し、caller が構築できない branded `AcceptedExecutionAnalysis` を返す。
+この受理は、claim が束縛する completeness scope と proof domain の範囲で static assertion を qualified fact として扱えることだけを意味する。
+concrete occurrence identity と scope 外の実行事実を証明しない。
+CN01 は `AcceptedExecutionAnalysis` だけを placement と client exclusion の入力にでき、bare graph、自己申告 record、proof-domain digest を permission として扱わない。
+
+#### dependency と identity DAG
+
+ExecutionGraph の dependency context は、一つの strict `ModuleGraphSnapshot` と、superset を許す strict `ObservationContract` 集合である。
+snapshot preimage は module graph ID と実際に参照する contract ID の昇順集合だけを保持する。
+context に余分な contract があっても identity は変わらないが、参照 contract の欠落、重複、digest mismatch は拒否する。
+
+record identity は次の順序で構築する。
+
+1. `ExecutionAnalysisProfile`
+2. `RootDefinitionAnchor`
+3. `ExecutionLocationRequirement`
+4. `StaticExecutionOccurrenceTemplate`
+5. source または generated `ExecutionTemplateNode`
+6. `ExecutionGenerationDomain`
+7. `QualifiedExecutionNode`
+8. typed `ExecutionEdge`
+9. `RegistrationSupportTemplate` または `ReactiveSupportTemplate`
+10. `RootObligation`
+11. `ExecutionGraphSnapshot`
+
+`ExecutionAnalysisProfile` は analyzer implementation digest、version、normalized syntax schema、operation taxonomy schema、analysis configuration digest を持つ。
+この record は provenance identity であり、semantic fact の正しさや graph completeness を証明しない。
+
+`RootDefinitionAnchor` は root key digest、`seed | contingent`、root kind、phase だけを持つ。
+graph node、contract、constraint、support を anchor に含めないため、contract と root target が後続 record から anchor を参照しても identity cycle は生じない。
+
+`ExecutionLocationRequirement` は、HostInstance、AgentCluster、Agent、Realm、Global、Principal の六軸の symbolic domain ID を持つ。
+さらに target environment ID の集合と ModuleResolutionDomain ID の集合を持つ。
+host profile の認証と authority enforcement の証明は含めず、SC03 の qualified evidence に残す。
+
+source TemplateNode は content `ModuleDefinition` だけを参照できる。
+preimage は canonical source URL、transform 後 content digest、semantic profile ID、analysis profile ID、normalized syntax digest、operation kind、preorder ordinal を持ち、ModuleGraphSnapshot の definition と完全一致させる。
+external `ModuleDefinition` から source TemplateNode を作ることはできない。
+
+generated TemplateNode は generator schema、generator profile digest、slot label 付き input TemplateNode ID、operation kind、ordinal を持つ。
+root に依存しない generated node は root anchor ID と contract ID をともに `null` にする。
+root に依存する generated node は両方を保持し、contract の `rootDefinitionId`、anchor の唯一の RootObligation、obligation の contract ID を完全一致させる。
+contract が変われば generated node ID も変わるため、generated identity に RootObligation ID を含めない。
+generated TemplateNode の input relation は DAG とし、ExecutionEdge の cycle とは分離する。
+
+`ExecutionGenerationDomain` は location requirement ID、target environment ID、optional ModuleResolutionDomain ID、generator profile digest を持つ。
+resolution domain がある場合は、その domain が location requirement に含まれ、domain の `targetEnvironmentId` と generation domain の target environment が一致しなければならない。
+
+source `QualifiedExecutionNode` は `RuntimeModuleBindingId` を必須とし、binding の ModuleDefinition、resolution domain、target environment を TemplateNode と location requirement に一致させる。
+generated `QualifiedExecutionNode` は `ExecutionGenerationDomainId` を必須とし、location requirement、target environment、generator profile を generated TemplateNode と一致させる。
+`null` binding と concrete HostInstance、Realm、Principal ID は base graph に入れない。
+
+#### root と ObservationContract
+
+RootObligation は anchor ID、contract ID、target QualifiedExecutionNode ID、`execute | materialize` の entry fact、trigger constraint ID 集合、owner constraint ID 集合、terminal constraint ID を持つ。
+anchor は trigger、cardinality、admission cut、owner、cancellation、terminal outcome を重複保持しない。
+
+trigger constraint は contract 内の `event | effect | callback` constraint だけを参照し、その `admissionCutId` を contract の `initialCutId` と一致させる。
+trigger cardinality、`inputIdentityDomainId`、`occurrenceIdentityDomainId` は参照 constraint から取得する。
+contract の `eventIdentitySchemaId` は contract-level schema として独立に保持し、constraint の identity domain と同一視しない。
+
+owner constraint は同じ contract の `identity | lifetime` constraint だけを参照する。
+terminal constraint は同じ contract の `terminal` constraint を一つだけ参照し、その `subjectId` を root anchor ID と一致させる。
+cancellation と terminal outcome は terminal constraint の outcome 集合を正本とする。
+
+root kind は次の表で admission、phase、entry fact、trigger constraint を固定する。
+
+| root kind | admission | phase | entry fact | trigger constraint |
+| --- | --- | --- | --- | --- |
+| `external-entry` | `seed` | `admission` | `execute` | `event` を1件 |
+| `initial-ui` | `seed` | `render` | `execute` | なし |
+| `artifact` | `seed` | `build` | `materialize` | なし |
+| `request-handler` | `seed` | `admission` | `execute` | `event` を1件 |
+| `action` | `seed` | `admission` | `execute` | `event` を1件 |
+| `lifecycle` | `seed` | `lifecycle` | `execute` | `effect` を1件 |
+| `effect` | `seed` | `effect` | `execute` | `effect` を1件 |
+| `platform-obligation` | `seed` | `admission` | `execute` | なし |
+| `callback` | `contingent` | `event` | `execute` | `callback` を1件 |
+| `reactive-updater` | `contingent` | `update` | `execute` | `effect` を1件 |
+
+owner constraint はすべての root kind で optional な exact set とする。
+異なる root kind tuple が必要になった場合は caller option を追加せず、schema と ADR を更新する。
+
+各 root anchor は RootObligation を一つだけ持つ。
+各 contingent root は support template から一回以上参照されなければならないが、seed から到達しない support cycle は許可する。
+
+#### edge algebra と root support
+
+root fixed point を伝播する edge は `may-execute` と `may-materialize` だけとする。
+`may-execute` は `execute(source)` から `execute(target)` を導出する。
+`may-materialize` は `execute(source)` または `materialize(source)` から `materialize(target)` を導出する。
+
+data、control、call、possible-call、reads-from、writes-to、possible-subscription、untracked-data、invalidation、registration、materializes、obligates、scheduling、scheduler-sequence、settles、resumes、abrupt-to-handler、module-link、live-binding-read、live-binding-write、evaluate-before、possible-alias、identity、ownership、lifetime、cleanup、transfer、capability-use、authority-possession は topology と evidence だけを表す。
+各 relation は direction と endpoint operation category の閉じた表を持ち、snapshot validator が table と完全一致させる。
+`identity` edge は対象となる `ExecutionOccurrenceIdentitySlot` を一つ保持する。
+両 endpoint は同じ semantic role を持ち、各 StaticExecutionOccurrenceTemplate がその exact slot を含まなければならない。
+symbolic location と binding の一致は base graph の受理条件にせず、後続の trusted verifier が exact claim の completeness scope と proof domain の範囲で assertion を qualified fact として受理する。
+`identity` は fixed point traversal と node collapse には使わない。
+`possible-alias` は identity union に使わない。
+
+caller は base graph に `happens-before` と `synchronizes-with` を提出できない。
+static scheduler event node と typed scheduling relation は記録できるが、それだけから host must-order を導出しない。
+concrete `Enqueue`、`Start`、`MicrotaskCheckpoint`、`Complete` と authenticated host profile から得る order は runtime occurrence graph が所有する。
+
+`RegistrationSupportTemplate` は callback-registration node、registration edge、callback-body node、contingent callback root、child root の trigger constraint ID、`once`、abortability、protocol version を持つ。
+registration edge の endpoint は registration node から callback body とし、child obligation の target、entry fact、root kind、contract、trigger constraint と完全一致させる。
+一つの registration node は、同じ `once`、abortability、protocol version を共有する複数の callback support を持てる。
+この fan-out は有限な callback 候補の保守的な union であり、guard correlation と concrete callback selection は後続の semantic analysis と runtime occurrence が所有する。
+producer が有限な registration option 候補を持つ場合は option tuple ごとに deterministic な generated registration node へ正規化し、同じ tuple の callback 候補を unsupported にしない。
+parent root の closure が registration node を materialize した場合だけ potential support を導出する。
+static protocol は `pending -> active | cancelled | closed` と `active -> cancelled | closed` を許可し、mutable RegistrationInstance state は runtime が所有する。
+
+`ReactiveSupportTemplate` は collector、read、dependency、binding node、read から collector への data edge、read から dependency への possible-subscription edge、dependency から binding への non-empty contiguous invalidation path、contingent updater root、child root の trigger constraint ID を持つ。
+child obligation の target を binding、entry fact を `execute`、root kind を `reactive-updater`、trigger constraint を同じ `effect` constraint と一致させる。
+parent root が collector と read を execute し、binding を materialize した場合だけ potential support を導出する。
+`untracked-data` edge は reactive support の根拠にできない。
+active subscription generation と実際の updater activation は runtime が所有する。
+
+index は次の三種類の root-specific record を別々に導出する。
+
+- `IntraRootFact(rootId, execute | materialize, nodeId)`
+- `PotentialRootSupport(parentRootId, contingentRootId, supportTemplateId)`
+- `SeedReachability(seedRootId, supportedRootId)`
+
+derivation は seed root の RootObligation にある entry fact だけから開始する。
+support された child root は parent root の fact を引き継がず、child root 自身の target と entry fact から closure を開始する。
+nested support と self support は finite record set 上で saturate し、seed から到達しない support SCC は fact を生成しない。
+
+#### occurrence と derived index
+
+`StaticExecutionOccurrenceTemplate` は、`root-instance`、`activation`、`continuation`、`registration`、`allocation` の identity slot 集合と、`module-instance`、`request`、`render-attempt`、`activation`、`event-task`、`update-flush`、`remote-invocation`、`cleanup` の possible epoch kind 集合だけを持つ。
+concrete occurrence ID と epoch instance ID は持たない。
+
+すべての root target は `root-instance` slot を持つ。
+callback root target は `registration` と `activation` slot も持ち、reactive updater root target は `activation` slot も持つ。
+
+base ExecutionGraphSnapshot は root fact、support closure、justification path、SCC、condensation、host order を直列化しない。
+これらは fixed derivation profile `dathra.execution-graph-derivation/1` を使う `ExecutionGraphIndex` が計算する。
+
+index の全出力は code-unit tuple 順にする。
+intra-root justification path は traversal edge 数が最小の path を選び、同数なら edge ID sequence の辞書式順で選ぶ。
+support chain は support 数が最小の chain を選び、同数なら support template ID sequence の辞書式順で選ぶ。
+SCC と condensation は `may-execute | may-materialize` の directed subgraph だけを対象とする。
+roots-for-node は root ID だけの union ではなく、`execute | materialize` を保持する `IntraRootFact` を返す。
+occurrence query は QualifiedExecutionNode が参照する static template を返す。
+
+unreachable な QualifiedExecutionNode と semantic edge は、保守的な静的上限として snapshot に保持できる。
+analysis profile、location requirement、generation domain、occurrence template、TemplateNode、support、RootObligation、selected contract は structural owner からの exact use を要求する。
+ExecutionGraph が参照しない EG01 module record は拒否しない。
+
+creator と parser は canonicalization 前に property descriptor を getter 実行なしで走査する。
+caller が指定する budget override は framework の hard cap を狭めることだけができ、上限を拡張できない。
+一つの公開 operation は operation-local `BudgetLedger` を生成し、canonicalization、dependency preflight、cross-record validation、fixed point、support probe、path、SCC、最終 index 構築へ共有する。
+hard budget は depth、data node、property、array length、string code unit、dependency record、各 graph record、canonical byte、validation step、fixed-point fact、traversal step、support probe、derived support、path、SCC work、index work を制限する。
+各 counter は対象 work の allocation、sort、parser 呼び出し、candidate 判定より前に課金する。
+dependency cardinality は dependency snapshot の clone と parser 呼び出しより前に descriptor から検査する。
+canonical byte は value 単位で preflight 中に計測し、上限内と確認した後だけ full canonical text を生成する。
+
 ## component と JavaScript の扱い
 
 ### component body
