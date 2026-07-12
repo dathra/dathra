@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: EG01 immutable module graph snapshot の対象 transformer code と既存 resolver contract を調査し、SPEC と test を先に追加する。
+- 次の作業: EG01 の確定済み identity DAG と phase-aware closure を transformer の `src/moduleGraph/SPEC.typ` と先行 test へ反映する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -27,7 +27,7 @@
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
-| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01 は completed。次は EG01 immutable module graph snapshot |
+| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01 は completed。EG01 immutable module graph snapshot の設計レビューを収束し、SPEC/test 先行へ移行 |
 | P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02 と SC03 は未着手 |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
@@ -85,7 +85,7 @@ package 間で使う internal export、package export map、build entry は、�
 | ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | completed |
 | SC01 | RegistryId、descriptor、symbolic/final catalog、environment projection | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema、role matrix、fixed-point derivation と validation | ID01 | completed |
 | OC01 | ObservationContract、canonical trace language、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | canonical DFA、relation projection/inclusion、claim、instance witness の pure implementation | SC01 / ID01 | completed |
-| EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | pending |
+| EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | in-progress |
 | EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | pending |
 | EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | pending |
 | SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / test | qualification 前後の contract schema | SC01 / ID01 | pending |
@@ -186,6 +186,28 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 
 ## 現在の Slice
 
+### EG01 immutable module graph snapshot
+
+- **設計要件**：server、browser、worker など複数の resolution domain を一つの immutable snapshot に束縛し、content definition、runtime module identity、loader cache identity、semantic request、source site を混同しない module graph foundation を作る。
+- **変更範囲**：設計正本の ModuleCoordinator と NativeModuleClosure を具体化し、`packages/transformer/src/moduleGraph/` に `AGENTS.md`、`SPEC.typ`、`implementation.test.ts`、`implementation.ts` を追加する。producer slice として transformer root export も追加する。
+- **identity DAG**：semantic profile、edge-independent request inventory、external definition contract、module definition、resolution domain、runtime binding、loader entry、external runtime closure evidence、semantic request、resolution evidence、resolved request、request-site evidence、request site/entry、snapshot の順に ID を生成する。import edge は runtime binding ID へ戻さないため cycle を許容する。
+- **resolution domain**：native module-map/Realm と CommonJS loader-cache namespace、resolver profile/input transcript、module-map semantics、condition set と hook-visible sequence を domain ごとに保持する。同じ source URL でも domain、module-map type、effective attributes、transform output が異なれば別 record を許可する。
+- **module identity**：compiler の `ModuleDefinitionId` と runtime の Module Record/namespace/evaluation/failure identity を分離する。request/module-map URL と response/base URL、module-map type と definition kind、source attributes と effective cache-key attributes も別 field にする。
+- **request semantics**：ECMAScript ModuleRequest identity を site ordinal から分離し、specifier、attributes、phase が同じ request は一つの target に限定する。CommonJS は resolution origin を持つ別 request とし、semantic request、target loader entry、structured resolver evidence を `ResolvedModuleRequest` で一対一に結合する。inventory syntax と site の semantic request key set は `ModuleRequestSiteEvidence` の finite coverage proof で結合する。
+- **phase-aware closure**：`source < evaluation` の fixed point を使う。source-phase target は transitive site を traversal せず、evaluation へ到達した content binding だけが inventory と完全一致する site closure を必要とする。cross-phase request は同じ runtime binding を共有する。
+- **external leaf**：external definition は entry/importer にしない。runtime ID に依存しない `ExternalModuleDefinitionContract` と、binding/loader entry 後の `ExternalRuntimeClosureEvidence` を分離し、Module Source Object、namespace、evaluation/failure、TLA、`import.meta`、transitive ownership、byte correspondence を二段階で証明できる target だけを許す。
+- **先行 test**：URL canonicalization、exact byte digest、record ID DAG、multi-domain resolution、request/response URL、module-map key、ESM request dedup、CommonJS origin、source/evaluation phase、cycle、exact reachability、unused/dangling/cross-domain/external role、noncanonical order、forged digest、getter 非実行、public export を実装前に追加する。
+- **変更前 baseline**：transformer 11 files、607 tests、typecheck、lint 0件、format check、build がすべて成功した。
+- **red test 証拠**：`pnpm --filter @dathra/transformer exec vitest run src/moduleGraph/implementation.test.ts` は `./implementation` 不在で失敗し、SPEC と test が production implementation より先に追加されたことを確認した。
+- **実装済み API**：URL/content digest、semantic profile、resolution domain、request inventory、二段階 external contract、definition、runtime binding、loader entry、native/CommonJS semantic request、resolution evidence、resolved request、request-site evidence/site、entry、snapshot creator と strict parser を実装し、transformer root から公開した。
+- **実装済み validation**：closed input、record digest、canonical order、multi-domain namespace、runtime/cache identity conflict、request/evidence/target 一対一対応、syntax/request-key coverage、external exact evidence、`source < evaluation` fixed point、cycle、cross-phase coherence、exact-use closure を検証する。
+- **現在の検証**：transformer 全12 files、627 tests が成功した。moduleGraph は20 tests、statement 88.49%、branch 74.84%、function 100%、line 89.71% である。typecheck、lint 0件、format check、build が成功した。type-aware lint は moduleGraph の warning/error 0件で、既存 transform/rlse の warning 14件だけを報告した。
+- **artifact 検査**：ESM/CJS build に `node:`、`createHash`、`Buffer` はない。declaration は snapshot creator/parser/error と全 producer type を公開する。build artifact で `abc` digest、URL canonicalization、creator/parser の function export を実行確認した。
+- **独立レビュー**：単一 graph、URL-only identity、site-bound request、opaque domain evidence の不足を指摘した設計レビューを取り込み、definition/runtime/cache identity、resolution evidence、source phase、loader namespace を分離した。ResolvedModuleRequest、二段階 external contract、request-site coverage evidence まで設計正本へ追記し、Kepler の最終 design review は `ACCEPT` である。実装レビューで condition sequence の重複/order を包含判定で失う問題を修正し、Bacon の2回目の独立実装レビューは `ACCEPT` である。
+- **完了証拠**：transformer test、typecheck、lint、type-aware lint、format、build、canonical vector、cycle/source-phase fixture、独立実装レビュー、commit、push を必要とする。
+
+## 直前に完了した Slice
+
 ### OC01 observation contract
 
 - **設計要件**：root の観測条件を closed constraint と canonical trace language で表し、source と candidate の equality または明示 rule による refinement を有限に判定する。
@@ -203,7 +225,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 - **artifact 検査**：shared ESM/CJS build に `node:`、`createHash`、`Buffer` はなく、declaration は policy requirement、relation composition context、proof acceptance input、equality input を公開する。
 - **完了証拠**：shared test、typecheck、lint、format、build、browser-compatible artifact inspection、known canonical vector、独立実装レビュー、commit、push を必要とする。
 
-## 直前に完了した Slice
+## 以前に完了した Slice
 
 ### SC01 execution registry contract
 
@@ -309,6 +331,8 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | OC01-DESIGN | completed | canonical trace language、relation inclusion、composition result、instance witness | 設計正本、matrix、digest DAG、責務分担を更新した | 提案と2回目の actual diff レビューは `ACCEPT` | `2900469` / push 済み |
 | OC01-DESIGN-REVISION | completed | contract conformance、derived relation、proof DAG、result contract、coverage closure | composition `/4`、class-local policy closure、contract/application `/3` coalescing requirement の superseding ADR と interface specification を更新した | cycle proposal は Archimedes、coalescing requirement は Pauli が評価し、指摘を反映済み | `86204da` / origin tracking branch |
 | OC01 | completed | canonical contract、relation、composition、realization | shared 8 files・165 tests、typecheck、lint、fmt、build、browser artifact inspection が成功 | Cicero の focused 最終レビューは `ACCEPT` | `86204da` / origin tracking branch |
+| EG01-DESIGN | completed | multi-domain module graph、非循環 identity DAG、phase-aware exact closure | 設計正本、EG01 SPEC、先行 contract test、targeted red failure | 複数回の proposal/actual diff review を収束し、Kepler の最終レビューは `ACCEPT` | この slice の implementation commit に含める |
+| EG01 | in-progress | canonical immutable module graph snapshot と strict exact-use validation | transformer 12 files・627 tests、typecheck、lint、type-aware lint、fmt、build、artifact inspection が成功 | condition sequence の指摘を修正し、Bacon の2回目レビューは `ACCEPT` | commit / push 待ち |
 
 ## Review Log
 

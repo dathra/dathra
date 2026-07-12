@@ -1726,6 +1726,195 @@ ModuleCoordinator は、canonical resolver、conditional exports、関連 plugin
 server build と client build は、同じ graph snapshot と hash を参照する。
 watch build は reverse dependency を一つの compilation transaction として invalidate する。
 
+### immutable module graph snapshot
+
+ModuleCoordinator が公開する graph snapshot は、一つの resolver 出力だけを表す file list ではない。
+server、browser、worker など複数の resolution domain と、その domain が所有する module-map、loader cache、request、entry の exact closure を一つの immutable `ModuleGraphSnapshot` に束縛する。
+
+snapshot の identity は、次の非循環 DAG で生成する。
+
+```txt
+ModuleSemanticProfile
+  -> ModuleRequestInventory
+  -> ModuleDefinition
+
+ExternalModuleDefinitionContract
+  -> external ModuleDefinition
+
+ModuleResolutionDomain
+  + ModuleDefinition
+  -> RuntimeModuleBinding
+  -> ModuleLoaderEntry
+  -> ExternalRuntimeClosureEvidence
+  -> semantic ModuleRequest
+  -> ModuleResolutionEvidence
+  -> ResolvedModuleRequest
+  -> ModuleRequestSiteEvidence
+  -> ModuleRequestSite / ModuleGraphEntry
+  -> ModuleGraphSnapshot
+```
+
+import edge は `RuntimeModuleBinding` またはそれ以前の identity に入れない。
+このため、module import cycle が存在しても definition、runtime binding、loader entry の ID は有限回で確定する。
+
+各 record は versioned canonical preimage と SHA-256 ID を持つ closed immutable value とする。
+canonical array は record ID 順、集合 field は canonical lexical order、source order が意味を持つ field は明示 ordinal 順に表す。
+record ID と preimage の不一致、noncanonical order、duplicate ID、extra field、dangling reference は snapshot 作成時と strict validation 時の両方で拒否する。
+
+#### semantic profile と request inventory
+
+`ModuleSemanticProfile` は、content bytes 以外で definition semantics に影響する次の情報を束縛する。
+
+```txt
+definition kind と parse goal
+transform pipeline の version、plugin order、configuration digest
+semantic transform metadata digest
+loader と host-hook semantics digest
+import.meta semantics digest
+```
+
+host の module-map type は definition kind と同じ概念ではない。
+たとえば HTML の `javascript-or-wasm` module-map type は JavaScript と WebAssembly の definition kind を直接区別しない。
+したがって module-map type は `ModuleSemanticProfile` に入れず、後述する `ModuleLoaderEntry` が保持する。
+
+`ModuleRequestInventory` は transformed content digest、semantic profile ID、versioned extractor profile digest と、source order の request-site descriptor を束縛する。
+各 site descriptor は request kind、native request の `source | evaluation` phase、target を含まない normalized syntax digest を持つ。
+resolved target、loader entry、candidate request ID は inventory に入れないため、inventory と import edge の間に identity cycle は生じない。
+
+content `ModuleDefinition` は canonical source URL、exact source bytes digest、exact transformed bytes digest、semantic profile ID、request inventory ID を持つ。
+definition と inventory の transformed content digest と semantic profile ID は完全一致しなければならない。
+
+`ExternalModuleDefinitionContract` は domain と runtime binding に依存しない definition-level contract である。
+versioned preimage は external definition kind、definition semantics digest、Module Source Object の availability/creation semantics digest、transitive dependency ownership digest、module bytes と manifest の correspondence digest を持つ。
+built-in など host-owned bytes を使う場合も correspondence field を省略せず、host ownership を表す canonical contract digest を使う。
+
+external `ModuleDefinition` は canonical source URL と external definition contract ID を持つ。
+external definition の transitive dependency は Dathra graph に暗黙展開せず、definition contract が ownership boundary を宣言する。
+一つの external definition contract は一つ以上の external definition から参照できるが、snapshot 内でどの definition からも参照されない contract record は拒否する。
+
+#### resolution domain、runtime binding、loader entry
+
+`ModuleResolutionDomain` は少なくとも次を束縛する。
+
+```txt
+target environment identity
+native module-map と Realm の namespace digest
+CommonJS loader-cache namespace digest
+resolver algorithm、plugin order、configuration digest
+package map、import map、redirect、filesystem、realpath、case rule を含む resolver input transcript digest
+module-map と loader-cache semantics digest
+ESM と CommonJS それぞれの active condition set
+resolver hook から観測できる ESM と CommonJS それぞれの condition sequence
+```
+
+condition set は membership の canonical identity として sort する。
+condition sequence は hook から観測できる順序を保持し、package exports/imports object の source key order と resolver traversal order は resolver input transcript に束縛する。
+
+`RuntimeModuleBinding` は resolution domain ID、module definition ID、response URL に由来する canonical module base URL、runtime module identity digest を持つ。
+runtime module identity は compiler の content-addressed definition ID とは別であり、Module Record、namespace、module source object、evaluation result、evaluation failure cache を共有する単位を表す。
+一つの resolution domain 内で同じ runtime module identity digest を持つ binding は一つだけとし、definition または base URL が競合する別 binding を許可しない。
+
+`ModuleLoaderEntry` は resolution domain ID、`native | commonjs` loader namespace kind、request/module-map URL、host module-map type、effective cache-key import attributes、host cache-key digest、runtime binding ID を持つ。
+module-map URL は fetch または resolver の request URL、module base URL は response URL または host が確定した resolution base であり、redirect をまたぐ場合も同一 field に潰さない。
+WHATWG URL parse/serialize は URL syntax を canonicalize するだけであり、`file:` URL の realpath、symlink、case normalization は resolver contract と transcript が所有する。
+
+module-map key の uniqueness は URL 単体ではなく、resolution domain、loader namespace、request URL、module-map type、effective key attributes の tuple で判定する。
+host cache-key digest も同じ namespace 内で一つの loader entry だけを指す。
+複数の loader entry が同じ runtime binding を指すことは許可し、redirect alias や native/CommonJS cache 間で identity を共有する host semantics を表せるようにする。
+
+external definition を持つ runtime binding には、一つの `ExternalRuntimeClosureEvidence` を要求する。
+この evidence の canonical preimage は external definition contract ID、runtime binding ID、その binding を指す canonical loader-entry ID set、runtime semantics digest、phase-coherence evidence digest を持つ。
+runtime semantics digest は concrete domain における module-map/cache、Module Record、namespace、evaluation/failure cache、top-level await、`import.meta` を束縛する。
+phase-coherence evidence は Module Source Object の concrete availability、identity、creation failure と、source/evaluation phase が同じ runtime binding を返すことを束縛する。
+
+external definition contract は runtime ID を含まないため `ModuleDefinition` より前に確定し、external runtime closure evidence は runtime binding と loader entry だけを参照するため import edge より前に確定する。
+この分離により external contract を definition ID へ入れても identity cycle は生じない。
+content runtime binding に external runtime closure evidence を付けること、および external runtime binding の evidence を欠落または重複させることを拒否する。
+
+#### semantic request、resolution evidence、request site
+
+ECMAScript の semantic ModuleRequest と、source syntax 上の request site を分離する。
+
+native `ModuleRequest` identity は、resolution domain、importer runtime binding、`source | evaluation` import phase、specifier、source import attributes から作る。
+static import、dynamic import、別 source site という情報と resolved target は semantic request ID に入れない。
+import attribute は key と string value の exact pair とし、key order は identity に影響しない canonical order にする。
+
+同じ domain、importer、specifier、source attributes、phase を持つ native request は一つの target だけへ解決する。
+phase だけが異なる同一 native request は同じ `RuntimeModuleBinding` へ解決し、source phase と evaluation phase の違いを理由に Module Record、module source object、namespace、evaluation/failure cache identity を fork しない。
+
+CommonJS request は ECMAScript ModuleRequest として扱わない。
+CommonJS request identity は resolution domain、importer runtime binding、`createRequire()` を含む canonical resolution origin URL、specifier から作る。
+target、cache key、hook evidence を request identity に入れず、同じ semantic CommonJS request を別 target へ解決する逃げ道にしない。
+mutable `require.cache`、`require.extensions`、loader hook state を有限 transcript と contract へ固定できない場合は、external ownership または compiler diagnostic とする。
+
+各 semantic request は一つの `ModuleResolutionEvidence` と一つの `ResolvedModuleRequest` に対応する。
+resolution evidence は request ID、target loader-entry ID、実際に resolver が観測した condition sequence、native request の effective cache-key attributes、redirect evidence digest、resolver trace digest を束縛する。
+resolution evidence の condition sequence は対応する resolution domain の ESM または CommonJS hook-visible sequence と重複・順序を含め完全一致させる。
+request ごとに resolver-observable sequence が異なる target は同じ domain に混在させず、別 resolution domain として表す。
+request の source attributes、resolution evidence の effective attributes、target loader entry、request URL、response/base URL の対応を domain-level opaque digest だけに委ねない。
+
+`ResolvedModuleRequest` の canonical preimage は request kind、semantic request ID、target loader-entry ID、resolution evidence ID を持つ。
+semantic request ID は target と proof metadata に依存せず、resolved request ID は target と evidence の exact association を表す。
+一つの semantic request ID に対応する resolved request は一つだけとし、resolution evidence の request/target と resolved request の request/target は完全一致させる。
+この record は semantic request と loader entry より後、request site より前に生成するため、import cycle を runtime binding identity へ戻さない。
+
+`ModuleRequestSiteEvidence` は inventory ID と ordinal、inventory descriptor の normalized syntax digest、importer runtime binding ID、canonical semantic request ID set、candidate coverage proof digest を持つ。
+semantic request ID set は target と resolution evidence を含まず、native request では specifier、source import attributes、phase、CommonJS request では specifier と resolution origin URL を identity 経由で束縛する。
+candidate coverage proof は、inventory の当該 syntax site からその semantic request key set が導出でき、ほかの有限候補がないことを EG02 の extractor/analysis profile で証明する。
+static site では literal specifier と source attributes の singleton equality、dynamic native と CommonJS site では finite candidate domain の soundness と completeness を証明する。
+inventory ID、ordinal、normalized syntax digest、importer、semantic request set のいずれかを別 site と交換した evidence は拒否する。
+
+`ModuleRequestSite` は importer runtime binding、inventory ordinal、request kind、native import phase、site evidence ID、有限な resolved request ID set を持つ。
+static native、Wasm、CSS request site は一つの request を持ち、dynamic native と CommonJS request site は一つ以上の事前認証された有限候補を持てる。
+同じ resolved request は複数 site から参照できる。
+site が参照する各 resolved request は semantic request まで辿り、resolution domain と importer runtime binding が site と完全一致しなければならない。
+native site は native semantic request だけを参照し、その import phase も site と一致させる。
+CommonJS site は CommonJS semantic request だけを参照し、native request ID を候補へ混在させない。
+static/dynamic という source-site kind は semantic ModuleRequest identity に入れないが、inventory descriptor と site の kind、および kind が許可する request variant/cardinality は一致させる。
+site evidence の inventory、ordinal、syntax digest、importer は site と definition inventory に一致させ、site が参照する resolved request から得た semantic request ID set は site evidence の set と完全一致させる。
+
+#### entry、phase-aware closure、snapshot
+
+`ModuleGraphEntry` は resolution domain、dense entry ordinal、entry kind、entry loader context digest、content loader-entry ID を束縛する。
+entry loader context は top-level fetch options、credentials、referrer policy、worker/script kind、`import.meta.main` など entry admission に影響する host semantics を含む。
+
+module graph reachability は次の二段階 lattice で判定する。
+
+```txt
+source < evaluation
+```
+
+- entry は target runtime binding を `evaluation` reachable にする
+- evaluation-phase native request は target を `evaluation` reachable にする
+- CommonJS request は target を `evaluation` reachable にする
+- source-phase native request は target を `source` reachable にするが、その target の request site を再帰 traversal しない
+- source reachable binding が別 path から evaluation reachable へ昇格した場合は、その時点で request site を traversal する
+
+evaluation reachable な content runtime binding には、definition の request inventory と ordinal、kind、phase が完全一致する request site が必要である。
+source-only reachable な content runtime binding は definition と inventory を保持するが、その binding の request site と outgoing resolved request を snapshot に持たない。
+external runtime binding は source/evaluation のどちらでも leaf とし、request site を持たない。
+
+snapshot validation は domain ごとに entry から phase-aware fixed point を計算し、次を拒否する。
+
+- reachable でない runtime binding、loader entry、definition、profile、inventory、external definition contract、domain
+- site から参照されない resolved request、および resolved request と一対一対応しない semantic request と resolution evidence
+- site と一対一対応しない request-site evidence、または inventory syntax と semantic request key set の coverage proof mismatch
+- entry または resolved request から参照されない loader entry
+- cross-domain importer または target
+- external definition を持つ entry または importer
+- external runtime closure evidence の欠落、重複、content binding への誤付与、definition contract/runtime binding/loader-entry set の不一致
+- inventory の trailing site を含む欠落、duplicate ordinal、kind/phase mismatch
+- request site と semantic request の domain、importer、native/CommonJS variant、native phase mismatch
+- native request の cross-phase runtime binding mismatch
+- module-map/cache key conflict
+
+import cycle は runtime binding ID に edge を含めないため合法であり、evaluation reachable subgraph の phase-aware fixed point で処理する。
+entry order は dense ordinal に保持し、snapshot 内の entry record array 自体は record ID 順に canonicalize する。
+
+`ModuleGraphSnapshot` は semantic profile、resolution domain、request inventory、external definition contract、module definition、runtime binding、loader entry、external runtime closure evidence、semantic request、resolution evidence、resolved request、request-site evidence、request site、entry の exact-use closure 全体を hash する。
+snapshot 作成後に record または candidate を追加しない。
+同じ graph epoch で認証した dynamic extension も、link 前に新しい immutable snapshot と snapshot ID を確定してから使う。
+
 ### ExecutionGraph の qualification
 
 ExecutionGraph の node は TemplateNode であり、動的実行そのものではない。
@@ -1962,8 +2151,15 @@ Script または CommonJS を Module として出力するのは、global enviro
 **NativeModuleClosure** は、一つの target module map に属する Module Record と ModuleRequest の必要な transitive closure である。
 live binding、namespace identity、cycle、top-level await、`import.meta`、evaluation failure cache を保持する。
 
+source-phase import を含む closure は Module Source Object の availability、identity、creation failure と、同じ semantic request の source/evaluation phase が同じ RuntimeModuleBinding を参照する証拠を保持する。
+source phase は target Module Record を load しても transitive request を evaluation traversal せず、evaluation phase へ昇格した場合だけその request inventory を traversal する。
+
 dynamic import は、事前認証された有限候補、または同じ graph epoch で link 前に認証する extension に限定する。
 host が module bytes と manifest の対応を保証できない場合は、native reuse を許可しない。
+
+external definition contract は definition semantics、transitive dependency ownership、module bytes と manifest の対応、Module Source Object の host-level availability/creation semantics を runtime ID に依存せず束縛する。
+external runtime closure evidence は concrete domain の module-map/cache identity、Module Record と namespace identity、evaluation と failure cache、top-level await、`import.meta`、Module Source Object の concrete identity/failure、source/evaluation phase coherence を runtime binding と loader-entry set に束縛する。
+source-only external target を含め、この二段階 contract/evidence を証明できない external module は NativeModuleClosure に採用せず diagnostic とする。
 
 source evaluation event は別 realm で replay しない。
 object、array、RegExp、template、computed key、spread、class heritage、field、static block、default initializer、bind も observable evaluation event に含む。
