@@ -12,6 +12,8 @@ artifact finalizationの決定項目をexactなclosed productとして固定し�
 
 artifact内のentry責務とentry invocation順序のclaimをexactなclosed productとして固定し、unsupportedなrole、欠落したfield、変更されたproperty modifierを後続のaddress preimageへ混入させないpackage-localなtypeを定義する。
 
+artifactのdependency slotが参照するartifact addressとexport nameのclaimをexactなclosed productとして固定し、unsupportedなdependency kind、欠落したfield、変更されたproperty modifierを後続のaddress preimageへ混入させないpackage-localなtypeを定義する。
+
 これらのAPIはtype-only foundationであり、runtime operationとshared package rootの公開面を増やさない。
 
 == 設計判断
@@ -85,6 +87,32 @@ artifact内のentry責務とentry invocation順序のclaimをexactなclosed prod
     2. *runtime enum object*: type-only contractにruntime valueとinitializationを追加するため採用しない
     3. *ordinal validationを同時に提供する*: collection全体なしではgap-freeまたはuniqueを判定できないため採用しない
     4. *dependency、export、aggregateと同時に提供する*: 独立して検証できる後続contractを束ねるため採用しない
+  ],
+)
+
+#adr(
+  header("artifact dependency bindingをinline kind unionとclosed productで表す", Status.Accepted, "2026-07-13"),
+  [
+    artifact address preimageは、finalized artifact内のdependency slot、reference方式、参照先artifact address、参照先export name claimを区別する必要がある。
+    openなstring kind、optional field、mutable fieldを許すrecordでは、未定義のdependency方式や暗黙のdefaultがidentity inputへ入る。
+  ],
+  [
+    `ArtifactDependencyBinding`を4個のrequiredかつreadonlyなpropertyからなるinterfaceとして定義する。
+    `kind`は`static-import`、`dynamic-import`、`wasm-import`、`data-reference`のinlineなclosed literal unionとし、`ArtifactDependencyKind` aliasは追加しない。
+    focused modelからpackage-local facadeへtype-onlyで提供する。
+    validation、target existence、ordering、duplicates、identity issuance、URL、integrity、trust、aggregate、root publication、parser、creator、guard、runtime behaviorは追加しない。
+  ],
+  [
+    - 後続contractはdependency bindingのclosed productをidentity inputとして再利用できる
+    - type fixtureはkeys、property types、required modifier、readonly modifier、closed kind unionの変更を検出できる
+    - typeへの適合はslotまたはtarget exportの妥当性、target artifactの実在、canonical order、一意性、provenance、trustを証明しない
+    - semantic canonical validation、collection invariant、identity operationは後続unitに残る
+  ],
+  alternatives: [
+    1. *`ArtifactDependencyKind` aliasを追加する*: 採択済みcontractに存在しないtype surfaceを増やすため採用しない
+    2. *kindをopenなstringにする*: unsupportedなdependency方式を拒否できないため採用しない
+    3. *runtime enum objectを追加する*: type-only contractにruntime valueとinitializationを追加するため採用しない
+    4. *validationまたはaggregateと同時に提供する*: 単一bindingでは判定できないordering、duplicates、target existenceをこのleaf contractへ混入させるため採用しない
   ],
 )
 
@@ -183,6 +211,42 @@ artifact内のentry責務とentry invocation順序のclaimをexactなclosed prod
   ],
 )
 
+#interface_spec(
+  name: "Artifact dependency binding",
+  summary: [
+    artifact dependencyのslot、kind、target artifact address、target export nameのclaimを、requiredかつreadonlyなclosed productとして表す。
+  ],
+  format: [
+    ```typescript
+    import type { ArtifactAddressId } from "./model"
+
+    interface ArtifactDependencyBinding {
+      readonly slot: string
+      readonly kind:
+        | "static-import"
+        | "dynamic-import"
+        | "wasm-import"
+        | "data-reference"
+      readonly targetArtifactAddressId: ArtifactAddressId
+      readonly targetExportName: string | null
+    }
+
+    export type { ArtifactDependencyBinding }
+    ```
+  ],
+  constraints: [
+    - `keyof ArtifactDependencyBinding`は記載した4個のpropertyだけである
+    - 全propertyはrequiredかつreadonlyであり、index signatureを持たない
+    - 各property typeは記載したtypeと双方向に一致する
+    - `kind`は記載した4個のliteralからなるinline unionであり、`ArtifactDependencyKind` aliasを追加しない
+    - `targetArtifactAddressId`はpackage-localな`ArtifactAddressId`そのものであり、plain stringまたはgeneric digestへwidenしない
+    - `targetExportName`は`string | null`であり、missing、`undefined`、またはnon-null stringだけへ変更しない
+    - `ArtifactDependencyBinding`は`dependencyBindingModel`内部で定義し、package-local facadeからtype-onlyで提供する
+    - facade、dependency binding model、type fixture、type-only consumerはruntime import edge、runtime value、top-level effectを持たない
+    - shared package rootへの公開はAS01が所有する
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -246,6 +310,27 @@ artifact内のentry責務とentry invocation順序のclaimをexactなclosed prod
   ],
 )
 
+#behavior_spec(
+  name: "Dependency binding structural boundary",
+  summary: [
+    dependency binding自身のkeys、property types、required modifier、readonly modifier、inline closed kind unionを型検査で固定する。
+  ],
+  preconditions: [
+    - 比較対象が採択済みbindingまたはmissing、extra、optional、mutable、widened、kind変更、target address変更、target export nullability変更variantである
+  ],
+  steps: [
+    1. bindingのkeysが採択済み4 propertyと双方向に一致することを検査する
+    2. `kind` unionが採択済み4 literalと双方向に一致することを検査する
+    3. 各property typeが採択済みtypeと双方向に一致することを検査する
+    4. 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
+    5. missing、extra、optional、mutable、widened、kind変更、target address変更、target export nullability変更variantがexact contractと一致しないことを検査する
+  ],
+  postconditions: [
+    - package-local type contractのclosed unionまたはclosed product shapeを変更する差分を検出できる
+    - validation、collection invariant、runtime value、runtime behavior、identity operationは追加されない
+  ],
+)
+
 == 機能仕様
 
 #feature_spec(
@@ -282,7 +367,7 @@ artifact内のentry責務とentry invocation順序のclaimをexactなclosed prod
 #feature_spec(
   name: "Type-only artifact finalization template",
   summary: [
-    後続bindingとaggregateを仮実装せず、`ArtifactFinalizationTemplate`だけをcurrent revisionのpackage-local facadeへ追加する。
+    `ArtifactFinalizationTemplate`をpackage-local facadeへtype-onlyで提供し、現行の累積facadeでは後続追加済みbinding contractと共存させる。
   ],
   api: [
     ```typescript
@@ -315,18 +400,18 @@ artifact内のentry責務とentry invocation順序のclaimをexactなclosed prod
     - `keyof`と全property typeが期待型と双方向に一致することを検査する
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing、extra、optional、mutable、widened variantがexact contractと一致しないことを検査する
-    - facadeのASTが`./model`の`ArtifactAddressId`と`./finalizationTemplateModel`の`ArtifactFinalizationTemplate`だけをtype-only exportすることを検査する
-    - facade、address model、finalization template model、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
-    - 後続binding、aggregate、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
+    - facadeのASTが4個のfocused modelから現行の`ArtifactAddressId`、`ArtifactFinalizationTemplate`、`ArtifactEntryRole`、`ArtifactEntryBinding`、`ArtifactDependencyBinding`だけをtype-only exportすることを検査する
+    - facade、全model、全type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - 後続export binding、aggregate、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared package rootから`ArtifactFinalizationTemplate`をimportできないことを検査する
-    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに`ArtifactAddressId`と`ArtifactFinalizationTemplate`が存在しないことを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の5 typeが存在しないことを検査する
   ],
 )
 
 #feature_spec(
   name: "Type-only artifact entry binding",
   summary: [
-    後続dependency binding、export binding、aggregate、validatorを仮実装せず、`ArtifactEntryRole`と`ArtifactEntryBinding`だけをcurrent revisionのpackage-local facadeへ追加する。
+    `ArtifactEntryRole`と`ArtifactEntryBinding`をpackage-local facadeへtype-onlyで提供し、現行の累積facadeではdependency bindingと共存させる。
   ],
   api: [
     ```typescript
@@ -354,19 +439,64 @@ artifact内のentry責務とentry invocation順序のclaimをexactなclosed prod
     - `keyof`と全property typeが期待型と双方向に一致することを検査する
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing、extra、optional、mutable、widened、role変更、ordinal変更variantがexact contractと一致しないことを非空なnegative fixtureで検査する
-    - facadeのASTが`./model`、`./finalizationTemplateModel`、`./entryBindingModel`から採択済み4 typeだけをtype-only exportすることを検査する
+    - facadeのASTが4個のfocused modelから現行の5 typeだけをtype-only exportすることを検査する
     - facade、全model、type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
-    - 後続dependency binding、export binding、aggregate、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
+    - 後続export binding、aggregate、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared package rootから`ArtifactEntryRole`と`ArtifactEntryBinding`をimportできないことを検査する
-    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに採択済み4 typeが存在しないことを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の5 typeが存在しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Type-only artifact dependency binding",
+  summary: [
+    validator、export binding、aggregate、identity operationを仮実装せず、`ArtifactDependencyBinding`だけをcurrent revisionのpackage-local facadeへ追加する。
+  ],
+  api: [
+    ```typescript
+    import type { ArtifactAddressId } from "./model"
+
+    interface ArtifactDependencyBinding {
+      readonly slot: string
+      readonly kind:
+        | "static-import"
+        | "dynamic-import"
+        | "wasm-import"
+        | "data-reference"
+      readonly targetArtifactAddressId: ArtifactAddressId
+      readonly targetExportName: string | null
+    }
+
+    export type { ArtifactDependencyBinding }
+    ```
+  ],
+  edge_cases: [
+    - kind unionに未定義の値を追加せず、`string`へwidenしない
+    - `ArtifactDependencyKind` aliasを追加しない
+    - propertyをoptionalまたはmutableにしない
+    - target artifact addressをplain stringまたはgeneric digestへwidenしない
+    - nullableなtarget export nameをoptional fieldまたはnon-null stringへ変更しない
+    - typeへの適合をvalidation、target existence、ordering、duplicates、identity issuance、URL、integrity、trust、aggregate publicationの証拠として扱わない
+  ],
+  test_cases: [
+    - `keyof`と全property typeが期待型と双方向に一致することを検査する
+    - kind unionが期待する4 literalと双方向に一致することを検査する
+    - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
+    - missing、extra、optional、mutable、widened、kind変更、target address変更、target export nullability変更variantがexact contractと一致しないことを非空なnegative fixtureで検査する
+    - facadeのASTが4個のfocused modelから採択済み5 typeだけをtype-only exportし、`ArtifactDependencyKind`をexportしないことを検査する
+    - facade、全model、dependency binding type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - validator、export binding、aggregate、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
+    - shared package rootから`ArtifactDependencyBinding`をimportできないことを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに`ArtifactDependencyBinding`が存在しないことを検査する
   ],
 )
 
 == 責務境界
 
 - canonical snapshot validator、artifact address identity operation、creator、parser、guard、castは後続AR01 unitが所有する
-- dependency binding、export binding、artifact address preimage aggregateは後続AR01 unitが所有する
+- export binding、artifact address preimage aggregateは後続AR01 unitが所有する
 - entry bindingのsemantic canonical validatorは後続AR01 unitが所有する
+- dependency bindingのsemantic validation、target existence、ordering、duplicatesは後続AR01 unitが所有する
 - artifact URL、exact-byte integrity、artifact closureは後続unitが所有する
 - SC01 migrationはAR01-I後のintegration unitが所有する
 - このunitはcanonicality、provenance acceptance、trust admission、referent closure、artifact existence、exact-byte integrityを表さない

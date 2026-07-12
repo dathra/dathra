@@ -130,7 +130,7 @@ describe("artifact contract type domains", () => {
     expect(Object.keys(artifactContractApi)).toEqual([]);
   });
 
-  it("exports exactly four package-local types from their model modules", () => {
+  it("exports exactly five package-local types from their model modules", () => {
     const relativePath = "./implementation.ts";
     const source = readFileSync(new URL(relativePath, import.meta.url), "utf8");
     const sourceFile = createSourceFile(
@@ -203,10 +203,20 @@ describe("artifact contract type domains", () => {
           },
         ],
       },
+      {
+        isTypeOnly: true,
+        moduleSpecifier: "./dependencyBindingModel",
+        exports: [
+          {
+            exportedName: "ArtifactDependencyBinding",
+            localName: "ArtifactDependencyBinding",
+          },
+        ],
+      },
     ]);
   });
 
-  it("emits the facade and all three models only as module markers", () => {
+  it("emits the facade and all four models only as module markers", () => {
     expect(emitTypeScriptModule("./implementation.ts").trim()).toBe(
       "export {};",
     );
@@ -215,6 +225,9 @@ describe("artifact contract type domains", () => {
       "export {};",
     );
     expect(emitTypeScriptModule("./entryBindingModel.ts").trim()).toBe(
+      "export {};",
+    );
+    expect(emitTypeScriptModule("./dependencyBindingModel.ts").trim()).toBe(
       "export {};",
     );
   });
@@ -252,6 +265,8 @@ describe("artifact contract type domains", () => {
         expect(exportedNames).not.toContain("ArtifactFinalizationTemplate");
         expect(exportedNames).not.toContain("ArtifactEntryRole");
         expect(exportedNames).not.toContain("ArtifactEntryBinding");
+        expect(exportedNames).not.toContain("ArtifactDependencyBinding");
+        expect(exportedNames).not.toContain("ArtifactDependencyKind");
       }
     } finally {
       rmSync(outputDirectory, { force: true, recursive: true });

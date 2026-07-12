@@ -4,3 +4,4 @@ export type {
   ArtifactEntryRole,
   ArtifactEntryBinding,
 } from "./entryBindingModel";
+export type { ArtifactDependencyBinding } from "./dependencyBindingModel";
