@@ -11,3 +11,4 @@ export type {
   FactEndpoint,
   SemanticRelation,
 } from "./relationModel";
+export type { ExportExecutionContract } from "./exportModel";

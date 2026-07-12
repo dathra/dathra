@@ -63,11 +63,11 @@ type _DefineExecutionContractMustNotExist =
   ExecutionContractApi["defineExecutionContract"];
 
 type _ParseExecutionContractSourceMustNotExist =
-  // @ts-expect-error Structural parsing belongs to SC02A9.
+  // @ts-expect-error Source-level parsing belongs to SC02A12.
   ExecutionContractApi["parseExecutionContractSource"];
 
 type _ValidateExecutionContractSourceMustNotExist =
-  // @ts-expect-error Source closure validation belongs to SC02A11.
+  // @ts-expect-error Source validation remains internal to SC02A12.
   ExecutionContractApi["validateExecutionContractSource"];
 
 type ExpectedSemanticRelationKind =
@@ -521,7 +521,7 @@ describe("source-local semantic relation schema", () => {
 });
 
 describe("relation model publication boundary", () => {
-  it("exports exactly three types from the model and facade", () => {
+  it("exports exactly three relation types within the cumulative facade", () => {
     const { sourceFile } = readTypeScriptModule("./relationModel.ts");
     const { sourceFile: facadeSourceFile } = readTypeScriptModule(
       "./implementation.ts",
@@ -534,7 +534,7 @@ describe("relation model publication boundary", () => {
     );
 
     expect(exportStatements).toHaveLength(1);
-    expect(facadeSourceFile.statements).toHaveLength(5);
+    expect(facadeSourceFile.statements).toHaveLength(6);
     expect(facadeSourceFile.statements.every(isExportDeclaration)).toBe(true);
     expect(readNamedExportSurface("./relationModel.ts")).toEqual([
       {
@@ -568,6 +568,11 @@ describe("relation model publication boundary", () => {
         moduleSpecifier: "./relationModel",
         typeOnly: true,
         names: ["SemanticRelationKind", "FactEndpoint", "SemanticRelation"],
+      },
+      {
+        moduleSpecifier: "./exportModel",
+        typeOnly: true,
+        names: ["ExportExecutionContract"],
       },
     ]);
   });

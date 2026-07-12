@@ -11,6 +11,6 @@ These files are the source of truth for this API. Keep `SPEC.typ`, `implementati
 
 ## Scope
 
-This directory owns the untrusted source-local execution contract schema, canonical normalization, strict parsing, local closure validation, resource budgets, and source digest. Qualified and compiled contracts belong to the later SC02B slice, while namespace qualification, module-signature validation, evidence admission, and compiler diagnostics belong to SC03.
+This directory owns the untrusted source-local execution contract schema, including subject, fact, relation, and export-summary models, plus later canonical normalization, strict parsing, local closure validation, resource budgets, and source digest. Qualified and compiled contracts belong to the later SC02B slice, while namespace qualification, module-signature validation, evidence admission, and compiler diagnostics belong to SC03.
 
-`implementation.ts` is the package-local facade. Keep subject, fact, relation, budget accounting, canonical parsing, semantic parsing, and source closure concerns in focused internal modules.
+`implementation.ts` is the package-local facade. Keep subject, fact, relation, export summary, budget accounting, canonical parsing, semantic parsing, and source closure concerns in focused internal modules.

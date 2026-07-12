@@ -2,6 +2,8 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
   // @ts-expect-error AS01 owns shared-root publication.
+  type ExportExecutionContract as _RootExportExecutionContractMustNotExist,
+  // @ts-expect-error AS01 owns shared-root publication.
   type FactEndpoint as _RootFactEndpointMustNotExist,
   // @ts-expect-error AS01 owns shared-root publication.
   type SemanticPathSegment as _RootSemanticPathSegmentMustNotExist,
@@ -27,14 +29,13 @@ import {
   type FactEndpoint,
   // @ts-expect-error Registry source aggregation belongs to a later review unit.
   type ExecutionContractRegistrySources as _RegistrySourcesMustNotExist,
+  type ExportExecutionContract,
   type SemanticFact,
   type SemanticFactKind,
   type SemanticPathSegment,
   type SemanticRelation,
   type SemanticRelationKind,
   type SemanticSubject,
-  // @ts-expect-error Export summaries belong to a later review unit.
-  type ExportExecutionContract as _ExportContractMustNotExist,
   // @ts-expect-error The aggregate source contract belongs to a later review unit.
   type ExecutionContractSource as _SourceMustNotExist,
   // @ts-expect-error The source envelope belongs to a later review unit.
@@ -62,11 +63,11 @@ type _DefineExecutionContractMustNotExist =
   ExecutionContractApi["defineExecutionContract"];
 
 type _ParseExecutionContractSourceMustNotExist =
-  // @ts-expect-error Structural parsing belongs to SC02A9.
+  // @ts-expect-error Source-level parsing belongs to SC02A12.
   ExecutionContractApi["parseExecutionContractSource"];
 
 type _ValidateExecutionContractSourceMustNotExist =
-  // @ts-expect-error Source closure validation belongs to SC02A11.
+  // @ts-expect-error Source validation remains internal to SC02A12.
   ExecutionContractApi["validateExecutionContractSource"];
 
 const ERROR_CODES = {
@@ -382,7 +383,7 @@ describe("ExecutionContractError", () => {
     );
   });
 
-  it("keeps the subject, fact, and relation models type-only at the package-local facade", () => {
+  it("keeps the subject, fact, relation, and export models type-only at the package-local facade", () => {
     expectTypeOf<SemanticFact["kind"]>().toEqualTypeOf<SemanticFactKind>();
     expectTypeOf<FactEndpoint<"read">>().toEqualTypeOf<{
       readonly factId: FactId;
@@ -394,6 +395,12 @@ describe("ExecutionContractError", () => {
     expectTypeOf<TransferBinding["kind"]>().toEqualTypeOf<
       "none" | "snapshot" | "codec" | "reference" | "subscription" | "remote"
     >();
+    expectTypeOf<ExportExecutionContract["callable"]>().toEqualTypeOf<
+      "none" | "call" | "construct" | "call-and-construct"
+    >();
+    expectTypeOf<
+      ExportExecutionContract["transfer"]
+    >().toEqualTypeOf<TransferBinding>();
     expect(Object.keys(executionContractApi).sort()).toEqual([
       "ExecutionContractError",
       "factId",

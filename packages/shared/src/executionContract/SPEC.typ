@@ -1,4 +1,4 @@
-= source execution contract identity, subject, fact, and relation model
+= source execution contract identity, subject, fact, relation, and export model
 
 #import "/SPEC/functions.typ": *
 #import "/SPEC/settings.typ": *
@@ -15,6 +15,8 @@ SC02A2はsemantic subjectとpath segmentをtype-only modelとして追加する�
 SC02A3はsemantic factとtransfer bindingをtype-only modelとして追加する。
 
 SC02A4はsemantic relationをtype-only modelとして追加する。
+
+SC02A5はmodule exportごとのexecution summaryをtype-only modelとして追加する。
 
 source envelope、unknown input parser、budget、closure、digestは後続の独立review unitが追加する。
 
@@ -86,6 +88,22 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
     - endpointが参照するfactの実在、tagとの一致、subject constraintは後続SC02A local closureが検証する
     - ownership cardinality、ownership DAG、ordering ordinal semanticsは後続SC02A local closureが検証する
     - SC02A4はruntime value、parser、validator、closureを追加しない
+  ],
+)
+
+#adr(
+  header("export summaryの構造claimをclosure validationから分離する", Status.Accepted, "2026-07-12"),
+  [
+    module exportのsummary型へfact、registry、callable、transferの整合性検証まで埋め込むと、source envelopeとindexが存在しない段階では単独で検証できず、構造claimとvalidation済みcontractの境界も曖昧になる。
+  ],
+  [
+    `ExportExecutionContract`はfact ID、callable form、receiver brand、value domain、transfer bindingだけを保持する未信頼なsource-local structural claimとする。
+    factとregistryの実在、direct fieldとの整合、canonical order、export closureは後続SC02A operationだけが検証する。
+  ],
+  [
+    - SC02A5はparser、validator、source envelope、registry aggregate、digestを追加しない
+    - qualified、compiled、accepted contractは後続sliceだけが定義する
+    - typeへの適合だけではmodule exportの実在、trust acceptance、client exclusionを証明しない
   ],
 )
 
@@ -360,7 +378,7 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
     - read、write、effect、ownership、orderingはbehavioral relationやmemberを表すfieldを持たない
     - `SemanticFactKind`、`TransferBinding`、`SemanticFact`だけをfact modelからpackage-local facadeへtype-only exportする
     - individual fact interfaceとhelper aliasをpackage-local facadeへexportしない
-    - export summary、registry aggregate、source envelope、parser、validator、closure、digest、qualified、compiled、accepted APIを追加しない
+    - registry aggregate、source envelope、parser、validator、closure、digest、qualified、compiled、accepted APIを追加しない
     - package rootへ公開せず、shared rootへの公開はAS01が所有し、facadeのruntime valueは`ExecutionContractError`と`factId`だけとする
   ],
 )
@@ -460,24 +478,77 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
   ],
 )
 
+#interface_spec(
+  name: "Source-local export execution summary",
+  summary: [
+    module export一件に紐づくfact参照とdirect execution summaryを一つのclosed structural claimで表す。
+  ],
+  format: [
+    ```typescript
+    interface ExportExecutionContract {
+      readonly factIds: readonly FactId[]
+      readonly callable: "none" | "call" | "construct" | "call-and-construct"
+      readonly receiverBrandId: RegistryId<"brand"> | null
+      readonly valueDomainId: RegistryId<"value-domain">
+      readonly transfer: TransferBinding
+    }
+    ```
+  ],
+  constraints: [
+    - exactに`factIds`、`callable`、`receiverBrandId`、`valueDomainId`、`transfer`の5 fieldをrequiredかつreadonlyで持つ
+    - `factIds`はsource-local `FactId`のreadonly sequenceであり、このsliceではfactの実在、export subjectとの一致、set uniqueness、canonical orderを証明しない
+    - `callable`は`none`、`call`、`construct`、`call-and-construct`のclosed unionとする
+    - `receiverBrandId`は`RegistryId<"brand"> | null`、`valueDomainId`はrequiredな`RegistryId<"value-domain">`とし、registry kindを相互代入できない
+    - `transfer`はSC02A3の`TransferBinding`をそのまま保持する
+    - callable、receiver brand、transfer factの整合性とregistry closureは後続SC02A source closureが検証する
+    - `ExportExecutionContract`だけをexport modelからpackage-local facadeへtype-only exportし、callable helper aliasを公開しない
+    - parser、validator、normalizer、source envelope、registry aggregate、digest、qualified、compiled、accepted APIを追加しない
+    - package rootへ公開せず、shared rootへの公開はAS01が所有し、facadeへruntime valueまたはruntime import edgeを追加しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
-  given: "non-emptyなvalid Unicode stringをfactIdへ渡す",
-  when: "source-local FactIdを作る",
-  then: "normalizationせず同じcode-unit sequenceを返す",
+  name: "source-local FactIdを作成する",
+  summary: "valid Unicode stringをnormalizationせずsource-local identityへ変換する。",
+  preconditions: [
+    - inputはnon-emptyなvalid Unicode stringである
+  ],
+  steps: [
+    - inputを`factId`へ渡す
+  ],
+  postconditions: [
+    - 同じcode-unit sequenceを持つ`FactId`を返す
+  ],
 )
 
 #behavior_spec(
-  given: "empty string、lone surrogate、または非string runtime valueをfactIdへ渡す",
-  when: "source-local FactIdを作る",
-  then: "空pathを持つinvalid-fact-idのExecutionContractErrorを送出する",
+  name: "invalidなFactId inputを拒否する",
+  summary: "source-local identityとして表現できないruntime inputを診断する。",
+  preconditions: [
+    - inputはempty string、lone surrogate、または非string runtime valueである
+  ],
+  steps: [
+    - inputを`factId`へ渡す
+  ],
+  errors: [
+    - 空pathと`invalid-fact-id` codeを持つ`ExecutionContractError`を送出する
+  ],
 )
 
 #behavior_spec(
-  given: "mutable pathを使ってExecutionContractErrorを作成する",
-  when: "callerが元のpath、error.path、error fieldを書き換える",
-  then: "error codeとpath snapshotは変化しない",
+  name: "ExecutionContractErrorの診断snapshotを保持する",
+  summary: "callerの後続mutationからerror codeとpathを隔離する。",
+  preconditions: [
+    - mutable pathを使って`ExecutionContractError`を作成している
+  ],
+  steps: [
+    - callerが元のpath、`error.path`、error fieldの書き換えを試みる
+  ],
+  postconditions: [
+    - error codeとpath snapshotは変化しない
+  ],
 )
 
 == 機能仕様
@@ -543,5 +614,20 @@ source envelope、unknown input parser、budget、closure、digestは後続の�
     - relation modelと実ファイルのtype-only consumerがruntime codeを生成しないことを検査する
     - package-local facadeがrelation modelから3 typeだけを公開し、runtime valueまたはruntime import edgeを追加しないことを検査する
     - package rootへ公開されず、individual relation、parser、validator、closure、source、order-semantic APIが存在しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Source-local export summary schema",
+  summary: [
+    後続のstrict parserとsource closureが扱うmodule export summaryのtype-only schemaを提供する。
+  ],
+  test_cases: [
+    - 4 callable literalと5 required readonly fieldのexact keyおよびproperty typeを双方向fixtureで検査する
+    - missing、extra、optional、mutable、widened fieldを実装定数に依存しないnon-vacuous negative fixtureで拒否する
+    - brandとvalue-domainの`RegistryId`を相互代入できないことを検査する
+    - export model、package-local facade、type-only consumerがruntime import edgeを生成しないことを検査する
+    - package-local facadeがexport modelから`ExportExecutionContract`だけを公開し、helper aliasまたはruntime valueを追加しないことを検査する
+    - package rootのsourceとbuild declarationへ公開されず、parser、validator、source envelope、registry aggregate、digest、qualified、compiled、accepted APIが存在しないことを検査する
   ],
 )

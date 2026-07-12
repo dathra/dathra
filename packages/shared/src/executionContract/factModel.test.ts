@@ -644,7 +644,7 @@ describe("source-local transfer binding schema", () => {
 });
 
 describe("fact model publication boundary", () => {
-  it("exports exactly three types from the model and facade", () => {
+  it("exports exactly three fact types within the cumulative facade", () => {
     const { sourceFile } = readTypeScriptModule("./factModel.ts");
     const { sourceFile: facadeSourceFile } = readTypeScriptModule(
       "./implementation.ts",
@@ -657,7 +657,7 @@ describe("fact model publication boundary", () => {
     );
 
     expect(exportStatements).toHaveLength(1);
-    expect(facadeSourceFile.statements).toHaveLength(5);
+    expect(facadeSourceFile.statements).toHaveLength(6);
     expect(facadeSourceFile.statements.every(isExportDeclaration)).toBe(true);
     expect(readNamedExportSurface("./factModel.ts")).toEqual([
       {
@@ -691,6 +691,11 @@ describe("fact model publication boundary", () => {
         moduleSpecifier: "./relationModel",
         typeOnly: true,
         names: ["SemanticRelationKind", "FactEndpoint", "SemanticRelation"],
+      },
+      {
+        moduleSpecifier: "./exportModel",
+        typeOnly: true,
+        names: ["ExportExecutionContract"],
       },
     ]);
 
