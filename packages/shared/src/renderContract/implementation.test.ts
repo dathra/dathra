@@ -6,8 +6,10 @@ import { join } from "node:path";
 import {
   canHaveModifiers,
   createSourceFile,
+  forEachChild,
   getModifiers,
   getJSDocCommentsAndTags,
+  isCallExpression,
   isClassDeclaration,
   isExportDeclaration,
   isFunctionDeclaration,
@@ -22,6 +24,7 @@ import {
   ScriptTarget,
   SyntaxKind,
   transpileModule,
+  type Node,
   type Statement,
 } from "typescript";
 import {
@@ -62,6 +65,7 @@ import * as renderContractApi from "./implementation";
 import {
   RenderDefinitionError,
   createRenderDefinition,
+  parseRenderDefinition,
   type RenderBodyReferenceClaim,
   type RenderDefinition,
   type RenderDefinitionErrorCode,
@@ -124,6 +128,11 @@ type ExpectedInput = {
   readonly orderedBodyPlanId: Sha256Digest;
   readonly exposureContractId: Sha256Digest;
 };
+
+interface ParserValue {
+  readonly id: Sha256Digest;
+  readonly preimage: RenderDefinitionPreimage;
+}
 
 type ExpectedErrorCode =
   | "invalid-closed-record"
@@ -191,6 +200,10 @@ function expectedPreimage(): RenderDefinitionPreimage {
   };
 }
 
+function parserValue(id: Sha256Digest): ParserValue {
+  return { id, preimage: expectedPreimage() };
+}
+
 function deferred<Value>(): {
   readonly promise: Promise<Value>;
   readonly resolve: (value: Value) => void;
@@ -219,7 +232,9 @@ async function caughtOperationError(
   throw new TypeError("Expected RenderDefinitionError");
 }
 
-function isDefinitionRoot(value: unknown): boolean {
+function isDefinitionRoot(
+  value: unknown,
+): value is { readonly id: unknown; readonly preimage: unknown } {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -326,6 +341,24 @@ function hasExportModifier(statement: Statement): boolean {
   );
 }
 
+function countIdentifierCalls(node: Node, name: string): number {
+  let count = 0;
+
+  function visit(current: Node): void {
+    if (
+      isCallExpression(current) &&
+      isIdentifier(current.expression) &&
+      current.expression.text === name
+    ) {
+      count += 1;
+    }
+    forEachChild(current, visit);
+  }
+
+  visit(node);
+  return count;
+}
+
 describe("render definition type model", () => {
   it("defines the four reference claims with exact role-specific shapes", () => {
     expectTypeOf<RenderObservationReferenceClaim>().toEqualTypeOf<ExpectedObservationClaim>();
@@ -429,7 +462,7 @@ describe("RenderDefinitionError", () => {
 });
 
 describe("render contract package-local facade", () => {
-  it("exports exactly the cumulative DI3A value and type inventory", () => {
+  it("exports exactly the cumulative DI3B value and type inventory", () => {
     const { sourceFile } = readTypeScriptModule("./implementation.ts");
 
     expect(sourceFile.statements.every(isExportDeclaration)).toBe(true);
@@ -442,7 +475,7 @@ describe("render contract package-local facade", () => {
       {
         moduleSpecifier: "./operations",
         typeOnly: false,
-        names: ["createRenderDefinition"],
+        names: ["createRenderDefinition", "parseRenderDefinition"],
       },
       {
         moduleSpecifier: "./error",
@@ -466,23 +499,24 @@ describe("render contract package-local facade", () => {
     ]);
   });
 
-  it("contains the error and creator, while the parser remains absent", () => {
+  it("contains exactly the error, creator, and parser at runtime", () => {
     expect(Object.keys(renderContractApi)).toEqual([
       "RenderDefinitionError",
       "createRenderDefinition",
+      "parseRenderDefinition",
     ]);
     expect(renderContractApi.RenderDefinitionError).toBe(RenderDefinitionError);
     expect(renderContractApi.createRenderDefinition).toBe(
       createRenderDefinition,
     );
-    expect("parseRenderDefinition" in renderContractApi).toBe(false);
+    expect(renderContractApi.parseRenderDefinition).toBe(parseRenderDefinition);
   });
 
   it("emits only the two intentional runtime facade dependencies", () => {
     expect(emitTypeScriptModule("./implementation.ts").trim()).toBe(
       [
         'export { RenderDefinitionError } from "./error";',
-        'export { createRenderDefinition } from "./operations";',
+        'export { createRenderDefinition, parseRenderDefinition } from "./operations";',
       ].join("\n"),
     );
     expect(emitTypeScriptModule("./model.ts").trim()).toBe("export {};");
@@ -516,14 +550,46 @@ describe("render contract package-local facade", () => {
       "RenderDefinitionErrorCode",
       "RenderDefinitionError",
     ]);
-    expect(operationNames).toEqual(["createRenderDefinition"]);
+    expect(operationNames).toEqual([
+      "createRenderDefinition",
+      "parseRenderDefinition",
+    ]);
     expect(readNamedExportSurface("./operations.ts")).toEqual([
       {
         moduleSpecifier: null,
         typeOnly: false,
-        names: ["createRenderDefinition"],
+        names: ["createRenderDefinition", "parseRenderDefinition"],
       },
     ]);
+  });
+
+  it("uses one private assertion at exactly two evidence-gated call sites", () => {
+    const { source, sourceFile } = readTypeScriptModule("./operations.ts");
+    const functions = new Map(
+      sourceFile.statements
+        .filter(isFunctionDeclaration)
+        .flatMap((declaration) =>
+          declaration.name === undefined
+            ? []
+            : [[declaration.name.text, declaration] as const],
+        ),
+    );
+    const creator = functions.get("createRenderDefinition");
+    const parser = functions.get("parseRenderDefinition");
+
+    expect(creator).toBeDefined();
+    expect(parser).toBeDefined();
+    if (creator === undefined || parser === undefined) {
+      throw new TypeError("Expected both render definition operations");
+    }
+
+    expect(source.match(/as RenderDefinitionId/gu)).toHaveLength(1);
+    expect(countIdentifierCalls(sourceFile, "issueRenderDefinitionId")).toBe(2);
+    expect(countIdentifierCalls(creator, "issueRenderDefinitionId")).toBe(1);
+    expect(countIdentifierCalls(parser, "issueRenderDefinitionId")).toBe(1);
+    expect(source).toMatch(
+      /if \(computedDigest !== unbranded\.id\) \{[\s\S]*?throw new RenderDefinitionError\([\s\S]*?\);[\s\S]*?\}[\s\S]*?const id = issueRenderDefinitionId\(computedDigest\);/u,
+    );
   });
 });
 
@@ -725,7 +791,281 @@ describe("createRenderDefinition", () => {
   });
 });
 
-describe("render creator publication boundary", () => {
+describe("parseRenderDefinition", () => {
+  it("has the exact package-local parser signature", () => {
+    expectTypeOf(parseRenderDefinition).toEqualTypeOf<
+      (value: unknown) => Promise<RenderDefinition>
+    >();
+  });
+
+  it("digests the exact fresh preimage once and returns its computed ID", async () => {
+    const inputPreimage = expectedPreimage();
+    const computedDigest = await digestCanonicalJson(inputPreimage);
+    canonicalIdentityMock.digestCanonicalJson.mockClear();
+    let capturedPreimage: unknown;
+    canonicalIdentityMock.digestCanonicalJson.mockImplementationOnce(
+      (preimage: unknown) => {
+        capturedPreimage = preimage;
+        return Promise.resolve(computedDigest);
+      },
+    );
+    const input: ParserValue = { id: computedDigest, preimage: inputPreimage };
+
+    const definition = await parseRenderDefinition(input);
+
+    expect(canonicalIdentityMock.digestCanonicalJson).toHaveBeenCalledOnce();
+    expect(canonicalIdentityMock.digestCanonicalJson).toHaveBeenCalledWith(
+      capturedPreimage,
+    );
+    expect(capturedPreimage).toBe(definition.preimage);
+    expect(definition.id).toBe(computedDigest);
+    expect(definition).toEqual(input);
+    expect(definition).not.toBe(input);
+    expect(definition.preimage).not.toBe(input.preimage);
+    expect(definition.preimage.observationContract).not.toBe(
+      input.preimage.observationContract,
+    );
+    expect(definition.preimage.responseContributions).not.toBe(
+      input.preimage.responseContributions,
+    );
+    expect(definition.preimage.orderedBodyPlan).not.toBe(
+      input.preimage.orderedBodyPlan,
+    );
+    expect(definition.preimage.exposure).not.toBe(input.preimage.exposure);
+  });
+
+  it("finishes descriptor and scalar failure before starting crypto", async () => {
+    let cryptoReads = 0;
+    vi.stubGlobal(
+      "crypto",
+      new Proxy(
+        {},
+        {
+          get() {
+            cryptoReads += 1;
+            throw new TypeError("Validation must finish before WebCrypto");
+          },
+        },
+      ),
+    );
+
+    const structural = parserValue(DEFERRED_ID);
+    Object.defineProperty(
+      structural.preimage.observationContract,
+      "claimedId",
+      {
+        enumerable: true,
+        get() {
+          throw new TypeError("Parser must not invoke accessors");
+        },
+      },
+    );
+    await expect(parseRenderDefinition(structural)).rejects.toMatchObject({
+      code: "invalid-closed-record",
+      path: ["preimage", "observationContract"],
+    });
+
+    const scalar = parserValue(DEFERRED_ID);
+    Reflect.set(scalar.preimage.observationContract, "claimedId", "malformed");
+    await expect(parseRenderDefinition(scalar)).rejects.toMatchObject({
+      code: "invalid-reference",
+      path: ["preimage", "observationContract", "claimedId"],
+    });
+
+    expect(canonicalIdentityMock.digestCanonicalJson).not.toHaveBeenCalled();
+    expect(cryptoReads).toBe(0);
+  });
+
+  it("captures before a deferred digest and ignores caller mutation", async () => {
+    const digestResult = deferred<Sha256Digest>();
+    let capturedPreimage: unknown;
+    canonicalIdentityMock.digestCanonicalJson.mockImplementationOnce(
+      (preimage: unknown) => {
+        capturedPreimage = preimage;
+        return digestResult.promise;
+      },
+    );
+    const input = parserValue(DEFERRED_ID);
+
+    try {
+      const definitionPromise = parseRenderDefinition(input);
+      Reflect.set(input, "id", DIGEST_A);
+      Reflect.set(input.preimage, "schema", "changed");
+      Reflect.set(input.preimage.observationContract, "claimedId", DIGEST_D);
+
+      expect(canonicalIdentityMock.digestCanonicalJson).toHaveBeenCalledOnce();
+      expect(capturedPreimage).toEqual(expectedPreimage());
+      expect(Object.isFrozen(capturedPreimage)).toBe(true);
+      digestResult.resolve(DEFERRED_ID);
+
+      const definition = await definitionPromise;
+      expect(definition.id).toBe(DEFERRED_ID);
+      expect(definition.preimage).toBe(capturedPreimage);
+      expect(definition.preimage).toEqual(expectedPreimage());
+    } finally {
+      digestResult.resolve(DEFERRED_ID);
+    }
+  });
+
+  it("rejects a lexical ID mismatch without issuing a returned root", async () => {
+    canonicalIdentityMock.digestCanonicalJson
+      .mockResolvedValueOnce(DIGEST_B)
+      .mockResolvedValueOnce(DIGEST_B);
+    const freezeSpy = vi.spyOn(Object, "freeze");
+
+    try {
+      const firstError = await caughtOperationError(
+        parseRenderDefinition(parserValue(DIGEST_A)),
+      );
+      const secondError = await caughtOperationError(
+        parseRenderDefinition(parserValue(DIGEST_A)),
+      );
+      const frozenDefinitionRoots = freezeSpy.mock.calls
+        .map(([value]) => value)
+        .filter(isDefinitionRoot);
+
+      expect(firstError).not.toBe(secondError);
+      expect(firstError.path).not.toBe(secondError.path);
+      for (const error of [firstError, secondError]) {
+        expect(error.code).toBe("digest-mismatch");
+        expect(error.path).toEqual(["id"]);
+        expect(Object.isFrozen(error.path)).toBe(true);
+        expect(Object.isFrozen(error)).toBe(true);
+      }
+      expect(frozenDefinitionRoots).toHaveLength(2);
+      expect(canonicalIdentityMock.digestCanonicalJson).toHaveBeenCalledTimes(
+        2,
+      );
+    } finally {
+      freezeSpy.mockRestore();
+    }
+  });
+
+  it("maps a missing WebCrypto host to fresh root-path errors", async () => {
+    vi.stubGlobal("crypto", undefined);
+
+    const firstError = await caughtOperationError(
+      parseRenderDefinition(parserValue(DEFERRED_ID)),
+    );
+    const secondError = await caughtOperationError(
+      parseRenderDefinition(parserValue(DEFERRED_ID)),
+    );
+
+    expect(firstError).not.toBe(secondError);
+    expect(firstError.path).not.toBe(secondError.path);
+    for (const error of [firstError, secondError]) {
+      expect(error).not.toBeInstanceOf(CanonicalIdentityError);
+      expect(error.code).toBe("crypto-unavailable");
+      expect(error.path).toEqual([]);
+      expect(Object.isFrozen(error.path)).toBe(true);
+      expect(Object.isFrozen(error)).toBe(true);
+    }
+  });
+
+  it("prefixes other canonical failures with the parser preimage path", async () => {
+    const canonicalError = new CanonicalIdentityError(
+      "invalid-unicode",
+      ["observationContract", "claimedId"],
+      "Invalid parsed canonical input",
+    );
+    canonicalIdentityMock.digestCanonicalJson.mockRejectedValueOnce(
+      canonicalError,
+    );
+
+    const error = await caughtOperationError(
+      parseRenderDefinition(parserValue(DEFERRED_ID)),
+    );
+
+    expect(error).not.toBe(canonicalError);
+    expect(error).not.toBeInstanceOf(CanonicalIdentityError);
+    expect(error.code).toBe("invalid-field");
+    expect(error.path).toEqual([
+      "preimage",
+      "observationContract",
+      "claimedId",
+    ]);
+    expect(error.path).not.toBe(canonicalError.path);
+    expect(Object.isFrozen(error.path)).toBe(true);
+    expect(Object.isFrozen(error)).toBe(true);
+  });
+
+  it("rethrows failures outside the canonical identity domain", async () => {
+    const unexpectedError = new Error("Unexpected parser digest host failure");
+    canonicalIdentityMock.digestCanonicalJson.mockRejectedValueOnce(
+      unexpectedError,
+    );
+
+    await expect(parseRenderDefinition(parserValue(DEFERRED_ID))).rejects.toBe(
+      unexpectedError,
+    );
+  });
+
+  it("freezes only a fresh returned root after reusing the DI2B preimage", async () => {
+    let capturedPreimage: unknown;
+    canonicalIdentityMock.digestCanonicalJson.mockImplementationOnce(
+      (preimage: unknown) => {
+        capturedPreimage = preimage;
+        return Promise.resolve(DEFERRED_ID);
+      },
+    );
+    const freezeSpy = vi.spyOn(Object, "freeze");
+
+    try {
+      const definition = await parseRenderDefinition(parserValue(DEFERRED_ID));
+      const frozenDefinitionRoots = freezeSpy.mock.calls
+        .map(([value]) => value)
+        .filter(isDefinitionRoot);
+
+      expect(definition.preimage).toBe(capturedPreimage);
+      expect(frozenDefinitionRoots).toHaveLength(2);
+      expect(frozenDefinitionRoots[0]).not.toBe(definition);
+      expect(frozenDefinitionRoots[0]).toEqual(definition);
+      expect(frozenDefinitionRoots[0]?.preimage).toBe(definition.preimage);
+      expect(frozenDefinitionRoots[1]).toBe(definition);
+      expect(
+        freezeSpy.mock.calls.filter(([value]) => value === definition.preimage),
+      ).toHaveLength(1);
+      expect(
+        [
+          definition,
+          definition.preimage,
+          definition.preimage.observationContract,
+          definition.preimage.responseContributions,
+          definition.preimage.orderedBodyPlan,
+          definition.preimage.exposure,
+        ].map(Object.isFrozen),
+      ).not.toContain(false);
+    } finally {
+      freezeSpy.mockRestore();
+    }
+  });
+
+  it("shares no record identity across equal calls", async () => {
+    const computedDigest = await digestCanonicalJson(expectedPreimage());
+    canonicalIdentityMock.digestCanonicalJson.mockClear();
+    const input = parserValue(computedDigest);
+
+    const first = await parseRenderDefinition(input);
+    const second = await parseRenderDefinition(input);
+
+    expect(first).toEqual(second);
+    expect(first).not.toBe(second);
+    expect(first.preimage).not.toBe(second.preimage);
+    expect(first.preimage.observationContract).not.toBe(
+      second.preimage.observationContract,
+    );
+    expect(first.preimage.responseContributions).not.toBe(
+      second.preimage.responseContributions,
+    );
+    expect(first.preimage.orderedBodyPlan).not.toBe(
+      second.preimage.orderedBodyPlan,
+    );
+    expect(first.preimage.exposure).not.toBe(second.preimage.exposure);
+    expect(canonicalIdentityMock.digestCanonicalJson).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("render operation publication boundary", () => {
   it("keeps creator and parser out of the shared root source and runtime", () => {
     const rootSource = readFileSync(
       new URL("../index.ts", import.meta.url),
@@ -741,7 +1081,7 @@ describe("render creator publication boundary", () => {
   it("keeps creator and parser out of root declarations and runtime bundles", () => {
     const packageRoot = new URL("../../", import.meta.url);
     const outputDirectory = mkdtempSync(
-      join(tmpdir(), "dathra-render-contract-di3a-root-"),
+      join(tmpdir(), "dathra-render-contract-di3b-root-"),
     );
 
     try {
@@ -775,7 +1115,7 @@ describe("render creator publication boundary", () => {
   it("emits a browser-compatible opt-in facade without activation code", () => {
     const packageRoot = new URL("../../", import.meta.url);
     const outputDirectory = mkdtempSync(
-      join(tmpdir(), "dathra-render-contract-di3a-browser-"),
+      join(tmpdir(), "dathra-render-contract-di3b-browser-"),
     );
 
     try {
@@ -817,7 +1157,7 @@ describe("render creator publication boundary", () => {
       expect(browserEmit).not.toMatch(
         /\b(?:window|document|customElements|addEventListener)\b/u,
       );
-      expect(browserEmit).not.toContain("parseRenderDefinition");
+      expect(browserEmit).toContain("parseRenderDefinition");
       expect(browserEmit).not.toContain("RenderEnvelope");
     } finally {
       rmSync(outputDirectory, { force: true, recursive: true });

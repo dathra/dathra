@@ -3,16 +3,25 @@ import {
   digestCanonicalJson,
   type Sha256Digest,
 } from "../canonicalIdentity/implementation";
-import { snapshotRenderDefinitionCreatorDescriptors } from "./descriptorSnapshot";
+import {
+  snapshotRenderDefinitionCreatorDescriptors,
+  snapshotRenderDefinitionParserDescriptors,
+} from "./descriptorSnapshot";
 import { RenderDefinitionError } from "./error";
 import type {
   RenderDefinition,
   RenderDefinitionId,
   RenderDefinitionInput,
 } from "./model";
-import { validateRenderDefinitionCreatorSnapshot } from "./validatedSnapshot";
+import {
+  validateRenderDefinitionCreatorSnapshot,
+  validateRenderDefinitionParserSnapshot,
+} from "./validatedSnapshot";
 
-function throwRenderDefinitionIdentityError(error: unknown): never {
+function throwRenderDefinitionIdentityError(
+  error: unknown,
+  pathPrefix: readonly (string | number)[],
+): never {
   if (!(error instanceof CanonicalIdentityError)) {
     throw error;
   }
@@ -27,9 +36,13 @@ function throwRenderDefinitionIdentityError(error: unknown): never {
 
   throw new RenderDefinitionError(
     "invalid-field",
-    error.path,
+    [...pathPrefix, ...error.path],
     "[dathra] Render definition preimage is not canonical",
   );
+}
+
+function issueRenderDefinitionId(digest: Sha256Digest): RenderDefinitionId {
+  return digest as RenderDefinitionId;
 }
 
 /** Creates an immutable render definition with its canonical content identity. */
@@ -43,11 +56,37 @@ async function createRenderDefinition(
   try {
     digest = await digestCanonicalJson(preimage);
   } catch (error: unknown) {
-    throwRenderDefinitionIdentityError(error);
+    throwRenderDefinitionIdentityError(error, []);
   }
 
-  const id = digest as RenderDefinitionId;
+  const id = issueRenderDefinitionId(digest);
   return Object.freeze({ id, preimage });
 }
 
-export { createRenderDefinition };
+/** Parses an immutable render definition after verifying its content identity. */
+async function parseRenderDefinition(
+  value: unknown,
+): Promise<RenderDefinition> {
+  const snapshot = snapshotRenderDefinitionParserDescriptors(value);
+  const unbranded = validateRenderDefinitionParserSnapshot(snapshot);
+
+  let computedDigest: Sha256Digest;
+  try {
+    computedDigest = await digestCanonicalJson(unbranded.preimage);
+  } catch (error: unknown) {
+    throwRenderDefinitionIdentityError(error, ["preimage"]);
+  }
+
+  if (computedDigest !== unbranded.id) {
+    throw new RenderDefinitionError(
+      "digest-mismatch",
+      ["id"],
+      "[dathra] Render definition ID does not match its canonical preimage",
+    );
+  }
+
+  const id = issueRenderDefinitionId(computedDigest);
+  return Object.freeze({ id, preimage: unbranded.preimage });
+}
+
+export { createRenderDefinition, parseRenderDefinition };

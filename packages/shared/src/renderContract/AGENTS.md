@@ -31,8 +31,13 @@ maps canonical identity failures into the domain error, and issues the private
 ID brand only after digest success. It reuses the DI2B-frozen preimage and
 freezes only a fresh returned root.
 
-Do not add `parseRenderDefinition`, wrapper ID equality, digest mismatch,
-referent closure, accepted evidence, generation, envelope, authority, shared
-root publication, hard-limit options, ID helpers, or automatic browser/runtime
-placement in DI3A. DI2A and DI2B remain package-internal and are not facade
-exports.
+RC01-DI3B owns the package-local `parseRenderDefinition` facade value. It
+synchronously composes the parser sides of DI2A and DI2B, hashes the exact
+validated preimage once, compares the wrapper ID, and issues the private ID
+brand and returned root only after equality succeeds. It reuses the DI2B-frozen
+preimage without returning the unbranded wrapper root.
+
+Do not add referent closure, accepted evidence, generation, envelope,
+publication, authority, shared-root exports, hard-limit options, generic ID
+helpers, or automatic browser/runtime placement in DI3B. DI2A and DI2B remain
+package-internal and are not facade exports.

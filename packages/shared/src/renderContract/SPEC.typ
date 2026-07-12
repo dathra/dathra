@@ -12,7 +12,8 @@ DI1はnominal ID、role-specific claim、definition record、creator input、dom
 DI2Aはcreator inputとparser inputのdescriptor occurrenceを同期的にsnapshotするpackage-internal APIを提供する。
 DI2Bはそのsnapshotへscalar validationを適用し、fresh preimageとunbranded wrapperを構築する。
 DI3Aはcreator snapshotからcontent identityを発行し、freshなreturned definition rootを構築するpackage-local creatorを提供する。
-verified parser、wrapper ID equality、digest mismatch、shared package rootへの公開は後続sliceが所有する。
+DI3Bはparser snapshotのpreimage content identityとwrapper IDの一致を検証し、freshなreturned definition rootを構築するpackage-local parserを提供する。
+shared package rootへの公開は後続sliceが所有する。
 
 == 設計判断
 
@@ -166,6 +167,31 @@ verified parser、wrapper ID equality、digest mismatch、shared package rootへ
     1. *digest開始前にbrandを付与する*: failed operationにもidentity authorityを与えるため採用しない
     2. *digest成功後にpreimageをcloneまたはdeep freezeする*: DI2B validated outputのidentityとfreeze責務を破るため採用しない
     3. *generic ID castまたはguardを公開する*: preimage検証なしでbrandを発行できるため採用しない
+  ],
+)
+
+#adr(
+  header("verified parserのbrand authorityをself digest一致後に限定する", Status.Accepted, "2026-07-13"),
+  [
+    lexicalに妥当なwrapper `id`だけへ`RenderDefinitionId` brandを付与すると、closed preimageとのcontent identity関係を証明できない。
+    また、DI2Bのunbranded wrapperをそのまま返すと、digest不一致でもreturned definition rootを発行するか、validation ownerとidentity authorityの境界を曖昧にする。
+  ],
+  [
+    DI3B parserはDI2A descriptor snapshotとDI2B scalar validationを最初の非同期境界より前に同期実行し、unbranded wrapperのexact same preimageへ`digestCanonicalJson`をexactly once開始する。
+    canonical identity failureをparser wrapper rootに相対なdomain errorへ変換し、computed digestとlexically validなwrapper `id`が一致した後だけ、computed digestをcreatorと共有するprivate assertion一点で`RenderDefinitionId`として発行する。
+    DI2B preimageを再構築または再freezeせず、その同じidentityを持つfreshな`{ id, preimage }` rootだけをfreezeし、DI2B unbranded wrapper rootは返さない。
+  ],
+  [
+    - descriptorまたはscalar failureはWebCrypto、brand、returned rootを開始しない
+    - canonical identity failureまたはdigest mismatchはbrandとreturned rootを発行しない
+    - caller mutationと非同期digestの競合をDI2A/DI2Bの同期captureで遮断できる
+    - parser outputはclosed preimageとself digest一致だけを証明し、referentの実在、trust、acceptanceを証明しない
+  ],
+  alternatives: [
+    1. *wrapper IDを字句検査後にbrand化する*: preimageとの一致前にidentity authorityを発行するため採用しない
+    2. *computed digestではなくwrapper IDをbrand化する*: authorityの根拠となる計算結果との対応をprivate boundaryで表せないため採用しない
+    3. *DI2B unbranded wrapperを返す*: identity authorityを持つfresh rootの発行時点を分離できないため採用しない
+    4. *digest後にpreimageをcloneまたはdeep freezeする*: DI2B validated outputのidentityとfreeze責務を破るため採用しない
   ],
 )
 
@@ -433,6 +459,34 @@ verified parser、wrapper ID equality、digest mismatch、shared package rootへ
   ],
 )
 
+#behavior_spec(
+  name: "Verified render definition parsing",
+  summary: [
+    unknown wrapperを同期captureして検証し、validated preimageのcanonical digestとwrapper IDが一致するfreshなdefinitionを返す。
+  ],
+  steps: [
+    1. `snapshotRenderDefinitionParserDescriptors(value)`を同期的に呼ぶ
+    2. `validateRenderDefinitionParserSnapshot(snapshot)`を同期的に呼び、freshかつdeep-frozenなunbranded wrapperとpreimageを得る
+    3. exact same `unbranded.preimage`へ`digestCanonicalJson(unbranded.preimage)`をexactly once開始する
+    4. `CanonicalIdentityError`が`crypto-unavailable`なら`crypto-unavailable`とroot path、それ以外なら`invalid-field`と`["preimage", ...error.path]`を持つfresh immutable `RenderDefinitionError`へ変換する
+    5. computed digestとlexically validな`unbranded.id`が異なる場合は、`digest-mismatch`と`["id"]`を持つfresh immutable `RenderDefinitionError`を投げる
+    6. equality成功後だけcomputed digestをprivateな境界で`RenderDefinitionId`として発行する
+    7. exact same preimageを持つfreshな`{ id, preimage }` rootを構築し、そのrootだけをfreezeする
+  ],
+  postconditions: [
+    - returned `id`は`digestCanonicalJson(returned.preimage)`のcomputed digestであり、validated wrapper `id`と等しい
+    - inputのstructuralまたはscalar failureではcanonical digestとWebCryptoを開始しない
+    - callerがoperation返却直後にinput rootまたはnested recordを変更してもcaptured preimageと結果は変わらない
+    - input root、preimage、nested claimのobject identityを一つもreturned definitionへ保持しない
+    - `CanonicalIdentityError`をcallerへ公開せず、canonical identityの非`crypto-unavailable` pathへparser wrapperの`preimage` prefixを付ける
+    - digest失敗またはdigest mismatchではbrandとreturned rootを発行しない
+    - equality成功後にrootだけが追加でfreezeされ、preimageとnested claimはDI2Bがfreezeした同一objectである
+    - DI2B unbranded wrapper rootを返さない
+    - 値が等しい二回の呼び出しはroot、preimage、全nested claimのidentityを共有しない
+    - outputはreferentの実在、target schema、referent self digest、role compatibility、trust、acceptanceを証明しない
+  ],
+)
+
 == 機能仕様
 
 #feature_spec(
@@ -574,7 +628,7 @@ verified parser、wrapper ID equality、digest mismatch、shared package rootへ
   ],
   test_cases: [
     - functionのexact signature、英語JSDoc、operations export、facade runtime inventoryを検査する
-    - `parseRenderDefinition`とID guard/parser/castがfacadeに存在しないことを維持する
+    - DI3B cumulative facadeでは`parseRenderDefinition`と共存し、generic ID guard/parser/castが存在しないことを維持する
     - returned IDがexact same preimage identityのcanonical digestと等しく、digest callがexactly onceであることを検査する
     - structural failureとscalar failureがcanonical digestおよびWebCryptoより前に完了することを検査する
     - deferred digest中のcaller mutationがcaptured preimageと結果を変更しないことを検査する
@@ -586,13 +640,42 @@ verified parser、wrapper ID equality、digest mismatch、shared package rootへ
   ],
 )
 
+#feature_spec(
+  name: "RC01-DI3B package-local verified parser identity",
+  summary: [
+    DI2A/DI2B capture済みwrapperのpreimage digestを再計算し、wrapper ID一致後だけcontent identityを発行するparserをpackage-local facadeへ追加する。
+  ],
+  api: [
+    ```typescript
+    function parseRenderDefinition(
+      value: unknown,
+    ): Promise<RenderDefinition>
+
+    export { parseRenderDefinition }
+    ```
+  ],
+  test_cases: [
+    - functionのexact signature、英語JSDoc、operations export、facadeのerror/creator/parser exact runtime inventoryを検査する
+    - valid wrapperでexact same DI2B preimageをexactly once digestし、input record identityを保持せずcomputed digestを返す
+    - descriptor failureとscalar failureがcanonical digestおよびWebCryptoより前に完了することを検査する
+    - deferred digest中のcaller root/nested mutationがcaptured preimageと結果を変更しないことを検査する
+    - lexicalに妥当なwrapper IDのmismatchをfresh immutable `digest-mismatch`と`["id"]`へ変換し、brandとreturned rootを発行しないことを検査する
+    - WebCrypto不在をroot pathへ、その他のcanonical identity failureを`preimage` prefix付きpathへ変換し、canonical error instanceを漏らさないことを検査する
+    - canonical identity domain外のfailureを同じobject identityで再throwすることを検査する
+    - equality成功後だけfresh rootをfreezeし、DI2B preimage identityを再利用してunbranded wrapper rootを返さないことを検査する
+    - 値が等しい反復callでroot、preimage、nested claimのidentityを共有しないことを検査する
+    - package-local facadeだけがparserを公開し、shared root source、ESM/CJS declaration、runtime bundleへ含めないことを検査する
+    - focused browser emitがcreatorとparserを含み、Node builtin、`Buffer`、browser activationまたはruntime placementを含まないことを検査する
+  ],
+)
+
 == 責務境界
 
 - record key cap、property key cap、descriptor preflight、identity cache、schema occurrence projectionはDI2Aが所有する
 - expected string cap、missing/extra classification、schema/role/digest validation、fresh preimageとunbranded wrapper構築はDI2Bが所有する
 - DI2AとDI2Bのhard limitはcaller optionにせず、package-local facadeとshared rootへAPIを追加しない
-- creator、canonical digest、brand発行、freshなreturned `RenderDefinition` rootの構築とfreeze、crypto error変換はDI3Aが所有する
-- verified parser、wrapper ID equality、digest mismatchはDI3Bが所有する
+- creator側のcanonical digest、brand発行、freshなreturned `RenderDefinition` rootの構築とfreeze、crypto error変換はDI3Aが所有する
+- parser側のcanonical digest、wrapper ID equality、digest mismatch、brand発行、freshなreturned `RenderDefinition` rootの構築とfreeze、crypto error変換はDI3Bが所有する
 - referent closureとaccepted definitionは後続RC01 unitが所有する
 - `RenderEnvelope`、generation、publication、writer、authority、runtime conformanceは後続unitが所有する
 - shared package rootまたはrole-scoped subpathへの公開はAS01が所有する
@@ -600,3 +683,4 @@ verified parser、wrapper ID equality、digest mismatch、shared package rootへ
 - DI2Aはscalar semantic validation、domain record構築、canonicalization、content digest、wrapper ID equality、WebCrypto、brand発行、public creator/parser、deep freezeを実行しない
 - DI2Bはvalidated preimageとunbranded wrapperだけをdeep freezeし、caller record、reflection、descriptor、canonicalization、content digest、wrapper ID equality、WebCrypto、brand発行、public creator/parser、returned `RenderDefinition`を扱わない
 - DI3AはDI2A/DI2Bをfacadeへexportせず、parser、wrapper ID equality、digest mismatch、referent closure、accepted evidence、generation、envelope、authority、shared root publicationを扱わない
+- DI3BはDI2A/DI2Bをfacadeへexportせず、referent closure、accepted evidence、generation、envelope、publication、authority、shared root publication、browser activationを扱わない

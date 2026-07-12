@@ -1,5 +1,5 @@
 export { RenderDefinitionError } from "./error";
-export { createRenderDefinition } from "./operations";
+export { createRenderDefinition, parseRenderDefinition } from "./operations";
 export type { RenderDefinitionErrorCode } from "./error";
 export type {
   RenderDefinitionId,

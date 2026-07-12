@@ -17,6 +17,8 @@ import type {
   // @ts-expect-error Render contract publication belongs to AS01.
   createRenderDefinition as _RootCreateDefinitionMustNotExist,
   // @ts-expect-error Render contract publication belongs to AS01.
+  parseRenderDefinition as _RootParseDefinitionMustNotExist,
+  // @ts-expect-error Render contract publication belongs to AS01.
   RenderExposureReferenceClaim as _RootExposureClaimMustNotExist,
   // @ts-expect-error Render contract publication belongs to AS01.
   RenderObservationReferenceClaim as _RootObservationClaimMustNotExist,
@@ -31,8 +33,7 @@ import type {
   isRenderDefinitionId as _IdGuardMustNotExist,
   // @ts-expect-error A lexical parser cannot establish definition identity.
   parseRenderDefinitionId as _IdParserMustNotExist,
-  // @ts-expect-error Verified record parsing belongs to DI3.
-  parseRenderDefinition as _ParseDefinitionMustNotExist,
+  parseRenderDefinition,
   // @ts-expect-error A lexical cast cannot establish definition identity.
   renderDefinitionId as _IdCastMustNotExist,
   RenderBodyReferenceClaim,
@@ -142,8 +143,14 @@ type CreateRenderDefinitionIsExact = ExpectTrue<
     (input: RenderDefinitionInput) => Promise<RenderDefinition>
   >
 >;
+type ParseRenderDefinitionIsExact = ExpectTrue<
+  Equal<
+    typeof parseRenderDefinition,
+    (value: unknown) => Promise<RenderDefinition>
+  >
+>;
 
-/** Compile-time evidence for render-contract type and creator boundaries. */
+/** Compile-time evidence for render-contract type and operation boundaries. */
 type RenderContractTypeFixture = readonly [
   IdIsNotNever,
   IdExtendsDigest,
@@ -156,6 +163,7 @@ type RenderContractTypeFixture = readonly [
   ErrorCodeIsExact,
   ErrorPathIsExact,
   CreateRenderDefinitionIsExact,
+  ParseRenderDefinitionIsExact,
 ];
 
 export type { RenderContractTypeFixture };
