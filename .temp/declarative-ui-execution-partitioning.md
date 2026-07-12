@@ -1,7 +1,7 @@
 # Declarative UI execution partitioning design
 
 作成日: 2026-07-08
-更新日: 2026-07-12
+更新日: 2026-07-13
 状態: 設計判断完了、実装中
 
 この文書は、Dathra の server と client の実行分割に関する設計判断の正本である。
@@ -1706,6 +1706,69 @@ ManifestCoreIntegrityTable は projection definition、request class、joint var
 PartitioningMetricVector は costOrder と同じ長さの decimal value を保持する。
 plan ID は、canonical candidate graph、PartitioningSelectionDomainDescriptor、BundlerProfile、ArtifactIntegrityTable、PartitioningMetricVector を束縛した canonical PlanIdentityPreimage の digest とする。
 plan ID は manifest にだけ記録するため、自己参照は発生しない。
+
+#### deployment identity と artifact address preimage の実装境界
+
+この決定は、`DeploymentIdentityPreimage`と`ArtifactAddressPreimage`を同じtype-only revisionへ含める案をsupersedeする。
+両schemaはpersistent identity inputだが、別々にgreenへでき、共有facadeを逐次更新できるため、AR01-DPを完了してからAR01-Pを開始する。
+
+正準名は`DeploymentIdentityPreimage`と`ArtifactAddressPreimage`である。
+historical review proposalにある`ArtifactAddressPreimageSource`と`ArtifactKind`は現行APIではなく、`kind`は`"javascript" | "wasm" | "data"`のdirect inline unionとする。
+
+AR01-DPは7個のrequired readonly fieldを持つexact typeだけを追加する。
+digest fieldはgenericな`Sha256Digest`を使い、`DeploymentIdentityDigest`、`DeploymentIdentityId`、brand、source aliasを追加しない。
+plain string fieldへのtype適合はsyntax、origin canonicality、namespace、host profile、deployment admissionを証明しない。
+
+AR01-DP以降のownerは次の依存順に分ける。
+
+| revision | owner | downstreamへ渡す証拠 |
+| --- | --- | --- |
+| AR01-DS | hostile unknown inputのclosed descriptor snapshot | fresh scalar snapshot |
+| AR01-DV | deployment fieldとpublic originのsemantic canonical validation | deep-frozen validated preimage |
+| AR01-DD | validated preimage全体のcanonical digest | generic `Sha256Digest` |
+| AF01 | accepted candidateとcandidate-specific planごとのdeployment/artifact finalization | candidate-specific finalized evidence |
+| SL01 | AF01がfinalizeしたresultだけからの最終選択 | selected AF01 evidence |
+| RR01 | selected evidenceのauthenticated runtime conformance | runtime admission result |
+
+AR01-DDはAR01-DVのexact snapshotを`digestCanonicalJson()`へ一回渡し、partial projectionまたはambient deployment stateを混入させない。
+成功はpreimageのcanonical digestだけを証明し、application、release、target environment、host profileの実在またはtrustを証明しない。
+
+AF01は「選択済みcandidate」を入力にしない。
+CN01-Lのaccepted candidateとMP02のcandidate-specific planごとにdeployment identityを束縛してfinalizeし、その完了resultだけをSL01が比較する。
+
+AR01-PはID01と既存AR01-DP、AR01-FT、AR01-EB、AR01-DB、AR01-XBへ依存し、canonical schemaにある10個のrequired readonly fieldだけを追加する。
+`ArtifactAddressPreimageSource`、`ArtifactKind`、source alias、derived digest、derived URL、byte lengthを追加しない。
+readonly collectionはstructural sequenceであり、empty、duplicate、unsorted、dangling、role mismatch、kind/template mismatchをtypeだけでは拒否しない。
+
+AR01-P以降のownerは次の依存順に分ける。
+
+| revision | owner | 明示的に証明しないもの |
+| --- | --- | --- |
+| AR01-PS | hostile unknown inputのclosed structural snapshot | canonical order、referent existence |
+| AR01-PV | base URL input、sort、duplicate、ordinal、kind/template、local consistencyのsemantic validation | target artifact existence、placement、trust |
+| AR01-PI | validated preimage digestとpost-success `ArtifactAddressId` brand発行 | referent closure、final bytes、client inclusion |
+| AR01-PC | target address/exportとartifact dependency graph closure | candidate selection、runtime trust |
+| AR01-URL | normalized base、kind segment、address、extensionからのcanonical URL contract | actual fetch bytes |
+| AR01-IT | address、exact digest、byte lengthを持つintegrity table schemaとvalidation | table production、runtime conformance |
+
+AR01-Pのtype-only fixtureはexact key、modifier、direct inline union、invalid stateの表現可能性、runtime-empty emit、shared-root非公開だけを検査する。
+compile-time fixtureは`declare const targetId: ArtifactAddressId`を使えるが、runtime JCS fixtureのためにprivate brandをassertionで捏造しない。
+
+full-field identity fixtureはAR01-PIが所有する。
+最初にdependencyを持たないlegitimate leaf preimageから`ArtifactAddressId`を発行し、そのIDでnon-empty dependency fixtureを構築する。
+validated snapshot全体が再projectionされずdigestへ渡ること、合法なtyped mutationがdigestを変えること、異なる二要素を持つraw canonical corpusの追加、削除、値、順序がbytesを変えることを別々に検査する。
+unsortedまたはduplicate collectionはAR01-PVがdigest前に拒否し、singleton schema mutationはuntyped validator negative fixtureへ置く。
+
+AR01-URLはcanonical URL derivation contractを、AR01-ITはintegrity schemaとvalidatorを所有する。
+AF01はcandidateごとにactual deployment、artifact graph、canonical URL、final bytes、integrity table、reproduction evidenceを生成する。
+AR01のschema/validatorとAF01のproductionを同じ責務として扱わない。
+
+CN01-Lはcandidate legalityとplacement、SL01はAF01-finalized candidateのselection、RR01はselected AF01 evidenceのruntime conformance、AS01はrootまたはsubpath publicationを所有する。
+RR01はselected deployment preimage/digest、`artifactBaseUrl`、address preimage/digest、canonical URL、actual exact digest、byte length、integrityを相互検証し、不一致時に別candidate、artifact、URLへfallbackしない。
+
+AR01-DPの手書き差分は合計700行、最大test file 300行以下を見込む。
+AR01-Pはruntime JCS matrixをAR01-PIへ移したうえで合計900行、最大test file 350行以下を見込む。
+合計1,500行または一file 1,000行の停止条件へ達した場合は実装を止め、fixture責務を別review revisionへ再分割する。
 
 `dathra.cost/1` は各 metric を次のように数える。
 
@@ -7334,8 +7397,8 @@ endpointIdentity は server deployment、operation qualified ID、transport prof
 descriptor、kind、version、namespace、requirement、dependency semantics の追加、欠落、変更を禁止し、各 symbolic implementation locator を一つの artifact address と export name へ解決する。
 
 environment `E` の registry universe `U_E` は、global finalized catalog のうち `E` の implementation を一件以上持つ owner の exact set とする。
-`RegistryEnvironmentCatalogRecord` は `U_E` と対象 environment の DeploymentIdentityDigest を明示入力として deterministic に射影し、owner metadata、qualified descriptor と digest、`E` の全 requirement、implementation、dependency、利用可能な public protocol binding を保持する。
-build validator は owner set だけでなく全 field と array を global finalized catalog と DeploymentIdentityDigest から再計算して exact equality を検証する。
+`RegistryEnvironmentCatalogRecord` は `U_E` と対象 environment の `deploymentIdentityDigest: Sha256Digest` を明示入力として deterministic に射影し、owner metadata、qualified descriptor と digest、`E` の全 requirement、implementation、dependency、利用可能な public protocol binding を保持する。
+build validator は owner set だけでなく全 field と array を global finalized catalog と同じgeneric deployment identity digestから再計算して exact equality を検証する。
 browser catalog は browser implementation、browser dependency、public protocol metadata だけを持ち、server implementation、server dependency、server artifact locator を持たない。
 catalog にある未選択 implementation の metadata byte は cost metric に含めるが、artifact table と module graph には final projection が選んだ binding だけを入れる。
 
@@ -7723,6 +7786,127 @@ descriptor preflight、ownership DAG、deep freeze は iterative に処理する
 exact canonical byte length は full canonical text を生成する前に allocation-free で測定する。
 object property sort の worst-case upper bound も `maximumCanonicalWorkSteps` へ先に課金する。
 上限内と確認した後だけ `canonicalizeJson()` を一回呼び、返された exact bytes を `sha256Digest()` へ渡す。
+
+#### hostile closed-data boundary の実装分割
+
+この決定は、budget、descriptor、cycle、source profile、clone、freeze、canonical measurementを一つのSC02A8 implementation revisionへ含める案をsupersedeする。
+各契約は別々にgreenへできるため、次の依存順で個別にreview、commit、pushする。
+
+| revision | owner | 独立した検証 |
+| --- | --- | --- |
+| SC02A8A | `ExecutionContractBudget`とoperation-local ledger | exact/limit+1 counter、peak depth、ledger isolation |
+| SC02A8B | distinct-container descriptor capture | getter非実行、identityごとの一回reflection、sparse/hidden/symbol rejection |
+| SC02A8C | active-ancestor tracker | direct/indirect cycle、leave後alias、iterative depth |
+| SC02A8D | profile-driven occurrence walkerとparent-linked plan | occurrence counter、alias再課金、failure path materialization |
+| SC02A8E | execution-source cardinality/reference profile | collection、reference、SemanticPathのexact/limit+1 |
+| SC02A8F | alias-expanding closed clone | caller非再読、alias identity分離、prototype normalization |
+| SC02A8G | final public snapshotのiterative freeze primitive | deep chain、visited identity、validation-step exact/limit+1 |
+
+A8AからA8Gがpackage-local facadeへ追加するsurfaceはtype-only `ExecutionContractBudget`だけとする。
+ledger、descriptor view、tracker、profile、plan、clone、freezeはinternal APIであり、shared rootへ追加しない。
+
+budget recordはcurrent `Object.prototype`またはnull prototypeを持つclosed recordだけを受理する。
+present overrideは0以上、framework hard cap以下のsafe integerとし、extra、symbol、hidden、accessorを拒否する。
+
+ledgerはcumulativeな`chargeTotal(counter, amount)`とpeak用の`observePeak("maximumInputDepth", depth)`を分ける。
+depth以外の14 counterはcumulativeに課金し、depthは1-based active depthの最大値だけを観測する。
+overflowまたはlimit failureではそのincrementを適用せず、一つのpublic operation内でledgerをresetしない。
+
+host objectの受理条件は観測可能なprototypeだけで定義する。
+recordはcurrent `Object.prototype`またはnull、arrayは`Array.isArray()`がtrueかつcurrent `Array.prototype`であることを要求する。
+foreign realm provenance、ordinary internal slot、Proxy trapまたはhost side effectの非実行は保証しない。
+reflection APIがthrowした場合はcurrent occurrence pathの`invalid-closed-record`へ変換する。
+
+standard APIはown keyをstreaming取得できないため、distinct identityごとの`Reflect.ownKeys()` result allocationだけはprecharge前に発生し得る不可避なhost boundaryとする。
+SC02A8Bはfirst-seen identityをheader phaseとview phaseに分ける。
+header phaseはprototype、own key、array `length` descriptor、key metadataだけをcaptureし、walkerがproperty、key code unit、array length、source cardinalityを課金した後にだけ各descriptorを読む。
+
+reflectionはdistinct object identityごとに一回だけ行う。
+depth、data node、property、array length、string unit、source cardinality、referenceはpath occurrenceごとに再課金する。
+same identityがactive ancestorにある場合だけcycleとし、leave後のshared aliasは許可する。
+
+root depthは1とする。
+data nodeはnull、boolean、number、string、array、recordの全occurrenceを数える。
+propertyはsymbolを含む全own keyを数え、array intrinsic `length`だけを除く。
+拒否するsymbol、hidden、accessor、extra keyもdescriptor validation前にproperty counterへ含める。
+string unitはstring valueとstring keyのraw UTF-16 code unitを数え、symbolを含めない。
+
+source profileはwalkerへ二つのhookとして注入する。
+`beforeDescriptors`はfacts、relations、exports、10 registry collection、registry implementations、SemanticPath、array-valued referenceのcardinalityをchild descriptor前に課金する。
+`beforeChildren`はcapture済みrecord viewからpresent scalar reference slotをchild traversal前に課金する。
+missingまたはmalformed discriminatorのsemantic errorはA9以降が所有するが、structurally presentなcollectionまたはpotential referenceはsemantic validationより前に課金する。
+
+plan nodeはfull path arrayを保持せず、parent occurrence IDと一つのsegmentだけを持つ。
+error時だけ最大depth 64のparent chainからpathをmaterializeする。
+descriptor view、occurrence node、captured property、clone node、array slot、stackのallocationは対応するcounter cap以下にする。
+
+SC02A8Fはplanだけを読み、callerを再reflectionしない。
+shared aliasはoutputで保持せず、path occurrenceごとにfresh subtreeへ展開する。
+recordはnull prototype、arrayはstandard arrayへ正規化し、enumerable data propertyとして構築する。
+
+raw cloneはoperation外へ公開せず、A9からA12が同期的にfresh domain recordへ変換する。
+A12はfinal snapshotのnode、property、array、string cardinalityがadmitted capを超えないことを検査し、A8Gでdeep-freezeしたrootだけをpublic `ExecutionContractSource`として発行する。
+A8Gはbrand、identity、trust、placement permissionを発行しない。
+
+budget argumentのroot failure pathは`["budget"]`、field failureは`["budget", field]`とする。
+depth/node breachはcurrent occurrence、property/key/array breachはcontainer、source cardinalityは対象collection、scalar referenceは対象slot、sparse/cycleは発見したchild occurrenceをpathにする。
+canonical work/byteのglobal budget failureはroot pathとし、canonical scalarまたはUnicode failureはID01と同じvalue/property pathにする。
+
+#### bounded canonical measurement の実装分割
+
+canonical identity workはhostile-input boundaryからさらに分ける。
+ID01-CB、SC02A8I、SC02A13を同じproduction revisionへ含めない。
+
+| revision | owner | 独立した検証 |
+| --- | --- | --- |
+| ID01-CB | byte-identicalなiterative canonical builder | existing vectors、depth、cycle/alias、instrumented sort/work bound |
+| SC02A8I | full outputを作らないexact byte/work meter | ID01 byte oracle、work/byte exact/limit+1、alias occurrence |
+| SC02A13 | canonicalizeとdigestのintegration | canonicalize exact once、digest exact once、failure時zero call |
+
+ID01-CBはnative `.sort()`をraw UTF-16 comparatorのiterative stable merge sortへ置き換え、recursive string compositionをiterative frame/chunk builderへ置き換える。
+public `canonicalizeJson()`のsignature、error、path、prototype/descriptor rule、cycle/alias semantics、text、bytesを変更しない。
+
+record property countを`p`、最大key長を`m`、`levels = ceil(log2(max(1, p)))`とする。
+comparison countは`p * levels`以下、一comparisonのUTF-16 scanは`2 * m + 1`以下、moveは`2 * p * levels`以下とする。
+`sortWorkBound = p * levels * (2 * m + 1) + 2 * p * levels`をrecordごとのworst-case upper boundとする。
+long common-prefix keyをscan boundへ含め、A8Iは全乗算と加算をremaining limit + 1へsaturateしてsafe integer overflow前に停止する。
+
+ID01-CB自体はbudget引数またはpublic APIを追加しない。
+standalone `canonicalizeJson()`のmemoryはactive path上のproperty occurrenceに対する`O(P)`だけを主張する。
+A8I/A13のadmitted snapshotでは、active-path key/scratch entryをproperty capの定数倍に制限し、two-buffer merge sortは`2 * maximumInputProperties`以下とする。
+
+SC02A8Iはfull canonical textまたはencoded bytesを生成しない。
+traversal frame、current/ancestor recordのkey state、counter、numberごとの`JSON.stringify`結果だけを一時allocationとして使う。
+stringとproperty keyはraw UTF-16をscanし、lone surrogate、JSON escape、UTF-8 byte lengthをID01と同じ規則で処理する。
+numberはfiniteかつnegative zeroでない値だけを受理する。
+
+`linearWork`はdata node occurrence、property occurrence、array slot occurrence、string code unitの合計とする。
+meterは各linear workを実行直前に課金し、recordではsort開始前にそのrecordの`sortWorkBound`全量を課金する。
+snapshot全体の未測定workをmeter開始前に知っているとは仮定しない。
+
+exact byte countをfull output生成前に`maximumCanonicalBytes`へ課金する。
+meter完了後、実測した同じ`linearWork + sortWork`をdownstream `canonicalizeJson()`分として追加予約する。
+追加予約が失敗した場合はcanonical text、encoded bytes、digestを生成しない。
+
+A12 snapshotはcaller aliasを保持しないが、framework-owned aliasの不在までは保証しない。
+A8IとID01-CBはactive ancestorだけをcycleとし、leave後に再出現するshared aliasをvisited setでdedupしない。
+aliasはpath occurrenceごとにbyte、linear work、sort workを再測定、再課金、再serializeする。
+
+「allocation-free」はmeter自身がfull canonical textまたはbyte arrayを作らない意味に限定する。
+A13のbounded output allocation、`join`中のchunks/text共存、WebCrypto内部copy、GC時期まで存在しないとは主張しない。
+frameworkは不要になったfull-payload referenceをphaseごとに解放し、hostとGCを含むresident storageは実装依存の定数倍`O(maximumCanonicalBytes)`とする。
+
+A13は同じoperation-local ledgerをresetせず、A12のexact snapshotへ`canonicalizeJson()`を一回呼び、その返却bytesを`sha256Digest()`へ一回渡す。
+再canonicalizeまたは再encodeしない。
+
+ID01-CB fixtureはproperty countが2の冪の直前、exact、直後であるrecord、最大長common-prefix、shared alias、cycleを含める。
+A8I fixtureはUnicode、escape、number boundary、negative zero、property insertion permutation、nested record/array、sibling record/array aliasについて、meter byte lengthと`canonicalizeJson(value).bytes.byteLength`を比較する。
+active-path scratchの合計peakとalias occurrenceごとのexact二重課金も検査する。
+
+meterとdownstream builderを二重計上したdefault `maximumCanonicalWorkSteps`の実用上限はA8I implementation admissionでbenchmarkまたはprobeする。
+cap変更が必要なら別design revisionへ戻し、実装都合で暗黙に緩和しない。
+
+realm provenanceを推定する案、aliasをglobal visited setでdedupする案、meterだけをboundedにしてdownstream native sort/recursive builderを残す案、canonical byte capだけでCPU workを代用する案は採用しない。
 
 `ExecutionContractError` は immutable な path と stable code を持つ。
 code は `invalid-closed-record`、`invalid-field`、`invalid-fact-id`、`invalid-registry-id`、`noncanonical-order`、`duplicate-record`、`dangling-reference`、`kind-mismatch`、`version-mismatch`、`semantic-mismatch`、`budget-exceeded`、`crypto-unavailable` とする。

@@ -1,6 +1,6 @@
 # 宣言的 UI 実行分割の実装進捗
 
-更新日: 2026-07-12
+更新日: 2026-07-13
 状態: 実装中
 
 ## 再開情報
@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次のscheduler action: SC02A1をcommit、pushしてcompletedへ移し、MP01-DK、AR01-I、RC01-Aの独立design review unitを並列に進める。
+- 次のscheduler action: SC02A8 boundary/canonicalとAR01-DP/Pの収束済みdecisionを正本へ統合してcommit/pushする。その後、write setが重ならないSC02A8A、ID01-CB、AR01-DPを独立laneで開始する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -31,17 +31,33 @@
 sliceのcontract固定、実装完了、review開始または収束、dependency変更、lane解放のたびにready queueを再計算する。
 優先順位はcritical path、後続解放数、独立した長時間検証の順とし、write setが重ならない四laneを通常上限、統合余力がある場合は六laneを最大上限とする。
 あるsliceのreviewまたはblockerは、そのsliceへ依存せずwrite setも重ならないlaneを停止しない。
+固定revisionはslice-local manifestで表し、別laneのcommitによるHEAD前進と共有文書の無関係な変更では無効にしない。
 
 | Lane | Slice | Owner | 状態 | 完了dependency OID | 専有write set | 固定contract | 次のgate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| L1 | SC02A1 | main session | merge-ready | `98585c9c95bc1a02f71e26a764a67e9882519738` | `packages/shared/src/executionContract/` | source-local `FactId`とstable error | staged file監査、commit、push、OID同期 |
-| L2 | MP01-DK | Hilbert `019f55a3-3f5c-7592-bd19-0049330130a2` | ready | `98585c9c95bc1a02f71e26a764a67e9882519738` | 設計proposalはread-only。実装予定は`packages/shared/src/materializationContract/` | materialization kind taxonomyとowner境界 | proposal作成、三人並列design review |
-| L3 | AR01-I | Noether `019f55a3-454b-7fd3-84c6-b4d4d50c0a03` | ready | `98585c9c95bc1a02f71e26a764a67e9882519738` | 設計proposalはread-only。実装予定は`packages/shared/src/artifactContract/` | `ArtifactAddressId` identity surface | proposal作成、三人並列design review |
-| L4 | RC01-A | Ptolemy `019f55a3-4dcd-7cf1-860d-1a9d5efd1430` | ready | `98585c9c95bc1a02f71e26a764a67e9882519738` | 設計proposalはread-only。実装予定は`packages/shared/src/renderContract/` | envelope identityとversioned preimage | proposal作成、三人並列design review |
+| L1 | SC02A8-DESIGN boundary/canonical decomposition | main design | merge-ready | SC02A7 commit `1c393b3d120859d63a9da8e7045e40a1b0774f97` | 設計正本と進捗文書 | A8A-G、ID01-CB、A8I、A13のowner、counter、alias、memory、measurement | 正本integrationをcommit/pushしてSC02A8AとID01-CBをreadyにする |
+| L2 | RC01-DI3B verified parser | main integration | completed | RC01-DI3A commit `9a1b9b59bfac9c2eee8c4f38ed8c096006a2e110` | renderContractの6-file cumulative write set | strict parser、self-digest equality、mismatchだけ | commit `8a70f80dd722ed936a570b7d7e2683daab871a76`をpush済み |
+| L3 | AR01-DP/P-DESIGN identity preimage split | main design | merge-ready | AR01-XB commit `44a1b0f1dbd5c0f4e053040d1df08359ba319b93`、ID01 | 設計正本と進捗文書 | DP/P分割、DS/DV/DD、PS/PV/PI/PC/URL/IT、AF01/SL01/RR01順序 | 正本integrationをcommit/pushしてAR01-DPをreadyにする |
+| L4 | PROCESS-PROGRESS-V3 | main integration | merge-ready | HEAD `8a70f80dd722ed936a570b7d7e2683daab871a76` | implementation progress文書だけ | completed/reviewing lane、admission split、next gateの事実同期 | design checkpointと同時にcommit/pushする |
 
-MP01、AR01、RC01はdependency上readyだが、read-only admission調査で具体schema、identity、budget、owner境界の未決定を確認したため、production implementationを開始しない。
-MP01は`DK → DR → DG → DP`、AR01は`I → C → U → B`、RC01は`A → B → C → D → E → F`の独立design revisionへ分ける。
-各design unitが収束した後だけ、同じlaneの最小implementation unitを`contract-ready`へ進める。
+SC02A2、SC02A3、SC02A4、SC02A5、SC02A6、SC02A7、MP01-DK1-T、MP01-DR-S-R4 integration、AR01-ID、AR01-FT、AR01-EB、AR01-DB、AR01-XB、RC01-DI2B、RC01-DI3A、RC01-DI3Bはslice-local reviewが収束し、各commitをpush済みである。
+SC02A5のfixed snapshotではfocused 38 tests、shared全15 filesと224 tests、typecheck、通常lint 0件、format、build、root source/build非公開検査が成功した。
+type-aware lintは変更外の`rlse.config.ts:32`に既存warning 1件だけを報告した。
+Popper、Ramanujan、旧MP01 design reviewer三者、旧RC01 ownerは現在のsessionから`not_found`であり、未回収結果を収束証拠として扱わない。
+Nash、Socrates、Jason、Ampereの収束試行は固定入力がレビュー中または開始前に変更されたため`REVIEW INVALID`とし、判定回数へ含めない。
+Linnaeus、Lagrange、Parfitの試行はdisjointなAR01 commitによるglobal HEAD前進だけで無効にしたため、slice-local manifest導入前の無効試行として判定回数へ含めない。
+MP01は`DK1 taxonomy → DR → DG → DP`の独立design revisionを維持する。旧DK2のshared bridgeは追加せず、qualificationとadmissionをSC03、PL02、CN01、MP02、AF01、SL01、RR01のowner pipelineへ分ける。
+AR01は`ID nominal domain → FT finalization template → entry binding → dependency binding → export binding → DP`までを共通predecessorとする。DP後は`DS → DV → DD`と`P → PS → PV → PI → PC / URL / IT`へ分岐し、AF01 candidate finalization、SL01 selection、RR01 conformanceへ合流する。
+RC01はRenderDefinition、generation、RenderEnvelopeを別revisionとする。
+RenderDefinition identityもmodel/error、closed snapshot、identity operationの三implementation revisionへ分ける。
+
+MP01-DR-S R1の三役は、state update modeのauthoritative input不在、`CN01-D -> CN01-G`間のvalidation/identity欠落、既存facade inventory消失、transformer向け合法export不在をblockerとした。
+R2はexact schemaを撤回し、owner correction、state prerequisite、materialization/emission schema、publication、derivation、validation、identityへ分割した。
+R2収束reviewは、emission側subpath不在、DM/DEを直列化した誤り、DVがPL02-Vからprojection completenessを再検証しない点、state policy admission owner不在をblockerとした。
+R3はDM/DE並列化、separate publication、state semantics authorityを解消したが、DAGの必須edge省略、raw claim closure前のequality、OC02 implementationの過大粒度で再度`REJECT`となった。
+R4はOC02をdesign/type/closed validation/identity/behaviorへ、PL02 state pathをdesign/lowering/admissionへ、CN01 demand validationをraw parser/acceptanceへ分割し、全dependency edgeとtrust-safe順序を明示した。
+Laplaceの旧ルールfresh convergence reviewはR1からR3のblockerが解消し、新しいcorrectness blockerがないとして`ACCEPT`した。
+CN01-DVP/DVAの偽造snapshotとparser-version mismatch、AS01-MP/EPのpackage inversionとsubpath、SL01のserver-first cost orderとdeterministic tie-breakを後続fixture obligationとして残す。
 
 進捗文書、`packages/shared/src/index.ts`、package export、共通config、複数laneの統合箇所はメインセッションだけが編集する。
 各laneは専有write setだけを変更し、メインセッションがreview revisionを固定する前にroot exposureと統合gateを追加する。
@@ -54,7 +70,7 @@ MP01は`DK → DR → DG → DP`、AR01は`I → C → U → B`、RC01は`A → 
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
 | P01 | ExecutionGraph foundation | completed | ID01、SC01、OC01、EG01、EG02、EG03 の検証、独立レビュー、commit、push が完了した |
-| P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02Aの設計reviewは収束済みであり、実装はSC02A1からSC02A8へ再分割した |
+| P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02Aの設計reviewは収束済みであり、実装はSC02A1からSC02A13へ再分割した |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
 | P05 | materialization と projection | pending | 未着手 |
@@ -114,7 +130,7 @@ package 間で使う internal export、package export map、build entry は、�
 | EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | completed |
 | EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | completed |
 | EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | completed |
-| SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / focused test | SC02A1からSC02A8のsource-local契約、SC02B qualified compiled schema | SC01 / ID01 | in-progress |
+| SC02 | semantic fact、relation、source/compiled execution contract | shared: `src/executionContract/` | 同 directory の SPEC / focused test | SC02A1からSC02A13のsource-local契約、SC02B qualified compiled schema | SC01 / ID01 | in-progress |
 | SC03 | contract qualification、source conflict、qualification後のdangling/kind diagnostic | transformer: `src/diagnostic/`、`src/contractCompiler/` | 各 directory の SPEC / test | diagnostic path、artifact 非依存の QualifiedRegistryUniverse、policy proof-domain verifier profile admission | EG02 / SC01 / SC02 / OC01 | pending |
 | PL01 | function extraction、capture、mutable state、module closure | transformer: `src/moduleClosure/` | 同 directory の SPEC / test | NativeModuleClosure と client closure evidence | EG03 / SC03 | pending |
 | PL02 | root、read、effect、callback、module evaluation の導出 | transformer: `src/executionAnalysis/` | 同 directory の SPEC / test。既存 `transform/SPEC.typ` に superseding ADR | component-transparent semantic analysis | EG03 / SC03 / PL01 | pending |
@@ -212,32 +228,46 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 
 ## 現在の Slice
 
-### SC02A1 Source identity
+### SC02A source contract decomposition
 
 SC02Aの設計判断は変更しない。
 従来のSC02Aは、独立してgreenにできるidentity、model、入力境界、semantic parser、registry/export parser、local closure、source closure、digest/publicationを一つのreview revisionへ束ねていた。
-先行testが3,068行、modelが767行となり、新しいreview-unit admission gateの停止条件へ到達したため、未commit変更を保持したまま次の八つのvertical sliceへ再編する。
+先行testが3,068行、modelが767行となり、新しいreview-unit admission gateの停止条件へ到達したため、未commit変更を保持したまま独立したvertical sliceへ段階的に再編する。
 最初の再編ではidentityとmodelをSC02A1へ残したが、手書き差分が1,522行となって停止条件へ再到達した。
 `FactId`とstable errorはsemantic unionなしでgreenにできるため、例外扱いせずSC02A1とSC02A2へ分けた。
 
 | slice | 観測可能な契約 | ownerとmodule | 先行test | 単独greenの根拠 | 状態 |
 | --- | --- | --- | --- | --- | --- |
-| SC02A1 | source-local `FactId`とstable error | `identity.ts`、`implementation.ts` | `factId()`、Unicode、error immutability、facade boundary | semantic modelなしでidentity boundaryとして完結する | merge-ready |
-| SC02A2 | source-local semantic model | `model.ts`、`implementation.ts` | 16 fact、8 relation、7 subject、3 pathのtype fixture | parserを公開せずclosed schemaだけで完結する | pending |
-| SC02A3 | untrusted closed-data preflight、operation-local budget、immutable snapshot | `budget.ts`、`canonical.ts` | descriptor rejection、alias/cycle、全input budget、freeze | semantic recordを解釈せずunknown data boundaryとして検証できる | pending |
-| SC02A4 | subject、fact、relationのstrict parseとcanonical normalization | `semantic.ts` | 全semantic variantとcanonical order | registry、export、cross-record closureなしでstructural parserを検証できる | pending |
-| SC02A5 | registry source、transfer binding、export recordのstrict parse | `registrySource.ts`、`exportSource.ts` | 10 registry kind、25 legal role tuple、transfer/export shape | semantic graph closureと独立したSC01 integrationとして検証できる | pending |
-| SC02A6 | fact/relation local closure、ownership DAG、ordering semantics | `semanticClosure.ts` | endpoint/subject表、nested fact reference、ownership/order | parsed semantic recordsだけを入力にするpure validatorとして完結する | pending |
-| SC02A7 | source assembly、registry/version/export/host closure、creator/parser | `source.ts` | registry reference、version、export direct summary、host assumption | A1からA6のvalidated partsを統合し、source snapshot APIを完成させる | pending |
-| SC02A8 | canonical digestとpackage root publication | `digest.ts`、`implementation.ts`、shared root | permutation digest、crypto failure、artifact/export boundary | 完成したsource parserへidentity operationを追加するだけで完結する | pending |
+| SC02A1 | source-local `FactId`とstable error | `identity.ts`、`implementation.ts` | `factId()`、Unicode、error immutability、facade boundary | semantic modelなしでidentity boundaryとして完結する | completed |
+| SC02A2 | source-local subjectとpath taxonomy | `model.ts`、`implementation.ts` | 7 subject、3 pathと全variant shapeのexact type fixture | fact、relation、source envelopeなしでlocation contractとして完結する | completed |
+| SC02A3 | 16 source-local factと6 transfer binding | `factModel.ts`、`implementation.ts` | 全fact kind、field、closed enum、brand分離のexact type fixture | subject modelへ依存する一つのfact schemaとして単独greenにできる | completed |
+| SC02A4 | 8 source-local semantic relation | `relationModel.ts`、`implementation.ts` | 全relation endpoint、ordinal exclusivity、illegal edge fixture | fact kindへ依存するbehavioral edge schemaとして単独greenにできる | completed |
+| SC02A5 | export summary schema | `exportModel.ts`、`implementation.ts` | callable、receiver brand、value domain、transfer summaryのexact fixture | factとtransfer typeだけへ依存する独立summaryである | completed |
+| SC02A6 | 10 registry source collection schema | `registrySourceModel.ts`、`implementation.ts` | collection keyと`RegistrySourceEntry<Kind>`のexact mapping | SC01 typeだけへ依存する独立registry source schemaである | completed |
+| SC02A7 | source contract envelope | `sourceModel.ts`、`implementation.ts` | source field、export/registry composition、untrusted claim、future API不在 | A1からA6を束ねるaggregateだけを所有する | completed |
+| SC02A8-DESIGN | hostile closed-data boundaryとcanonical measurementのowner、counter、snapshot semantics | boundary/canonical別design revision | own-key課金、counter、source profile、alias clone、freeze、sort/meter work | productionをA8A-G、ID01-CB、A8I、A13へ分ける | merge-ready |
+| SC02A8A | budget contractとoperation-local ledger | `budget.ts`、focused test/type fixture | 15 field、narrow-only override、cumulative/peak exact/-1、ledger isolation | descriptorやsource semanticsなしでbudget APIを直接検証できる | ready |
+| SC02A8B | distinct-container descriptor capture | `closedDescriptor.ts`、focused test | getter非実行、identity一回reflection、header/view、sparse/hidden/symbol rejection | source fieldを解釈せずdescriptor boundaryだけを検証できる | pending |
+| SC02A8C | active-ancestor cycle policy | `activeAncestor.ts`、focused test | direct/indirect cycle、leave後alias、iterative depth | descriptor cloneと独立したcycle policyとしてgreenにできる | ready |
+| SC02A8D | profile-driven occurrence walkerとparent-linked plan | `closedDataPlan.ts`、focused test | occurrence counter、alias再課金、parent path、profile hook order | A8A/B/Cを組み合わせ、clone前planだけを所有する | pending |
+| SC02A8E | execution-source cardinality/reference profile | `sourceProfile.ts`、focused test | 全source collection、reference、SemanticPathのprecharge exact/-1 | A8D profile interfaceへsource path ruleだけを実装できる | pending |
+| SC02A8F | alias-expanding closed source clone | `snapshot.ts`、focused test | caller mutation隔離、alias identity分離、input再読なし | completed planからcloneだけを生成してgreenにできる | pending |
+| SC02A8G | final public snapshotのiterative deep freeze | `freeze.ts`、focused test | nested freeze、deep chain、visited alias、validation step exact/-1 | A12 domain snapshotだけを入力にしてfreeze policyを検証できる | pending |
+| ID01-CB | iterative bounded canonical builder | `canonicalIdentity/`のSPEC/test/implementation | byte identity、2冪境界、common-prefix、cycle/alias、instrumented work | public API/bytesを変えずcanonical builder単独でgreenにできる | ready |
+| SC02A8I | canonical JCS byte/work meter | `canonicalMeasurement.ts`、focused test | UTF-8 byte一致、Unicode/number/key order、alias occurrence、byte/work exact/-1 | canonical text/digestを生成せずmeasurementだけを検証できる | pending |
+| SC02A9 | subject、fact、relationのstrict parseとcanonical normalization | `semantic.ts` | 全semantic variantとcanonical order | registry、export、cross-record closureなしでstructural parserを検証できる | pending |
+| SC02A10 | registry source、transfer binding、export recordのstrict parse | `registrySource.ts`、`exportSource.ts` | 10 registry kind、25 legal role tuple、transfer/export shape | semantic graph closureと独立したSC01 integrationとして検証できる | pending |
+| SC02A11 | fact/relation local closure、ownership DAG、ordering semantics | `semanticClosure.ts` | endpoint/subject表、nested fact reference、ownership/order | parsed semantic recordsだけを入力にするpure validatorとして完結する | pending |
+| SC02A12 | source assembly、registry/version/export/host closure、creator/parser | `source.ts` | registry reference、version、export direct summary、host assumption | A1からA11のvalidated partsを統合し、source snapshot APIを完成させる | pending |
+| SC02A13 | canonical digestとpackage-local facade integration | `digest.ts`、`implementation.ts` | permutation digest、crypto failure、artifact/export boundary | 完成したsource parserへidentity operationだけを追加し、shared root publicationはAS01へ残す | pending |
 
 各sliceは、その時点で実装する契約だけをSPECとtestへ追加し、後続sliceの失敗testを混在させない。
 SC02A全体の設計review結果、relation表、reference表、budget表は親契約の制約として維持し、各sliceの実装reviewは`.temp/goal.md`の手順4から手順6を別revisionで適用する。
 
 - **設計要件**：opaque boundary と author declaration を、source-local `FactId`、typed `SemanticFact`、typed `SemanticRelation`、export contract、SC01 registry source entry から成る closed `ExecutionContractSource` として表現する。
-- **親slice境界**：SC02A1からSC02A8はsource-local契約だけを完成させる。SC02Bはqualified/compiled typeとstructural parserを追加し、SC03だけがSCC namespaceを計算してsource-local IDをqualified IDへ変換する。SC02Bのstructural brandもtrust acceptanceを意味しない。
-- **変更範囲**：`packages/shared/src/executionContract/` に四点セットと focused internal module を追加し、source authoring API を `@dathra/shared` root から公開する。既存 canonical identity と execution registry の意味は変更しない。
-- **public API**：`factId(value: string): FactId`、`defineExecutionContract(input: ExecutionContractSourceInput, budget?: ExecutionContractBudget): ExecutionContractSource`、`parseExecutionContractSource(value: unknown, budget?: ExecutionContractBudget): ExecutionContractSource`、`digestExecutionContractSource(value: unknown, budget?: ExecutionContractBudget): Promise<Sha256Digest>`、`ExecutionContractError`、`ExecutionContractBudget` と source-local semantic type だけを公開する。`digestExecutionContractSource()` は unknown input をstrict parserで再検証してからdigestする。低水準 shared API は AO01 が後で author-facing facade から再公開し、SC02A は qualified type や acceptance API を先行公開しない。
+- **親slice境界**：SC02A1からSC02A13はsource-local契約だけを完成させる。SC02Bはqualified/compiled typeとstructural parserを追加し、SC03だけがSCC namespaceを計算してsource-local IDをqualified IDへ変換する。SC02Bのstructural brandもtrust acceptanceを意味しない。
+- **変更範囲**：`packages/shared/src/executionContract/` に四点セットと focused internal module を追加し、source authoring APIをpackage-local facadeへ段階的に追加する。`@dathra/shared` rootまたはrole-scoped subpathへの公開はAS01が所有し、既存 canonical identity と execution registry の意味は変更しない。
+- **package-local API**：`factId(value: string): FactId`、`defineExecutionContract(input: ExecutionContractSourceInput, budget?: ExecutionContractBudget): ExecutionContractSource`、`parseExecutionContractSource(value: unknown, budget?: ExecutionContractBudget): ExecutionContractSource`、`digestExecutionContractSource(value: unknown, budget?: ExecutionContractBudget): Promise<Sha256Digest>`、`ExecutionContractError`、`ExecutionContractBudget` と source-local semantic type だけを完成させる。`digestExecutionContractSource()` は unknown input をstrict parserで再検証してからdigestする。AS01とAO01が後でroot/subpathとauthor-facing facadeを所有し、SC02A は qualified type や acceptance API を先行公開しない。
 - **trust boundary**：creator と parser の出力は、構造と source-local closure を満たす未信頼 claim である。`integrity.source = "compiler"`、`trust-boundary`、host assumption、canonical digest は evidence admission、host enforcement、placement permission を作らない。SC03 の qualified evidence と後続の `AcceptedExecutionAnalysis` がない source contract を client exclusion に利用できない。
 - **behavioral edge**：`SemanticRelation` をbehavioral cross-fact edgeの唯一の正本にする。`read.readEffectFactId`、`write.writeEffectFactId`、`effect.readFactIds`、`effect.writeFactIds`、`effect.invocationFactIds`、`ownership.ownerFactId`、`ownership.lifetimeFactId`、`ordering.memberFactIds` はsource/compiled fact schemaから削除する。read/writeのenvironment/exposureはfactのattribute referenceとして残し、behavioral relationとは扱わない。
 - **ownership と ordering**：ownership factはretentionだけを保持する。`owns` relationはoptionalなidentityまたはownership ownerを最大1件、lifetimeをexactly 1件結ぶ。ordering factはrelation kindだけを保持し、`orders-before` relationがmemberを結ぶ。`before`と`serial`では`ordinal`を0から始まるgap-free sequence、`exclusive`と`commutative`では`ordinal: null`のsetとする。
@@ -247,7 +277,7 @@ SC02A全体の設計review結果、relation表、reference表、budget表は親�
 - **SC03へ残す検証**：export name、parameter index、path、callback index、allocation site が実際の module signature と一致するか、source解析とcontractが衝突しないか、locator exportがdescriptor/implementation interfaceを満たすか、dependency contract SCCをどうqualificationするかだけを残す。`factId()` と `registryId()` の build-time literal 制約も SC03 が検証する。
 - **identity**：source contractはdigest fieldを持たない。`digestExecutionContractSource()`は正規化済みsource snapshot全体のcanonical JCS SHA-256を返す。FactIdとRegistryIdはlocal domainに残し、qualified IDはSC02B/SC03より前に生成しない。
 - **hard budget**：overrideはframework capを狭めるだけとし、一つのoperation-local ledgerをschema-aware descriptor preflight、closed snapshot、normalization、index、closure validation、canonical measurement、freeze、digestへ共有する。nested collectionはcloneより前に総数を課金する。getter、custom prototype、hidden/symbol property、sparse array、cycleはcallback実行なしで拒否する。
-- **alias と stack**：shared alias は出現ごとに input budget へ課金して許可し、active ancestor だけを cycle として拒否する。descriptor preflight と deep freeze は iterative にし、canonicalizer の再帰は maximum depth 64 以下の snapshot だけへ一度適用する。
+- **alias と stack**：shared alias は出現ごとに input budget、canonical byte、canonical workへ課金して許可し、active ancestor だけを cycle として拒否する。descriptor capture、walker、deep freeze、canonical builder、meterはiterativeにする。
 - **初回並列設計レビュー**：contract、budget、最終目標の三 reviewer は全員 `REJECT` であった。trust acceptance、qualified type owner、relation subject、SemanticPath、canonical order、全 reference/version closure、host assumption、semantic edge 二重表現、ordering semantics、pre-clone budget、complexity table、API/error/test contract の指摘を blocker として採用し、この修正版へまとめた。
 - **収束確認**：新しい一人のreviewerは12 blockerのうち7件を解消、5件を未解消として`REJECT`した。ownership/orderの残る二重表現、export照合subject、自己relation、reference-kind表、budget cap/counter名、exact API signatureを採用し、この最終修正版へ反映した。追加の全面reviewは行わず、SPEC tableと独立fixtureを収束証拠にする。
 - **設計正本**：最終修正版を設計正本の「source execution contract の canonical boundary」へsuperseding decisionとして追加し、untrusted source、behavioral relation一元化、source closure、API、budget、failureを固定した。
@@ -261,6 +291,43 @@ SC02A全体の設計review結果、relation表、reference表、budget表は親�
 - **SC02A1 final slice gate**：限定fixture追加後、targeted 15 testsとidentity statement、branch、function、line coverage 100%、shared全9 filesと180 tests、typecheck、通常lint 0件、format、buildが成功した。type-aware lintは既存`rlse.config.ts`のwarning 1件だけであり、build artifactとshared rootにexecutionContract runtime/type APIが存在しないことをnegative inspectionで確認した。
 - **dynamic scheduler migration**：worktree変更を保持し、実行中command 0件、read-only planning agent 3件を成果回収済みとしてcheckpointを作った。更新済みgoal、review手順、進捗文書を現行worktreeから再読し、L2からL4が設計レビュー先行であることをready queueへ反映した。
 - **process rule commit**：review-unit admission gateとready queue、parallel lane規則を`98585c9c95bc1a02f71e26a764a67e9882519738`としてpushし、localとtracking branchのexact OID一致を確認した。このcommitはscheduler移行指示を受け取る前に完了しており、revertしない。
+- **SC02A1 commit and push**：review済みのsource identity、親設計節、dynamic scheduler記録を`d5d704a45ad9366c681547fe875549b272d40d87`としてpushし、localとtracking branchのexact OID一致を確認した。SC02A1をcompletedとし、SC02A2をreadyへ移した。
+- **SC02A2 red evidence**：SPECとtype fixtureを先に更新した時点のshared typecheckは、`EffectFact`、`SemanticFact`、`ExecutionContractSource`などが旧facadeに存在しないためexit 2で失敗した。type-only contractの先行失敗を確認してから`model.ts`とfacade type exportを追加した。
+- **SC02A2 initial implementation gate**：16 fact、8 relation、7 subject、3 path、6 transfer binding、10 registry collection、removed field、ordinal exclusivity、未信頼source shapeをtype fixtureへ追加した。targeted 18 tests、executionContract runtime coverage 100%、shared全9 filesと183 tests、typecheck、通常lint 0件、format、buildが成功し、type-aware lintは既存warning 1件だけであった。unit差分は1,312行、最大fileは771行で停止条件未満であった。
+- **SC02A2 initial parallel review**：最終目標と粒度のreviewerは、semantic taxonomyとsource envelopeが独立してgreenになるためscope blockerとした。correctnessとSPEC/test reviewerは、`ordinal?: never`が`ordinal: undefined`を受理することと、closed unionおよびrelation edge fixtureが片方向であることをblockerとした。三件を根拠とコードで再現し、すべて採用した。
+- **SC02A2 first correction**：source envelope、export summary、10 registry collectionをsemantic taxonomyから分離した。non-ordering relationから`ordinal` keyを削除し、closed enum、fact kind、relation kind、endpoint、transfer shapeの双方向fixtureを追加した。
+- **SC02A2 admission recheck**：first correctionはsubject/path、fact/transfer、relation matrixという三つの独立契約と手書き差分1,433行を残した。三者review開始直後にadmission gateを再適用し、reviewerを安全にshutdownして結果を採用せず、current revisionをSC02A2からSC02A4へ再編した。
+- **SC02A2 subject/path revision**：current production revisionを7 subjectと3 path segmentだけへ縮小した。各variantのkeyとproperty type、closed kind union、repeated path、wrong type、extra field、後続API不在をfixtureで固定した。combined first correctionは`.temp/sc02a-review-unit-draft/`へ保持し、factとrelationの後続sliceで該当部分だけを戻す。
+- **SC02A2 corrected gate**：targeted 16 tests、shared全9 filesと181 tests、typecheck、通常lint 0件、format、build、root/artifact negative inspectionが成功した。type-aware lintは既存`rlse.config.ts`のwarning 1件だけであり、SC02A2のwarningとerrorは0件である。SPEC 188行、test 319行、model 45行、facade 8行で、独立したsubject/path contractだけをreview対象とする。
+- **SC02A3 red evidence**：SPECとtype fixtureだけを先に追加した時点で、focused testは`./factModel`不在、shared typecheckはfact model export不在によって失敗した。
+- **SC02A3 implementation gate**：16 fact kind、6 transfer binding、全variantのexact keyとproperty type、removed behavioral field、RegistryId kind分離、facade AST、memory emit、root非公開を直接検証した。focused 25 tests、shared全12 filesと199 tests、typecheck、通常lint 0件、format、buildが成功した。type-aware lintは変更外の`rlse.config.ts`に既存warning 1件だけを報告した。
+- **SC02A3 fixed review**：5 implementation fileと4 direct dependencyをmanifest `28d42170645574170c92cb8f78d13b76df83b8fb623c255d32d81ca55fb904eb`へ固定し、contract correctness、SPEC/test/artifact、最終目標とowner境界の三役へ並列reviewを開始した。
+- **SC02A3 R1 blocker**：最終目標とowner境界のreviewerは、root非公開fixtureのcommentがshared root publicationをSC02A13へ誤帰属している一点だけをblockerとした。検査自体は正しく、16 fact、6 transfer binding、attribute-only境界、client/runtime非追加にはblockerがなかった。
+- **SC02A3 R2**：5 commentをAS01 ownerへ修正し、SPECにもAS01 ownershipを明記した。R1の残る二reviewを`REVIEW INVALID`として停止し、新manifest `0c217050f7cdaf7381d7ebdffd48e31ffdb35252f6b25a49e8d483b775756c1b`を三役へ並列に渡した。
+- **SC02A3 R2 review**：contract correctnessと最終目標/owner境界の二者は`ACCEPT`した。SPEC/test/artifact reviewerは、facadeへdirect type exportまたはruntime statementを追加しても既存fixtureが通るfalse-negative一件だけをblockerとした。
+- **SC02A3 R3 correction**：facade sourceをexactly 4 `ExportDeclaration`へ固定し、memory emitを既存identity value re-export一行へ完全一致させた。focused 25 tests、typecheck、formatが成功し、新しい一人へ限定収束確認を依頼した。
+- **SC02A3 completion**：収束reviewerはdirect type exportとruntime statementのsynthetic probeが拒否されることを確認して`ACCEPT`した。5 production fileを`43350db7088fa46e6e90f5db9a528b481f624da1`としてpushし、localとtracking branchの一致を確認した。
+- **SC02A4 implementation gate**：8 relation kind、全endpoint、`FactEndpoint<Kind>`、`orders-before`だけが持つrequiredな`ordinal: number | null`、他variantのordinal key不在、facade AST、type-only emitを直接検証した。focused 31 tests、shared全14 filesと217 tests、typecheck、lint、format、buildがimmutable snapshotで成功した。
+- **SC02A4 R1 review**：correctness reviewerは`ACCEPT`した。SPEC reviewerは`feature_spec`の非正準引数、goal/boundary reviewerはSC02A2/SC02A3節に残るrelation API不在制約をblockerとした。R1固定snapshotはdisjointなAR01 correction前の216 testsであり、current worktreeの217 testsという初期manifest記録を訂正した。
+- **SC02A4 R2 convergence**：R1から`SPEC.typ`だけを修正し、stale不在制約を除去して4個の`feature_spec`を`summary`と`test_cases`へ統一した。Newtonはmanifest、10固定blob、依存、decision anchor、31 focused/217 shared test evidenceを再照合し、blocker解消と新規correctness blocker不在を確認して`ACCEPT`した。
+- **SC02A4 completion**：review済み9 blobをcurrent HEADへ重ねたintegration tree `bc94eac0fc3ff771628ad0c1cef157ecf1761d39`とstaging/commit treeを一致させ、`fcfe5ee68c0cc049cf762c4578e8dc5600d1eb92`としてpushした。localとtracking branchは同じexact OIDを指す。
+- **SC02A5 red evidence**：SPECと先行fixtureを追加した時点でfocused testは`./exportModel`不在、typecheckは`ExportExecutionContract`とmodule export不在によって失敗した。
+- **SC02A5 implementation**：5 required readonly field、4 callable literal、`FactId` sequence、brand/value-domain `RegistryId`、既存`TransferBinding`だけを持つtype-only export summaryを追加した。parser、validator、closure、source envelope、runtime value、root exportは追加していない。
+- **SC02A5 cumulative fixture correction**：SC02A3とSC02A4のfacade inventory testが5 statementを固定していたため、両testへ`exportModel`の6番目のtype-only exportだけを追加した。factとrelationのmodelまたは契約は変更していない。
+- **SC02A5 gate**：focused 4 filesと38 tests、shared全16 filesと227 tests、typecheck、通常lint 0件、format、build、root sourceとgenerated declaration非公開、runtime-empty emit、diff checkが成功した。10-file write setはadmission gate未満である。
+- **SC02A5 fixed review**：proposal、10 write-set blob、9 direct dependency、3 decision anchorをsynthetic commit `f75ca1c5cd02b8a8d7e588f2998028051253891d`へ固定し、correctness、SPEC/artifact、最終目標/granularityの三役へ並列reviewを開始した。
+- **SC02A5 R1 disposition**：correctnessと最終目標の二役は`ACCEPT`した。SPEC/artifact reviewerの`behavior_spec`正準引数とsource-level API owner表記のblockerを採用し、generated declaration positive control、`SPEC/functions.typ` dependency、fixed/integrated test証拠の区別もR2へ反映した。
+- **SC02A5 R2 convergence**：fixed synthetic commit `77f36d25053f3ff10e969981c212ec97e5f0341a`でfocused 38 tests、shared 15 filesと224 tests、typecheck、lint、format、build、declaration positive/negative inspectionが成功した。fresh reviewerは`ACCEPT`し、manifestの削除数だけ22ではなく24というerratumをintegration recordへ残した。
+- **SC02A5 completion**：10-file staged treeがsynthetic tree `70eb1245e38d5962078621dca7f288f61dfde884`と一致することを確認し、commit `dc456b8fa31dd6d03a7caeaf385e9ad053e493b3`をpushした。localとtracking branchはexact OIDで一致する。
+- **SC02A6 fixed gate**：10 registry kindをexact readonly collectionへ対応付ける7-file revisionをsynthetic commit `13ea5d0e4746c619f52c0c38949ba74dce1929ba`へ固定した。focused 6 filesと44 tests、shared 19 filesと271 tests、typecheck、lint 0件、format、buildがisolated snapshotで成功した。
+- **SC02A6 review/completion**：low-tier primary reviewerはexact mapping、SC01/SC02A7+/AS01 owner、正準SPEC、non-vacuous type fixture、runtime-empty emit、root非公開にblocker 0件で`ACCEPT`した。進捗表の現行分割同期だけをfollow-upとして採用し、commit `ea129bb434789a2ec55386a89ebae2dc74345390`をpushした。
+- **SC02A7 admission/gate**：A1からA6を束ねる8-field untrusted type-only envelopeだけへ限定した。実装差分は749 additions、10 deletions、最大377 additionsで停止条件未満である。synthetic commit `edd059f4d01f28c9671c517f146facf97ed29e63`でfocused 50 tests、shared 398 tests、typecheck、lint、format、buildが成功した。
+- **SC02A7 review/completion**：low-tier primary reviewerはexact readonly shape、無brand alias、invalid claimの表現可能性、runtime-empty/package-local/root非公開、placement authority非追加を確認し、blocker/follow-up 0件で`ACCEPT`した。commit `1c393b3d120859d63a9da8e7045e40a1b0774f97`をpushし、remote OID一致を確認した。
+- **SC02A8 admission split**：旧A8はbudget、descriptor capture、active ancestor、occurrence walker、source profile、clone、freeze、canonical builder、meterという別々にgreenへできる契約を含むため、そのままでは`SPLIT`とした。boundary unitはA8AからA8G、canonical unitはID01-CB、A8I、A13へ分け、同じproduction revisionへ戻さない。
+- **SC02A8 boundary review**：R1三役のdepth cumulative、realm provenance、occurrence reflection、source precharge blockerを採用した。R2はpeak depth、observable prototype、distinct-identity reflection、two-stage profile、alias-expanding clone、A12 final freezeへ修正し、fresh convergence reviewerが`ACCEPT`した。
+- **SC02A8 boundary follow-up**：A8Bはprecharge前の追加key metadata copyを作らず、不可避allocationを`Reflect.ownKeys()` resultへ限定する。A12 integration fixtureはfinal snapshot cardinality/depthとA8G validation-stepのexact/-1を検査する。
+- **SC02A8 canonical review**：R1のcommon-prefix sort、downstream native sort/recursion、negative zero、byte oracle blockerをR2で修正した。R2 convergenceでactive-path scratch、host/GC resident表現数、shared alias fixtureの三blockerを採用し、R3はproperty cap定数倍、host storage `O(maximumCanonicalBytes)`、occurrence alias測定へ訂正した。targeted reviewerは`ACCEPT`した。
+- **SC02A8 canonical follow-up**：ID01-CB/A8I fixtureは多階層active-path scratch peak、sibling record/array aliasのexact二重課金、2冪境界、最大長common-prefixを維持する。A8I admissionでmeter/downstream二重予約後のdefault work capをbenchmarkまたはprobeする。
 - **follow-up**：AO01 では10 registry collectionの空配列を省略できる author helperを検討する。SC02A の strict output schema は固定collectionを維持する。
 - **baseline**：shared全8 files、165 tests、typecheck、通常lint 0件、format、buildが成功した。type-aware lintは既存`rlse.config.ts`のwarning 1件だけを報告した。
 
@@ -387,6 +454,108 @@ SC01/ID01 failureは元のpathへ現在のfield prefixを付けてこのerrorへ
 - 全budget counterのzero、exact boundary、boundary-minus-oneとnested collectionのpre-clone failure
 - deep inputのtyped failure、iterative freeze、caller mutation不変性
 - `@dathra/shared` root exportとqualified/accepted APIの不在
+
+### AR01-FT artifact finalization template
+
+- **contract**：`ArtifactFinalizationTemplate`を10個のrequired readonly propertyからなるpackage-local type-only closed productとして追加した。binding、aggregate、validator、identity operation、URL、integrity、closure、runtime value、shared root exportは追加していない。
+- **initial implementation gate**：focused 5 tests、shared 12 filesと200 tests、typecheck、lint、format、build、source rootと生成declarationのnegative inspectionが成功した。
+- **R2 initial review**：correctnessと最終目標の二reviewerは`ACCEPT`した。SPEC/artifact reviewerは、package build entryだけをinternal facadeへ変更すると生成declarationから型が公開されてもfocused testがgreenになるfixture holeをblockerとした。
+- **R3 correction**：SPECへ実build declaration検査を追加し、temporary outputへshared packageをbuildして`index.d.mts`と`index.d.cts`のexport surfaceから`ArtifactAddressId`と`ArtifactFinalizationTemplate`を拒否するtestを追加した。build entry mutationでは新testがexit 1となることを確認した。
+- **R3 convergence**：Hubbleはtemporary outputのsuccess、build failure、assertion failureでのcleanup、両declaration entry、mutation resistanceを確認し、`ACCEPT`した。named export抽出のpositive controlは将来強化できるfollow-upであり、current blockerではない。
+- **final gate**：immutable R3 snapshotでfocused 6 tests、shared 12 filesと201 tests、typecheck、lint、format、buildが成功した。current integrated shared stateでも14 filesと217 testsが成功した。
+- **commitとpush**：type schemaを`9cff8edc119813fdef64980a247eb920de2e0ff2`、declaration boundary correctionを`8d164cdb0234c58a3957dd7d740cd1c4ed7117fb`としてpushし、localとtracking branchの一致を確認した。
+
+### AR01-EB artifact entry binding
+
+- **contract**：`ArtifactEntryRole`の3 literalと、role、semantic ID、exported name、invocation ordinalを持つ`ArtifactEntryBinding`だけをpackage-local type-only schemaとして追加した。ordinal legality、semantic/export existence、canonical order、aggregate、validator、identity、runtime valueは後続へ残した。
+- **fixed gate**：focused 2 filesと9 tests、shared 14 filesと214 tests、typecheck、lint、format、build、runtime-empty emit、root/generated declaration非公開がsynthetic commit `8395f3e5dca2f2d348cc8ffdcff36adce7b70331`で成功した。
+- **parallel review**：correctness、最終目標/boundary、SPEC/artifactの三役は、exact two-type schema、既存ID/template不変、正準SPEC、cumulative facade、future API不在を確認し、全員`ACCEPT`、blocker/follow-up 0件と判定した。
+- **completion**：disjointなSC02A5とRC01-DI2AのHEAD前進後も固定8 blobを維持し、current parentへ重ねたstaged tree `85fd580d21abbbaf3dc4c404730f22b3db4e7ae3`を確認した。commit `106acaea86dabecfb4ce256373279a4fd4801b30`をpushし、localとtracking branchのexact OIDが一致する。
+
+### AR01-DB artifact dependency binding
+
+- **contract/admission**：`slot`、inlineな4 kind、nominal `targetArtifactAddressId`、nullable `targetExportName`を持つrequired readonlyなpackage-local typeだけを所有する。validation、target existence、order、duplicate、aggregate、identity、URL、integrity、trust、root publicationは後続へ残す。永続artifact identity inputを固定するため`high` tierとした。
+- **main fixture correction**：review固定前にmodel内のprivate `ArtifactDependencyKind` aliasを見逃す穴を発見し、modelのexact exportとdirect negative importを追加した。初期snapshotではfocused 12 tests、shared 269 tests、typecheck、lint、format、buildが成功した。
+- **R1 initial review**：implementationとboundary reviewerは`ACCEPT`した。primary reviewerは、finalization/entry feature specに残る歴史的2/4-type facade期待とdependency-binding不在、およびprivate kind aliasがgreenになるAST fixture holeをblockerとした。両方を採用した。
+- **R2 correction/gate**：旧feature/test obligationを現行4-model/5-type累積facadeへ同期し、model ASTで一つのinterface、4 property、direct 4-literal union、type alias不在を固定した。isolated snapshotでfocused 13 tests、typecheck、lint、formatが成功し、private alias mutationはfocused testをexit 1にした。full shared test/buildは変更外R1 attestationを継承し、fresh delta reviewerの収束確認中である。
+- **follow-up**：後続validatorで`targetExportName: null`のsort位置とstring comparisonを固定する。identity operationはextra own propertyを拒否したclosed snapshotだけから`ArtifactAddressId`を発行する。
+- **R2 convergence/completion**：fresh reviewerはstale cumulative SPECとprivate inline-alias blockerの解消、新規correctness blocker不在を確認して`ACCEPT`した。8 staged blobをR2 manifestと一致させ、commit `31a6da6154d75a58cc09b0946bb2fae6c265a22b`をpushし、localとtracking branchのexact OID一致を確認した。
+
+### AR01 identity preimage admission
+
+- **AR01-XB contract**：`exportName`、`memberSemanticId`、inlineな6-role unionを持つrequired readonlyな`ArtifactExportBinding`だけを所有する。export table、aggregate、validator、identity、URL、integrity、trust、root publication、runtime behaviorは後続へ残す。persistent artifact identity inputを固定するため`high` tierとする。
+- **AR01-XB fixed gate**：8-file revisionをsynthetic commit `2abd9d8d5966b69a130df413a8850f01ec7c5a2a`へ固定した。focused 18 tests、shared 414 tests、typecheck、lint、format、build、runtime-empty emit、root/generated declaration非公開が成功した。593 additions、22 deletions、最大214 additionsで停止条件未満である。
+- **AR01-XB review/completion**：primary、implementation、boundaryの三役はcanonical 3-field/6-role schema、inline union、non-vacuous fixture、runtime-empty/root非公開、trust/placement非証明を確認し、全員`ACCEPT`、blocker 0件とした。8 staged blobをmanifestへ一致させ、commit `44a1b0f1dbd5c0f4e053040d1df08359ba319b93`をpushし、remote OID一致を確認した。
+- **AR01-XB follow-up**：後続文書ではAR01のintegrity schemaとAF01のfinal artifact bytes/integrity table生成を区別して記述する。現行binding contractのblockerではない。
+- **AR01-DP/P admission split**：`DeploymentIdentityPreimage`と`ArtifactAddressPreimage`は別々の永続identity schemaであり、後続operationなしにexact type/JCS fixtureで単独greenへできるため、同一revisionへ束ねない。AR01-DPを先行し、そのreview/commit後にAR01-Pを逐次実装する。
+- **AR01-DP exact pending contract**：`schema: "dathra.deployment-identity/1"`、`applicationNamespaceDigest`、`releaseIdentity`、`targetEnvironmentId`、`canonicalPublicOrigin`、`contractNamespaceGraphDigest`、`hostProfileSetDigest`の7 required readonly fieldを持つ。digestはgeneric `Sha256Digest`を再利用し、別ID/aliasを追加しない。
+- **AR01-P exact pending contract**：正準名は`ArtifactAddressPreimage`とし、`ArtifactAddressPreimageSource`を追加しない。`kind`は`"javascript" | "wasm" | "data"`のinline unionとし、`ArtifactKind` aliasを追加しない。ID01、DP、既存FT/EB/DB/XBへ依存する10-field aggregateだけを所有する。
+- **AR01-DP design convergence**：R1で欠けていたDS structural snapshot、DV semantic validator、DD canonical digest、AF01/RR01 binding ownerをR2へ追加した。convergenceでAF01をselected candidateへ依存させた逆順をblockerとして採用し、R3で`CN01-L -> MP02 -> AF01 per candidate -> SL01 -> RR01`へ訂正した。targeted reviewerはblocker/follow-up 0件で`ACCEPT`した。
+- **AR01-P design convergence**：runtime JCS fixtureをtype-only PからPIへ移し、legitimate leaf address発行後にbranded dependency corpusを作る。PS/PV/PI/PC/URL/IT、AR01 schema、AF01 production、CN01-L legality、SL01 selection、RR01 conformanceを分離した。R2 convergenceでRR01がgeneric AF01 evidenceを受ける抜け道をblockerとして採用し、R3でSL01-selected AF01 evidenceだけへ限定した。targeted reviewerはblocker/follow-up 0件で`ACCEPT`した。
+- **AR01 historical vocabulary**：旧`AR01-P-DECOMP-R2` blobをimmutable dependencyとして固定し、`ArtifactAddressPreimageSource`と`ArtifactKind`をhistorical vocabularyに限定した。現行typeは`ArtifactAddressPreimage`とdirect inline kindだけを使う。
+- **AR01 admission estimate**：DPは合計700 additions、最大test 300 additions、Pは合計900 additions、最大test 350 additions以下を見込む。合計1,500または一file 1,000の停止条件へ達した場合は実装を止め、fixture責務を別revisionへ分ける。
+
+| revision | 契約 | 状態 | 次のdependency |
+| --- | --- | --- | --- |
+| AR01-DP | exact 7-field deployment preimage type | ready | ID01 |
+| AR01-DS | hostile closed descriptor snapshot | pending | DPとresource/error design |
+| AR01-DV | deployment semantic canonical validation | pending | DSとorigin/string rule design |
+| AR01-DD | validated deployment preimage digest | pending | DV |
+| AR01-P | exact 10-field artifact address preimage type | pending | DP、FT、EB、DB、XB、ID01 |
+| AR01-PS | hostile closed structural snapshot | pending | Pとresource/error design |
+| AR01-PV | URL/order/duplicate/ordinal/kind-template validation | pending | PSとcanonical rule design |
+| AR01-PI | ArtifactAddressId identity operation | pending | PV |
+| AR01-PC | target/export/dependency graph closure | pending | PIとartifact graph |
+| AR01-URL | canonical artifact URL contract | pending | PI |
+| AR01-IT | integrity table schema/validator | pending | PI |
+
+### RC01-DI implementation decomposition
+
+R2とR3はRenderDefinition model、closed snapshot、content identity operationを一つのimplementation revisionとしていた。
+
+三契約は依存順に単独greenへできるため、同じrevisionではreviewしない。
+
+| Slice | 契約 | 専有module | 先行test | 単独greenの根拠 | 状態 |
+| --- | --- | --- | --- | --- | --- |
+| RC01-DI1 | versioned schema、nominal ID、reference claim type、domain error | `model.ts`、`error.ts`、`implementation.ts` | exact type、brand separation、claim非互換、error immutability、後続API不在 | parserとdigestなしで型とfailure vocabularyを直接検証できる | completed |
+| RC01-DI2A | record key hard limit、descriptor preflight、identity cache、sanitized occurrence snapshot | `descriptorSnapshot.ts`、focused testとtype fixture | prototype、key cap、descriptor order、alias、structural rejection、primitive deferral | caller objectを後段へ渡さないdescriptor resource境界として単独greenにできる | completed |
+| RC01-DI2B | expected string cap、missing/extra、schema/role/digest、fresh scalar construction | `validatedSnapshot.ts`、focused testとtype fixture | string boundary、全failure code/path、fresh preimage/unbranded wrapper | DI2A snapshotだけを入力にしてcallerを再読せず単独greenにできる | completed |
+| RC01-DI3A | creator、content digest、brand発行、fresh root freeze | `operations.ts`、`implementation.ts`、`implementation.test.ts`、`typeContract.fixture.ts` | digest equality、mutation snapshot、crypto変換、root freeze、parser不在 | creatorはparser equalityなしでvalidated preimageからidentityを発行し単独greenにできる | completed |
+| RC01-DI3B | verified parser、self-digest equality、mismatch | DI3Aと同じ6-file cumulative write set | parse success、mismatch code/path、crypto変換、identity non-sharing | parserはDI3A creatorをpredecessorにして独立追加できる | completed |
+
+RC01-DI2Aはunknown objectの可変own keyを扱うhigh-cost sliceとする。
+
+resource contractは`.temp/review-proposals/RC01-DI-R5-RESOURCE.md`で収束し、per-record cap、最大6 occurrence、最大96 descriptor、deterministic failure orderを固定した。
+
+各distinct recordのhost own-key列挙はalready-materialized ordinary object APIの不可避なcostとして分離し、返却直後からdescriptor scan、nested traversal、snapshot、digestをhard capで有界化する。
+
+Proxyは入力契約外とし、wire ownerはobject construction前のbyte、depth、key count admissionを別に所有する。
+
+- **RC01-DI2 process incident**：combined DI2はdescriptor boundaryとscalar/schema validationを一revisionへ実装し、手書き1,488行、98 focused testsへ到達した。既存implementation goalは「別々にgreenにできる契約を別sliceにする」「実装後に判明してもreviewへ進まず再編する」と既に要求していたため、これはルール不足ではなくworker dispatch前にmainがadmission gateを適用しなかった運用逸脱である。
+- **RC01-DI2 incident containment**：combined revisionはreview、commit、pushしていない。5 blobをGit object databaseと`.temp/review-manifests/RC01-DI2-COMBINED-DRAFT.md`へcheckpointし、worktreeから`closedSnapshot.*`を外してDI2AとDI2Bへ分割した。
+- **RC01-DI2A boundary**：DI2Aはprototype、16-key cap、128-key-code-unit cap、descriptor取得、structural rejection、object identity cache、schema-path occurrence projectionだけを所有する。256 expected string cap、missing/extra、literal、digest、fresh constructionはDI2Bへ残す。
+- **RC01-DI2A main correction**：nested expected fieldのprimitiveをDI2Aで拒否せず親field stateへ保持するようにし、DI2Bがcallerを再読せず分類できる境界を補った。descriptor消失probeを追加し、内部key型を`Reflect.ownKeys()`の実型`string | symbol`へ限定した。
+- **RC01-DI2A fixed gate**：synthetic commit `4c62d3b746ef0bf66faace841c5ebdbae46ac87a`でfocused 48 tests、対象production coverage 100%、shared 16 filesと262 tests、typecheck、通常lint 0件、format、build、root/generated/runtime非公開、diff checkが成功した。type-aware lintは変更外の既存warning 1件だけである。1,239 additions、8 deletions、最大file 694行で、一つのdescriptor occurrence契約として三役review中である。
+- **RC01-DI2A review/completion**：correctness/security、SPEC/type/artifact、最終目標/granularityの三役は全員`ACCEPT`、blocker 0件と判定した。staged treeをsynthetic tree `94af8a723770eb8202433c5fad91b606eb59d032`と一致させ、commit `bd1fd198a2281c0f5b3725a265e49d0c2db4e0eb`をpushし、localとtracking branchのexact OID一致を確認した。
+- **RC01-DI2B required fixture**：DI2Bはsanitized DI2A snapshotだけを入力とし、caller recordへのreflectionとproperty accessをすべて失敗させてもscalar validationとfresh constructionが完了することを先行testで固定する。
+- **RC01-DI2B gate**：focused validated snapshot 116 tests、renderContract 3 filesと164 tests、shared全19 filesと382 tests、typecheck、通常lint 0件、format、buildが成功した。caller recordとreflectionをDI2A snapshot後に利用不能にするfixtureもgreenである。
+- **RC01-DI2B risk tier**：package-internal APIだが、attacker-controlled scalar inputを後続identity operationより前に閉じるtrust-boundary validatorであるため`high`とした。primary、implementation、boundaryの三役を使う。
+- **RC01-DI2B fixed revision**：5-file write setをsynthetic commit `0cda1c775a4f8778555a4413e927a2023916cafa`へ固定した。manifest SHA-256は`53c772eb41234a28b2ff5562ea7ed7b35efe2edc599f5ae1f79d2a911f2a45c0`、attestationは`RC01-DI2B-R1-ATTESTATION-1`である。
+- **RC01-DI2B initial review**：implementationとboundary reviewerは`ACCEPT`した。primary reviewerは、R5のpost-digest freezeとDI2B pre-digest freezeの矛盾、およびparser functionとgenerated/runtime artifactの非公開fixture不足をblockerとした。両方を採用した。
+- **RC01-DI2B R2 convergence**：type/root negativeとESM/CJS/declaration artifact検査は解消済みと判定された。freeze splitも正しかったが、R1 Accepted ADRを直接変更した履歴違反一件が新blockerとなった。
+- **RC01-DI2B R3 convergence/completion**：R1 Accepted ADRの23行をbyte-identicalに戻し、R5 timingだけをsupersedeする新Accepted ADRへ分離した。targeted reviewerはblocker/follow-up 0件で`ACCEPT`した。isolated R2でrender 165 tests、shared 382 tests、typecheck、lint、format、build、R3でrender 165 testsとformatが成功し、commit `50744910cfb052cf5249a40a3b9d60c5128f3a48`をpushした。
+- **RC01-DI3 admission split**：creatorとverified parserは別々にgreenへでき、現行DI3説明は非分割の同一不変条件を示せないため、worker dispatch前にDI3A creatorとDI3B parserへ分割した。両sliceはidentity、private brand authority、untrusted parserまたはartifact inclusion境界を扱う`high` tierとし、各revisionを三役reviewする。DI3A/DI3Bのunion write setはAGENTS、SPEC、`operations.ts`、facade、implementation test、`typeContract.fixture.ts`の6ファイルで、逐次実装する。
+- **RC01-DI3A gate/review**：synthetic commit `4a2f90790f532c3e8697873ce61d3e4dcd4777b6`でrender 176 tests、shared 409 tests、operations coverage 100%、typecheck、lint、format、buildが成功した。primary、implementation、boundaryの三役はdigest順序、failure mapping、brand authority、preimage reuse、package/root/browser境界を確認し、全員`ACCEPT`、blocker/follow-up 0件とした。
+- **RC01-DI3A completion**：6 staged blobとfixed manifestを一致させ、commit `9a1b9b59bfac9c2eee8c4f38ed8c096006a2e110`をpushした。remote branchのexact OID一致を確認し、DI3Bを実装可能にした。
+- **RC01-DI3B gate/review**：initial synthetic commit `d9c3632ceefe04414e38cd7f1c4a34f3edc0e593`でrender 187 tests、shared 425 tests、operations coverage 100%、typecheck、lint、format、buildが成功した。primary、implementation、boundaryの三役は全員`ACCEPT`し、AST authority call-site fixtureとDI3A cumulative wordingをfollow-upとして採用した。
+- **RC01-DI3B convergence/completion**：R2 synthetic commit `7706eeb50e738dc13e3998a20535805a31feec50`でfocused 187 tests、typecheck、lint、formatが成功した。fresh reviewerはprivate assertionがcreator/parser各一回でmismatch後にだけ呼ばれることと、DI3A/DI3B wordingを確認してblocker/follow-up 0件で`ACCEPT`した。commit `8a70f80dd722ed936a570b7d7e2683daab871a76`をpushし、remote branchとexact OIDで一致した。
+
+- **RC01-DI1 red evidence**：SPECとtestを先に追加した時点で、focused suiteは`./implementation`不在のmodule resolution errorによって失敗した。
+- **RC01-DI1 implementation gate**：private nominal ID、四つのrole-specific claim、preimage、definition、input、六error code、immutable error、package-local facadeを追加した。focused 10 tests、shared全13 filesと209 tests、root全test、shared/root build、typecheck、通常lint 0件、formatが成功した。type-aware lintは変更外の`rlse.config.ts`に既存warning 1件だけを報告した。
+- **RC01-DI1 boundary**：hard limit、descriptor preflight、snapshot、validator、creator、parser、digest、brand発行、referent closure、envelope、root exportは追加していない。7 implementation fileと2 direct dependencyをmanifest `220fa34f7081fab0d50bac69ca60fca5b19d75861569d64fb1de8c426ad3c102`へ固定した。
+- **RC01-DI1 R1 review**：identity/trust reviewerは`ACCEPT`した。correctness reviewerはprivate brand export modifierとerror field modifier/typeのfixture hole二件だけをblockerとした。残るreviewerは固定file変更前に停止したため、R2で三役の初期reviewを再実行する。
+- **RC01-DI1 R2 snapshot**：brand export modifierをAST、error fieldのrequired、readonly、exact typeをtype fixtureで固定した。focused 10 tests、typecheck、lint、formatが成功した。7 fileをsynthetic commit `79d5da77cfbc664d23ca99f4c2f7abc413bc799b`へ保存し、shared worktreeではなくimmutable snapshotを三役へ渡した。
+- **RC01-DI1 post-commit audit**：R2固定7 blobがcommit `639bc26cf460f5f5c4965d67f5a3e657f4690cca`と一致することをmanifest `b032cc5fc569ded43797ef2699e89cc7b2a93e82725a3adab627cabc50ed76f0`へ固定した。correctness、SPEC/artifact、最終目標/ownerの三役は、R1 fixture blockerの解消、type-only boundary、root/client非追加、後続DI2/DI3責務の維持を確認し、全員`ACCEPT`、blocker/follow-up 0件と判定した。
 
 ## 直前に完了した Slice
 
@@ -616,6 +785,15 @@ EG03 は untrusted parser、many-to-many relation、fixed point、SCC を扱う�
 | OC01 | completed | canonical contract、relation、composition、realization | shared 8 files・165 tests、typecheck、lint、fmt、build、browser artifact inspection が成功 | Cicero の focused 最終レビューは `ACCEPT` | `86204da` / origin tracking branch |
 | EG01-DESIGN | completed | multi-domain module graph、非循環 identity DAG、phase-aware exact closure | 設計正本、EG01 SPEC、先行 contract test、targeted red failure | 複数回の proposal/actual diff review を収束し、Kepler の最終レビューは `ACCEPT` | この slice の implementation commit に含める |
 | EG01 | completed | canonical immutable module graph snapshot と strict exact-use validation | transformer 12 files・627 tests、typecheck、lint、type-aware lint、fmt、build、artifact inspection が成功 | condition sequence の指摘を修正し、Bacon の2回目レビューは `ACCEPT` | `4efc445` / push 済み |
+| SC02A2 | completed | source-local subjectとpath taxonomy | focused 17 tests、shared 191 tests、typecheck、lint、fmt、build、root非公開 | McClintockのslice-local収束reviewは`ACCEPT` | `7b22d0d` / push済み |
+| SC02A3 | completed | source-local factとtransfer binding | focused 25 tests、shared 199 tests、typecheck、lint、fmt、build、root非公開 | KantのR3 convergence reviewは`ACCEPT` | `43350db` / push済み |
+| SC02A4 | completed | source-local semantic relation | focused 31 tests、shared 217 tests、typecheck、lint、fmt、build | NewtonのR2 convergence reviewは`ACCEPT` | `fcfe5ee` / push済み |
+| SC02A5 | completed | source-local export summary | fixed focused 38 tests、shared 224 tests、typecheck、lint、fmt、build、declaration非公開 | CiceroのR2 convergence reviewは`ACCEPT` | `dc456b8` / push済み |
+| MP01-DK1-T | completed | materialization mechanismの7 literal taxonomy | focused 5 tests、shared 191 tests、typecheck、lint、fmt | Godelのslice-local収束reviewは`ACCEPT` | `ff28849` / push済み |
+| MP01-DR-S | reopened | demand ownerとatomic requirement前提の分解 | R1三役とR2 fresh convergenceでowner、admission、publicationを照合 | R2はRussellが`REJECT`。R3でblocker修正中 | production commitなし |
+| AR01-ID | completed | ArtifactAddressIdのtype-only nominal domain | type、AST、memory emit、root非公開 | 三役のimplementation reviewはすべて`ACCEPT` | `14edf91`と`c147270` / push済み |
+| AR01-EB | completed | artifact entry roleとentry binding | focused 9 tests、shared 214 tests、typecheck、lint、fmt、build、root非公開 | 三役全員`ACCEPT`、blocker/follow-up 0件 | `106acae` / push済み |
+| RC01-DI2A | completed | descriptor occurrence snapshot boundary | fixed focused 48 tests、shared 262 tests、coverage 100%、全package gate | 三役全員`ACCEPT`、blocker 0件 | `bd1fd19` / push済み |
 
 ## Review Log
 
@@ -675,6 +853,100 @@ EG03 は untrusted parser、many-to-many relation、fixed point、SCC を扱う�
 | OC01 implementation 最終監査試行 | Parfit (`019f540a-2b3a-7242-bf95-1d7c602be804`) | REVIEW INCOMPLETE | 確認済み範囲の新規 blocker は0件だが全経路を照合できず、ACCEPT として採用しない。公開typeの修正だけは確認済み |
 | OC01 implementation focused 再監査 | Raman (`019f540d-1d7a-79e2-8e9e-4f8cb49a200a`) | CHANGES REQUIRED | commutative application がない claim の任意 composition ID が受理される bypass を採用した。composition ID を application/context の有無と iff で束縛する失敗 test と検証を追加した |
 | OC01 implementation focused 最終 | Cicero (`019f5412-8515-7f40-bdc4-9b3dcf3b4818`) | ACCEPT | immutable coalescing requirement、target-local symbol、unique trust、duplicate拒否、public type、commutative context、relation contract/class、composition ID iff を確認した。observation 23 test と shared typecheck も成功した |
+| SC02A2 initial correctness | Pasteur (`019f55b3-24f7-7883-a28a-dec4769ad92d`) | REJECT | `ordinal?: never`が`exactOptionalPropertyTypes`無効時に`ordinal: undefined`を受理すること、closed unionと8 relation edge fixtureが片方向であることを採用した |
+| SC02A2 initial SPEC/test | Fermat (`019f55b3-2b88-7551-be1f-550d8ff0534f`) | REJECT | ordinal field不在と`undefined`拒否、全relation endpointとclosed enumの双方向fixture、SPEC目的文の更新を採用した。10 registry collection fixtureは分割後のSC02A3へ移した |
+| SC02A2 initial goal/granularity | Rawls (`019f55b3-3225-7200-80f5-77c86c3b6421`) | REJECT | semantic taxonomyとsource envelopeが独立してgreenになるscope blockerを採用し、SC02A2とSC02A3へ別revisionとして分割した |
+| SC02A2 subject correctness | Parfit (`019f55cc-92e7-7f23-9799-e476b4710174`) | ACCEPT | 7 subject、3 path、variant shape、sequence、type-only facade、後続API不在、独立greenにblocking findingなしと確認した |
+| SC02A2 subject SPEC/test | Sagan (`019f55cc-94ac-7603-bd0c-d91e6babacab`) | REJECT | SPEC未規定のKind alias公開と、TransferBindingおよびExecutionContractSourceのtype-only不在fixture不足を採用した |
+| SC02A2 subject final goal | Euclid (`019f55cc-98d8-7ea1-9243-1c7a2884e3dc`) | REJECT | nested parameter内の複数callbackを一意にできないschema blockerとTransferBinding境界fixture不足を採用した。path追加はAccepted designを変えるためSC02A2-CBPATH-R1へ分離してdesign reviewする |
+| MP01-DK-R1 contract/granularity | Boole (`019f55b3-38bb-7ca0-8118-d87abc62152d`) | REJECT | taxonomy/disposition/carrierとTransferBinding/trust/registry bridgeのscope分割、atomic step discriminant、全kind共通trust gate、exact SC01 entry/version/remote role closureを採用した |
+| MP01-DK-R1 feasibility | Kepler (`019f55b3-4002-7070-96b2-958238dc9379`) | REJECT | inlineをrequest-specific carrier不要だがemissionありと定義し、candidate legality、projection導出順、owner別diagnosticをtaxonomy unitから除外する指摘を採用した |
+| MP01-DK-R1 final goal | Singer (`019f55b3-49bf-7c02-8f52-e2e5146d2ef9`) | REJECT | kindをrepeatable atomic stepとし、inline/target-nativeを排他的に定義し、TransferBindingを未信頼なcandidate constraint、SC01 closureをexact role/version/protocol bindingとする指摘を採用した |
+| RC01-A-R1 identity/authority | Archimedes (`019f55a9-b132-7a00-94a0-cea7e64a27a7`) | REJECT | RenderDefinitionとRenderEnvelopeのscope分割、generation identityの独立前提、referent resolution、authority operation/generation/epoch binding、error変換を採用した |
+| RC01-A-R1 final goal | Curie (`019f55a9-b7f4-7ca3-9c92-a09012a685f2`) | REJECT | RenderDefinitionとRenderEnvelopeのscope分割、generic digestからactual outputへのdomain-specific closure、RR01/SR02責務分離、generation契約の先行を採用した |
+| RC01-A-R1 feasibility | Peirce (`019f55a9-c09e-7031-8e84-d8a223bdb21d`) | REVIEW INCOMPLETE | sessionがresultを返さず`not_found`になった。二件の独立した根拠とmain sessionの照合でscope blockerを採用し、combined revisionを破棄した |
+| AR01-I-R1 initial review | Confucius、Dewey、Ramanujan | REVIEW INCOMPLETE | 三sessionがresultを返さず`not_found`になった。旧combined proposalを採用せず、preimage source domainをAR01-P-R1として新revisionへ分けた |
+| AR01-P-R1 identity | Aristotle (`019f55c7-354d-7351-9afa-c53f014fb733`) | REJECT | nominal subtypeの片方向保証、collection一意性、SCC collapse後のdependency DAG前提を指摘した。identity保証の表現はAR01-IDへ、canonical ruleとDAG前提は後続P/Vへ分ける |
+| AR01-P-R1 feasibility | Carson (`019f55c7-3692-7033-bd2d-c637e71d09fa`) | REJECT | source type unitへcanonical validatorとURL受理規則が混入したblockerを採用した。structural typeのextra-field保証、semantic ID provenance、artifact owner分離を後続前提へ記録する |
+| AR01-P-R1 final goal/granularity | Turing (`019f55c7-38ab-76e0-a3f3-98bde72dd5d8`) | REJECT | nominal domainとsource schemaが独立してgreenになるscope blockerを採用した。combined proposalは一括修正せず、AR01-IDとAR01-Pの別revisionへ分割する |
+| MP01-DK1-R1 contract | Noether (`019f55c1-2bc7-7cc1-bdd0-ad75c9ce991e`) | REJECT | server-onlyとno-transferの混同、snapshot/subscriptionのjoint consistency owner、target-native/codec/remoteの重複を採用した。protocol operationはtaxonomyから除外する |
+| MP01-DK1-R1 feasibility | Galileo (`019f55c1-2cd0-78b1-86a3-e7e39f3d7158`) | REJECT | step/DAG semanticsをtype-only unitで証明できないことと、root未到達artifact inspectionが空証明になることを採用した。typecheckとtype-only consumer inspectionへ限定する |
+| MP01-DK1-R1 goal/granularity | Bacon (`019f55c1-2f2a-7d90-9f85-b320d5f84f64`) | REJECT | taxonomy、server-only disposition、graph-table carrierが独立してgreenになるscope blockerを採用した。MP01-DK1-Tを7 literalのmechanism taxonomyだけの新revisionへ分割した |
+| SC02A2 slice-local convergence | McClintock (`019f55fa-d4ca-7461-843c-b5d56b81b88e`) | ACCEPT | required callback path、static slot identity、SC02A/SC03/runtime owner、後続type boundary、SPEC/test/model/facadeに新規blockerがないことを固定manifestで確認した |
+| AR01-ID design convergence | Descartes (`019f55fd-d326-73b0-85f3-3040bfde4678`) | ACCEPT | 一方向assignability、distinct brand、type/AST/emit検証、root owner、preimageとidentity operationの後続分離にdesign blockerがないことを確認した |
+| AR01-ID implementation correctness | Beauvoir (`019f5601-36b1-7553-b4f5-e7f7b93d5f3c`) | ACCEPT | private mandatory brand、一方向assignability、distinct brand、non-vacuous negative fixture、runtime-empty emit、root非公開を確認した |
+| AR01-ID implementation SPEC/artifact | Lorentz (`019f5602-a980-7060-877e-b15fdb1a8975`) | ACCEPT | SPEC/test/model/facade、exact AST export、memory emit、build declaration、JSDoc、変更範囲にblockerがないことを確認した |
+| AR01-ID implementation goal/boundary | Arendt (`019f5603-4f52-77e2-8b16-a9c2857be7c3`) | ACCEPT | type-only foundationがruntimeを増やさず、provenance、integrity、closureを後続ownerへ維持し、独立して有用であることを確認した |
+| RC01-DI-R4 contract | Carver (`019f55f9-4d4a-73c1-abc2-7e2620b4b0c0`) | REJECT | nested record discovery前にoperation total key countを確定できないことと、budget違反同士の順序未定義を採用した |
+| RC01-DI-R4 feasibility | Newton (`019f55f9-4e98-71b3-99ca-5f646ab7284b`) | REJECT | ancestor descriptorなしにnested total capを課金できず、object identityとschema occurrenceの区別も必要と確認した |
+| RC01-DI-R4 goal/granularity | Wegener (`019f55f9-5094-7953-b35f-94440732c6b0`) | REJECT | prototype検査をownKeysより先に置き、record-local cap後にdescriptorを読む実装可能な順序へ変更する指摘を採用した |
+| MP01-DK1-T slice-local convergence | Godel (`019f55fd-9a85-7790-9eac-d5f06ca7570a`) | ACCEPT | native closureを証明しない境界、7 literal taxonomy、exact facade AST、type-only emit、root非公開にblockerがないことを確認した |
+| RC01-DI-R5 convergence | Franklin (`019f55ff-961d-71d2-9d1d-af8ec8897420`) | ACCEPT | per-record cap、object identity cache、descriptor discovery、deterministic budget order、Proxy契約外境界、server-first impactに新規blockerがないことを確認した |
+| AR01-ID / RC01-DI design integration初回 | Epicurus (`019f5608-ad71-77c3-be5d-5b64887ea5b1`) | REJECT | failure mapping、resource wording、owner/server-first境界、referent trust boundary、brand authorityの転記不足を採用し、固定済み決定だけを設計正本へ補った |
+| SC02A3 R1 goal/boundary | Mill (`019f560f-51ce-73d3-b4c6-31d784199b16`) | REJECT | root非公開fixtureのowner comment 5件がSC02A13へ誤帰属していたため、AS01へ修正しSPECにもownerを明記した。それ以外のcontract blockerはなかった |
+| SC02A3 R1 correctness / SPEC | Volta、Archimedes | REVIEW INVALID | owner blockerの修正でmanifest記載fileが変わるため、安全に停止して判定へ含めなかった |
+| AR01-ID / RC01-DI design integration収束 | Dirac (`019f560f-58ef-7d21-8d3a-4ccd11330330`) | REJECT | 5 blocker中4件は解消した。generic wrong-primitive rowがdigest固有rowと重なる一件だけを採用し、schema/role違反へ限定した |
+| AR01-FT-R1 design review | Ramanujan、Hilbert | REVIEW INVALID | 固定proposalがreview中に別laneから変更されたため、二者とも判定を発行せず停止した。変更内容を保持して必須proposal項目を補いR2へ固定した |
+| AR01-ID / RC01-DI failure mapping targeted recheck | Dirac (`019f560f-58ef-7d21-8d3a-4ccd11330330`) | RESOLVED | generic rowを削除し、schema/roleは`invalid-field`、creator/nested digestは`invalid-reference`、wrapper IDは`invalid-field`へ一意に分類したことを固定excerptで確認した |
+| SC02A3 R2 correctness | Euclid (`019f5614-8800-7e12-b3a6-3e263fb6019b`) | ACCEPT | 16 fact、6 binding、全field、RegistryId domain、AS01 owner、type-only facadeにblockerがないことを確認した |
+| SC02A3 R2 SPEC/artifact | Bohr (`019f5614-82df-7fb3-aeb4-de1e463d4293`) | REJECT | facade AST/emit fixtureがdirect type exportとruntime statementを見逃すfalse-negativeを採用し、全statementとemitをexactに固定した |
+| SC02A3 R2 goal/boundary | Aristotle (`019f5614-8442-7531-908a-86499f569cb7`) | ACCEPT | source-local、attribute-only、callback path、AS01 owner、runtime/client/root非追加にblockerがないことを確認した |
+| AR01-FT-R2 contract/granularity | Copernicus (`019f5616-eb12-7d41-b97b-468e0068635e`) | ACCEPT | 10-field closed product、field semantics、owner分離、単独green、後続sort tupleをfollow-upとして確認した |
+| AR01-FT-R2 feasibility/final goal | James (`019f5616-e9b4-7113-81f0-7e1e44c8711d`) | ACCEPT | type-only feasibility、runtime edge不在、server-first適合を確認した。runtime closed record、cross-field legality、exact-byte algorithm、stable diagnosticを後続validator/finalizer obligationとして記録した |
+| AR01-FT implementation correctness | Beauvoir (`019f5627-d809-7093-b5dc-feb292b33066`) | ACCEPT | exact keys、property、modifier、nominal predecessor、runtime-empty emit、package boundaryにblockerがないことを確認した |
+| AR01-FT implementation SPEC/artifact | Fermat (`019f5627-dae8-7aa0-991b-8dfd27db7329`) | REJECT | build entry mutationで生成declarationから型が公開されてもfocused testが通るfixture holeを採用した。named integrity table negative fixtureとfacade export orderはfollow-upとした |
+| AR01-FT implementation final goal | Mendel (`019f5627-d6ad-7f12-adfb-56f256298cb4`) | ACCEPT | type-only schemaがruntime/client edgeを作らず、後続ownerとAS01 publicationを維持することを確認した |
+| AR01-FT declaration boundary convergence | Hubble (`019f5637-0f8f-7ff0-9573-c1a034026a2f`) | ACCEPT | temporary build、両declaration export、mutation rejection、全terminal pathのcleanupを確認し、R2 blockerの解消と新規blocker不在を確認した |
+| SC02A3 R3 convergence | Kant (`019f561c-e251-7f40-8b9c-e860d924d837`) | ACCEPT | exact facade statement inventoryとemit equalityがdirect type exportおよびruntime statementのsynthetic mutationを拒否することを確認した |
+| RC01-DI1 R1 correctness | Harvey (`019f5618-9ca4-79a1-8442-da365311f084`) | REJECT | private brandのexport modifierとerror fieldのrequired、readonly、exact typeを既存fixtureが保証しない二blockerを採用した |
+| RC01-DI1 R1 SPEC/artifact | Aquinas (`019f5618-9b90-7e11-852d-4e5a60e58221`) | REVIEW INVALID | manifest-listed fixture変更前に停止したため判定へ含めず、R2で通常人数の初期reviewを再実行する |
+| RC01-DI1 R1 goal/boundary | Popper (`019f5618-9f6f-7621-9cae-5c762038ee29`) | ACCEPT | untrusted claim、brand authority、後続owner、root/client非追加にblockerがないことを確認した |
+| PROCESS-SLICE-LOCAL R1 correctness | Hooke (`019f561c-e372-7043-8a0a-9dd2662c5426`) | REJECT | atomic result/commit binding、review中ownership、完全な固定入力とdecision anchorの不足を採用した |
+| PROCESS-SLICE-LOCAL R1 usability | Dewey (`019f561c-e627-7252-a3a6-503424f60b13`) | REJECT | implementation goalの無効化条件、decision source再抽出、初期role coverage、進捗owner不一致を採用した |
+| MP01-DK2 owner integration | Singer (`019f5646-4c0c-7010-9542-e240be3d699c`) | ACCEPT | shared bridgeを追加せず、SC01からRR01までのqualification、candidate legality、finalization、selection、runtime conformance ownerが設計正本へ漏れなく転記されたことを確認した |
+| SC02A4 R1 correctness | Euler | ACCEPT | 8 relation union、endpoint type、ordinal exclusivity、type-only facadeにcorrectness blockerがないことを確認した |
+| SC02A4 R1 SPEC | Banach | REJECT | `feature_spec`が正準macroに存在しない`description`と`validation`引数を使うblockerを採用した |
+| SC02A4 R1 goal/boundary | Ampere | REJECT | SC02A2とSC02A3の累積SPECにrelation/endpoint API不在というstale制約が残るblockerを採用した。R1 snapshot test総数の記録も216へ訂正した |
+| SC02A4 R2 convergence | Newton (`019f564c-12e3-77e2-bddc-f9714d0ae6e1`) | ACCEPT | stale不在制約とmacro引数の修正、SC02A1からSC02A4の意味保持、固定31 focused/217 shared testsを確認し、残存blockerなしと判定した |
+| RC01-DI1 post-commit correctness | Plato (`019f5656-0168-7d00-8e54-843a1640670f`) | ACCEPT | private brand、4 claim、preimage/definition/input、6 error code、immutable field、R1 mutation fixture、boundary外API不在をexact commitで確認した |
+| RC01-DI1 post-commit SPEC/artifact | Gauss (`019f5656-27f3-7263-b19e-3f623354c4d4`) | ACCEPT | SPEC/test/model/error/facade、runtime emit、root declaration非公開、focused 10 testsとpackage gateをisolated exact commitで確認した |
+| RC01-DI1 post-commit goal/boundary | Hooke (`019f5656-5d07-7d53-ad9b-98160674382d`) | ACCEPT | DI2/DI3、RR01、SR02、envelope ownerを先取りせず、client edge、hydration、fallbackを追加しないtype-only foundationであることを確認した |
+| SC02A5 R1 correctness | Harvey (`019f5666-8067-7300-a0d6-20c4840947d0`) | ACCEPT | exact five-field type-only schema、non-vacuous mutation fixture、runtime-empty facade、後続責務不在を確認した |
+| SC02A5 R1 SPEC/artifact | Heisenberg (`019f5666-53aa-73d0-addb-d8b8b1fbbfac`) | REJECT | 非正準`behavior_spec`引数とsource-level API ownerの不一致を採用し、declaration positive controlと`SPEC/functions.typ` dependencyもR2へ反映した |
+| SC02A5 R1 goal/granularity | Copernicus (`019f5666-2d73-7483-884e-d82707876aa2`) | ACCEPT | fixed snapshotは15 files/224 testsであり、別laneを含む16/227 integration証拠と区別するfollow-upを採用した |
+| SC02A5 R2 convergence | Cicero (`019f5674-d29a-7ee0-9471-5cc44b3cda25`) | ACCEPT | R1 blocker、positive declaration control、fixed evidence、11 dependency、10 blobを再照合し、新規blockerなしと判定した。削除数erratumだけをintegration recordへ残した |
+| MP01-DR-S R1 contract | Lagrange (`019f5668-6c48-7a92-b759-ec85b89e546f`) | REJECT | state updateModeのauthoritative input、DV/DI trust chain、累積facade inventoryの不足を採用した |
+| MP01-DR-S R1 feasibility | Hegel (`019f566b-1abd-7eb2-872a-3ae83bd81e9c`) | REJECT | DV/DI欠落、既存taxonomy削除、transformerからshared contractへの合法export経路不在を採用した |
+| MP01-DR-S R1 goal/granularity | Huygens (`019f566b-6d00-7602-b607-78c49201c070`) | REJECT | state projection未決定とowner correction/exact schemaの過剰な束ね方を採用し、schemaを前提unit後へ延期した |
+| MP01-DR-S R2 convergence | Russell (`019f5677-8f4a-7701-8d50-af226abd76fa`) | REJECT | emission publication不在、DM/DE直列化、DVのPL02-V再検証不足、state policy admission owner不在をR3 blockerとして採用した |
+| MP01-DR-S R3 convergence | Epicurus (`019f5684-538c-7f93-b5eb-4220911aab17`) | REJECT | DAGのSC03-T/PL02-S/MP依存省略、raw claim closure前のequality、OC02-SI過大scopeをR4 blockerとして採用した |
+| RC01-DI2A correctness/security | Archimedes (`019f567e-86fd-7b83-bdbd-7d89e89b99bf`) | ACCEPT | reflection順、hard limit、alias、mutation isolation、structural rejection、failure path、DI2B継続surfaceにcorrectness/security blockerがないことを確認した |
+| RC01-DI2A SPEC/type/artifact | Boyle (`019f567e-88cd-7e80-a19f-6d1efb844680`) | ACCEPT | 正準SPEC macro、新Accepted ADR、exact internal type、DI1 blob不変、facade/root/build非公開、fixed gateを確認した |
+| RC01-DI2A goal/granularity | Pauli (`019f567e-8ba1-7000-8752-16625404e979`) | ACCEPT | DI2A/DI2B分割、単独有用性、sanitized surface、server-first/client最小境界、admission上限にblockerがないことを確認した |
+| SC02 facade fixture R2 convergence | Turing (`019f56eb-1a11-76f1-a0fa-2eda514c06ee`) | ACCEPT | future-owner negativeをcentral exact facade fixtureへ集約し、predecessorのmodel-local、permanent negative、root boundaryを維持した。fixed 5 filesと39 testsを確認し、blocker/follow-up 0件と判定した |
+| MP01-DR-S R4 convergence | Laplace (`019f56eb-1904-7fb3-8699-03cd59894f33`) | ACCEPT | R1からR3のDAG、authority、raw closure、OC02粒度blockerが解消し、cycle、trust gap、premature schemaがないことを確認した。後続3 fixture obligationだけをfollow-upとした |
+| MP01 R4 actual integration R1 | Herschel (`019f56f2-421e-7bf0-bb6a-82f38d35714a`) | REJECT | OC02-SD/ST/SV、compiler/author provenanceとconditional SC03-T、DVA parser-version checkの転記漏れ三群を採用した |
+| MP01 R4 actual integration R2 | Gibbs (`019f56fc-177b-7591-b36a-fa4597ca9054`) | ACCEPT | 三つの転記漏れがaccepted R4から復元され、変更段落にowner driftまたは新規矛盾がないことを確認した |
+| RC01-DI2B R2 ADR/publication convergence | Erdos (`019f56ff-d016-7ec3-892e-d8b5bd49235e`) | REJECT | publication fixtureは解消したが、R1 Accepted ADRの直接変更を履歴blockerとして採用した |
+| RC01-DI2B R3 ADR-history targeted recheck | Chandrasekhar (`019f5707-fabc-77a3-b3bd-ca5d6d4ada29`) | ACCEPT | R1 ADRのbyte一致、新ADRだけのR5 supersession、DI2B/DI3 freeze ownerを確認し、blocker/follow-up 0件と判定した |
+| SC02A6 low-tier primary | Dalton (`019f5704-8743-78e1-978c-067af73add04`) | ACCEPT | exact 10 collection mapping、SC01/SC02A7+/AS01 owner、正準SPEC、runtime-empty/root非公開を確認した。進捗表同期だけをfollow-upとした |
+| AR01-DB R1 primary | Plato (`019f5709-d333-7663-b31a-a60aa23e4e6d`) | REJECT | finalization/entry feature specのstale累積facadeと、private kind aliasを見逃すinline-union fixture holeを採用した |
+| AR01-DB R1 implementation | Pasteur (`019f5709-d435-77b2-8ac4-5600fd782844`) | ACCEPT | exact model、modifier fixture、facade/root/emit、isolated gateを確認し、後続validator/identityへの二follow-upだけを残した |
+| AR01-DB R1 boundary | Dalton (`019f5709-d655-75e2-8707-8d3cdbb391f1`) | ACCEPT | persistent identity input、untrusted claim、AS01 root owner、client runtime非追加、後続責務分離を確認した |
+| AR01-DB R2 convergence | Lovelace (`019f5713-fcf0-76e2-aff2-50a30f3240bb`) | ACCEPT | 4-model/5-type累積SPECとdirect inline-union AST fixtureが両blockerを解消し、変更2 blobに新規blockerがないことを確認した |
+| RC01-DI3B R1 primary | `019f5816-2bad-7353-b05d-f56b4ddce054` | ACCEPT | strict parser、digest equality、brand authorityを確認し、authority call-site AST fixtureだけをfollow-upとした |
+| RC01-DI3B R1 implementation | `019f5816-4e63-7c91-ade8-75db544a8ede` | ACCEPT | focused/shared gate、root/browser boundaryを確認し、AST fixtureとstale SPEC wordingをfollow-upとした |
+| RC01-DI3B R1 boundary | `019f5816-6b61-7b11-96f8-d5e091879554` | ACCEPT | referent/trust/publicationを先取りしないself-digest parser境界を確認した |
+| RC01-DI3B R2 convergence | `019f5823-d7a5-7e40-a498-d50a15c8ba74` | ACCEPT | ASTでauthority helperがcreator/parser各一回、parserではmismatch後であることとDI3A/DI3B wordingを確認した |
+| SC02A8 boundary R1 三役 | `019f5811-9979-7b53-868f-f0cf8f770def`、`019f5811-bc08-7c81-84a3-2da0d5c24187`、`019f5811-d901-79c1-989a-c27c4c071ed6` | REJECT | depth、realm provenance、reflection identity、source profile、sort/downstream boundのblockerを採用した |
+| SC02A8 boundary R2 convergence | `019f582a-afc5-7441-ba39-93607dcfbd3c` | ACCEPT | peak depth、observable prototype、distinct reflection、occurrence alias、two-stage profile、A12 freeze、7-way splitを確認した |
+| SC02A8 canonical R2 convergence | `019f5833-304e-7761-b47d-4c3980b84fc1` | REJECT | active-path scratch underbound、host/GC 3-representation保証、shared alias fixture欠落を採用した |
+| SC02A8 canonical R3 targeted | `019f583a-228f-7780-ab37-ae41486cb603` | ACCEPT | property-cap scratch、host storage big-O、occurrence alias measurementが三blockerを解消したことを確認した |
+| AR01-DP/P R1 三役 | `019f581a-7dc0-7780-976d-f02eb07fabd6`、`019f581a-9e49-7453-adec-52a753c5b071`、`019f581a-d238-79d0-b7e3-e2e799ac5e58` | REJECT | historical binding、private branded JCS fixture、DeploymentIdentity pipeline、AR01/AF01/CN01-L/SL01/RR01 owner、line estimateを採用した |
+| AR01-DP R2 convergence | `019f582d-f134-73f3-a5e6-a26cf52123f6` | REJECT | AF01をselected candidateへ依存させた逆順をblockerとし、RR01 target明記をfollow-upとした |
+| AR01-DP R3 targeted | `019f5832-7f08-7b00-8a32-db302739f7c2` | ACCEPT | candidateごとのAF01 finalization後にSL01 selectionを行う順序とRR01検証対象を確認した |
+| AR01-P R2 convergence | `019f5837-08dd-7241-809e-9c4297e927f5` | REJECT | RR01がgeneric AF01 evidenceを受けてSL01を迂回できるowner blockerを採用した |
+| AR01-P R3 targeted | `019f583c-9da2-7c33-9027-58eb1f2c12d5` | ACCEPT | RR01をSL01-selected AF01 evidenceだけへ限定し、candidate/artifact/URL fallbackがないことを確認した |
 
 ## Commit / Push Log
 
@@ -689,6 +961,32 @@ EG03 は untrusted parser、many-to-many relation、fixed point、SCC を扱う�
 | SC01 | `da05b19` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `da05b191945df608e09a61d87538a7bf69ceca82` で一致した |
 | OC01-DESIGN | `2900469` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `29004694c0f5a700825afe2d22e15e70ffe5f8f5` で一致した |
 | OC01 | `86204da` | `origin/feature/declarative-ui-execution-partitioning` | implementation commit を完了記録 commit と同時に push し、tracking branch の履歴へ包含されることを確認する |
+| SCHEDULER-RULE | `98585c9` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `98585c9c95bc1a02f71e26a764a67e9882519738` で一致した |
+| SC02A1 | `d5d704a` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `d5d704a45ad9366c681547fe875549b272d40d87` で一致した |
+| AR01-ID | `14edf91` | `origin/feature/declarative-ui-execution-partitioning` | package-local nominal domainをpushし、localとtracking branchがcommit時に一致した |
+| AR01-ID-FACADE | `c147270` | `origin/feature/declarative-ui-execution-partitioning` | facade AST inspection修正をpushし、後続HEADから到達できる |
+| SC02A2 | `7b22d0d` | `origin/feature/declarative-ui-execution-partitioning` | subject/path revisionをpushし、slice-local reviewの`ACCEPT`を回収した |
+| MP01-DK1-T | `ff28849` | `origin/feature/declarative-ui-execution-partitioning` | taxonomy revisionをpushし、slice-local reviewの`ACCEPT`を回収した。localとtracking branchは`ff28849987a7d40d84e402b6d1accabea09129c7`で一致した |
+| DESIGN-CONTRACT-INTEGRATION | `afcac4d` | `origin/feature/declarative-ui-execution-partitioning` | SC02A2、MP01、AR01-ID、RC01-DIの収束済みdecisionを設計正本へ統合し、localとtracking branchが`afcac4d39fc79650e7ca2292ac3cb827cccf5f0d`で一致した |
+| SC02A3 | `43350db` | `origin/feature/declarative-ui-execution-partitioning` | source-local fact schemaをpushし、localとtracking branchが`43350db7088fa46e6e90f5db9a528b481f624da1`で一致した |
+| PROCESS-IMMUTABLE-REVIEW | `f19c6dd` | `origin/feature/declarative-ui-execution-partitioning` | immutable synthetic review revision規則をpushし、後続HEADから到達できる |
+| AR01-FT | `9cff8ed` | `origin/feature/declarative-ui-execution-partitioning` | package-local finalization template typeをpushし、後続correctionで生成declaration gateを補強した |
+| RC01-DI1 | `639bc26` | `origin/feature/declarative-ui-execution-partitioning` | render definition modelをpushし、localとtracking branchがcommit時に一致した |
+| AR01-FT-DECLARATION | `8d164cd` | `origin/feature/declarative-ui-execution-partitioning` | R3収束済みdeclaration boundary testをpushし、localとtracking branchが`8d164cdb0234c58a3957dd7d740cd1c4ed7117fb`で一致した |
+| MP01-OWNER-PIPELINE | `122c47b` | `origin/feature/declarative-ui-execution-partitioning` | DK2 shared bridgeを除去したowner pipelineをpushし、localとtracking branchが`122c47b7d66a6b83d7c0d5280bb22354aedbfe78`で一致した |
+| SC02A4 | `fcfe5ee` | `origin/feature/declarative-ui-execution-partitioning` | source-local relation schemaをpushし、localとtracking branchが`fcfe5ee68c0cc049cf762c4578e8dc5600d1eb92`で一致した |
+| SC02A5 | `dc456b8` | `origin/feature/declarative-ui-execution-partitioning` | source-local export summaryをpushし、localとtracking branchが`dc456b8fa31dd6d03a7caeaf385e9ad053e493b3`で一致した |
+| RC01-DI2A | `bd1fd19` | `origin/feature/declarative-ui-execution-partitioning` | descriptor occurrence snapshotをpushし、localとtracking branchが`bd1fd198a2281c0f5b3725a265e49d0c2db4e0eb`で一致した |
+| SC02-FACADE-FIXTURE | `b7f5b71` | `origin/feature/declarative-ui-execution-partitioning` | central facade ownership testをpushし、localとtracking branchが`b7f5b71dbb23f4cc442a8883fc29957bfa0c8269`で一致した |
+| MP01-R4-INTEGRATION | `0c73a73` | `origin/feature/declarative-ui-execution-partitioning` | accepted state/demand admission detailをpushし、後続HEADから到達できる |
+| SC02A6 | `ea129bb` | `origin/feature/declarative-ui-execution-partitioning` | registry source collection schemaをpushし、localとtracking branchが`ea129bb434789a2ec55386a89ebae2dc74345390`で一致した |
+| RC01-DI2B | `5074491` | `origin/feature/declarative-ui-execution-partitioning` | validated scalar snapshotをpushし、localとtracking branchが`50744910cfb052cf5249a40a3b9d60c5128f3a48`で一致した |
+| AR01-DB | `31a6da6` | `origin/feature/declarative-ui-execution-partitioning` | dependency binding identity-input schemaをpushし、localとtracking branchが`31a6da6154d75a58cc09b0946bb2fae6c265a22b`で一致した |
+| PROCESS-REVIEW-V2 | `5eb062f` | `origin/feature/declarative-ui-execution-partitioning` | risk tier、attestation、capsule、delta convergence規則をpushし、localとtracking branchが`5eb062f7612855c9662486ea794b0aa0524092e2`で一致した |
+| SC02A7 | `1c393b3` | `origin/feature/declarative-ui-execution-partitioning` | source contract envelopeをpushし、localとtracking branchが`1c393b3d120859d63a9da8e7045e40a1b0774f97`で一致した |
+| RC01-DI3A | `9a1b9b5` | `origin/feature/declarative-ui-execution-partitioning` | render definition creatorをpushし、localとtracking branchが`9a1b9b59bfac9c2eee8c4f38ed8c096006a2e110`で一致した |
+| AR01-XB | `44a1b0f` | `origin/feature/declarative-ui-execution-partitioning` | artifact export bindingをpushし、localとtracking branchが`44a1b0f1dbd5c0f4e053040d1df08359ba319b93`で一致した |
+| RC01-DI3B | `8a70f80` | `origin/feature/declarative-ui-execution-partitioning` | verified render definition parserをpushし、localとtracking branchが`8a70f80dd722ed936a570b7d7e2683daab871a76`で一致した |
 
 ## 未完了事項
 
