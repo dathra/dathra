@@ -6,15 +6,21 @@
 
 1. [SPEC.typ](./SPEC.typ) - Defines the render-definition contract and slice boundaries
 2. [implementation.test.ts](./implementation.test.ts) - Defines the correctness criteria
+3. [descriptorSnapshot.test.ts](./descriptorSnapshot.test.ts) - Defines the DI2A descriptor criteria
 
 These files are authoritative and must remain aligned with the implementation.
 
 ## Current Scope
 
-RC01-DI1 owns only the nominal ID, role-specific reference claim types,
+RC01-DI1 owns the nominal ID, role-specific reference claim types,
 render-definition record types, creator input type, immutable domain error, and
 package-local facade.
 
-Do not add validation, hard limits, identity operations, record freezing,
-referent closure, accepted definitions, envelopes, publication, or authority in
-this slice.
+RC01-DI2A owns the fixed record-key budgets and the package-internal descriptor
+occurrence snapshot consumed by DI2B. It validates current-realm plain records
+and descriptor structure without reading accessors or extra values.
+
+DI2B owns expected-string budgets, missing and extra classification, literals,
+lexical digests, and fresh scalar construction. Do not add those operations,
+canonicalization, content digests, brand issuance, public creator or parser
+APIs, returned-definition freezing, root exports, or publication in DI2A.
