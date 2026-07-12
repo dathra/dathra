@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次の作業: OC01 の最終独立実装レビューを収束させ、shared gate と browser artifact を再確認して commit、push する。
+- 次の作業: EG01 immutable module graph snapshot の対象 transformer code と既存 resolver contract を調査し、SPEC と test を先に追加する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -27,7 +27,7 @@
 | S00 | branch、計画文書、baseline | completed | `gnb` で branch を作成し、計画 commit `8a0eedd` を push した。全 baseline command が成功した |
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
-| P01 | ExecutionGraph foundation | in-progress | ID01 と SC01 は completed。OC01 は superseding schema と監査 finding を実装し、最終独立レビュー中 |
+| P01 | ExecutionGraph foundation | in-progress | ID01、SC01、OC01 は completed。次は EG01 immutable module graph snapshot |
 | P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02 と SC03 は未着手 |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
@@ -84,7 +84,7 @@ package 間で使う internal export、package export map、build entry は、�
 | VG01 | docs と全 playground の実処理 gate | root、`docs/`、`playgrounds/{e2e,ssr,vanilla,getting-started-check,nuxt}/` | app ごとの workflow test と `vitest.config.ts` | package scripts、CI、Nuxt context repair | なし | completed |
 | ID01 | canonical preimage、digest、qualified ID | shared: `src/canonicalIdentity/` | 同 directory の SPEC / test | 同 directory の implementation | VG01 | completed |
 | SC01 | RegistryId、descriptor、symbolic/final catalog、environment projection | shared: `src/executionRegistry/` | 同 directory の SPEC / test | closed registry schema、role matrix、fixed-point derivation と validation | ID01 | completed |
-| OC01 | ObservationContract、canonical trace language、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | canonical DFA、relation projection/inclusion、claim、instance witness の pure implementation | SC01 / ID01 | in-progress |
+| OC01 | ObservationContract、canonical trace language、composition、RealizationWitness | shared: `src/observationContract/` | 同 directory の SPEC / test | canonical DFA、relation projection/inclusion、claim、instance witness の pure implementation | SC01 / ID01 | completed |
 | EG01 | immutable module graph snapshot | transformer: `src/moduleGraph/` | 同 directory の SPEC / test | canonical module request、content digest、snapshot | ID01 | pending |
 | EG02 | ModuleCoordinator、fixed point、incremental invalidation | transformer: `src/moduleCoordinator/` | 同 directory の SPEC / test | resolver/load/transform adapter、barrier、cache | EG01 | pending |
 | EG03 | ExecutionGraph、TemplateNode、Occurrence、root、edge | transformer: `src/executionGraph/` | 同 directory の SPEC / test | deterministic graph builder | EG02 / OC01 | pending |
@@ -307,8 +307,8 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | SC01-DESIGN | completed | flat projection と artifact 順序の矛盾を解消する | design type/prose、matrix、生成 DAG の整合確認 | proposal review と final actual diff review は `ACCEPT` | `17591e5` / push 済み |
 | SC01 | completed | closed registry schema、catalog、fixed-point projection | shared 6 files・142 tests、typecheck、lint、fmt、build、artifact inspection | 3回目の独立実装レビューは `ACCEPT` | `da05b19` / push 済み |
 | OC01-DESIGN | completed | canonical trace language、relation inclusion、composition result、instance witness | 設計正本、matrix、digest DAG、責務分担を更新した | 提案と2回目の actual diff レビューは `ACCEPT` | `2900469` / push 済み |
-| OC01-DESIGN-REVISION | completed | contract conformance、derived relation、proof DAG、result contract、coverage closure | composition `/4`、class-local policy closure、contract/application `/3` coalescing requirement の superseding ADR と interface specification を更新した | cycle proposal は Archimedes、coalescing requirement は Pauli が評価し、指摘を反映済み | OC01実装と同じ整合commitへ含める |
-| OC01 | in-progress | canonical contract、relation、composition、realization | shared 8 files・165 tests、typecheck、lint、fmt、build が成功。behavior、derived relation、policy composition、coverage/witness closure は実装済み | Cicero の focused 最終レビューは `ACCEPT` | commit、push 待ち |
+| OC01-DESIGN-REVISION | completed | contract conformance、derived relation、proof DAG、result contract、coverage closure | composition `/4`、class-local policy closure、contract/application `/3` coalescing requirement の superseding ADR と interface specification を更新した | cycle proposal は Archimedes、coalescing requirement は Pauli が評価し、指摘を反映済み | `86204da` / origin tracking branch |
+| OC01 | completed | canonical contract、relation、composition、realization | shared 8 files・165 tests、typecheck、lint、fmt、build、browser artifact inspection が成功 | Cicero の focused 最終レビューは `ACCEPT` | `86204da` / origin tracking branch |
 
 ## Review Log
 
@@ -381,6 +381,7 @@ vanilla では `Signal.update()` の呼び出しにより最初の counter click
 | SC01-DESIGN | `17591e5` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `17591e5d8d0d4f54501d12753353bf8887a70f6e` で一致した |
 | SC01 | `da05b19` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `da05b191945df608e09a61d87538a7bf69ceca82` で一致した |
 | OC01-DESIGN | `2900469` | `origin/feature/declarative-ui-execution-partitioning` | local と tracking branch が `29004694c0f5a700825afe2d22e15e70ffe5f8f5` で一致した |
+| OC01 | `86204da` | `origin/feature/declarative-ui-execution-partitioning` | implementation commit を完了記録 commit と同時に push し、tracking branch の履歴へ包含されることを確認する |
 
 ## 未完了事項
 
