@@ -1,4 +1,4 @@
-= source execution contract identity and subject model
+= source execution contract identity, subject, and fact model
 
 #import "/SPEC/functions.typ": *
 #import "/SPEC/settings.typ": *
@@ -6,13 +6,15 @@
 
 == 目的
 
-source execution contractが、qualification前のfactを一つのcontract内で参照するためのlocal identity、stable failure、source-local subjectとvalue pathを提供する。
+source execution contractが、qualification前のfactを一つのcontract内で参照するためのlocal identity、stable failure、source-local subjectとvalue path、closed fact schemaを提供する。
 
 SC02A1は`FactId`、`factId()`、`ExecutionContractError`だけをpackage-local facadeから公開する。
 
 SC02A2はsemantic subjectとpath segmentをtype-only modelとして追加する。
 
-fact、transfer binding、relation、source envelope、unknown input parser、budget、closure、digestは後続の独立review unitが追加する。
+SC02A3はsemantic factとtransfer bindingをtype-only modelとして追加する。
+
+relation、source envelope、unknown input parser、budget、closure、digestは後続の独立review unitが追加する。
 
 == 設計判断
 
@@ -47,6 +49,24 @@ fact、transfer binding、relation、source envelope、unknown input parser、bu
     - SC02A1は後続operationが使う全stable codeを先に固定する
     - nested parserは同じerrorへfield prefixを追加する
     - package-local facadeはinternalな`fail()` helperを公開しない
+  ],
+)
+
+#adr(
+  header("semantic factをattributeだけのclosed unionとして固定する", Status.Accepted, "2026-07-12"),
+  [
+    behavioral edgeをfact fieldとrelationの両方で表すと、二つの表現が矛盾し、どちらを正本として扱うかを一意に決められない。
+    registry referenceをkindなしのstringで表すと、異なるregistry domainのIDを取り違えてもtype boundaryで検出できない。
+  ],
+  [
+    source-local `SemanticFact`は`schema`、`FactId`、`SemanticSubject`を共有する16種類のclosed discriminated unionとする。
+    read、write、effect、ownership、orderingはattributeだけを保持し、behavioral cross-fact edgeを保持しない。
+    `TransferBinding`は6種類のclosed unionとし、registry referenceにはkind付きのsource-local `RegistryId`を使う。
+  ],
+  [
+    - source-local factは構造を表す未信頼claimであり、module signatureとの一致やtrust acceptanceを証明しない
+    - behavioral relation、closure、strict parserは後続review unitが定義する
+    - SC02A3はruntime valueを追加しない
   ],
 )
 
@@ -143,6 +163,189 @@ fact、transfer binding、relation、source envelope、unknown input parser、bu
   ],
 )
 
+#interface_spec(
+  name: "Source-local transfer binding",
+  summary: [
+    valueのtransfer mechanismと必要なsource-local registry referenceを6種類のclosed discriminated unionで表す。
+  ],
+  format: [
+    ```typescript
+    type TransferBinding =
+      | { readonly kind: "none" }
+      | { readonly kind: "snapshot" }
+      | {
+          readonly kind: "codec"
+          readonly codecId: RegistryId<"codec">
+          readonly version: string
+        }
+      | {
+          readonly kind: "reference"
+          readonly resolverId: RegistryId<"resolver">
+          readonly version: string
+          readonly capabilityPolicyId: RegistryId<"policy">
+        }
+      | {
+          readonly kind: "subscription"
+          readonly sourceId: RegistryId<"subscription-source">
+          readonly version: string
+        }
+      | {
+          readonly kind: "remote"
+          readonly operationId: RegistryId<"remote-operation">
+          readonly version: string
+        }
+    ```
+  ],
+  constraints: [
+    - `none`と`snapshot`は`kind`以外のfieldを持たない
+    - `codec`、`reference`、`subscription`、`remote`はrequiredな`version`を持つ
+    - registry IDはqualification前のsource-local `RegistryId`であり、kindごとのbrandを保持する
+    - `reference`のcapability policyは`RegistryId<"policy">`であり、resolver IDと同じdomainとして扱わない
+    - parserによるversion文字列とclosed structural ruleの検証は後続review unitが定義する
+  ],
+)
+
+#interface_spec(
+  name: "Closed source-local semantic fact model",
+  summary: [
+    source-local semantic claimを共通baseと16種類のattribute-only variantで表す。
+  ],
+  format: [
+    ```typescript
+    type SemanticFactKind =
+      | "environment"
+      | "read"
+      | "write"
+      | "effect"
+      | "invocation"
+      | "identity"
+      | "ownership"
+      | "ordering"
+      | "failure"
+      | "cancellation"
+      | "lifetime"
+      | "transfer"
+      | "exposure"
+      | "integrity"
+      | "dependency-epoch"
+      | "trust-boundary"
+
+    interface FactBase {
+      readonly schema: "dathra.fact/1"
+      readonly id: FactId
+      readonly subject: SemanticSubject
+    }
+
+    type SemanticFact = FactBase & (
+      | {
+          readonly kind: "environment"
+          readonly environments: readonly ExecutionEnvironment[]
+          readonly hostProfileIds: readonly RegistryId<"host-profile">[]
+        }
+      | {
+          readonly kind: "read"
+          readonly stability: "immutable" | "stable-within-token" | "may-change"
+          readonly consistency: "none" | "snapshot-token" | "linearizable-authority"
+          readonly replay: {
+            readonly duplicate: boolean
+            readonly reorder: boolean
+            readonly recompute: boolean
+          }
+          readonly environmentFactId: FactId
+          readonly exposureFactId: FactId
+        }
+      | {
+          readonly kind: "write"
+          readonly environmentFactId: FactId
+          readonly exposureFactId: FactId
+        }
+      | {
+          readonly kind: "effect"
+          readonly retainsCallbacks: boolean
+          readonly reentrant: boolean
+          readonly schedulesWork: boolean
+          readonly allocatesResource: boolean
+        }
+      | {
+          readonly kind: "invocation"
+          readonly callable: "call" | "construct" | "call-and-construct"
+          readonly boundary: "sync" | "async"
+          readonly callbackParameterIndexes: readonly number[]
+          readonly retainsCallbacks: boolean
+          readonly reentrant: boolean
+          readonly receiverBrandId: RegistryId<"brand"> | null
+        }
+      | {
+          readonly kind: "identity"
+          readonly scope: "none" | "realm" | "module" | "instance"
+          readonly brandId: RegistryId<"brand"> | null
+        }
+      | {
+          readonly kind: "ownership"
+          readonly retention: "owned" | "leased" | "borrowed" | "environment-permanent"
+        }
+      | {
+          readonly kind: "ordering"
+          readonly relation: "before" | "serial" | "exclusive" | "commutative"
+        }
+      | {
+          readonly kind: "failure"
+          readonly channel: "typed-result" | "throw" | "reject" | "abort"
+          readonly schemaId: RegistryId<"failure-schema">
+        }
+      | {
+          readonly kind: "cancellation"
+          readonly point: "before-start" | "before-commit" | "best-effort-after-commit"
+          readonly propagation: "owned-descendants" | "explicit-edges"
+        }
+      | {
+          readonly kind: "lifetime"
+          readonly domain: "call" | "request" | "generation" | "owner" | "realm" | "process"
+          readonly cleanup: "none" | "sync" | "async"
+        }
+      | {
+          readonly kind: "transfer"
+          readonly binding: TransferBinding
+        }
+      | {
+          readonly kind: "exposure"
+          readonly audiencePolicyId: RegistryId<"policy">
+          readonly sinkPolicyIds: readonly RegistryId<"policy">[]
+          readonly releasePolicyId: RegistryId<"policy"> | null
+        }
+      | {
+          readonly kind: "integrity"
+          readonly source: "compiler" | "signed-manifest" | "validated-input" | "untrusted"
+          readonly endorsementPolicyId: RegistryId<"policy"> | null
+        }
+      | {
+          readonly kind: "dependency-epoch"
+          readonly epochId: string
+          readonly invalidation: "content-addressed" | "host-supplied" | "explicit"
+        }
+      | {
+          readonly kind: "trust-boundary"
+          readonly enforcement: "worker" | "sandbox" | "compartment" | "host-process"
+          readonly capabilityPolicyIds: readonly RegistryId<"policy">[]
+        }
+    )
+    ```
+  ],
+  constraints: [
+    - すべてのvariantはexactに`schema`、`id`、`subject`と各variant固有fieldを持つ
+    - `schema`は`"dathra.fact/1"`、`id`はsource-local `FactId`、`subject`はSC02A2の`SemanticSubject`とする
+    - callback subjectはrequiredなparameter-local `path`を含む現行shapeをそのまま使う
+    - readとwriteは`environmentFactId`と`exposureFactId`だけをfact attribute referenceとして保持する
+    - effectは`retainsCallbacks`、`reentrant`、`schedulesWork`、`allocatesResource`だけを固有fieldとして持つ
+    - ownershipは`retention`だけ、orderingは`relation`だけを固有fieldとして持つ
+    - read、write、effect、ownership、orderingはbehavioral relationやmemberを表すfieldを持たない
+    - `SemanticFactKind`、`TransferBinding`、`SemanticFact`だけをfact modelからpackage-local facadeへtype-only exportする
+    - individual fact interfaceとhelper aliasをpackage-local facadeへexportしない
+    - relation、endpoint、export summary、registry aggregate、source envelope、parser、validator、closure、digest、qualified、compiled、accepted APIを追加しない
+    - package rootへ公開せず、shared rootへの公開はAS01が所有し、facadeのruntime valueは`ExecutionContractError`と`factId`だけとする
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -189,7 +392,25 @@ fact、transfer binding、relation、source envelope、unknown input parser、bu
     - direct callbackの空path、object property callback、tuple callback、element callbackを区別できることを検査する
     - pathの順序とrepeated path segmentを保持できることを検査する
     - wrong property type、extra property、callback pathの省略をnegative type fixtureで検査する
-    - fact、transfer binding、relation、aggregate source、source envelope、qualified、compiled、accepted、digest APIが存在しないことを検査する
+    - relation、aggregate source、source envelope、qualified、compiled、accepted、digest APIが存在しないことを検査する
     - facadeのruntime valueが`ExecutionContractError`と`factId`だけであることを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Closed source-local fact schema",
+  description: [
+    後続のstrict parserとclosure validatorが扱うfact claimのtype-only schemaを提供する。
+  ],
+  validation: [
+    - 16 fact kindを双方向のexact type fixtureで検査する
+    - すべてのfact variantのexact keyとproperty typeを検査する
+    - 6 transfer binding variantのexact key、registry kind、version、policy fieldを検査する
+    - removed behavioral fieldを各該当variantが受理しないことを検査する
+    - `FactId`とrequired callback pathを含む`SemanticSubject`を再利用することを検査する
+    - 異なるkindの`RegistryId`を相互代入できないことを検査する
+    - fact modelとtype-only consumerがruntime codeを生成しないことを検査する
+    - package-local facadeがfact modelから3 typeだけを公開し、runtime valueを追加しないことを検査する
+    - package rootへ公開されず、後続review unitのAPIが存在しないことを検査する
   ],
 )

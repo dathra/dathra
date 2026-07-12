@@ -1,9 +1,9 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
-  // @ts-expect-error SC02A13 owns publication of the completed source API.
+  // @ts-expect-error AS01 owns shared-root publication.
   type SemanticPathSegment as _RootSemanticPathSegmentMustNotExist,
-  // @ts-expect-error SC02A13 owns publication of the completed source API.
+  // @ts-expect-error AS01 owns shared-root publication.
   type SemanticSubject as _RootSemanticSubjectMustNotExist,
 } from "../index";
 import { fail } from "./identity";
@@ -20,10 +20,8 @@ import {
   type ExecutionContractPathSegment as _PathSegmentMustNotExist,
   // @ts-expect-error Registry source aggregation belongs to a later review unit.
   type ExecutionContractRegistrySources as _RegistrySourcesMustNotExist,
-  // @ts-expect-error The fact taxonomy belongs to the next review unit.
-  type SemanticFact as _SemanticFactMustNotExist,
-  // @ts-expect-error Fact kinds belong to the next review unit.
-  type SemanticFactKind as _SemanticFactKindMustNotExist,
+  type SemanticFact,
+  type SemanticFactKind,
   type SemanticPathSegment,
   // @ts-expect-error The relation taxonomy belongs to a later review unit.
   type SemanticRelation as _SemanticRelationMustNotExist,
@@ -34,8 +32,7 @@ import {
   type ExecutionContractSource as _SourceMustNotExist,
   // @ts-expect-error The source envelope belongs to a later review unit.
   type ExecutionContractSourceInput as _SourceInputMustNotExist,
-  // @ts-expect-error Transfer declarations belong to the next review unit.
-  type TransferBinding as _TransferBindingMustNotExist,
+  type TransferBinding,
   // @ts-expect-error SC01 owns registry entries; this facade does not re-export them.
   type RegistrySourceEntry as _RegistrySourceEntryMustNotExist,
   // @ts-expect-error Qualified identity is owned by SC02B and SC03.
@@ -366,7 +363,11 @@ describe("ExecutionContractError", () => {
     );
   });
 
-  it("keeps the subject model type-only at the package-local facade", () => {
+  it("keeps the subject and fact models type-only at the package-local facade", () => {
+    expectTypeOf<SemanticFact["kind"]>().toEqualTypeOf<SemanticFactKind>();
+    expectTypeOf<TransferBinding["kind"]>().toEqualTypeOf<
+      "none" | "snapshot" | "codec" | "reference" | "subscription" | "remote"
+    >();
     expect(Object.keys(executionContractApi).sort()).toEqual([
       "ExecutionContractError",
       "factId",
