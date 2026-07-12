@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次のscheduler action: SC02A8 boundary/canonicalとAR01-DP/Pの収束済みdecisionを正本へ統合してcommit/pushする。その後、write setが重ならないSC02A8A、ID01-CB、AR01-DPを独立laneで開始する。
+- 次のscheduler action: 完了したSC02A8A、ID01-CB、AR01-DPを前提にready queueを再計算し、write setが重ならないSC02A8BとAR01-Pを独立laneで開始する。SC02A8C、SC02A8I、AR01-DSはreadyを維持し、各packageの共有SPEC/facadeとの競合が解消した時点で順次開始する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -35,10 +35,10 @@ sliceのcontract固定、実装完了、review開始または収束、dependency
 
 | Lane | Slice | Owner | 状態 | 完了dependency OID | 専有write set | 固定contract | 次のgate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| L1 | SC02A8-DESIGN boundary/canonical decomposition | main design | merge-ready | SC02A7 commit `1c393b3d120859d63a9da8e7045e40a1b0774f97` | 設計正本と進捗文書 | A8A-G、ID01-CB、A8I、A13のowner、counter、alias、memory、measurement | 正本integrationをcommit/pushしてSC02A8AとID01-CBをreadyにする |
+| L1 | SC02A8A budget/ledger | main integration | completed | SC02A8 design commit `b3b6ed298144a22a30214e400b77e8154a496691` | `executionContract`の8-file slice | 15-field budget、narrow-only override、cumulative/peak exact/-1、ledger isolation | commit `02bdfe4a662de7f0799f3211a9464303f2a2cbbc`をpush済み |
 | L2 | RC01-DI3B verified parser | main integration | completed | RC01-DI3A commit `9a1b9b59bfac9c2eee8c4f38ed8c096006a2e110` | renderContractの6-file cumulative write set | strict parser、self-digest equality、mismatchだけ | commit `8a70f80dd722ed936a570b7d7e2683daab871a76`をpush済み |
-| L3 | AR01-DP/P-DESIGN identity preimage split | main design | merge-ready | AR01-XB commit `44a1b0f1dbd5c0f4e053040d1df08359ba319b93`、ID01 | 設計正本と進捗文書 | DP/P分割、DS/DV/DD、PS/PV/PI/PC/URL/IT、AF01/SL01/RR01順序 | 正本integrationをcommit/pushしてAR01-DPをreadyにする |
-| L4 | PROCESS-PROGRESS-V3 | main integration | merge-ready | HEAD `8a70f80dd722ed936a570b7d7e2683daab871a76` | implementation progress文書だけ | completed/reviewing lane、admission split、next gateの事実同期 | design checkpointと同時にcommit/pushする |
+| L3 | AR01-DP deployment identity preimage | main integration | completed | AR01 design commit `b3b6ed298144a22a30214e400b77e8154a496691`、ID01 | `artifactContract`の8-file slice | exact 7-field readonly aggregate、generic `Sha256Digest`、type-only facade | commit `f56864d544217188e1fd4372d7f180cda435b991`をpush済み |
+| L4 | ID01-CB bounded canonical builder | main integration | completed | SC02A8 design commit `b3b6ed298144a22a30214e400b77e8154a496691` | `canonicalIdentity`の10-file slice | iterative builder、bounded scratch、failure-only path materialization、descriptor accounting | commit `e42fec40210aeead036209f209e9038632421f5b`をpush済み |
 
 SC02A2、SC02A3、SC02A4、SC02A5、SC02A6、SC02A7、MP01-DK1-T、MP01-DR-S-R4 integration、AR01-ID、AR01-FT、AR01-EB、AR01-DB、AR01-XB、RC01-DI2B、RC01-DI3A、RC01-DI3Bはslice-local reviewが収束し、各commitをpush済みである。
 SC02A5のfixed snapshotではfocused 38 tests、shared全15 filesと224 tests、typecheck、通常lint 0件、format、build、root source/build非公開検査が成功した。
@@ -245,16 +245,16 @@ SC02Aの設計判断は変更しない。
 | SC02A5 | export summary schema | `exportModel.ts`、`implementation.ts` | callable、receiver brand、value domain、transfer summaryのexact fixture | factとtransfer typeだけへ依存する独立summaryである | completed |
 | SC02A6 | 10 registry source collection schema | `registrySourceModel.ts`、`implementation.ts` | collection keyと`RegistrySourceEntry<Kind>`のexact mapping | SC01 typeだけへ依存する独立registry source schemaである | completed |
 | SC02A7 | source contract envelope | `sourceModel.ts`、`implementation.ts` | source field、export/registry composition、untrusted claim、future API不在 | A1からA6を束ねるaggregateだけを所有する | completed |
-| SC02A8-DESIGN | hostile closed-data boundaryとcanonical measurementのowner、counter、snapshot semantics | boundary/canonical別design revision | own-key課金、counter、source profile、alias clone、freeze、sort/meter work | productionをA8A-G、ID01-CB、A8I、A13へ分ける | merge-ready |
-| SC02A8A | budget contractとoperation-local ledger | `budget.ts`、focused test/type fixture | 15 field、narrow-only override、cumulative/peak exact/-1、ledger isolation | descriptorやsource semanticsなしでbudget APIを直接検証できる | ready |
-| SC02A8B | distinct-container descriptor capture | `closedDescriptor.ts`、focused test | getter非実行、identity一回reflection、header/view、sparse/hidden/symbol rejection | source fieldを解釈せずdescriptor boundaryだけを検証できる | pending |
+| SC02A8-DESIGN | hostile closed-data boundaryとcanonical measurementのowner、counter、snapshot semantics | boundary/canonical別design revision | own-key課金、counter、source profile、alias clone、freeze、sort/meter work | productionをA8A-G、ID01-CB、A8I、A13へ分ける | completed |
+| SC02A8A | budget contractとoperation-local ledger | `budget.ts`、focused test/type fixture | 15 field、narrow-only override、cumulative/peak exact/-1、ledger isolation | descriptorやsource semanticsなしでbudget APIを直接検証できる | completed |
+| SC02A8B | distinct-container descriptor capture | `closedDescriptor.ts`、focused test | getter非実行、identity一回reflection、header/view、sparse/hidden/symbol rejection | source fieldを解釈せずdescriptor boundaryだけを検証できる | ready |
 | SC02A8C | active-ancestor cycle policy | `activeAncestor.ts`、focused test | direct/indirect cycle、leave後alias、iterative depth | descriptor cloneと独立したcycle policyとしてgreenにできる | ready |
 | SC02A8D | profile-driven occurrence walkerとparent-linked plan | `closedDataPlan.ts`、focused test | occurrence counter、alias再課金、parent path、profile hook order | A8A/B/Cを組み合わせ、clone前planだけを所有する | pending |
 | SC02A8E | execution-source cardinality/reference profile | `sourceProfile.ts`、focused test | 全source collection、reference、SemanticPathのprecharge exact/-1 | A8D profile interfaceへsource path ruleだけを実装できる | pending |
 | SC02A8F | alias-expanding closed source clone | `snapshot.ts`、focused test | caller mutation隔離、alias identity分離、input再読なし | completed planからcloneだけを生成してgreenにできる | pending |
 | SC02A8G | final public snapshotのiterative deep freeze | `freeze.ts`、focused test | nested freeze、deep chain、visited alias、validation step exact/-1 | A12 domain snapshotだけを入力にしてfreeze policyを検証できる | pending |
-| ID01-CB | iterative bounded canonical builder | `canonicalIdentity/`のSPEC/test/implementation | byte identity、2冪境界、common-prefix、cycle/alias、instrumented work | public API/bytesを変えずcanonical builder単独でgreenにできる | ready |
-| SC02A8I | canonical JCS byte/work meter | `canonicalMeasurement.ts`、focused test | UTF-8 byte一致、Unicode/number/key order、alias occurrence、byte/work exact/-1 | canonical text/digestを生成せずmeasurementだけを検証できる | pending |
+| ID01-CB | iterative bounded canonical builder | `canonicalIdentity/`のSPEC/test/implementation | byte identity、2冪境界、common-prefix、cycle/alias、instrumented work | public API/bytesを変えずcanonical builder単独でgreenにできる | completed |
+| SC02A8I | canonical JCS byte/work meter | `canonicalMeasurement.ts`、focused test | UTF-8 byte一致、Unicode/number/key order、alias occurrence、byte/work exact/-1 | canonical text/digestを生成せずmeasurementだけを検証できる | ready |
 | SC02A9 | subject、fact、relationのstrict parseとcanonical normalization | `semantic.ts` | 全semantic variantとcanonical order | registry、export、cross-record closureなしでstructural parserを検証できる | pending |
 | SC02A10 | registry source、transfer binding、export recordのstrict parse | `registrySource.ts`、`exportSource.ts` | 10 registry kind、25 legal role tuple、transfer/export shape | semantic graph closureと独立したSC01 integrationとして検証できる | pending |
 | SC02A11 | fact/relation local closure、ownership DAG、ordering semantics | `semanticClosure.ts` | endpoint/subject表、nested fact reference、ownership/order | parsed semantic recordsだけを入力にするpure validatorとして完結する | pending |
@@ -328,6 +328,8 @@ SC02A全体の設計review結果、relation表、reference表、budget表は親�
 - **SC02A8 boundary follow-up**：A8Bはprecharge前の追加key metadata copyを作らず、不可避allocationを`Reflect.ownKeys()` resultへ限定する。A12 integration fixtureはfinal snapshot cardinality/depthとA8G validation-stepのexact/-1を検査する。
 - **SC02A8 canonical review**：R1のcommon-prefix sort、downstream native sort/recursion、negative zero、byte oracle blockerをR2で修正した。R2 convergenceでactive-path scratch、host/GC resident表現数、shared alias fixtureの三blockerを採用し、R3はproperty cap定数倍、host storage `O(maximumCanonicalBytes)`、occurrence alias測定へ訂正した。targeted reviewerは`ACCEPT`した。
 - **SC02A8 canonical follow-up**：ID01-CB/A8I fixtureは多階層active-path scratch peak、sibling record/array aliasのexact二重課金、2冪境界、最大長common-prefixを維持する。A8I admissionでmeter/downstream二重予約後のdefault work capをbenchmarkまたはprobeする。
+- **ID01-CB completion**：R1 reviewでpath配列の反復copyによる二次計算量、array sparse pre-scanによるerror precedence変更、array descriptorのscratch計測漏れをblockerとして採用した。R2でparent-linked path cursor、失敗時だけのiterative path materialization、indexごとのsparse検査、array descriptor accounting、12,000-depth fixtureへ修正した。R2収束時に既存Accepted ADRの直接変更を検出したため、R3でR1 ADRをbyte-identicalに復元し、継承する新ADRを追加した。focused 66、shared 440、canonicalIdentity coverage 97.02/94.47/100/96.95、typecheck、lint、format、buildが成功し、commit `e42fec40210aeead036209f209e9038632421f5b`をpush済みである。
+- **SC02A8A completion**：15-field budget、narrow-only override、operation-local ledger、cumulative/peak exact/-1、failure rollbackを実装した。R1三役は全員`ACCEPT`し、implementation reviewerのBigInt success-path costというfollow-upを採用した。R2で`amount > limit - current`により成功時をnumber演算だけにし、失敗後だけBigIntでexact attempted valueを生成した。combined gateで26 files、479 tests、`budget.ts` coverage 100%、typecheck、lint、format、buildが成功し、commit `02bdfe4a662de7f0799f3211a9464303f2a2cbbc`をpush済みである。
 - **follow-up**：AO01 では10 registry collectionの空配列を省略できる author helperを検討する。SC02A の strict output schema は固定collectionを維持する。
 - **baseline**：shared全8 files、165 tests、typecheck、通常lint 0件、format、buildが成功した。type-aware lintは既存`rlse.config.ts`のwarning 1件だけを報告した。
 
@@ -488,7 +490,7 @@ SC01/ID01 failureは元のpathへ現在のfield prefixを付けてこのerrorへ
 - **AR01-XB review/completion**：primary、implementation、boundaryの三役はcanonical 3-field/6-role schema、inline union、non-vacuous fixture、runtime-empty/root非公開、trust/placement非証明を確認し、全員`ACCEPT`、blocker 0件とした。8 staged blobをmanifestへ一致させ、commit `44a1b0f1dbd5c0f4e053040d1df08359ba319b93`をpushし、remote OID一致を確認した。
 - **AR01-XB follow-up**：後続文書ではAR01のintegrity schemaとAF01のfinal artifact bytes/integrity table生成を区別して記述する。現行binding contractのblockerではない。
 - **AR01-DP/P admission split**：`DeploymentIdentityPreimage`と`ArtifactAddressPreimage`は別々の永続identity schemaであり、後続operationなしにexact type/JCS fixtureで単独greenへできるため、同一revisionへ束ねない。AR01-DPを先行し、そのreview/commit後にAR01-Pを逐次実装する。
-- **AR01-DP exact pending contract**：`schema: "dathra.deployment-identity/1"`、`applicationNamespaceDigest`、`releaseIdentity`、`targetEnvironmentId`、`canonicalPublicOrigin`、`contractNamespaceGraphDigest`、`hostProfileSetDigest`の7 required readonly fieldを持つ。digestはgeneric `Sha256Digest`を再利用し、別ID/aliasを追加しない。
+- **AR01-DP completion**：`schema: "dathra.deployment-identity/1"`、`applicationNamespaceDigest`、`releaseIdentity`、`targetEnvironmentId`、`canonicalPublicOrigin`、`contractNamespaceGraphDigest`、`hostProfileSetDigest`の7 required readonly fieldを持つtype-only aggregateを追加した。digestはgeneric `Sha256Digest`を再利用し、別ID/aliasを追加していない。R1三役は全員`ACCEPT`し、ID01-CB後のcurrent-base integrationでも8 write-set blobの同一性とfocused 23、shared 445、typecheck、lint、format、buildを再確認した。commit `f56864d544217188e1fd4372d7f180cda435b991`をpush済みである。
 - **AR01-P exact pending contract**：正準名は`ArtifactAddressPreimage`とし、`ArtifactAddressPreimageSource`を追加しない。`kind`は`"javascript" | "wasm" | "data"`のinline unionとし、`ArtifactKind` aliasを追加しない。ID01、DP、既存FT/EB/DB/XBへ依存する10-field aggregateだけを所有する。
 - **AR01-DP design convergence**：R1で欠けていたDS structural snapshot、DV semantic validator、DD canonical digest、AF01/RR01 binding ownerをR2へ追加した。convergenceでAF01をselected candidateへ依存させた逆順をblockerとして採用し、R3で`CN01-L -> MP02 -> AF01 per candidate -> SL01 -> RR01`へ訂正した。targeted reviewerはblocker/follow-up 0件で`ACCEPT`した。
 - **AR01-P design convergence**：runtime JCS fixtureをtype-only PからPIへ移し、legitimate leaf address発行後にbranded dependency corpusを作る。PS/PV/PI/PC/URL/IT、AR01 schema、AF01 production、CN01-L legality、SL01 selection、RR01 conformanceを分離した。R2 convergenceでRR01がgeneric AF01 evidenceを受ける抜け道をblockerとして採用し、R3でSL01-selected AF01 evidenceだけへ限定した。targeted reviewerはblocker/follow-up 0件で`ACCEPT`した。
@@ -497,11 +499,11 @@ SC01/ID01 failureは元のpathへ現在のfield prefixを付けてこのerrorへ
 
 | revision | 契約 | 状態 | 次のdependency |
 | --- | --- | --- | --- |
-| AR01-DP | exact 7-field deployment preimage type | ready | ID01 |
-| AR01-DS | hostile closed descriptor snapshot | pending | DPとresource/error design |
+| AR01-DP | exact 7-field deployment preimage type | completed | ID01 |
+| AR01-DS | hostile closed descriptor snapshot | ready | DPとresource/error design |
 | AR01-DV | deployment semantic canonical validation | pending | DSとorigin/string rule design |
 | AR01-DD | validated deployment preimage digest | pending | DV |
-| AR01-P | exact 10-field artifact address preimage type | pending | DP、FT、EB、DB、XB、ID01 |
+| AR01-P | exact 10-field artifact address preimage type | ready | DP、FT、EB、DB、XB、ID01 |
 | AR01-PS | hostile closed structural snapshot | pending | Pとresource/error design |
 | AR01-PV | URL/order/duplicate/ordinal/kind-template validation | pending | PSとcanonical rule design |
 | AR01-PI | ArtifactAddressId identity operation | pending | PV |
@@ -947,6 +949,19 @@ EG03 は untrusted parser、many-to-many relation、fixed point、SCC を扱う�
 | AR01-DP R3 targeted | `019f5832-7f08-7b00-8a32-db302739f7c2` | ACCEPT | candidateごとのAF01 finalization後にSL01 selectionを行う順序とRR01検証対象を確認した |
 | AR01-P R2 convergence | `019f5837-08dd-7241-809e-9c4297e927f5` | REJECT | RR01がgeneric AF01 evidenceを受けてSL01を迂回できるowner blockerを採用した |
 | AR01-P R3 targeted | `019f583c-9da2-7c33-9027-58eb1f2c12d5` | ACCEPT | RR01をSL01-selected AF01 evidenceだけへ限定し、candidate/artifact/URL fallbackがないことを確認した |
+| ID01-CB R1 primary | `019f585e-4fc8-7f42-9a9f-0e0a9f476d46` | REJECT | parent path配列copyによる二次計算量とfailure path materialization不足を採用した |
+| ID01-CB R1 implementation | `019f585e-50c8-7830-af1a-c8b8ac9b396b` | REJECT | array sparse pre-scanのerror precedence変更と深い入力へのboundedness不足を採用した |
+| ID01-CB R1 boundary | `019f585e-52fa-7751-a85f-974c41b04202` | REJECT | array descriptorがactive scratch accountingから漏れるblockerを採用した |
+| ID01-CB R2 convergence | `019f5866-92a3-7bf2-b1ff-c7f4f107fd59` | REJECT | runtime blocker解消を確認したが、Accepted ADRの直接変更を履歴blockerとして採用した |
+| ID01-CB R3 targeted | `019f586a-868d-7733-ad78-e5e58c9f8d53` | ACCEPT | R1 ADRのbyte-identical復元と継承ADRだけによる訂正を確認した |
+| AR01-DP R1 primary | `019f586a-87a8-74f2-a441-c773d86de644` | ACCEPT | exact 7-field schema、generic digest、type-only facadeにblockerがないことを確認した |
+| AR01-DP R1 implementation | `019f586a-896c-7a21-8d66-b17276c2d3e2` | ACCEPT | type fixture、runtime-empty emit、focused/full gateを確認した |
+| AR01-DP R1 boundary | `019f586a-8b98-7a93-b721-ef4c4e0f2994` | ACCEPT | validation、identity、trust、publicationを先取りしない境界を確認した |
+| AR01-DP current-base integration | `019f5870-1ddc-7b11-9999-8a1de77f6a24` | ACCEPT | ID01-CB後も8 write-set blobが同一で、依存とgateが有効なことを確認した |
+| SC02A8A R1 primary | `019f586a-8e51-7d30-ae5d-a015c4164ac3` | ACCEPT | budget contract、override、exact/-1、ledger isolationを確認した |
+| SC02A8A R1 implementation | `019f586e-9aea-7f83-b030-36653d1845a4` | ACCEPT | correctness blockerなし。成功chargeごとのBigInt変換をperformance follow-upとした |
+| SC02A8A R1 boundary | `019f586e-9c1e-7800-a286-6c1d1041bc44` | ACCEPT | descriptor/source/canonical責務を先取りしないoperation-local contractを確認した |
+| SC02A8A R2 convergence | `019f5873-a8f9-7a91-9207-51206cc6fd46` | ACCEPT | success pathのnumber-only chargeとfailure時のexact BigInt attempted valueを確認した |
 
 ## Commit / Push Log
 
@@ -987,6 +1002,10 @@ EG03 は untrusted parser、many-to-many relation、fixed point、SCC を扱う�
 | RC01-DI3A | `9a1b9b5` | `origin/feature/declarative-ui-execution-partitioning` | render definition creatorをpushし、localとtracking branchが`9a1b9b59bfac9c2eee8c4f38ed8c096006a2e110`で一致した |
 | AR01-XB | `44a1b0f` | `origin/feature/declarative-ui-execution-partitioning` | artifact export bindingをpushし、localとtracking branchが`44a1b0f1dbd5c0f4e053040d1df08359ba319b93`で一致した |
 | RC01-DI3B | `8a70f80` | `origin/feature/declarative-ui-execution-partitioning` | verified render definition parserをpushし、localとtracking branchが`8a70f80dd722ed936a570b7d7e2683daab871a76`で一致した |
+| EXECUTION-BOUNDARY-DESIGN | `b3b6ed2` | `origin/feature/declarative-ui-execution-partitioning` | SC02A8とAR01のimplementation splitをpushし、後続HEADから到達できる |
+| ID01-CB | `e42fec4` | `origin/feature/declarative-ui-execution-partitioning` | bounded canonical builderをpushし、localとtracking branchが`e42fec40210aeead036209f209e9038632421f5b`で一致した |
+| AR01-DP | `f56864d` | `origin/feature/declarative-ui-execution-partitioning` | deployment identity preimageをpushし、localとtracking branchが`f56864d544217188e1fd4372d7f180cda435b991`で一致した |
+| SC02A8A | `02bdfe4` | `origin/feature/declarative-ui-execution-partitioning` | execution contract budget/ledgerをpushし、localとtracking branchが`02bdfe4a662de7f0799f3211a9464303f2a2cbbc`で一致した |
 
 ## 未完了事項
 
