@@ -24,6 +24,8 @@ SC02A7はSC02A1からSC02A6のtypeを束ねる未信頼なsource envelopeをtype
 
 SC02A8Aは15種類のframework hard capを狭めるbudget contractと、一つのoperation内だけで使用するinternal ledgerを追加する。
 
+SC02A8Bはdistinct container identityごとのoperation-localな二段階descriptor captureをinternal APIとして追加する。
+
 unknown input preflight、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
@@ -163,6 +165,44 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - ledger、factory、counter type、default hard capはinternal moduleだけに保持する
     - shared root、generated root declaration、runtime facadeへbudget runtime valueを公開しない
     - descriptor、profile、clone、freeze、meter、parser、public source operationを追加しない
+  ],
+)
+
+#adr(
+  header("distinct container descriptorをheaderとviewの二段階でcaptureする", Status.Accepted, "2026-07-13"),
+  [
+    hostile containerのown keyと全descriptorを事前課金前に同時に読むと、property、key code unit、array lengthのhard capがdescriptor reflectionとview allocationを停止できない。
+    alias occurrenceごとに同じcontainerを再reflectionすると、host side effectとcapture結果がidentityごとに変化する。
+  ],
+  [
+    freshなoperation-local captureはidentity cacheを所有し、first-seen containerをheader phaseとview phaseに分ける。
+    headerはprototype、未加工の凍結済み`Reflect.ownKeys()` result、arrayの場合はintrinsic `length` descriptorだけをcaptureする。
+    callerがheader由来counterを課金した後だけviewを完成し、完成viewをidentityごとに再利用する。
+  ],
+  [
+    - headerはarray intrinsic `length`を含むoriginal own-key sequenceをfilterまたはcopyせず保持する
+    - callerはdescriptorを読む前にsymbolや拒否対象keyも含めて課金し、array intrinsic `length`だけをproperty counterから除外する
+    - completed view以外のfailedまたはincomplete stateをcomplete cacheとして公開しない
+    - budget charge、occurrence walker、cycle、source profile、clone、final snapshot freeze、parser、meter、public source operationは後続sliceが所有する
+    - descriptor captureとそのtypeはruntime facadeまたはshared rootへ公開しない
+  ],
+)
+
+#adr(
+  header("descriptor captureの成功経路をmutable array prototypeとpath copyから分離する", Status.Accepted, "2026-07-13"),
+  [
+    frozenなown-key resultでも`for...of`はmutableな`Array.prototype[Symbol.iterator]`を参照し、通常のindex assignmentはinherited setterを実行し得る。
+    descriptor読取後のphase確認でproperty pathを毎回spreadすると、成功経路にproperty countとdepthの積に比例する未課金allocationが生じる。
+  ],
+  [
+    own-key resultはown `length`とindexによって走査し、sanitized entry/itemはown data propertyとして定義する。
+    phase確認はcontainer pathとactive segmentを別々に保持し、full property pathはfailure時だけmaterializeする。
+    reentrant trapが最初のcapture failureを再送出した場合は、そのfailureを別のreflection failureへwrapし直さない。
+  ],
+  [
+    - hostile trapがarray iteratorまたはinherited index setterを変更してもdescriptorを省略せずsanitized viewを構築する
+    - success pathではcaller path iteratorを実行しない
+    - failure pathのimmutable snapshot作成は`ExecutionContractError`が所有する
   ],
 )
 
@@ -670,6 +710,50 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   ],
 )
 
+#interface_spec(
+  name: "Operation-local closed container descriptor capture",
+  summary: [
+    hostile containerのheaderとgetter-free descriptor viewをdistinct identityごとに一度だけcaptureするinternal APIを提供する。
+  ],
+  format: [
+    ```typescript
+    type ClosedDescriptorValue = null | boolean | number | string | object
+
+    type ClosedContainerHeader =
+      | { readonly kind: "record"; readonly ownKeys: readonly PropertyKey[] }
+      | { readonly kind: "array"; readonly ownKeys: readonly PropertyKey[]; readonly length: number }
+
+    type ClosedContainerView =
+      | { readonly kind: "record"; readonly entries: readonly (readonly [string, ClosedDescriptorValue])[] }
+      | { readonly kind: "array"; readonly items: readonly ClosedDescriptorValue[] }
+
+    interface ClosedDescriptorCapture {
+      captureHeader(value: unknown, path: readonly (string | number)[]): ClosedContainerHeader
+      completeView(value: object, path: readonly (string | number)[]): ClosedContainerView
+    }
+
+    function createClosedDescriptorCapture(): ClosedDescriptorCapture
+    ```
+  ],
+  constraints: [
+    - factoryはfreshなoperation-local identity cacheを毎回作成する
+    - headerはnon-null objectだけを受け入れ、recordはprototypeがcurrent `Object.prototype`またはnull、arrayは`Array.isArray()`がtrueかつprototypeがcurrent `Array.prototype`であることを要求する
+    - headerはprototypeと`Reflect.ownKeys()`をdistinct identityごとに一回だけ読み、ownKeys result自体をfilterまたはcopyせずfreezeして公開する
+    - array headerのownKeysはintrinsic `length`を含み、そのdescriptorをheader phaseで一回だけ読み、non-enumerable、non-configurableなown data descriptorと0以上2^32-1以下のintegerである宣言lengthを公開する
+    - callerはownKeys、string key code unit、array length、header-only source cardinalityを課金し、array intrinsic `length`だけをproperty課金から除外した後に`completeView()`を呼ぶ
+    - view phaseは`length`以外の各own descriptorを最大一回読み、accessorを実行せず、frozenなentry、entry sequence、item sequence、viewを返す
+    - descriptor valueはnull、boolean、number、string、non-null objectだけを受理し、undefined、bigint、symbol、functionを拒否する
+    - numberのfinite性、negative zero、stringのUnicode validityをこのAPIで検査しない
+    - recordのsymbolはcontainer path、string propertyはproperty path、array indexはnumeric path、array extra string keyはstring path、sparse slotは最初のmissing numeric pathで`invalid-closed-record`にする
+    - prototype、ownKeys、descriptor reflectionがthrowした場合は対応するcontainerまたはproperty pathの`invalid-closed-record`へ変換する
+    - complete viewはalias occurrenceで同一identityに再利用し、failedまたはreentrant incomplete captureをcomplete viewとしてpublishしない
+    - ownKeys traversalはarray iteratorを使わず、sanitized entry/itemはinherited setterを実行しないown data propertyとして定義する
+    - success pathではfull property pathをcopyせず、active container pathとsegmentからfailure時だけmaterializeする
+    - reentrant capture failureがreflection trapから再送出された場合は最初のfailureを保持する
+    - internal moduleだけがexportし、package-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -755,6 +839,32 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - overflowまたはlimit超過を`budget-exceeded`で拒否する
     - error messageにcounter、limit、attempted valueを含める
     - failure pathは課金callerが渡したcurrent operation pathを保持する
+  ],
+)
+
+#behavior_spec(
+  name: "closed containerをheaderとviewの二段階でcaptureする",
+  summary: "distinct identityのmetadataを固定し、callerのheader-derived counter課金後だけgetter-free viewを完成する。",
+  preconditions: [
+    - callerはfreshなoperation-local captureを保持し、view completion前にproperty、key code unit、array length、header-only source cardinalityを課金する
+  ],
+  steps: [
+    - observable prototypeとarray conditionを検査し、original `Reflect.ownKeys()` resultとarray intrinsic `length` descriptorからheaderを作る
+    - callerがheader-derived counterを課金する
+    - 課金後に`length`以外のdescriptorを各一回だけ読む
+    - enumerable data property、array indexの完全性、descriptor value domainを検査する
+    - frozenなrecord entry sequenceまたはdense array item sequenceのviewを作る
+  ],
+  postconditions: [
+    - headerはoriginal frozen ownKeysとarray declared lengthを公開し、property descriptorをまだ読まない
+    - getterを実行せず、finiteでないnumber、negative zero、lone surrogate stringもcaptureする
+    - aliasに同じheaderとcompleted viewをreflectionなしで返す
+  ],
+  errors: [
+    - non-object、custom/foreign prototype、invalid array length descriptorとheader reflection exceptionをcontainer pathの`invalid-closed-record`にする
+    - symbol、hidden、accessor、disappearing descriptor、array extra key、sparse slot、unsupported descriptor valueをaccepted pathの`invalid-closed-record`で拒否する
+    - descriptor reflection exceptionをaccepted property pathの`invalid-closed-record`へ変換する
+    - failedまたはreentrant incomplete captureをcomplete viewとしてcacheしない
   ],
 )
 
@@ -887,5 +997,25 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - fresh ledgerのoperation isolationとreset API不在を検査する
     - package-local facadeへtypeだけを追加し、ledger、factory、counter type、default hard capがruntime facade、shared root、generated root declarationへ公開されないことを検査する
     - descriptor、profile、clone、freeze、meter、parser、public source operationが追加されないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Operation-local distinct-container descriptor capture",
+  summary: [
+    後続のoccurrence walkerが事前課金後だけ使えるgetter-freeなheader/view captureをinternal APIとして提供する。
+  ],
+  test_cases: [
+    - current/null record prototypeとcurrent `Array.prototype`を受理し、primitive、custom/foreign prototypeを拒否する
+    - original `Reflect.ownKeys()` resultがfrozenの同一identityで公開され、arrayのintrinsic `length`、symbol、hidden、extra keyをfilterしないことを検査する
+    - headerの後、caller prechargeの後にだけview completionを呼び、record/array property descriptorがprecharge前に読まれない順序を検査する
+    - prototype、ownKeys、intrinsic length descriptor、その他のdescriptorがdistinct identityごとに一回だけreflectionされ、aliasが同じfrozen header/viewを再利用することを検査する
+    - sparse、extra、symbol、hidden、accessor、disappearing descriptor、reflection exceptionのstable code/path、getter非実行、unsupported value rejectionを検査する
+    - `NaN`、infinity、negative zero、lone surrogate stringをこのsliceが拒否しないことを検査する
+    - failed/reentrant incomplete viewがcomplete cacheへpublishされず、後続aliasでdescriptorを再reflectionしないことを検査する
+    - hostile own-key iteratorとinherited array index setterへ依存せず、success path iteratorを実行しないことを検査する
+    - reentrant trapが最初のfailureを再送出しても別のreflection failureへwrapしないことを検査する
+    - exact internal type signatureとfrozen sanitized outputを検査する
+    - budget、walker、cycle、profile、clone、final freeze、parser、meter、public source operationを追加せず、facade、shared root、generated root declarationにdescriptor internalが公開されないことを検査する
   ],
 )

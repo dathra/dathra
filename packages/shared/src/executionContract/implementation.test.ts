@@ -1,6 +1,8 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
+  // @ts-expect-error SC02A8B descriptor capture remains internal.
+  type ClosedContainerHeader as _RootClosedContainerHeaderMustNotExist,
   // @ts-expect-error AS01 owns shared-root publication.
   type ExecutionContractBudget as _RootExecutionContractBudgetMustNotExist,
   // @ts-expect-error AS01 owns shared-root publication.
@@ -19,6 +21,10 @@ import {
 import { fail } from "./identity";
 import * as executionContractApi from "./implementation";
 import {
+  // @ts-expect-error SC02A8B descriptor capture remains internal.
+  type ClosedDescriptorCapture as _ClosedDescriptorCaptureMustNotExist,
+  // @ts-expect-error SC02A8B descriptor capture remains internal.
+  type ClosedContainerView as _ClosedContainerViewMustNotExist,
   ExecutionContractError,
   // @ts-expect-error Validation path internals are not part of the facade.
   type ExecutionContractPathSegment as _PathSegmentMustNotExist,
@@ -379,6 +385,10 @@ describe("ExecutionContractError", () => {
     expect("fail" in executionContractApi).toBe(false);
     expect("BudgetLedger" in executionContractApi).toBe(false);
     expect("createBudgetLedger" in executionContractApi).toBe(false);
+    expect("createClosedDescriptorCapture" in executionContractApi).toBe(false);
+    expect("ClosedDescriptorCapture" in executionContractApi).toBe(false);
+    expect("ClosedContainerHeader" in executionContractApi).toBe(false);
+    expect("ClosedContainerView" in executionContractApi).toBe(false);
     expect("DEFAULT_EXECUTION_CONTRACT_BUDGET" in executionContractApi).toBe(
       false,
     );
