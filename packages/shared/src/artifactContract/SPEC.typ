@@ -239,6 +239,7 @@ artifact finalizationの決定項目をexactなclosed productとして固定し�
     - facade、address model、finalization template model、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
     - 後続binding、aggregate、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared package rootから`ArtifactFinalizationTemplate`をimportできないことを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに`ArtifactAddressId`と`ArtifactFinalizationTemplate`が存在しないことを検査する
   ],
 )
 

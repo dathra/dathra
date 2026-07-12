@@ -1,4 +1,7 @@
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import {
   createSourceFile,
@@ -56,6 +59,29 @@ function emitTypeScriptModule(relativePath: string): string {
     },
     fileName: relativePath,
   }).outputText;
+}
+
+function readNamedExportNames(filePath: string): string[] {
+  const source = readFileSync(filePath, "utf8");
+  const sourceFile = createSourceFile(
+    filePath,
+    source,
+    ScriptTarget.ES2024,
+    true,
+    ScriptKind.TS,
+  );
+
+  return sourceFile.statements.flatMap((statement) => {
+    if (
+      !isExportDeclaration(statement) ||
+      statement.exportClause === undefined ||
+      !isNamedExports(statement.exportClause)
+    ) {
+      return [];
+    }
+
+    return statement.exportClause.elements.map((element) => element.name.text);
+  });
 }
 
 describe("artifact contract type domains", () => {
@@ -182,5 +208,34 @@ describe("artifact contract type domains", () => {
     expect(output.trim()).toBe("export {};");
     expect(output).not.toContain("./implementation");
     expect(output).not.toMatch(/\bimport\b/u);
+  });
+
+  it("keeps artifact contract types out of built root declarations", () => {
+    const packageRoot = new URL("../../", import.meta.url);
+    const outputDirectory = mkdtempSync(
+      join(tmpdir(), "dathra-artifact-contract-"),
+    );
+
+    try {
+      execFileSync(
+        "pnpm",
+        ["exec", "tsdown", "--out-dir", outputDirectory, "--logLevel", "error"],
+        {
+          cwd: packageRoot,
+          stdio: "pipe",
+        },
+      );
+
+      for (const declarationFile of ["index.d.mts", "index.d.cts"]) {
+        const exportedNames = readNamedExportNames(
+          join(outputDirectory, declarationFile),
+        );
+
+        expect(exportedNames).not.toContain("ArtifactAddressId");
+        expect(exportedNames).not.toContain("ArtifactFinalizationTemplate");
+      }
+    } finally {
+      rmSync(outputDirectory, { force: true, recursive: true });
+    }
   });
 });
