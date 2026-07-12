@@ -2,7 +2,13 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
   // @ts-expect-error AS01 owns shared-root publication.
+  type FactEndpoint as _RootFactEndpointMustNotExist,
+  // @ts-expect-error AS01 owns shared-root publication.
   type SemanticPathSegment as _RootSemanticPathSegmentMustNotExist,
+  // @ts-expect-error AS01 owns shared-root publication.
+  type SemanticRelation as _RootSemanticRelationMustNotExist,
+  // @ts-expect-error AS01 owns shared-root publication.
+  type SemanticRelationKind as _RootSemanticRelationKindMustNotExist,
   // @ts-expect-error AS01 owns shared-root publication.
   type SemanticSubject as _RootSemanticSubjectMustNotExist,
 } from "../index";
@@ -18,13 +24,14 @@ import {
   type ExecutionContractBudget as _BudgetMustNotExist,
   // @ts-expect-error Validation path internals are not part of the facade.
   type ExecutionContractPathSegment as _PathSegmentMustNotExist,
+  type FactEndpoint,
   // @ts-expect-error Registry source aggregation belongs to a later review unit.
   type ExecutionContractRegistrySources as _RegistrySourcesMustNotExist,
   type SemanticFact,
   type SemanticFactKind,
   type SemanticPathSegment,
-  // @ts-expect-error The relation taxonomy belongs to a later review unit.
-  type SemanticRelation as _SemanticRelationMustNotExist,
+  type SemanticRelation,
+  type SemanticRelationKind,
   type SemanticSubject,
   // @ts-expect-error Export summaries belong to a later review unit.
   type ExportExecutionContract as _ExportContractMustNotExist,
@@ -49,6 +56,18 @@ type SemanticSubjectKind = SemanticSubject["kind"];
 type _DigestExecutionContractSourceMustNotExist =
   // @ts-expect-error Digest operations belong to a later SC02A review unit.
   ExecutionContractApi["digestExecutionContractSource"];
+
+type _DefineExecutionContractMustNotExist =
+  // @ts-expect-error Source construction belongs to a later SC02A review unit.
+  ExecutionContractApi["defineExecutionContract"];
+
+type _ParseExecutionContractSourceMustNotExist =
+  // @ts-expect-error Structural parsing belongs to SC02A9.
+  ExecutionContractApi["parseExecutionContractSource"];
+
+type _ValidateExecutionContractSourceMustNotExist =
+  // @ts-expect-error Source closure validation belongs to SC02A11.
+  ExecutionContractApi["validateExecutionContractSource"];
 
 const ERROR_CODES = {
   "invalid-closed-record": true,
@@ -363,8 +382,15 @@ describe("ExecutionContractError", () => {
     );
   });
 
-  it("keeps the subject and fact models type-only at the package-local facade", () => {
+  it("keeps the subject, fact, and relation models type-only at the package-local facade", () => {
     expectTypeOf<SemanticFact["kind"]>().toEqualTypeOf<SemanticFactKind>();
+    expectTypeOf<FactEndpoint<"read">>().toEqualTypeOf<{
+      readonly factId: FactId;
+      readonly factKind: "read";
+    }>();
+    expectTypeOf<
+      SemanticRelation["kind"]
+    >().toEqualTypeOf<SemanticRelationKind>();
     expectTypeOf<TransferBinding["kind"]>().toEqualTypeOf<
       "none" | "snapshot" | "codec" | "reference" | "subscription" | "remote"
     >();
@@ -376,6 +402,11 @@ describe("ExecutionContractError", () => {
     expect("CompiledExecutionContract" in executionContractApi).toBe(false);
     expect("AcceptedExecutionAnalysis" in executionContractApi).toBe(false);
     expect("digestExecutionContractSource" in executionContractApi).toBe(false);
+    expect("defineExecutionContract" in executionContractApi).toBe(false);
+    expect("parseExecutionContractSource" in executionContractApi).toBe(false);
+    expect("validateExecutionContractSource" in executionContractApi).toBe(
+      false,
+    );
     expect("fail" in executionContractApi).toBe(false);
   });
 });

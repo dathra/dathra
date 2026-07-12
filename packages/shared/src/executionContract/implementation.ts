@@ -6,3 +6,8 @@ export type {
   TransferBinding,
   SemanticFact,
 } from "./factModel";
+export type {
+  SemanticRelationKind,
+  FactEndpoint,
+  SemanticRelation,
+} from "./relationModel";

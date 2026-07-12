@@ -1,4 +1,4 @@
-= source execution contract identity, subject, and fact model
+= source execution contract identity, subject, fact, and relation model
 
 #import "/SPEC/functions.typ": *
 #import "/SPEC/settings.typ": *
@@ -14,7 +14,9 @@ SC02A2はsemantic subjectとpath segmentをtype-only modelとして追加する�
 
 SC02A3はsemantic factとtransfer bindingをtype-only modelとして追加する。
 
-relation、source envelope、unknown input parser、budget、closure、digestは後続の独立review unitが追加する。
+SC02A4はsemantic relationをtype-only modelとして追加する。
+
+source envelope、unknown input parser、budget、closure、digestは後続の独立review unitが追加する。
 
 == 設計判断
 
@@ -67,6 +69,23 @@ relation、source envelope、unknown input parser、budget、closure、digestは
     - source-local factは構造を表す未信頼claimであり、module signatureとの一致やtrust acceptanceを証明しない
     - behavioral relation、closure、strict parserは後続review unitが定義する
     - SC02A3はruntime valueを追加しない
+  ],
+)
+
+#adr(
+  header("behavioral cross-fact edgeをSemanticRelationへ一元化する", Status.Accepted, "2026-07-12"),
+  [
+    fact fieldとrelationが同じbehavioral dependencyを表すと、二つの表現が矛盾し、どちらを正本として扱うかを一意に決められない。
+  ],
+  [
+    reads、writes、invokes、returns、owns、orders-before、transfers-as、fails-withはsource-local `SemanticRelation`だけに保持する。
+    endpointはsource-local `FactId`とexpected fact kind tagを保持する。
+    `orders-before`だけがrequiredな`ordinal: number | null`を持つ。
+  ],
+  [
+    - endpointが参照するfactの実在、tagとの一致、subject constraintは後続SC02A local closureが検証する
+    - ownership cardinality、ownership DAG、ordering ordinal semanticsは後続SC02A local closureが検証する
+    - SC02A4はruntime value、parser、validator、closureを追加しない
   ],
 )
 
@@ -341,8 +360,103 @@ relation、source envelope、unknown input parser、budget、closure、digestは
     - read、write、effect、ownership、orderingはbehavioral relationやmemberを表すfieldを持たない
     - `SemanticFactKind`、`TransferBinding`、`SemanticFact`だけをfact modelからpackage-local facadeへtype-only exportする
     - individual fact interfaceとhelper aliasをpackage-local facadeへexportしない
-    - relation、endpoint、export summary、registry aggregate、source envelope、parser、validator、closure、digest、qualified、compiled、accepted APIを追加しない
+    - export summary、registry aggregate、source envelope、parser、validator、closure、digest、qualified、compiled、accepted APIを追加しない
     - package rootへ公開せず、shared rootへの公開はAS01が所有し、facadeのruntime valueは`ExecutionContractError`と`factId`だけとする
+  ],
+)
+
+#interface_spec(
+  name: "Closed source-local semantic relation model",
+  summary: [
+    behavioral cross-fact edgeを8種類のsource-local typed relation unionで表す。
+  ],
+  format: [
+    ```typescript
+    type SemanticRelationKind =
+      | "reads"
+      | "writes"
+      | "invokes"
+      | "returns"
+      | "owns"
+      | "orders-before"
+      | "transfers-as"
+      | "fails-with"
+
+    type FactEndpoint<Kind extends SemanticFactKind> = {
+      readonly factId: FactId
+      readonly factKind: Kind
+    }
+
+    type SemanticRelation = { readonly schema: "dathra.relation/1" } & (
+      | {
+          readonly kind: "reads"
+          readonly from: FactEndpoint<"effect" | "invocation">
+          readonly to: FactEndpoint<"read">
+        }
+      | {
+          readonly kind: "writes"
+          readonly from: FactEndpoint<"effect" | "invocation">
+          readonly to: FactEndpoint<"write">
+        }
+      | {
+          readonly kind: "invokes"
+          readonly from: FactEndpoint<"effect" | "invocation">
+          readonly to: FactEndpoint<"invocation">
+        }
+      | {
+          readonly kind: "returns"
+          readonly from: FactEndpoint<"invocation">
+          readonly to: FactEndpoint<SemanticFactKind>
+        }
+      | {
+          readonly kind: "owns"
+          readonly from: FactEndpoint<"ownership">
+          readonly to: FactEndpoint<"identity" | "ownership" | "lifetime">
+        }
+      | {
+          readonly kind: "orders-before"
+          readonly from: FactEndpoint<"ordering">
+          readonly to: FactEndpoint<SemanticFactKind>
+          readonly ordinal: number | null
+        }
+      | {
+          readonly kind: "transfers-as"
+          readonly from: FactEndpoint<Exclude<SemanticFactKind, "transfer">>
+          readonly to: FactEndpoint<"transfer">
+        }
+      | {
+          readonly kind: "fails-with"
+          readonly from: FactEndpoint<"effect" | "invocation">
+          readonly to: FactEndpoint<"failure">
+        }
+    )
+    ```
+  ],
+  constraints: [
+    - endpointはexactに`factId: FactId`と`factKind`を持ち、subjectを複製しない
+    - readsはeffectまたはinvocationからreadへ向かう
+    - writesはeffectまたはinvocationからwriteへ向かう
+    - invokesはeffectまたはinvocationからinvocationへ向かう
+    - returnsはinvocationから任意のfact kindへ向かう
+    - ownsはownershipからidentity、ownership、lifetimeのいずれかへ向かう
+    - orders-beforeはorderingから任意のfact kindへ向かい、requiredな`ordinal: number | null`を持つ
+    - transfers-asはtransfer以外のfact kindからtransferへ向かう
+    - fails-withはeffectまたはinvocationからfailureへ向かう
+    - orders-before以外の7 variantは`ordinal` keyを持たず、`ordinal: undefined`も受理しない
+    - active subjectはmodule-evaluation、export-value、receiver、callback-invocation、allocated-resourceとする
+    - callable subjectはexport-value、receiver、parameter、return、callback-invocation、allocated-resourceとする
+    - value subjectはexport-value、receiver、parameter、return、allocated-resourceとする
+    - readsとwritesのsourceはactiveまたはcallable subject、targetはmodule-evaluationまたはvalue subjectとする
+    - invokesのsourceはactiveまたはcallable subject、targetはcallable subjectとする
+    - returnsのsourceはcallable subject、targetは同じexportNameのreturn subjectとする
+    - ownsとorders-beforeは上記fact-kind constraint内の任意subjectを結ぶ。ただしownsのlifetime targetはsource ownershipとexactに同じsubjectとする
+    - transfers-asはvalue subjectからexactに同じsubjectへ向かい、fails-withはactiveまたはcallable subjectからexactに同じsubjectへ向かう
+    - endpointのfact実在、異なるFactId、factKind tag、subject pairは後続SC02A local closureが検証する
+    - ownership cardinality、ownership DAG、ordering fact別のordinal制約は後続SC02A local closureが検証する
+    - `SemanticRelationKind`、`FactEndpoint`、`SemanticRelation`だけをrelation modelからpackage-local facadeへtype-only exportする
+    - individual relation interfaceとhelper aliasをrelation modelまたはpackage-local facadeからexportしない
+    - parser、validator、closure、normalizer、source envelope、digest、qualified、compiled、accepted APIを追加しない
+    - package rootへ公開せず、shared rootへの公開はAS01が所有し、facadeへruntime valueまたはruntime import edgeを追加しない
   ],
 )
 
@@ -370,10 +484,10 @@ relation、source envelope、unknown input parser、budget、closure、digestは
 
 #feature_spec(
   name: "Source-local identity boundary",
-  description: [
+  summary: [
     後続のsemantic modelとstrict parserが共有するsource-local identityとfailure vocabularyを提供する。
   ],
-  validation: [
+  test_cases: [
     - valid Unicode、composed/decomposed sequence、surrogate pairを検査する
     - empty、lone surrogate、非string runtime valueを検査する
     - errorとpathのimmutabilityを検査する
@@ -383,26 +497,26 @@ relation、source envelope、unknown input parser、budget、closure、digestは
 
 #feature_spec(
   name: "Source-local subject model",
-  description: [
+  summary: [
     後続のfact modelとstrict parserが共有するlocationとnested pathのtype-only taxonomyを提供する。
   ],
-  validation: [
+  test_cases: [
     - 7 subject kindと3 path segment kindを双方向のexact type fixtureで検査する
     - 各variantのkeyとproperty typeを双方向のexact type fixtureで検査する
     - direct callbackの空path、object property callback、tuple callback、element callbackを区別できることを検査する
     - pathの順序とrepeated path segmentを保持できることを検査する
     - wrong property type、extra property、callback pathの省略をnegative type fixtureで検査する
-    - relation、aggregate source、source envelope、qualified、compiled、accepted、digest APIが存在しないことを検査する
+    - aggregate source、source envelope、qualified、compiled、accepted、digest APIが存在しないことを検査する
     - facadeのruntime valueが`ExecutionContractError`と`factId`だけであることを検査する
   ],
 )
 
 #feature_spec(
   name: "Closed source-local fact schema",
-  description: [
+  summary: [
     後続のstrict parserとclosure validatorが扱うfact claimのtype-only schemaを提供する。
   ],
-  validation: [
+  test_cases: [
     - 16 fact kindを双方向のexact type fixtureで検査する
     - すべてのfact variantのexact keyとproperty typeを検査する
     - 6 transfer binding variantのexact key、registry kind、version、policy fieldを検査する
@@ -412,5 +526,22 @@ relation、source envelope、unknown input parser、budget、closure、digestは
     - fact modelとtype-only consumerがruntime codeを生成しないことを検査する
     - package-local facadeがfact modelから3 typeだけを公開し、runtime valueを追加しないことを検査する
     - package rootへ公開されず、後続review unitのAPIが存在しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Closed source-local relation schema",
+  summary: [
+    後続のstrict parserとlocal closureが扱うbehavioral edgeのtype-only schemaを提供する。
+  ],
+  test_cases: [
+    - 8 relation kindを双方向のexact type fixtureで検査する
+    - 8 variantと全from/to endpointのexact keyおよびproperty typeを双方向fixtureで検査する
+    - 全legal endpoint kindと、8 relationのfrom/to両位置におけるillegal fact-kind edgeをnegative type fixtureで検査する
+    - orders-beforeのrequiredな`number | null` ordinalと、ほかの7 variantにordinal keyが存在しないことを検査する
+    - kind、endpoint、ordinalのreadonly mutation、`ordinal: undefined`、raw string endpoint、extra endpoint fieldをnon-vacuous negative type fixtureで検査する
+    - relation modelと実ファイルのtype-only consumerがruntime codeを生成しないことを検査する
+    - package-local facadeがrelation modelから3 typeだけを公開し、runtime valueまたはruntime import edgeを追加しないことを検査する
+    - package rootへ公開されず、individual relation、parser、validator、closure、source、order-semantic APIが存在しないことを検査する
   ],
 )

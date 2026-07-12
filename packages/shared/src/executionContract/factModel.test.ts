@@ -32,11 +32,12 @@ import {
 } from "../index";
 import * as factModelApi from "./factModel";
 import {
-  // @ts-expect-error Relation endpoints belong to a later review unit.
-  type FactEndpoint as _FactEndpointMustNotExist,
+  type FactEndpoint,
   type FactId,
   type SemanticFact,
   type SemanticFactKind,
+  type SemanticRelation,
+  type SemanticRelationKind,
   type SemanticSubject,
   type TransferBinding,
   factId,
@@ -656,7 +657,7 @@ describe("fact model publication boundary", () => {
     );
 
     expect(exportStatements).toHaveLength(1);
-    expect(facadeSourceFile.statements).toHaveLength(4);
+    expect(facadeSourceFile.statements).toHaveLength(5);
     expect(facadeSourceFile.statements.every(isExportDeclaration)).toBe(true);
     expect(readNamedExportSurface("./factModel.ts")).toEqual([
       {
@@ -686,7 +687,17 @@ describe("fact model publication boundary", () => {
         typeOnly: true,
         names: ["SemanticFactKind", "TransferBinding", "SemanticFact"],
       },
+      {
+        moduleSpecifier: "./relationModel",
+        typeOnly: true,
+        names: ["SemanticRelationKind", "FactEndpoint", "SemanticRelation"],
+      },
     ]);
+
+    expectTypeOf<FactEndpoint<"read">["factKind"]>().toEqualTypeOf<"read">();
+    expectTypeOf<
+      SemanticRelation["kind"]
+    >().toEqualTypeOf<SemanticRelationKind>();
   });
 
   it("adds no runtime value or runtime import edge", () => {
