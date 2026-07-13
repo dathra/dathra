@@ -8,10 +8,7 @@
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "fmt": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --write \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json,vue}\"",
-    "fmt:check": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json,vue}\"",
-    "test": "pnpm build && vitest run",
-    "test:watch": "vitest"
+    "test": "pnpm build && vitest run"
   },
   "dependencies": {
     "@dathra/components": "workspace:*",
@@ -22,7 +19,6 @@
     "vue": "^3.5.13"
   },
   "devDependencies": {
-    "@dathra/config": "workspace:*",
     "@dathra/plugin": "workspace:*",
     "@nuxt/devtools": "^3.1.1",
     "@types/node": "catalog:",

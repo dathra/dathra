@@ -11,25 +11,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    projects: [
-      {
-        extends: true,
-        test: {
-          name: "execution-graph",
-          include: ["src/executionGraph/implementation.test.ts"],
-          sequence: { groupOrder: 0 },
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: "transformer-rest",
-          include: ["src/**/*.test.ts"],
-          exclude: ["src/executionGraph/implementation.test.ts"],
-          sequence: { groupOrder: 1 },
-        },
-      },
-    ],
+    include: ["src/**/*.test.ts"],
     clearMocks: true,
     coverage: {
       provider: "v8",
