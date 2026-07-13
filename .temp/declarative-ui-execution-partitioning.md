@@ -1745,11 +1745,11 @@ AR01-P以降のownerは次の依存順に分ける。
 | revision | owner | 明示的に証明しないもの |
 | --- | --- | --- |
 | AR01-PS | hostile unknown inputのclosed structural snapshot | canonical order、referent existence |
-| AR01-PV | base URL input、sort、duplicate、ordinal、kind/template、local consistencyのsemantic validation | target artifact existence、placement、trust |
+| AR01-PV-U/O/E/K/S/I | base URL input、sort、duplicate、ordinal、kind/template、local consistencyのsemantic validationと統合 | target artifact existence、placement、trust |
 | AR01-PI | validated preimage digestとpost-success `ArtifactAddressId` brand発行 | referent closure、final bytes、client inclusion |
-| AR01-PC | target address/exportとartifact dependency graph closure | candidate selection、runtime trust |
+| AR01-PC-I/T/X/S/C | target address/export index、existence、compatibilityとartifact dependency graph closure統合 | candidate selection、runtime trust |
 | AR01-URL | normalized base、kind segment、address、extensionからのcanonical URL contract | actual fetch bytes |
-| AR01-IT | address、exact digest、byte lengthを持つintegrity table schemaとvalidation | table production、runtime conformance |
+| AR01-IT-M/S/V | address、exact digest、byte lengthを持つintegrity table schema、snapshot、validation | table production、runtime conformance |
 
 AR01-Pのtype-only fixtureはexact key、modifier、direct inline union、invalid stateの表現可能性、runtime-empty emit、shared-root非公開だけを検査する。
 compile-time fixtureは`declare const targetId: ArtifactAddressId`を使えるが、runtime JCS fixtureのためにprivate brandをassertionで捏造しない。
@@ -1757,9 +1757,9 @@ compile-time fixtureは`declare const targetId: ArtifactAddressId`を使える�
 full-field identity fixtureはAR01-PIが所有する。
 最初にdependencyを持たないlegitimate leaf preimageから`ArtifactAddressId`を発行し、そのIDでnon-empty dependency fixtureを構築する。
 validated snapshot全体が再projectionされずdigestへ渡ること、合法なtyped mutationがdigestを変えること、異なる二要素を持つraw canonical corpusの追加、削除、値、順序がbytesを変えることを別々に検査する。
-unsortedまたはduplicate collectionはAR01-PVがdigest前に拒否し、singleton schema mutationはuntyped validator negative fixtureへ置く。
+unsortedまたはduplicate collectionはAR01-PV-O/Eがdigest前に拒否し、singleton schema mutationはuntyped validator negative fixtureへ置く。
 
-AR01-URLはcanonical URL derivation contractを、AR01-ITはintegrity schemaとvalidatorを所有する。
+AR01-URLはcanonical URL derivation contractを、AR01-IT-M/S/Vはintegrity schema、snapshot、validatorを所有する。
 AF01はcandidateごとにactual deployment、artifact graph、canonical URL、final bytes、integrity table、reproduction evidenceを生成する。
 AR01のschema/validatorとAF01のproductionを同じ責務として扱わない。
 
@@ -1773,8 +1773,8 @@ AR01-Pはruntime JCS matrixをAR01-PIへ移したうえで合計900行、最大t
 #### artifact contract error と resource foundation の実装分割
 
 AR01-DSとAR01-PSを開始する前に、error contract、budget/ledger、descriptor snapshotの課金順を固定する。
-errorとbudgetは別々にgreenへできるため、`AR01-E -> AR01-B -> {AR01-DS, AR01-PS}`の独立revisionに分ける。
-AR01-DDとAR01-PIの前には、canonical textを生成せずexact byte/workを課金するbounded canonical meterを別revisionとして置く。
+error、budget contract、ledger、descriptor kernelは別々にgreenへできるため、`AR01-E -> AR01-B-C -> AR01-B-L -> AR01-K -> {AR01-DS, AR01-PS}`の独立revisionに分ける。
+AR01-DDとAR01-PIの前には、canonical textを生成せずexact byte/workを課金する`AR01-CM-T/B/W/R`を置く。
 
 AR01-Eは次のpackage-localなexact error codeだけを提供する。
 
@@ -1816,15 +1816,15 @@ shared package rootへの公開はAS01だけが所有する。
 
 | code | 意味 | owner |
 | --- | --- | --- |
-| `invalid-closed-record` | prototype、own key、descriptor、accessor、hidden/symbol property、sparse collection、reflection failureによりclosed dataとして観測できない | AR01-DS、AR01-PS、AR01-IT |
-| `invalid-field` | closed snapshot内のscalar、literal、digest lexical form、number、schema、required relation endpointの値自体がfield contractを満たさない | AR01-DV、AR01-DD、AR01-PV、AR01-PI、AR01-IT |
-| `invalid-url` | URLがparse不能、許可scheme/origin/path条件違反、canonical serializerまたはderived URLと不一致 | AR01-DV、AR01-PV、AR01-URL |
-| `noncanonical-order` | collection elementは個別にvalidだが採択済みcomparator順ではない | AR01-PV、AR01-IT |
-| `duplicate-record` | canonical keyまたはidentity tupleがcollection内で重複する | AR01-PV、AR01-IT |
-| `dangling-reference` | graph closure時に要求されたartifact、member、exportなどのreferentが存在しない | AR01-PC |
-| `kind-mismatch` | referentは存在するがartifact、dependency、finalization kindの組合せが許可されない | AR01-PV、AR01-PC |
-| `semantic-mismatch` | referentとkindは存在するがentry、export、member roleまたはsemantic bindingが一致しない | AR01-PV、AR01-PC |
-| `budget-exceeded` | AR01-Bが定義するoperation-local hard limitを課金前検査で超える | AR01-B以降の課金operation |
+| `invalid-closed-record` | prototype、own key、descriptor、accessor、hidden/symbol property、sparse collection、reflection failureによりclosed dataとして観測できない | AR01-K、AR01-DS、AR01-PS、AR01-IT-S |
+| `invalid-field` | closed snapshot内のscalar、literal、digest lexical form、number、schema、required relation endpointの値自体がfield contractを満たさない | AR01-DV、AR01-DD、AR01-PV-U/O/E/K/S/I、AR01-PI、AR01-IT-V |
+| `invalid-url` | URLがparse不能、許可scheme/origin/path条件違反、canonical serializerまたはderived URLと不一致 | AR01-DV、AR01-PV-U、AR01-URL |
+| `noncanonical-order` | collection elementは個別にvalidだが採択済みcomparator順ではない | AR01-PV-O、AR01-PV-E、AR01-IT-V |
+| `duplicate-record` | canonical keyまたはidentity tupleがcollection内で重複する | AR01-PV-O、AR01-PV-E、AR01-PC-I、AR01-IT-V |
+| `dangling-reference` | graph closure時に要求されたartifact、member、exportなどのreferentが存在しない | AR01-PC-T、AR01-PC-X |
+| `kind-mismatch` | referentは存在するがartifact、dependency、finalization kindの組合せが許可されない | AR01-PV-K、AR01-PV-S、AR01-PC-S |
+| `semantic-mismatch` | referentとkindは存在するがentry、export、member roleまたはsemantic bindingが一致しない | AR01-PV-S、AR01-PC-S |
+| `budget-exceeded` | AR01-B-Cが定義するoperation-local hard limitを課金前検査で超える | AR01-B-L以降の課金sliceとAR01-CM-R |
 | `crypto-unavailable` | canonical digestに必要なWebCrypto capabilityが利用できない | AR01-DD、AR01-PI |
 
 schema version違反と不正なaddress lexical formは`invalid-field`にする。
@@ -1838,9 +1838,142 @@ nested operationのprefix、複数failureのprecedence、budget counterごとの
 AR01-Eはerror objectを作る能力だけを提供し、input acceptance、canonicality、identity、trust、provenance、placement、client inclusion、runtime admissionの証拠を生成しない。
 完全なAR01 parser、validator、producer surfaceはbuild/server側に残し、error classの存在をclient artifactへの到達許可にしない。
 
-AR01-BはAR01-Eの`budget-exceeded`を再利用するが、AR01-Eはbudget type、ledger、default、override、counterを持たない。
-AR01-Bはexact counter、hard cap、narrow-only override、operation-local ledger、課金順を独立して設計、review、実装する。
+AR01-B-CとAR01-B-LはAR01-Eの`budget-exceeded`を再利用するが、AR01-Eはbudget type、ledger、default、override、counterを持たない。
+AR01-B-Cはexact counter、hard cap、narrow-only override、AR01-B-Lはoperation-local ledgerとrollbackだけを独立して設計、review、実装する。
 generic shared snapshot utilityは現時点で追加せず、artifact-local descriptor kernelをDSとPSで共有できるかを各snapshot revisionで判断する。
+
+#### artifact resource、validation、closure の追加分割
+
+この決定は、`AR01-B`、`AR01-PV`、`AR01-PC`、`AR01-IT`をそれぞれ一つのimplementation revisionとして扱う案をsupersedeする。
+AR01-E、AR01-DD、AR01-PI、AR01-URLは現行の独立境界を維持する。
+
+budget contractとledgerは別々に直接検証できるため、次の順序へ分ける。
+
+| revision | owner | dependency | 独立した検証 |
+| --- | --- | --- | --- |
+| AR01-B-C | exact budget counter、default hard cap、closed narrow-only override resolution | AR01-E | 全counterのdefault、0/exact/+1 override、extra/hidden/accessor、root/field error path |
+| AR01-B-L | operation-local cumulative/peak ledgerと失敗時rollback | AR01-B-C | exact/limit+1、overflow、ledger isolation、失敗increment非適用 |
+
+AR01-B-Cは課金を行わず、AR01-B-Lはhostile inputやartifact fieldを解釈しない。
+exact counterとhard capはAR01-B-Cの先行design reviewで固定する。
+
+operation全体の課金順は一つのaggregate ownerへ戻さず、各consumerとintegration ownerへ割り当てる。
+
+| timing owner | 課金順の検証義務 |
+| --- | --- |
+| AR01-B-C | hostile budget overrideをartifact inputより先にclosed validationする |
+| AR01-K | own key数とkey長、array length、property workをdescriptor completionより先に課金する |
+| AR01-DS、AR01-PS、AR01-IT-S | data node、depth、string value、collection occurrenceをprojection allocationより先に課金する |
+| AR01-DV、AR01-PV-U/O/E/K/S、AR01-IT-V | Unicode scan、URL parse、comparison、Set/index構築より先にstring/validation stepを課金する |
+| AR01-PC-I/T/X/S | index allocation、lookup、compatibility probeより先にcardinality/validation stepを課金する |
+| AR01-CM-R | DD/PIのcanonicalizeまたはdigest callより先にexact byte/workとdownstream builder分を同じledgerへ予約する |
+| AR01-PV-I、AR01-PC-C | sibling evidenceを採択済み順で統合し、先行failure後に後続validatorまたはidentityを呼ばない |
+
+各ownerは自身の入力root相対pathとfailure precedenceをfocused testで固定する。
+
+AR01-DDとAR01-PIに必要なbounded canonical meterは、traversal、byte、work、ledger reservationへ分ける。
+
+| revision | owner | dependency | 独立した検証 |
+| --- | --- | --- | --- |
+| AR01-CM-T | canonical outputを生成しないiterative measurement traversal/event contract | ID01-CB | scalar/container/key event、iterative depth、cycle/alias occurrence、path一致 |
+| AR01-CM-B | T eventからのexact canonical UTF-8 byte measurement | AR01-CM-T | ID01 byte oracle、Unicode/number/escape/key punctuation、property insertion permutation |
+| AR01-CM-W | T eventからのcanonical work upper-bound measurement | AR01-CM-T | comparison/move/common-prefix、property insertion permutation、saturating arithmetic |
+| AR01-CM-R | byte/workとdownstream builder分のoperation-local ledger reservation | AR01-CM-B、AR01-CM-W、AR01-B-L | exact/limit+1、二重予約、failure時zero canonicalize/digest call |
+
+AR01-CM-BとAR01-CM-Wは同じT event contractだけへ依存し、後述する排他的focused pathで並列reviewできる。
+AR01-CM-Rはcanonical textまたはdigestを生成せず、AR01-DDとAR01-PIだけがvalidated preimageをdigestへ渡す。
+
+deploymentとartifactのhostile snapshotは、共通kernelとschema projectionへ分ける。
+
+| revision | owner | dependency | 独立した検証 |
+| --- | --- | --- | --- |
+| AR01-K | artifact-local descriptor capture kernel | AR01-B-L | getter非実行、prototype、own key/descriptor、identity cache、課金順、failure path |
+| AR01-DS | deployment identity schema projection | AR01-K、AR01-DP | exact 7-field snapshot、fresh scalar output、caller非再読 |
+| AR01-PS | artifact address schema/collection projection | AR01-K、AR01-P | exact 10-field snapshot、nested collection occurrence、fresh unbranded output、caller非再読 |
+
+AR01-Kはdeployment/artifact field名、URL、canonical order、referentを解釈しない。
+AR01-DSとAR01-PSはK completion後にdisjoint module/testとして並列reviewできる。
+
+AR01-PVのsemantic validationは次の独立revisionへ分ける。
+
+| revision | owner | dependency | 独立した検証 |
+| --- | --- | --- | --- |
+| AR01-PV-U | `artifactBaseUrl`のabsolute/canonical URL validation | AR01-PS | scheme、credentials、query/fragment、default port、dot segment、末尾slash |
+| AR01-PV-O | collection comparator、canonical order、duplicate rejection | AR01-PS | member、dependency、exportのexact comparator、null位置、unsorted/duplicate path |
+| AR01-PV-E | entry bindingのorder、ordinal、gap-free uniqueness | AR01-PS | empty/non-empty、0 start、gap、duplicate、role/name tuple order |
+| AR01-PV-K | artifact kindとfinalization/dependency template compatibility | AR01-PS | javascript/wasm/dataごとの合法matrixとkind mismatch path |
+| AR01-PV-S | member、entry、export、dependencyのartifact-local semantic consistency | AR01-PS | local referent、role compatibility、semantic mismatch path |
+| AR01-PV-I | U/O/E/K/S結果の統合とdeep-frozen validated preimage発行 | AR01-PV-U、PV-O、PV-E、PV-K、PV-S | caller再読なし、全field保持、失敗時identity zero call、fresh frozen output |
+
+AR01-PV-U、PV-O、PV-E、PV-K、PV-Sはvalidated brandまたはaggregate resultを単独発行しない。
+各revisionは同じAR01-PS snapshotをread-only入力にでき、disjoint module/testとして並列reviewできる。
+AR01-PV-Iだけが全証拠を束ね、AR01-PIへ渡すvalidated preimageを発行する。
+
+AR01-PCのgraph closureはindex、existence、compatibility、integrationへ分ける。
+
+| revision | owner | dependency | 独立した検証 |
+| --- | --- | --- | --- |
+| AR01-PC-I | PI-issued artifact addressによるimmutable artifact/export index | AR01-PI | duplicate artifact、deterministic index、input cardinality、caller非再読 |
+| AR01-PC-T | dependency target artifact existence closure | AR01-PC-I | dangling target、self edge policy、all dependency occurrence、failure path |
+| AR01-PC-X | target export existence closure | AR01-PC-I | null export、missing export、duplicate export、failure path |
+| AR01-PC-S | resolved target/exportのkindとsemantic compatibility | AR01-PC-T、AR01-PC-X | dependency kind、artifact kind、export role、semantic binding matrix |
+| AR01-PC-C | T/X/S結果の統合とclosed artifact graph発行 | AR01-PC-S | dangling zero、全address/export binding保持、fresh frozen closure、fallback禁止 |
+
+AR01-PC-TとAR01-PC-Xは同じimmutable indexへ依存し、disjoint module/testとして並列reviewできる。
+AR01-PC-Sは存在しないreferentをsentinelで扱わず、T/Xが解決したtargetだけを受け取る。
+
+AR01-ITはtype、hostile snapshot、semantic validationへ分ける。
+
+| revision | owner | dependency | 独立した検証 |
+| --- | --- | --- | --- |
+| AR01-IT-M | `ArtifactIntegrityEntry`と`ArtifactIntegrityTable`のexact type-only schema | AR01-PI | exact key/modifier/type、runtime-empty、root非公開 |
+| AR01-IT-S | unknown integrity tableのclosed structural snapshot | AR01-K、AR01-IT-M | getter非実行、entry occurrence、budget、fresh scalar snapshot |
+| AR01-IT-V | schema、address order/duplicate、digest、byteLengthのsemantic validation | AR01-IT-S | exact schema、canonical order、duplicate、safe byteLength、fresh frozen output |
+
+AR01-IT-Mはvalidatorまたはruntime authorityを追加せず、AR01-IT-Sはcanonical orderとdigest意味を解釈しない。
+integrity table productionとselected runtime conformanceは引き続きAF01、SL01、RR01が所有する。
+
+追加分割後の主要dependencyは次の順序とする。
+
+```text
+AR01-E -> AR01-B-C -> AR01-B-L -> AR01-K -> { AR01-DS, AR01-PS }
+ID01-CB -> AR01-CM-T -> { AR01-CM-B, AR01-CM-W } -> AR01-CM-R
+AR01-DS -> AR01-DV -> AR01-DD; AR01-DD also depends on AR01-CM-R
+AR01-PS -> { PV-U, PV-O, PV-E, PV-K, PV-S } -> PV-I -> AR01-PI; AR01-PI also depends on AR01-CM-R
+AR01-PI -> PC-I -> { PC-T, PC-X } -> PC-S -> PC-C
+AR01-PI -> IT-M -> IT-S -> IT-V
+```
+
+追加分割sliceの排他的focused write setを次に固定する。
+
+| revision | production path | focused test path | type fixture path |
+| --- | --- | --- | --- |
+| AR01-B-C | `artifactContract/budgetContract.ts` | `artifactContract/budgetContract.test.ts` | `artifactContract/budgetContract.type-fixture.ts` |
+| AR01-B-L | `artifactContract/budgetLedger.ts` | `artifactContract/budgetLedger.test.ts` | `artifactContract/budgetLedger.type-fixture.ts` |
+| AR01-CM-T | `artifactContract/canonicalMeasurementTraversal.ts` | `artifactContract/canonicalMeasurementTraversal.test.ts` | `artifactContract/canonicalMeasurementTraversal.type-fixture.ts` |
+| AR01-CM-B | `artifactContract/canonicalByteMeasurement.ts` | `artifactContract/canonicalByteMeasurement.test.ts` | N/A。T event consumerだけを所有する |
+| AR01-CM-W | `artifactContract/canonicalWorkMeasurement.ts` | `artifactContract/canonicalWorkMeasurement.test.ts` | N/A。T event consumerだけを所有する |
+| AR01-CM-R | `artifactContract/canonicalMeasurement.ts` | `artifactContract/canonicalMeasurement.test.ts` | `artifactContract/canonicalMeasurement.type-fixture.ts` |
+| AR01-K | `artifactContract/descriptorCapture.ts` | `artifactContract/descriptorCapture.test.ts` | `artifactContract/descriptorCapture.type-fixture.ts` |
+| AR01-DS | `artifactContract/deploymentSnapshot.ts` | `artifactContract/deploymentSnapshot.test.ts` | `artifactContract/deploymentSnapshot.type-fixture.ts` |
+| AR01-PS | `artifactContract/artifactAddressSnapshot.ts` | `artifactContract/artifactAddressSnapshot.test.ts` | `artifactContract/artifactAddressSnapshot.type-fixture.ts` |
+| AR01-PV-U | `artifactContract/artifactBaseUrlValidation.ts` | `artifactContract/artifactBaseUrlValidation.test.ts` | N/A。snapshot validatorだけを所有する |
+| AR01-PV-O | `artifactContract/artifactCollectionOrderValidation.ts` | `artifactContract/artifactCollectionOrderValidation.test.ts` | N/A。snapshot validatorだけを所有する |
+| AR01-PV-E | `artifactContract/artifactEntryValidation.ts` | `artifactContract/artifactEntryValidation.test.ts` | N/A。snapshot validatorだけを所有する |
+| AR01-PV-K | `artifactContract/artifactKindCompatibility.ts` | `artifactContract/artifactKindCompatibility.test.ts` | N/A。snapshot validatorだけを所有する |
+| AR01-PV-S | `artifactContract/artifactSemanticConsistency.ts` | `artifactContract/artifactSemanticConsistency.test.ts` | N/A。snapshot validatorだけを所有する |
+| AR01-PV-I | `artifactContract/artifactPreimageValidation.ts` | `artifactContract/artifactPreimageValidation.test.ts` | `artifactContract/artifactPreimageValidation.type-fixture.ts` |
+| AR01-PC-I | `artifactContract/artifactGraphIndex.ts` | `artifactContract/artifactGraphIndex.test.ts` | `artifactContract/artifactGraphIndex.type-fixture.ts` |
+| AR01-PC-T | `artifactContract/artifactTargetClosure.ts` | `artifactContract/artifactTargetClosure.test.ts` | N/A。resolved evidenceだけを返す |
+| AR01-PC-X | `artifactContract/artifactExportClosure.ts` | `artifactContract/artifactExportClosure.test.ts` | N/A。resolved evidenceだけを返す |
+| AR01-PC-S | `artifactContract/artifactCompatibilityClosure.ts` | `artifactContract/artifactCompatibilityClosure.test.ts` | N/A。resolved evidence consumerだけを所有する |
+| AR01-PC-C | `artifactContract/artifactGraphClosure.ts` | `artifactContract/artifactGraphClosure.test.ts` | `artifactContract/artifactGraphClosure.type-fixture.ts` |
+| AR01-IT-M | `artifactContract/integrityTableModel.ts` | `artifactContract/integrityTableModel.test.ts` | `artifactContract/integrityTableModel.type-fixture.ts` |
+| AR01-IT-S | `artifactContract/integrityTableSnapshot.ts` | `artifactContract/integrityTableSnapshot.test.ts` | `artifactContract/integrityTableSnapshot.type-fixture.ts` |
+| AR01-IT-V | `artifactContract/integrityTableValidation.ts` | `artifactContract/integrityTableValidation.test.ts` | `artifactContract/integrityTableValidation.type-fixture.ts` |
+
+この表のpathはslice間で共有しない。
+`artifactContract/SPEC.typ`、`artifactContract/implementation.test.ts`、package facade、shared root、進捗文書はmain integration ownerがslice revision固定前に一sliceずつ逐次統合する。
 
 `dathra.cost/1` は各 metric を次のように数える。
 
@@ -7924,6 +8057,34 @@ budget argumentのroot failure pathは`["budget"]`、field failureは`["budget",
 depth/node breachはcurrent occurrence、property/key/array breachはcontainer、source cardinalityは対象collection、scalar referenceは対象slot、sparse/cycleは発見したchild occurrenceをpathにする。
 canonical work/byteのglobal budget failureはroot pathとし、canonical scalarまたはUnicode failureはID01と同じvalue/property pathにする。
 
+#### occurrence walker と source profile の追加分割
+
+この決定は、上表の`SC02A8D`と`SC02A8E`を一つずつのimplementation revisionとして扱う部分だけをsupersedeする。
+既存のbudget、descriptor、active-ancestor、clone、freezeの意味は変更しない。
+
+`SC02A8D`はparent-linked planとwalker integrationを別々にgreenへできるため、次の直列revisionへ分ける。
+
+| revision | owner | dependency | 独立した検証 |
+| --- | --- | --- | --- |
+| SC02A8D-P | occurrence ID、parent ID、一segmentだけを保持するplanとfailure時path materialization | source-local path type | full path非保持、root/record/array path、12,000 depth、failure時だけのiterative materialization |
+| SC02A8D-W | A8A/B/CとD-Pを統合するiterative occurrence walkerとgeneric profile hook | SC02A8A、A8B、A8C、A8D-P | root depth、全node/key/string/array課金、alias再課金、active cycle、hook order、operation isolation |
+
+SC02A8D-Pはcaller object、descriptor、budget ledger、profile、cloneを参照しない。
+SC02A8D-Wはplanを構築するがsource固有fieldを解釈せず、`beforeDescriptors`と`beforeChildren`のgeneric hook順序だけを固定する。
+進行中の旧SC02A8D combined draftは破棄せず、fixed review revisionを作る前にD-PとD-Wのwrite setへ分類する。
+
+`SC02A8E`はcollection、reference、SemanticPathの独立counterを一つのreview unitに束ねない。
+
+| revision | owner | dependency | 独立した検証 |
+| --- | --- | --- | --- |
+| SC02A8E-C | facts、relations、exports、10 registry collection、registry implementationのcardinality profile | SC02A8D-W | 各collectionのexact/limit+1、descriptor前課金、非対象field非課金 |
+| SC02A8E-R | scalar referenceとarray-valued referenceのcardinality profile | SC02A8D-W | structurally presentなpotential referenceのexact/limit+1、semantic validation前課金 |
+| SC02A8E-P | `SemanticPath` segmentのcardinality profile | SC02A8D-W | repeated segment、empty path、全subject occurrence、child descriptor前のprecharge、exact/limit+1 |
+| SC02A8E-I | C/R/P hookの一回だけのcompositionとsource profile integration | SC02A8E-C、A8E-R、A8E-P | hook順序、二重課金なし、operation-local ledger共有、failure path |
+
+SC02A8E-C、A8E-R、A8E-Pはdisjoint focused module/testとして並列reviewできる。
+SC02A8E-Iだけが三profileを組み合わせ、source profile全体をwalkerへ渡す。
+
 #### bounded canonical measurement の実装分割
 
 canonical identity workはhostile-input boundaryからさらに分ける。
@@ -7934,6 +8095,36 @@ ID01-CB、SC02A8I、SC02A13を同じproduction revisionへ含めない。
 | ID01-CB | byte-identicalなiterative canonical builder | existing vectors、depth、cycle/alias、instrumented sort/work bound |
 | SC02A8I | full outputを作らないexact byte/work meter | ID01 byte oracle、work/byte exact/limit+1、alias occurrence |
 | SC02A13 | canonicalizeとdigestのintegration | canonicalize exact once、digest exact once、failure時zero call |
+
+上表の`SC02A8I` combined revisionは、次の追加分割によってsupersedeする。
+
+| revision | owner | dependency | 独立した検証 |
+| --- | --- | --- | --- |
+| SC02A8I-T | canonical outputを生成しないiterative measurement traversalとevent contract | ID01-CB | scalar/container/canonical-key event、iterative depth、cycle/alias occurrence、property insertion permutation、path一致 |
+| SC02A8I-B | T eventからのexact UTF-8 canonical byte measurement | SC02A8I-T | ID01 byte oracle、Unicode/number/escape/key punctuation、key order/permutation、exact/limit+1 |
+| SC02A8I-W | T eventからのcanonical work upper-bound measurement | SC02A8I-T | comparison/move/common-prefix bound、key permutation、saturating arithmetic、exact/limit+1 |
+| SC02A8I-R | byte/workを同じoperation-local ledgerへ予約するintegration | SC02A8I-B、A8I-W、SC02A8A | meter分とdownstream builder分の二重予約、failure時zero canonicalize/digest call |
+
+SC02A8I-BとSC02A8I-Wは同じT event contractだけへ依存し、disjoint module/testとして並列reviewできる。
+SC02A8I-Rまで完了してもcanonical text生成とdigestはSC02A13のownerに残る。
+
+追加分割sliceの排他的focused write setを次に固定する。
+
+| revision | production path | focused test path | type fixture path |
+| --- | --- | --- | --- |
+| SC02A8D-P | `executionContract/occurrencePlan.ts` | `executionContract/occurrencePlan.test.ts` | `executionContract/occurrencePlan.type-fixture.ts` |
+| SC02A8D-W | `executionContract/closedDataWalker.ts` | `executionContract/closedDataWalker.test.ts` | `executionContract/closedDataWalker.type-fixture.ts` |
+| SC02A8E-C | `executionContract/sourceCollectionProfile.ts` | `executionContract/sourceCollectionProfile.test.ts` | N/A。runtime hookだけを所有する |
+| SC02A8E-R | `executionContract/sourceReferenceProfile.ts` | `executionContract/sourceReferenceProfile.test.ts` | N/A。runtime hookだけを所有する |
+| SC02A8E-P | `executionContract/semanticPathProfile.ts` | `executionContract/semanticPathProfile.test.ts` | N/A。runtime hookだけを所有する |
+| SC02A8E-I | `executionContract/sourceProfile.ts` | `executionContract/sourceProfile.test.ts` | `executionContract/sourceProfile.type-fixture.ts` |
+| SC02A8I-T | `executionContract/canonicalMeasurementTraversal.ts` | `executionContract/canonicalMeasurementTraversal.test.ts` | `executionContract/canonicalMeasurementTraversal.type-fixture.ts` |
+| SC02A8I-B | `executionContract/canonicalByteMeasurement.ts` | `executionContract/canonicalByteMeasurement.test.ts` | N/A。T event consumerだけを所有する |
+| SC02A8I-W | `executionContract/canonicalWorkMeasurement.ts` | `executionContract/canonicalWorkMeasurement.test.ts` | N/A。T event consumerだけを所有する |
+| SC02A8I-R | `executionContract/canonicalMeasurement.ts` | `executionContract/canonicalMeasurement.test.ts` | `executionContract/canonicalMeasurement.type-fixture.ts` |
+
+この表のpathはslice間で共有しない。
+`executionContract/SPEC.typ`、`executionContract/implementation.test.ts`、package facade、shared rootはmain integration ownerが一sliceずつ逐次更新する。
 
 ID01-CBはnative `.sort()`をraw UTF-16 comparatorのiterative stable merge sortへ置き換え、recursive string compositionをiterative frame/chunk builderへ置き換える。
 public `canonicalizeJson()`のsignature、error、path、prototype/descriptor rule、cycle/alias semantics、text、bytesを変更しない。
