@@ -126,6 +126,23 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
   ],
 )
 
+#adr(
+  header("Module Graph consumer の導入時に Canonical Identity を package root へ公開する", Status.Accepted, "2026-07-13"),
+  [
+    前の ADR は production consumer がない間の root export を延期した。
+    immutable Module Graph は canonical JSON、digest、qualified identity の exact contract を production source から直接消費し、別 package から package-private path を参照できない。
+  ],
+  [
+    前の ADR の延期条件が満たされたものとして、Canonical Identity の公開 implementation API を `@dathra/shared` の package root から export する。
+    builder と instrumentation は internal のまま維持し、Module Graph は別の stacked change で transformer root 非公開を維持する。
+  ],
+  [
+    - Module Graph は公開された同一の canonical identity contract を build、server、browser 向け解析で共有できる
+    - `@dathra/shared` の公開 API に Canonical Identity が追加される
+    - builder implementation detail は published artifact に含めても公開 export には含めない
+  ],
+)
+
 == 機能仕様
 
 #feature_spec(

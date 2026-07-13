@@ -553,11 +553,11 @@ describe("createQualifiedId", () => {
   });
 });
 
-describe("package boundary", () => {
-  it("keeps canonical identity internal until a production consumer exists", () => {
-    expect(publicApi).not.toHaveProperty("canonicalizeJson");
-    expect(publicApi).not.toHaveProperty("sha256Digest");
-    expect(publicApi).not.toHaveProperty("digestCanonicalJson");
-    expect(publicApi).not.toHaveProperty("createQualifiedId");
+describe("public export", () => {
+  it("exports canonical identity primitives for the Module Graph consumer", () => {
+    expect(publicApi.canonicalizeJson).toBe(canonicalizeJson);
+    expect(publicApi.sha256Digest).toBe(sha256Digest);
+    expect(publicApi.digestCanonicalJson).toBe(digestCanonicalJson);
+    expect(publicApi.createQualifiedId).toBe(createQualifiedId);
   });
 });
