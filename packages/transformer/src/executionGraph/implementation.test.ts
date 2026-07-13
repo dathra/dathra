@@ -6,7 +6,7 @@ import {
   type ObservationContract,
   type Sha256Digest,
 } from "@dathra/shared";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import * as publicApi from "../index";
 import {
@@ -2600,54 +2600,65 @@ describe("deterministic derivation index", () => {
     );
   });
 
-  it("validates a deep generated-template DAG without recursive stack use", async () => {
-    const fixture = await createBaseFixture("deep-template-dag");
-    const generatorProfileDigest = await digest("deep-template-dag:generator");
-    let previous = fixture.template;
-    for (let ordinal = 0; ordinal < 12_000; ordinal += 1) {
-      const generated = await createExecutionTemplateNode({
-        kind: "generated",
-        generatorSchemaId: "dathra.deep-template-dag/1",
-        generatorProfileDigest,
-        inputs: [{ slot: "previous", templateNodeId: previous.id }],
-        rootDefinitionId: null,
-        observationContractId: null,
-        operationKind: "compute",
-        ordinal,
-      });
-      fixture.records.templateNodes.push(generated);
-      previous = generated;
-    }
-    const occurrence = await createStaticExecutionOccurrenceTemplate({
-      identitySlots: [],
-      epochKinds: ["render-attempt"],
-    });
-    const generationDomain = await createExecutionGenerationDomain({
-      locationRequirementId: fixture.location.id,
-      targetEnvironmentId: fixture.module.domain.preimage.targetEnvironmentId,
-      resolutionDomainId: fixture.module.domain.id,
-      generatorProfileDigest,
-    });
-    const node = await createQualifiedExecutionNode({
-      templateNodeId: previous.id,
-      locationRequirementId: fixture.location.id,
-      occurrenceTemplateId: occurrence.id,
-      semanticRole: "execution",
-      binding: {
-        kind: "generated",
-        generationDomainId: generationDomain.id,
-      },
-    });
-    fixture.records.occurrenceTemplates.push(occurrence);
-    fixture.records.generationDomains.push(generationDomain);
-    fixture.records.qualifiedNodes.push(node);
+  describe("deep generated-template DAG", () => {
+    let fixture: Awaited<ReturnType<typeof createBaseFixture>> | undefined;
 
-    await expect(
-      createExecutionGraphSnapshot(
-        snapshotInput(fixture.records),
-        fixture.dependencies,
-      ),
-    ).resolves.toBeDefined();
+    beforeAll(async () => {
+      const preparedFixture = await createBaseFixture("deep-template-dag");
+      const generatorProfileDigest = await digest(
+        "deep-template-dag:generator",
+      );
+      let previous = preparedFixture.template;
+      for (let ordinal = 0; ordinal < 12_000; ordinal += 1) {
+        const generated = await createExecutionTemplateNode({
+          kind: "generated",
+          generatorSchemaId: "dathra.deep-template-dag/1",
+          generatorProfileDigest,
+          inputs: [{ slot: "previous", templateNodeId: previous.id }],
+          rootDefinitionId: null,
+          observationContractId: null,
+          operationKind: "compute",
+          ordinal,
+        });
+        preparedFixture.records.templateNodes.push(generated);
+        previous = generated;
+      }
+      const occurrence = await createStaticExecutionOccurrenceTemplate({
+        identitySlots: [],
+        epochKinds: ["render-attempt"],
+      });
+      const generationDomain = await createExecutionGenerationDomain({
+        locationRequirementId: preparedFixture.location.id,
+        targetEnvironmentId:
+          preparedFixture.module.domain.preimage.targetEnvironmentId,
+        resolutionDomainId: preparedFixture.module.domain.id,
+        generatorProfileDigest,
+      });
+      const node = await createQualifiedExecutionNode({
+        templateNodeId: previous.id,
+        locationRequirementId: preparedFixture.location.id,
+        occurrenceTemplateId: occurrence.id,
+        semanticRole: "execution",
+        binding: {
+          kind: "generated",
+          generationDomainId: generationDomain.id,
+        },
+      });
+      preparedFixture.records.occurrenceTemplates.push(occurrence);
+      preparedFixture.records.generationDomains.push(generationDomain);
+      preparedFixture.records.qualifiedNodes.push(node);
+      fixture = preparedFixture;
+    });
+
+    it("validates without recursive stack use", async () => {
+      if (fixture === undefined) throw new Error("Expected a prepared fixture");
+      await expect(
+        createExecutionGraphSnapshot(
+          snapshotInput(fixture.records),
+          fixture.dependencies,
+        ),
+      ).resolves.toBeDefined();
+    });
   });
 });
 
