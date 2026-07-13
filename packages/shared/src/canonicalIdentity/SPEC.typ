@@ -91,6 +91,26 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
 )
 
 #adr(
+  header("WebCrypto result は intrinsic ArrayBuffer brand で受理する", Status.Accepted, "2026-07-13"),
+  [
+    WebCrypto の `digest()` は `ArrayBuffer` を返すが、TypeScript の戻り値型だけでは非準拠 host の runtime value を保証できない。
+    array-like object を `Uint8Array` constructor へ直接渡すと、`length` や indexed property の getter を実行し、author-controlled bytes を正規 digest として brand し得る。
+  ],
+  [
+    digest result は intrinsic `ArrayBuffer.prototype.byteLength` getter が受理する genuine `ArrayBuffer` に限定し、Proxy と array-like object を property access なしで拒否する。
+    genuine `ArrayBuffer` でない result、32 bytes でない result、WebCrypto capability の取得または operation の失敗は `crypto-unavailable` とし、branded digest を返さない。
+  ],
+  [
+    - 非準拠 host result の getter、iterator、Proxy trap を digest encoding 中に実行しない
+    - cross-realm を含む genuine `ArrayBuffer` の exact 32 bytes だけを canonical digest 表記へ変換する
+    - digest bytes の暗号学的な正しさは引き続き準拠 WebCrypto host を信頼する
+  ],
+  references: (
+    link("https://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-digest")[Web Cryptography API],
+  ),
+)
+
+#adr(
   header("Canonical JSON builder を反復処理と明示的な上限で構成する", Status.Accepted, "2026-07-13"),
   [
     canonicalization は後続の hostile-input boundary でも使われるため、host の sort 実装と JavaScript call stack の深さへ依存できない。
@@ -232,14 +252,14 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
     - `=`, `+`, `/`, whitespace、別 prefix、別長、non-zero pad bit を拒否する
     - `sha256Digest()` は caller の `Uint8Array` を同期 copy し、上書き可能な iterator や method を実行しない
     - genuine `Uint8Array` 以外の view、Proxy、detached buffer を author code の実行前に `unsupported-value` として拒否する
-    - WebCrypto operation の失敗または32 bytes以外の result を `crypto-unavailable` として拒否する
+    - WebCrypto capability の取得失敗、operation の失敗、genuine `ArrayBuffer` でない result、32 bytes以外の result を `crypto-unavailable` として拒否する
   ],
   test_cases: [
     - empty bytes と `abc` の既知 SHA-256 vector に一致する
     - 呼び出し直後に input bytes または preimage を変更しても開始時 snapshot の digest になる
     - input bytes の iterator を上書きしても実行せず、typed array の exact bytes を hash する
     - Proxy、別種の view、detached buffer を typed failure として拒否し、Proxy trap を実行しない
-    - 非準拠 WebCrypto result から branded digest を生成しない
+    - 非準拠 WebCrypto result の array-like getter または Proxy trap を実行せず、branded digest を生成しない
     - canonical digest guard が canonical 表記だけを受理する
   ],
 )

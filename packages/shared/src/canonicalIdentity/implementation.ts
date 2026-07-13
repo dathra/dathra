@@ -88,6 +88,12 @@ class CanonicalIdentityError extends TypeError {
 const SHA256_DIGEST_PATTERN = /^sha-256:[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/;
 const BASE64URL_ALPHABET =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+/* eslint-disable @typescript-eslint/unbound-method -- The intrinsic getter is invoked with a runtime candidate as its this value. */
+const ARRAY_BUFFER_BYTE_LENGTH_GETTER = Object.getOwnPropertyDescriptor(
+  ArrayBuffer.prototype,
+  "byteLength",
+)?.get;
+/* eslint-enable @typescript-eslint/unbound-method */
 // eslint-disable-next-line @typescript-eslint/unbound-method -- The intrinsic is invoked with an internal snapshot as its this value.
 const UINT8_ARRAY_SET = Uint8Array.prototype.set;
 
@@ -166,6 +172,50 @@ function snapshotUint8Array(value: unknown): Uint8Array<ArrayBuffer> {
       "SHA-256 input must use an attached backing buffer",
     );
   }
+}
+
+function hasArrayBufferBrand(value: unknown): value is ArrayBuffer {
+  if (ARRAY_BUFFER_BYTE_LENGTH_GETTER === undefined) {
+    return false;
+  }
+
+  try {
+    return (
+      typeof Reflect.apply(ARRAY_BUFFER_BYTE_LENGTH_GETTER, value, []) ===
+      "number"
+    );
+  } catch {
+    return false;
+  }
+}
+
+function snapshotSha256Result(value: unknown): Uint8Array<ArrayBuffer> {
+  if (!hasArrayBufferBrand(value)) {
+    fail(
+      "crypto-unavailable",
+      [],
+      "WebCrypto returned a non-ArrayBuffer SHA-256 result",
+    );
+  }
+
+  let digest: Uint8Array<ArrayBuffer>;
+  try {
+    digest = new Uint8Array(value);
+  } catch {
+    return fail(
+      "crypto-unavailable",
+      [],
+      "WebCrypto returned an unusable SHA-256 result",
+    );
+  }
+  if (digest.byteLength !== 32) {
+    fail(
+      "crypto-unavailable",
+      [],
+      "WebCrypto returned a noncanonical SHA-256 result",
+    );
+  }
+  return digest;
 }
 
 function validateUnicode(
@@ -325,24 +375,33 @@ function isSha256Digest(value: unknown): value is Sha256Digest {
 async function sha256Digest(bytes: Uint8Array): Promise<Sha256Digest> {
   const snapshot = snapshotUint8Array(bytes);
   const cryptoHost: { readonly crypto?: Crypto } = globalThis;
-  const subtle = cryptoHost.crypto?.subtle;
-  if (subtle === undefined || typeof subtle.digest !== "function") {
+  let subtle: SubtleCrypto | undefined;
+  let digestOperation: SubtleCrypto["digest"] | undefined;
+  try {
+    subtle = cryptoHost.crypto?.subtle;
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- Reflect.apply preserves the SubtleCrypto receiver after capability lookup.
+    digestOperation = subtle?.digest;
+  } catch {
+    return fail(
+      "crypto-unavailable",
+      [],
+      "WebCrypto SubtleCrypto is unavailable",
+    );
+  }
+  if (subtle === undefined || typeof digestOperation !== "function") {
     fail("crypto-unavailable", [], "WebCrypto SubtleCrypto is unavailable");
   }
 
-  let digest: Uint8Array;
+  let result: unknown;
   try {
-    digest = new Uint8Array(await subtle.digest("SHA-256", snapshot));
+    result = await Reflect.apply(digestOperation, subtle, [
+      "SHA-256",
+      snapshot,
+    ]);
   } catch {
     return fail("crypto-unavailable", [], "WebCrypto SHA-256 operation failed");
   }
-  if (digest.byteLength !== 32) {
-    fail(
-      "crypto-unavailable",
-      [],
-      "WebCrypto returned a noncanonical SHA-256 result",
-    );
-  }
+  const digest = snapshotSha256Result(result);
   return `sha-256:${encodeBase64Url(digest)}` as Sha256Digest;
 }
 

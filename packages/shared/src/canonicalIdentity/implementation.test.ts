@@ -13,7 +13,19 @@ import {
   type Sha256Digest,
 } from "./implementation";
 
-/* eslint-disable @typescript-eslint/consistent-type-imports -- Negative export probes must query missing types. */
+/* eslint-disable @typescript-eslint/consistent-type-imports, import/no-duplicates -- Each negative import must fail independently for mutation sensitivity. */
+// @ts-expect-error Canonical Identity runtime declarations remain package-internal in the type namespace.
+import type { CanonicalIdentityError as _CanonicalIdentityErrorExport } from "../index";
+// @ts-expect-error Canonical Identity runtime declarations remain package-internal in the type namespace.
+import type { canonicalizeJson as _CanonicalizeJsonExport } from "../index";
+// @ts-expect-error Canonical Identity runtime declarations remain package-internal in the type namespace.
+import type { createQualifiedId as _CreateQualifiedIdExport } from "../index";
+// @ts-expect-error Canonical Identity runtime declarations remain package-internal in the type namespace.
+import type { digestCanonicalJson as _DigestCanonicalJsonExport } from "../index";
+// @ts-expect-error Canonical Identity runtime declarations remain package-internal in the type namespace.
+import type { isSha256Digest as _IsSha256DigestExport } from "../index";
+// @ts-expect-error Canonical Identity runtime declarations remain package-internal in the type namespace.
+import type { sha256Digest as _Sha256DigestExport } from "../index";
 // @ts-expect-error Canonical Identity types remain package-internal.
 type _T01 = import("../index").CanonicalIdentityErrorCode;
 // @ts-expect-error Canonical Identity types remain package-internal.
@@ -32,7 +44,13 @@ type _T07 = import("../index").QualifiedIdInput<string>;
 type _T08 = import("../index").QualifiedIdPreimage<string>;
 // @ts-expect-error Canonical Identity types remain package-internal.
 type _T09 = import("../index").Sha256Digest;
-/* eslint-enable @typescript-eslint/consistent-type-imports */
+type _T10 = typeof _CanonicalIdentityErrorExport;
+type _T11 = typeof _CanonicalizeJsonExport;
+type _T12 = typeof _CreateQualifiedIdExport;
+type _T13 = typeof _DigestCanonicalJsonExport;
+type _T14 = typeof _IsSha256DigestExport;
+type _T15 = typeof _Sha256DigestExport;
+/* eslint-enable @typescript-eslint/consistent-type-imports, import/no-duplicates */
 
 const EMPTY_SHA256 = "sha-256:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU";
 const ABC_SHA256 = "sha-256:ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0";
@@ -398,6 +416,60 @@ describe("SHA-256 digest", () => {
       path: [],
     });
     expect(digest).toHaveBeenCalledOnce();
+  });
+
+  it("rejects non-ArrayBuffer WebCrypto output without reading array-like properties", async () => {
+    let propertyReads = 0;
+    const result = {};
+    Object.defineProperty(result, "length", {
+      get() {
+        propertyReads += 1;
+        return 32;
+      },
+    });
+    const digest = vi.fn().mockResolvedValue(result);
+    vi.stubGlobal("crypto", { subtle: { digest } });
+
+    await expect(sha256Digest(new Uint8Array())).rejects.toMatchObject({
+      code: "crypto-unavailable",
+      path: [],
+    });
+    expect(propertyReads).toBe(0);
+  });
+
+  it("rejects proxied WebCrypto output without invoking traps", async () => {
+    let trapCalls = 0;
+    const result = new Proxy(new ArrayBuffer(32), {
+      get(_target, property) {
+        if (property !== "then") {
+          trapCalls += 1;
+        }
+        return undefined;
+      },
+    });
+    const digest = vi.fn().mockResolvedValue(result);
+    vi.stubGlobal("crypto", { subtle: { digest } });
+
+    await expect(sha256Digest(new Uint8Array())).rejects.toMatchObject({
+      code: "crypto-unavailable",
+      path: [],
+    });
+    expect(trapCalls).toBe(0);
+  });
+
+  it("normalizes WebCrypto capability access failures", async () => {
+    const subtle = {};
+    Object.defineProperty(subtle, "digest", {
+      get() {
+        throw new Error("host capability failure");
+      },
+    });
+    vi.stubGlobal("crypto", { subtle });
+
+    await expect(sha256Digest(new Uint8Array())).rejects.toMatchObject({
+      code: "crypto-unavailable",
+      path: [],
+    });
   });
 
   it("normalizes WebCrypto SHA-256 operation failures", async () => {
