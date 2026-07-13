@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import {
   mkdir,
   mkdtemp,
@@ -9,9 +10,8 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 const IMPLEMENTATION_PATH = fileURLToPath(
   new URL("./implementation.mjs", import.meta.url),
@@ -82,6 +82,22 @@ async function createRepositoryFixture(t) {
     base,
     candidate,
     proposal: { path: "proposal.md" },
+    reviewResults: [
+      {
+        id: "primary-r1",
+        result: "verdict: ACCEPT\nblockers:\n- none\n",
+        reviewer: "reviewer-primary",
+        role: "primary",
+        verdict: "ACCEPT",
+      },
+      {
+        id: "risk-r1",
+        result: "verdict: ACCEPT\nblockers:\n- none\n",
+        reviewer: "reviewer-risk",
+        role: "risk",
+        verdict: "ACCEPT",
+      },
+    ],
     writeSet: ["target.txt", "second-target.txt"],
     dependencies: [
       {
@@ -171,6 +187,7 @@ test("generates byte-identical evidence and verifies it", async (t) => {
           paths: [...dependency.paths].reverse(),
         })),
       gates: [...fixture.input.gates].reverse(),
+      reviewResults: [...fixture.input.reviewResults].reverse(),
       writeSet: [...fixture.input.writeSet].reverse(),
     }).reverse(),
   );
@@ -213,6 +230,16 @@ test("generates byte-identical evidence and verifies it", async (t) => {
     /^[0-9a-f]{64}$/u,
   );
   assert.equal(evidence.manifest.gates[0].exitCode, 0);
+  assert.deepEqual(
+    evidence.manifest.reviewResults.map(({ id }) => id),
+    ["primary-r1", "risk-r1"],
+  );
+  assert.equal(evidence.manifest.reviewResults[0].role, "primary");
+  assert.equal(evidence.manifest.reviewResults[0].verdict, "ACCEPT");
+  assert.match(
+    evidence.manifest.reviewResults[0].result.sha256,
+    /^[0-9a-f]{64}$/u,
+  );
   assert.match(evidence.attestation.manifestSha256, /^[0-9a-f]{64}$/u);
   assert.equal(
     runGit(fixture.directory, [
@@ -234,6 +261,14 @@ test("generates byte-identical evidence and verifies it", async (t) => {
       "## NEXT-DECISION",
     ].join("\n"),
   );
+  assert.equal(
+    runGit(fixture.directory, [
+      "cat-file",
+      "blob",
+      evidence.manifest.reviewResults[0].result.blobOid,
+    ]),
+    "verdict: ACCEPT\nblockers:\n- none",
+  );
 
   const verification = runCli(fixture.directory, [
     "verify",
@@ -244,6 +279,17 @@ test("generates byte-identical evidence and verifies it", async (t) => {
   ]);
   assert.equal(verification.status, 0, verification.stderr);
   assert.equal(verification.stdout, firstBytes);
+
+  const { reviewResults: _, ...legacyInput } = fixture.input;
+  const legacyInputPath = join(fixture.directory, "legacy-input.json");
+  await writeFile(legacyInputPath, `${JSON.stringify(legacyInput, null, 2)}\n`);
+  const legacy = runCli(fixture.directory, [
+    "generate",
+    "--input",
+    legacyInputPath,
+  ]);
+  assert.equal(legacy.status, 0, legacy.stderr);
+  assert.equal("reviewResults" in JSON.parse(legacy.stdout).manifest, false);
 });
 
 test("rejects tampered evidence without rewriting it", async (t) => {
@@ -273,6 +319,43 @@ test("rejects tampered evidence without rewriting it", async (t) => {
   assert.notEqual(verification.status, 0);
   assert.match(verification.stderr, /Evidence mismatch/u);
   assert.equal(await readFile(evidencePath, "utf8"), tamperedBytes);
+});
+
+test("rejects a stale review result without rewriting evidence", async (t) => {
+  const fixture = await createRepositoryFixture(t);
+  const evidencePath = join(fixture.directory, "evidence.json");
+  const generated = runCli(fixture.directory, [
+    "generate",
+    "--input",
+    fixture.inputPath,
+    "--output",
+    evidencePath,
+  ]);
+  assert.equal(generated.status, 0, generated.stderr);
+  const evidenceBytes = await readFile(evidencePath, "utf8");
+
+  const staleInput = {
+    ...fixture.input,
+    reviewResults: [
+      {
+        ...fixture.input.reviewResults[0],
+        result: "verdict: ACCEPT\nblockers:\n- changed\n",
+      },
+      fixture.input.reviewResults[1],
+    ],
+  };
+  const staleInputPath = join(fixture.directory, "stale-input.json");
+  await writeFile(staleInputPath, `${JSON.stringify(staleInput, null, 2)}\n`);
+  const verification = runCli(fixture.directory, [
+    "verify",
+    "--input",
+    staleInputPath,
+    "--evidence",
+    evidencePath,
+  ]);
+  assert.notEqual(verification.status, 0);
+  assert.match(verification.stderr, /Evidence mismatch/u);
+  assert.equal(await readFile(evidencePath, "utf8"), evidenceBytes);
 });
 
 test("rejects an incorrect write set and a failed gate", async (t) => {
@@ -320,6 +403,26 @@ test("rejects an incorrect write set and a failed gate", async (t) => {
   ]);
   assert.notEqual(gateResult.status, 0);
   assert.match(gateResult.stderr, /exitCode must be 0/u);
+
+  const mismatchedReview = {
+    ...fixture.input,
+    reviewResults: [{ ...fixture.input.reviewResults[0], verdict: "BLOCK" }],
+  };
+  const mismatchedReviewPath = join(
+    fixture.directory,
+    "mismatched-review.json",
+  );
+  await writeFile(
+    mismatchedReviewPath,
+    `${JSON.stringify(mismatchedReview, null, 2)}\n`,
+  );
+  const reviewResult = runCli(fixture.directory, [
+    "generate",
+    "--input",
+    mismatchedReviewPath,
+  ]);
+  assert.notEqual(reviewResult.status, 0);
+  assert.match(reviewResult.stderr, /declared verdict BLOCK/u);
 
   const unknownField = { ...fixture.input, ignoredEvidence: true };
   const unknownFieldPath = join(fixture.directory, "unknown-field.json");

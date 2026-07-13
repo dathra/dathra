@@ -16,12 +16,13 @@ reviewerはhashやGit objectを個別に再計算せず、意味上のcorrectnes
     入力と出力はUTF-8 JSONとし、出力はmachine-readableなmanifestとattestationを一つのdocumentに持つ。
   ],
   format: [
-    - inputは`schemaVersion`、`reviewId`、`base`、`candidate`、`proposal`、`writeSet`、`dependencies`、`decisionAnchors`、`gates`を持つ
+    - inputは`schemaVersion`、`reviewId`、`base`、`candidate`、`proposal`、`writeSet`、`dependencies`、`decisionAnchors`、`gates`を持ち、新しいreviewでは`reviewResults`も持つ
     - `proposal`はrepository-relative pathを一つ持つ
     - dependencyはexact revisionとcandidateで不変な一個以上のpathを持つ
     - decision anchorはexact revision、source path、開始行、終了行を持つ
     - gateはID、argv配列、exit code、summaryを持つ
-    - outputはresolved commit OID、tree、path status、mode、SHA-256、Git blob OID、anchor excerpt、gate結果、canonical manifest hashを持つ
+    - review resultはID、reviewer、role、verdict、result本文を持つ
+    - outputはresolved commit OID、tree、path status、mode、SHA-256、Git blob OID、anchor excerpt、gate結果、review結果、canonical manifest hashを持つ
   ],
   constraints: [
     - candidateはbaseを唯一のparentに持つ
@@ -30,6 +31,10 @@ reviewerはhashやGit objectを個別に再計算せず、意味上のcorrectnes
     - dependency revisionはcandidateのancestorであり、列挙pathのmodeとblobはcandidateで同一である
     - anchorの開始行と終了行はsource内で一意に決定できる
     - 全gateのexit codeは0である
+    - review resultのroleは`primary`、`risk`、`convergence`のいずれかで、verdictは`ACCEPT`または`BLOCK`である
+    - review result本文の先頭行にあるverdictはinputのverdictと一致する
+    - review result本文はfilesystem pathを介さず、inputのUTF-8 textから直接Git blobへ変換する
+    - `reviewResults`を持たない既存schema version 1 inputは従来とbyte-identicalなevidenceを生成する
     - outputへ時刻、temporary path、branchのmutableな現在値を含めない
   ],
 )
@@ -48,7 +53,7 @@ reviewerはhashやGit objectを個別に再計算せず、意味上のcorrectnes
   steps: [
     1. base、candidate、dependency、anchor revisionをexact commit OIDへ解決する
     2. candidate parentとexact write setを検査する
-    3. proposal、変更前後のpath、dependency path、anchor sourceとexcerptをSHA-256とGit blob OIDへ変換し、proposalとexcerptのblobをGit object databaseへ保存する
+    3. proposal、変更前後のpath、dependency path、anchor sourceとexcerpt、review resultをSHA-256とGit blob OIDへ変換し、proposal、excerpt、review resultのblobをGit object databaseへ保存する
     4. gate resultがsuccessであることを検査する
     5. keyと集合をcanonical orderへ正規化し、manifest SHA-256へ束縛したattestationを生成する
     6. output指定時は同じdirectoryのtemporary fileからatomic renameする
@@ -57,10 +62,11 @@ reviewerはhashやGit objectを個別に再計算せず、意味上のcorrectnes
     - stdoutとoutput fileは同じcanonical JSONを表す
     - 同じinputによる再生成はbyte-identicalである
     - proposalとanchor excerptは出力されたblob OIDから取得できる
+    - `reviewResults`を指定した場合、review resultは出力されたblob OIDから取得できる
     - branch、index、Git refを変更しない
   ],
   errors: [
-    - invalid schema、unresolved revision、parent mismatch、write-set mismatch、dependency mismatch、anchor mismatch、failed gateではnon-zeroで終了する
+    - invalid schema、unresolved revision、parent mismatch、write-set mismatch、dependency mismatch、anchor mismatch、failed gate、invalid review resultではnon-zeroで終了する
     - failure時にpartial output fileを残さない
   ],
 )
@@ -80,7 +86,7 @@ reviewerはhashやGit objectを個別に再計算せず、意味上のcorrectnes
     - mismatch時はexpected evidenceを変更せずnon-zeroになる
   ],
   errors: [
-    - expected evidenceの欠落、invalid JSON、改変、stale candidate、stale dependency、stale anchor、stale proposalを拒否する
+    - expected evidenceの欠落、invalid JSON、改変、stale candidate、stale dependency、stale anchor、stale proposal、stale review resultを拒否する
   ],
 )
 
@@ -89,11 +95,15 @@ reviewerはhashやGit objectを個別に再計算せず、意味上のcorrectnes
 #feature_spec(
   name: "Bootstrap fixture",
   summary: [
-    disposable Git repositoryでidempotent generation、successful verification、tampered evidence、wrong write set、failed gateを直接検証する。
+    disposable Git repositoryでidempotent generation、successful verification、review result binding、tampered evidence、wrong write set、failed gateを直接検証する。
   ],
   test_cases: [
     - 同じinputから二回生成したoutputがbyte-identicalである
-    - candidate、write set、dependency、anchor、proposal、gateがmanifestとattestationへ固定される
+    - candidate、write set、dependency、anchor、proposal、gate、review resultがmanifestとattestationへ固定される
+    - review resultの並び順がevidence bytesへ影響しない
+    - 宣言verdictと本文が一致しないreview resultを拒否する
+    - review result本文を変更したinputで既存evidenceをverifyすると拒否する
+    - `reviewResults`のない既存inputから従来形のmanifestを生成する
     - tampered evidenceのverifyがnon-zeroになる
     - diffと異なるwrite setのgenerateがnon-zeroになる
     - non-zero gateを含むgenerateがnon-zeroになる

@@ -15,6 +15,8 @@ import {
 } from "./repository.mjs";
 
 const SCHEMA_VERSION = 1;
+const REVIEW_ROLES = new Set(["convergence", "primary", "risk"]);
+const REVIEW_VERDICTS = new Set(["ACCEPT", "BLOCK"]);
 
 function fail(message) {
   throw new Error(message);
@@ -100,6 +102,59 @@ async function readProposal(root, cwd, proposalValue) {
     path: resolved.path,
     sha256: sha256(bytes),
   };
+}
+
+function validateReviewResults(cwd, reviewResultsValue) {
+  if (reviewResultsValue === undefined) return undefined;
+
+  const reviewResults = expectArray(reviewResultsValue, "reviewResults").map(
+    (reviewResultValue, reviewResultIndex) => {
+      const label = `reviewResults[${reviewResultIndex}]`;
+      const reviewResult = expectObject(reviewResultValue, label);
+      expectExactKeys(
+        reviewResult,
+        ["id", "result", "reviewer", "role", "verdict"],
+        label,
+      );
+      const id = expectString(reviewResult.id, `${label}.id`);
+      const reviewer = expectString(reviewResult.reviewer, `${label}.reviewer`);
+      const role = expectString(reviewResult.role, `${label}.role`);
+      if (!REVIEW_ROLES.has(role)) {
+        fail(`${label}.role must be convergence, primary, or risk`);
+      }
+      const verdict = expectString(reviewResult.verdict, `${label}.verdict`);
+      if (!REVIEW_VERDICTS.has(verdict)) {
+        fail(`${label}.verdict must be ACCEPT or BLOCK`);
+      }
+
+      const result = expectString(reviewResult.result, `${label}.result`);
+      const declaredVerdict = /^verdict: (ACCEPT|BLOCK)(?:\r?\n|$)/u.exec(
+        result,
+      )?.[1];
+      if (declaredVerdict !== verdict) {
+        fail(
+          `${label}.result declares ${declaredVerdict ?? "no verdict"}, not declared verdict ${verdict}`,
+        );
+      }
+      const bytes = Buffer.from(result, "utf8");
+
+      return {
+        id,
+        result: {
+          blobOid: hashBlob(cwd, bytes),
+          sha256: sha256(bytes),
+        },
+        reviewer,
+        role,
+        verdict,
+      };
+    },
+  );
+
+  return sortedUnique(
+    reviewResults.map(({ id }) => id),
+    "reviewResults ids",
+  ).map((id) => reviewResults.find((reviewResult) => reviewResult.id === id));
 }
 
 function validateWriteSet(root, cwd, baseOid, candidateOid, writeSetValue) {
@@ -316,7 +371,7 @@ function validateGates(gatesValue) {
 }
 
 function normalizeInputForHash(source) {
-  return {
+  const normalized = {
     ...source,
     decisionAnchors: [...source.decisionAnchors].sort((left, right) =>
       compareStrings(left.id, right.id),
@@ -332,6 +387,12 @@ function normalizeInputForHash(source) {
     ),
     writeSet: [...source.writeSet].sort(compareStrings),
   };
+  if (source.reviewResults !== undefined) {
+    normalized.reviewResults = [...source.reviewResults].sort((left, right) =>
+      compareStrings(left.id, right.id),
+    );
+  }
+  return normalized;
 }
 
 /** Creates deterministic review evidence from validated repository inputs. */
@@ -347,6 +408,7 @@ async function createEvidence(input, cwd) {
       "gates",
       "proposal",
       "reviewId",
+      "reviewResults",
       "schemaVersion",
       "writeSet",
     ],
@@ -375,6 +437,7 @@ async function createEvidence(input, cwd) {
   if (writeSetPaths.has(proposal.path)) {
     fail("proposal.path must not overlap writeSet");
   }
+  const reviewResults = validateReviewResults(cwd, source.reviewResults);
 
   const manifest = {
     base: { oid: baseOid, treeOid: resolveTree(cwd, baseOid) },
@@ -398,6 +461,7 @@ async function createEvidence(input, cwd) {
     ),
     gates: validateGates(source.gates),
     proposal,
+    ...(reviewResults === undefined ? {} : { reviewResults }),
     reviewId,
     schemaVersion: SCHEMA_VERSION,
     writeSet,
