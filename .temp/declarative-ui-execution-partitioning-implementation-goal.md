@@ -94,6 +94,78 @@ interface と placeholder だけを追加した状態、旧実装と新実装を
 
 goal 文書と進捗文書は `.temp/` が ignore 対象でも `git add -f` で feature branch に含めてください。
 
+## 実装戦略 R7：walking skeletonを先に通す
+
+この節は、未完了foundationをphase順に横展開してからuser-visible integrationへ進む実装順序と、すべてのsliceへ同じ証跡とfull gateを要求する規則をsupersedeします。
+設計正本のruntime semantics、既存sliceのowner、dependency、排他的write set、acceptance obligationは変更しません。
+変更するのは実装の優先順位、review unit、review回数、gateの実行頻度です。
+
+次の主要マイルストーンを**WS01 maintainable walking skeleton**とします。
+WS01は専用の簡易IRまたは使い捨てruntimeを作らず、最終構造と同じ経路を通る最小のend-to-end実装です。
+
+```text
+source
+  -> ExecutionGraph
+  -> ObservationContract
+  -> MaterializationPlan
+  -> ClientScopeGraph
+  -> server/client artifact
+  -> SSR
+  -> activation
+```
+
+最初に扱うworkflowは、server-onlyなhighlight処理とstatic subtreeをserverへ残し、copy interactionのcallbackだけをclient artifactへ含める`DocCodeBlock`相当のfixtureです。
+特定のcomponent名またはfixture pathをproduction codeへ埋め込んではいけません。
+最初のrevisionで対応するnode、edge、materialization、activation variantを限定して構いませんが、未対応variantをeager hydration、component rerender、full module配信、暗黙RPCへfallbackしてはいけません。
+未対応variantはdependency pathを持つcompile diagnosticにし、後続sliceは同じIRとartifact contractへvariantを追加してください。
+
+| slice | 完成させる経路 | 主なowner | 単独のacceptance |
+| --- | --- | --- | --- |
+| `WS01-0` | 既存matrixからWS01-A〜Eに必要なfine slice、dependency OID、owner、排他的write setを抽出する | main integration process | 未完了dependencyを迂回せず、各WS01 sliceの開始条件とintegration ownerをacyclicな表へ固定する |
+| `WS01-A` | sourceからserver root、browser callback、必要edgeを導出し、ExecutionGraphとObservationContractへ接続する | transformer analysis | component名に依存しないfixtureからroot/edgeとdiagnosticを決定的に生成する |
+| `WS01-B` | callbackに必要なmaterializationとclient scopeだけを導出し、server/client artifact closureを分離する | transformer planner/compiler | server-only importがclient closureへ入らず、static subtreeがclient mutation planへ入らない |
+| `WS01-C` | server artifactからstatic HTML、DSD、activation metadataを生成する | transformer server renderer、runtime SSR、components SSR | highlighted subtreeをserverで生成し、component bodyのclient再実行を要求しない |
+| `WS01-D` | 既存DOMへcallbackだけをattachし、client rootがないrouteをzero-bootstrapにする | runtime bootstrap、activation、DOM event | copy interactionだけがactivateされ、static DOM identityを維持し、root不在時はpayloadとbootstrapを生成しない |
+| `WS01-E` | build toolからbrowserまで接続し、artifactを検査する | plugin、docs fixture、playground E2E | SSR前表示、interaction、server-only exclusion、body非再実行、zero-bootstrapを一つのworkflowで検証する |
+
+WS01-0を完了した後、WS01-AからWS01-Eを直列の主経路とします。
+各sliceはその時点で実用的なsupported subsetとしてgreenにし、後続sliceのplaceholder APIまたはproduction stubを追加してはいけません。
+WS01-EのE2Eとartifact inspectionはgoal完了まで恒久的な回帰testとして保持してください。
+
+WS01 IDは既存matrixのdependencyを置き換えるaliasではありません。
+WS01-AはcompletedなEG03 `4ebd2204e504c21d34e50db6e0b89b55e2c3df41`とOC01 `86204daaead270029be46acd7f212f156716fd07`に加え、少なくともSC02 completion、SC03-Q/C/T、PL01、PL02-A/Vの順に依存します。
+したがって、SC02の直接dependencyであるSC02A8D-WはWS01が直接必要とするfoundationとして再開対象です。
+
+WS01-0はWS01-B以降についても、現行matrixのtarget ownerからdependency closureを逆向きにたどり、必要なaggregateを既存のfine review unitへ展開します。
+既存aggregateの一部variantだけをsupported subsetへ含める場合は、ownerとdependency edgeを保ったfine sliceをprocess reviewで先に固定してください。
+completed commitまたはreview済みexact revisionがないdependencyをdiagnosticで代用してproduction実装を開始してはいけません。
+
+この戦略を採用した時点でreview中またはcommit準備中のfixed revisionは、blobとdecision anchorが変わっていなければ完了まで継続します。
+fixed revisionになる前の未commit差分は破棄せず、実行中commandを安全に終了し、write ownershipと再開条件を進捗文書へ記録して保管してください。
+その差分を横方向foundation sliceとしてreview、commit、pushせず、WS01が直接必要になった場合またはWS01-E完了後に再開します。
+それ以外の横方向foundation sliceも、WS01が直接必要とするdependencyを除いてWS01-E完了後へ延期します。
+
+## Reviewとgateの負荷配分
+
+同一review unitの回数上限は`.temp/goal.md`の手順4から手順6に従います。
+有効な初期レビューは一回、blocker修正後の収束レビューは一回だけです。
+収束後もblockerが残る場合は、三回目を開始せずreview unitを分割するか前提を再設計してください。
+
+`low`のimplementation sliceは、review対象のsynthetic commit OID、exact path一覧、focused gate結果を進捗文書へ記録すればよく、別のproposal、manifest、attestationを必須としません。
+`medium`と`high`、package境界、公開API、identity、trust、authority、race、server/client artifact inclusionを変更するsliceはslice-local manifestとattestationを維持してください。
+process文書だけを変更しruntime contractを変更しないrevisionは、一人のreviewerが義務保持、dependency、実行可能性だけを確認します。
+
+| gate level | 必須commandとartifact |
+| --- | --- |
+| `low` | focused test、scoped typecheckまたはcompile、scoped lint、format、diff check |
+| `medium` | `low`に加え、変更packageのtest、typecheck、lint、build |
+| `high` | `medium`に加え、影響するconsumer package、artifact inspection、関連E2E |
+| WS01 integration | WS01の累積integration test、browser E2E、server/client bundle inspection |
+| milestone / final | root build、test、typecheck、lint、format、全関連E2E |
+
+同じfull package test、declaration build、root buildをdisjointなpure helperごとに繰り返してはいけません。
+correctness上の具体的な疑義、baselineとの差分、package境界変更がある場合は、表の最低条件を超えるtargeted gateを追加してください。
+
 ## 手順 0：実装 branch と baseline を準備する
 
 最初に `git status`、最近の commit、local HEAD、追跡先 remote branch を確認してください。
@@ -210,16 +282,20 @@ downstreamのproduction implementationは、dependencyが`completed`になるか
 
 ready queueでは、最長のdownstream dependency chain上にあるslice、後続sliceを多く解放するslice、長時間の独立検証を持つsliceの順で優先してください。
 あるsliceのreview、blocker修正、収束確認は、そのsliceへ依存せずwrite setも重ならないlaneを停止する理由になりません。
+ただし、WS01-Eが完了するまではWS01の直列主経路を最優先します。
+WS01へ直接必要でないfoundation sliceは、dependencyがreadyでもmain integration owner、共有SPEC、cumulative test、package exportのwrite ownershipを占有してはいけません。
+WS01の待ち時間に並行実行できるのは、主経路とwrite setが分離し、統合負荷によってWS01を遅らせない作業だけです。
 
 各laneのowner、状態、dependency OID、write set、固定contract、次のgateを進捗文書へ記録してください。
 API directory内のSPEC、test、production moduleは担当laneだけが編集し、進捗文書、root barrel、package export、共通config、複数laneの統合箇所はメインセッションだけが編集してください。
 担当laneは共有統合ファイルを変更せず、メインセッションがslice revisionを固定する前に必要なexport変更を統合してください。
 
-各laneの固定revisionは、proposal、割当write setの完全なpath inventoryと全fileのmode、SHA-256、Git blob OID、直接dependency OID、decision anchor、synthetic review commit OIDを持つslice-local manifestで表してください。
+`medium`と`high`の各laneの固定revisionは、proposal、割当write setの完全なpath inventoryと全fileのmode、SHA-256、Git blob OID、直接dependency OID、decision anchor、synthetic review commit OIDを持つslice-local manifestで表してください。
+`low`のimplementation sliceは前節の軽量化規則に従い、immutable synthetic commit、exact path一覧、gate結果だけを固定してください。
 decision anchorはcanonical source path、stable decision IDまたは決定的な抽出command、抽出結果のSHA-256とGit blob OIDを持ちます。
 共有文書からcopyした抜粋だけをanchorとしてはいけません。
 
-manifestの全path、mode、hash、blob、dependency、decision anchor、synthetic commit、gate commandを一回の決定的なreview attestationで検証してください。
+`medium`と`high`のmanifestの全path、mode、hash、blob、dependency、decision anchor、synthetic commit、gate commandを一回の決定的なreview attestationで検証してください。
 attestationはmanifest SHA-256とsynthetic commitへ束縛し、メインセッションがreview開始前、結果統合直前、commit直前に再生成または再検証してください。
 reviewerごとに全OID照合とfull gateを重複実行させず、reviewerはattestation bindingと担当論点に必要な対象だけをspot checkします。
 具体的な不整合またはcorrectness上の疑義がある場合は、対象を限定したhash照合、test、artifact inspectionを追加できます。
@@ -309,7 +385,9 @@ unrelated refactor、format churn、metadata update を同じ slice に含めな
 
 ## 実装順序
 
-実装は次の dependency order を基本とします。
+次のphase一覧はgoal全体のacceptance coverageとdependencyを表し、WS01-E完了前のscheduler順序を表しません。
+実装はWS01の主経路を優先し、各WS01 sliceが必要とするphase要件だけを最終構造へ実装してください。
+WS01-E完了後は、次のdependency orderを基本として未完了variantとprotocolを拡張します。
 実コードを調査して依存関係が異なると証明できた場合は、理由を進捗文書に記録して順序を修正してください。
 
 ### Phase 1：ExecutionGraph foundation
@@ -398,7 +476,8 @@ unrelated refactor、format churn、metadata update を同じ slice に含めな
 
 ## 手順 5：slice を検証する
 
-slice ごとに、変更 package の test、typecheck、lint、build を実行してください。
+sliceごとの最低gateは「Reviewとgateの負荷配分」に従ってください。
+すべてのpure helperでfull package testとbuildを繰り返さず、package integration、WS01 integration、milestoneの境界で累積gateを実行してください。
 変更が package boundary を越える場合は、consumer package と関連 playground の test も実行してください。
 browser workflow、DSD、event、activation、artifact delivery に影響する場合は E2E を実行してください。
 
@@ -423,14 +502,16 @@ coverage は可能な限り 100% を維持してください。
 write setとdependencyが独立した複数sliceは、それぞれのrevisionを固定し、sliceごとのreviewer setを混同せず同時にreviewして構いません。
 一つのsliceが`reviewing`である間も、無関係なsliceのimplementation、verification、reviewを継続してください。
 
-reviewerにはslice-local manifestを渡し、manifestに含まれないbranch HEADの前進やdisjoint write setの変更を`REVIEW INVALID`にしないよう明示してください。
-共有設計文書を参照させる場合は文書全体のhashではなく、source pathと決定的な抽出規則を持つdecision anchorをmanifestへ固定してください。
-reviewerはmanifestのsynthetic commitをisolated worktreeで読み、manifest hash、synthetic commit、review attestationのbindingを確認してください。
+`medium`と`high`のreviewerにはslice-local manifestを渡し、manifestに含まれないbranch HEADの前進やdisjoint write setの変更を`REVIEW INVALID`にしないよう明示してください。
+`low`のimplementation sliceでは、manifestの代わりに前節で固定したsynthetic commit OID、exact path一覧、gate結果、適用したAccepted decisionのpathまたはIDを渡してください。
+`medium`と`high`が共有設計文書を参照する場合は、文書全体のhashではなく、source pathと決定的な抽出規則を持つdecision anchorをmanifestへ固定してください。
+`medium`と`high`のreviewerはmanifestのsynthetic commitをisolated worktreeで読み、manifest hash、synthetic commit、review attestationのbindingを確認してください。
+`low`のreviewerは同じくisolatedなsynthetic commitを読み、exact path一覧とgate結果を確認してください。
 
-review開始前にrisk tierと根拠をproposalと進捗文書へ記録してください。
-このrisk tier、attestation、output limit、delta convergence規則は、新たに固定するrevisionから適用し、すでにreviewを開始したrevisionへ遡及適用しません。
+review開始前にrisk tierと根拠を進捗文書へ記録し、`medium`と`high`ではproposalにも記録してください。
+このrisk tier、output limit、delta convergence規則と、`medium`、`high`のattestation規則は、新たに固定するrevisionから適用し、すでにreviewを開始したrevisionへ遡及適用しません。
 
-- `low`：一package内のtype-onlyまたはpackage-local contractで、runtime behavior、parser、public API、wire、identity、trust、authorityを変更しないslice。reviewerは一人
+- `low`：一package内のtype-only surface、またはAccepted decisionを適用するpure internal helperであり、state transition、untrusted input reflection、parser、public API、wire、identity、trust、authority、server/client artifact inclusionを変更しないslice。reviewerは一人
 - `medium`：`low`と`high`のどちらにも該当しないslice。reviewerは二人
 - `high`：複数package境界、identity、trust、authority、concurrency、race、state machine、untrusted可変長parser/serializer、server/client artifact inclusion、runtime admission、公開API、wire schema、永続identityのいずれかを変更するslice。reviewerは三人
 
@@ -472,6 +553,7 @@ reviewerの通常出力は800 tokens以内、blocker最大3件、follow-up最大
 収束reviewerはblocker解消と変更範囲のregressionだけを確認し、初期snapshot全体を再評価しません。
 write set、owner、public contract、trust boundaryがblocker解消範囲を越えて変わった場合は、risk tierを再判定した新しい初期reviewを実行してください。
 残る不確実性は追加の全面レビューではなく、SPEC、test、最小実装、または artifact inspection で検証してください。
+収束確認でblockerが残った場合は同じreview unitの三回目を開始せず、`.temp/goal.md`の回数上限に従ってunit分割または前提の再設計へ戻ってください。
 収束確認を待つ間に停止するのは、そのrevisionとdownstream dependencyだけです。
 ready queueの無関係なlaneは停止せず、手順2の再計算結果に従って進めてください。
 

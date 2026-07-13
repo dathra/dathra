@@ -10,7 +10,7 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次のscheduler action: artifact laneはaccepted AR01-E error foundationを継続する。execution laneは進行中の旧SC02A8D combined draftを安全に回収し、review revision固定前にSC02A8D-PとSC02A8D-Wへ分離する。canonical laneは共有SPEC/test ownership返却後にSC02A8I-Tから開始する。
+- 次のscheduler action: R7 R2 process文書を収束reviewへ渡し、docs-only commitをpushする。その後、productionを開始せずWS01-0 dependency-closure auditを実行し、A〜Eのexact fine slice、OID、owner、write setを固定する。SC02A8D-W draftはWS01-0が直接dependencyとして確定した後に再開する。
 - 外部 blocker: なし
 
 ## 状態の意味
@@ -24,8 +24,54 @@
 - `completed`: 検証、review、commit、push、local/remote同期が完了している。
 - `blocked`: 未解決dependencyまたは外部blockerによって、そのslice自身を進められない。
 - `reopened`: completed後の監査で不足が見つかり、再作業が必要である。
+- `deferred`: dependencyは満たすか未commit draftを保持しているが、WS01主経路を優先するため再開条件まで作業しない。
 - `superseded`: 後続の細粒度sliceに置き換えられた履歴上のaggregateであり、新規実装またはreview対象にしない。
 - `in-progress`: phaseまたは複数sliceを集約した行だけに使う。
+
+## 実装戦略 R7
+
+従来のphase-first schedulingは、内部foundationの完了数を増やしてもbrowserで動く新経路を長期間作れない問題があった。
+R7は既存のruntime semantics、owner、dependency、排他的write setを維持し、次の実装優先順位だけをsupersedeする。
+
+最優先マイルストーンを`WS01 maintainable walking skeleton`とする。
+WS01は専用の簡易IRまたは使い捨てruntimeを作らず、最終構造と同じ`ExecutionGraph -> ObservationContract -> MaterializationPlan -> ClientScopeGraph -> artifact -> SSR -> activation`を通るsupported subsetを作る。
+未対応variantはcompile diagnosticにし、eager hydration、component rerender、full module配信、暗黙RPCへfallbackしない。
+
+最初のworkflowは、server-onlyなhighlight処理とhighlighted subtreeをserverへ残し、copy interactionだけをclient artifactへ含める`DocCodeBlock`相当のfixtureとする。
+production codeは特定のcomponent名またはfixture pathへ依存してはいけない。
+
+| slice | 状態 | dependency | ownerとwrite set | acceptance |
+| --- | --- | --- | --- | --- |
+| `WS01-0` | contract-ready | implementation matrix、EG03 `4ebd2204e504c21d34e50db6e0b89b55e2c3df41`、OC01 `86204daaead270029be46acd7f212f156716fd07`、R7 R2 process commit | main integrationのprocess文書だけ | A〜Eごとの既存fine slice、dependency OID、owner、排他的write set、integration ownerを固定し、Kahn順序を確認する |
+| `WS01-A` | blocked | WS01-0、SC02 completion、SC03-Q/C/T、PL01、PL02-A/V、EG03、OC01 | 既存SC02/SC03/PL01 ownerとtransformer analysisの専有SPEC/test/implementation | prerequisiteがcompletedまたはreview済みexact revisionになった後だけroot/edgeとdiagnosticを生成する |
+| `WS01-B` | pending | WS01-A | transformer planner/compilerのSPEC/test/implementation | callbackに必要なmaterializationとclient scopeだけを作り、server-only importとstatic subtreeをclient artifactから除外する |
+| `WS01-C` | pending | WS01-B | server renderer、runtime SSR、components SSR | highlighted subtree、DSD、activation metadataをserver生成し、client body replayを要求しない |
+| `WS01-D` | pending | WS01-C | runtime bootstrap、activation、DOM event | 既存DOMへcopy callbackだけをattachし、client root不在routeをzero-bootstrapにする |
+| `WS01-E` | pending | WS01-D | plugin、docs fixture、playground E2E | SSR前表示、interaction、server-only exclusion、body非再実行、zero-bootstrapをbrowserとbundleで検証する |
+
+WS01-E完了後、既存implementation matrixの未完了sliceへ戻り、同じIRとartifact contractへvariant、protocol、budget、race、cleanupを追加する。
+WS01-EのE2Eとartifact inspectionは最終goalまで恒久的な回帰testとして保持する。
+
+### WS01の既存dependency closure
+
+WS01 IDは既存matrixのdependencyを短絡しません。
+次のaggregate closureをWS01-0で既存のfine review unitへ展開し、各unitのcompleted commitまたはreview済みexact revision、owner、排他的write setを固定してから対象WS01 sliceをreadyにします。
+
+| WS01 slice | 既存matrixから維持するminimum owner chain | 現在の開始可否 |
+| --- | --- | --- |
+| `WS01-A` | `SC02 -> SC03-Q/C/T -> PL01 -> PL02-A/V`。EG03 `4ebd2204e504c21d34e50db6e0b89b55e2c3df41`とOC01 `86204daaead270029be46acd7f212f156716fd07`はcompleted | blocked。SC02 completionから開始する |
+| `WS01-B` | WS01-A、DX01、MP01、AR01、PI01、PJ01、RC01、RP01、SP01、OP01、CN01、MP02、CG01 | blocked。各aggregateをsupported subsetのfine sliceへ分けてもowner/dependencyを削除しない |
+| `WS01-C` | WS01-B、RR01、MT01、SE01、SR01、SR02、SR03 | blocked。server renderer、payload、render operation、DSD integrationを同じcandidate evidenceへ接続する |
+| `WS01-D` | WS01-C、CR01、RF01、LC01、CP02、CR02、DA01、DA02、DA04、RP02、SP02、OP02、CE01 | blocked。未使用protocol variantを省く場合もCE01 aggregateのdependencyを黙って削除せずfine slice化する |
+| `WS01-E` | WS01-A〜D、CP01、BR01、AF01、SL01、PE01、BO01、BA01、AS01、AT01、AP01、AR02、AU01、AO01、MG01 | blocked。public/build/docs/E2E integrationまで同じartifact evidenceを使う |
+
+このclosureのedgeを削除または逆転する変更はR7 process revisionでは行いません。
+supported subsetのためにaggregateを細分化する場合は、production開始前に別のprocess revisionでfine slice、dependency、write set、integration ownerをreviewします。
+
+reviewは同一unitにつき初期一回と収束一回を上限とする。
+収束後にblockerが残る場合は三回目を開始せず、unit分割または前提の再設計へ戻る。
+`low` implementationはsynthetic commit、exact path一覧、focused gateだけを固定し、`medium`、`high`、package境界変更だけがmanifestとattestationを必須とする。
+gateはlow、medium、high、WS01 integration、milestoneの段階に分け、disjointなpure helperごとにfull package buildとroot gateを繰り返さない。
 
 ## Dynamic scheduler
 
@@ -36,10 +82,14 @@ sliceのcontract固定、実装完了、review開始または収束、dependency
 
 | Lane | Slice | Owner | 状態 | 完了dependency OID | 専有write set | 固定contract | 次のgate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| L1 | SC02A8C active ancestor | main integration | completed | SC02A8B commit `7dc62e79832f28d9a196e6993c7a1d3429b5b5be` | `executionContract`の5-file slice | active ancestorだけをcycle、strict LIFO rollback、leave後alias、iterative depth | commit `c37a81e8d932d712c6118d6865b6b29f94d59492`をpush済み |
-| L2 | AR01-E error foundation | main integration | implementing | accepted designとcanonical integration R2 `e22593423e52e817670a3c9a786f0e55eda0e957` | `artifactContract`のAGENTS/SPEC/cumulative test/facade/new error module/test/type fixture | exact ten-code union、immutable root-relative path、error/budget/snapshot split | completed worker result `+682/-28`と全gateを再検証してfixed review revisionを発行する |
-| L3 | SC02A8D-P / SC02A8D-W repartition | main integration | implementing | SC02A8B commit `7dc62e79832f28d9a196e6993c7a1d3429b5b5be`とSC02A8C commit `c37a81e8d932d712c6118d6865b6b29f94d59492` | 回収済み旧combined draftと固定classification。review前にplan module/testとwalker module/testへ分離する | D-Pはparent-linked plan/pathだけ、D-WはA8A/B/C統合walkerだけ | decomposition文書commit後、D-Pを先に単独greenへ再編する |
-| L4 | SC02A8I-T canonical measurement traversal | ready queue | ready | ID01-CB commit `e42fec40210aeead036209f209e9038632421f5b` | 後続`executionContract` canonical traversal slice | canonical output非生成、measurement event、iterative path | L3の共有SPEC/test ownership返却後に開始する |
+| L1 | R7 R2 process integration | main integration | reviewing | R7 R1 blocker、AR01-E `b05c061b6be3be35bbb6f21c3fb9de128c35edcb`、SC02A8D-P `fac2f6b9edce32a7470b312f990f238255cb9b7b` | implementation goal、progress | walking skeleton優先、既存dependency closure維持、review上限、段階的gate | fresh convergence reviewerでdependency blocker解消を確認し、docs-only commitをpushする |
+| L2 | WS01-0 dependency closure audit | main integration | contract-ready | R7 R2 process commit、implementation matrix、EG03、OC01 | implementation goalとprogressのprocess tableだけ | A〜Eのexact fine slice、OID、owner、write set、integration owner、Kahn順序 | R7 R2 push後、production editより先に独立process revisionとして固定する |
+| L3 | SC02A8D-W walker integration | main integration | deferred | SC02A8D-P `fac2f6b9edce32a7470b312f990f238255cb9b7b`、WS01-0 decision | 保護済み5-file draftと後続`closedDataWalker.ts` focused fixture | A8A/B/CとD-Pを統合し、source fieldとcloneを所有しない | WS01-0がdirect dependencyとして確定した場合だけdraftを再固定する |
+| L4 | WS01-A compiler analysis path | main integration | blocked | WS01-0、SC02、SC03-Q/C/T、PL01、PL02-A/V、EG03、OC01 | 既存ownerのfine sliceとtransformer analysisの専有SPEC/test/implementation | server root、browser callback、必要edge、dependency diagnostic | prerequisite chainの全exact revisionが固定されるまでproductionを開始しない |
+
+AR01-Eはcommit `b05c061b6be3be35bbb6f21c3fb9de128c35edcb`、SC02A8D-Pはcommit `fac2f6b9edce32a7470b312f990f238255cb9b7b`としてreview、gate、push、remote OID確認まで完了した。
+旧SC02A8D combined draftは引き続き保護refと未commit worktree fileで保持し、combined revisionとしてreviewまたはcommitしない。
+SC02A8D-Wの5-file draftはsynthetic commit `b17f6de14ee24e932310c762e3aa9473f9f16398`、tree `14955dae8663d65482b5e6c6f73b51869ae5ebe6`、`refs/codex/drafts/sc02a8d-w-r7-deferred`で保護する。review revisionではなく、WS01-E完了後またはWS01が直接必要とした時だけ再開する。
 
 SC02A2、SC02A3、SC02A4、SC02A5、SC02A6、SC02A7、MP01-DK1-T、MP01-DR-S-R4 integration、AR01-ID、AR01-FT、AR01-EB、AR01-DB、AR01-XB、RC01-DI2B、RC01-DI3A、RC01-DI3Bはslice-local reviewが収束し、各commitをpush済みである。
 SC02A5のfixed snapshotではfocused 38 tests、shared全15 filesと224 tests、typecheck、通常lint 0件、format、build、root source/build非公開検査が成功した。
@@ -71,7 +121,8 @@ CN01-DVP/DVAの偽造snapshotとparser-version mismatch、AS01-MP/EPのpackage i
 | S01 | implementation matrix | completed | 59 row 全件が AX01 の依存閉包に入り、A01〜A44 の owner/evidence を確定した。3回目の独立レビューは ACCEPT |
 | S02 | verification-gate slice | completed | 5回の独立レビューを収束させ、commit `8fe6c60` を push した |
 | P01 | ExecutionGraph foundation | completed | ID01、SC01、OC01、EG01、EG02、EG03 の検証、独立レビュー、commit、push が完了した |
-| P02 | semantic contract と registry | in-progress | SC01 registry contract は completed。SC02Aの設計reviewは収束済みであり、実装はSC02A1からSC02A13へ再分割した |
+| P02 | semantic contract と registry | in-progress | SC01 registry contract、AR01-E、SC02A8D-Pまでcompleted。残る横方向sliceはWS01が直接必要とするdependencyだけを先行する |
+| WS01 | maintainable walking skeleton | blocked | WS01-0で既存dependency closureを固定し、SC02からPL02までのprerequisiteを完了した後にWS01-Aを開始する |
 | P03 | 解析と placement | pending | 未着手 |
 | P04 | server render | pending | 未着手 |
 | P05 | materialization と projection | pending | 未着手 |
@@ -251,8 +302,8 @@ SC02Aの設計判断は変更しない。
 | SC02A8B | distinct-container descriptor capture | `closedDescriptor.ts`、focused test | getter非実行、identity一回reflection、header/view、sparse/hidden/symbol rejection | source fieldを解釈せずdescriptor boundaryだけを検証できる | completed |
 | SC02A8C | active-ancestor cycle policy | `activeAncestor.ts`、focused test | direct/indirect cycle、strict LIFO rollback、leave後alias、iterative depth | descriptor cloneと独立したcycle policyとしてgreenにできる | completed |
 | SC02A8D | profile-driven occurrence walkerとparent-linked plan | historical aggregate | D-P/D-Wへ分割 | planとwalkerが別々にgreenになるため一つのreview unitにしない | superseded |
-| SC02A8D-P | parent-linked occurrence planとfailure path materialization | `occurrencePlan.ts`、`occurrencePlan.test.ts`、`occurrencePlan.type-fixture.ts` | full path非保持、root/record/array path、12,000 depth、failure時だけmaterialize | descriptor、budget、profileなしでplan/path contractを直接検証できる | implementing |
-| SC02A8D-W | iterative occurrence walkerとgeneric profile hook | `closedDataWalker.ts`、`closedDataWalker.test.ts`、`closedDataWalker.type-fixture.ts` | root depth、全input counter、alias再課金、active cycle、hook order、operation isolation | A8A/B/CとD-Pだけを統合し、source fieldとcloneを所有しない | pending |
+| SC02A8D-P | parent-linked occurrence planとfailure path materialization | `occurrencePlan.ts`、`occurrencePlan.test.ts`、`occurrencePlan.type-fixture.ts` | full path非保持、root/record/array path、12,000 depth、failure時だけmaterialize | descriptor、budget、profileなしでplan/path contractを直接検証できる | completed |
+| SC02A8D-W | iterative occurrence walkerとgeneric profile hook | `closedDataWalker.ts`、`closedDataWalker.test.ts`、`closedDataWalker.type-fixture.ts` | root depth、全input counter、alias再課金、active cycle、hook order、operation isolation | A8A/B/CとD-Pだけを統合し、source fieldとcloneを所有しない | deferred |
 | SC02A8E | execution-source cardinality/reference profile | historical aggregate | E-C/E-R/E-P/E-Iへ分割 | 三counter familyが別々にgreenになるため一つのreview unitにしない | superseded |
 | SC02A8E-C | source collection cardinality profile | `sourceCollectionProfile.ts`、`sourceCollectionProfile.test.ts` | facts、relations、exports、registry collection/implementation exact/limit+1 | collection fieldだけを解釈するindependent hookである | pending |
 | SC02A8E-R | source reference cardinality profile | `sourceReferenceProfile.ts`、`sourceReferenceProfile.test.ts` | scalar/array potential reference、semantic validation前課金、exact/limit+1 | reference slotだけを解釈するindependent hookである | pending |
@@ -262,7 +313,7 @@ SC02Aの設計判断は変更しない。
 | SC02A8G | final public snapshotのiterative deep freeze | `freeze.ts`、focused test | nested freeze、deep chain、visited alias、validation step exact/-1 | A12 domain snapshotだけを入力にしてfreeze policyを検証できる | pending |
 | ID01-CB | iterative bounded canonical builder | `canonicalIdentity/`のSPEC/test/implementation | byte identity、2冪境界、common-prefix、cycle/alias、instrumented work | public API/bytesを変えずcanonical builder単独でgreenにできる | completed |
 | SC02A8I | canonical JCS byte/work meter | historical aggregate | I-T/I-B/I-W/I-Rへ分割 | traversal、byte、work、reservationが別々にgreenになるため一つのreview unitにしない | superseded |
-| SC02A8I-T | canonical measurement traversal/event contract | `canonicalMeasurementTraversal.ts`、`canonicalMeasurementTraversal.test.ts`、`canonicalMeasurementTraversal.type-fixture.ts` | scalar/container/canonical-key event、iterative depth、cycle/alias、property insertion permutation、path | byte/work counterなしでmeasurement traversalを検証できる | ready |
+| SC02A8I-T | canonical measurement traversal/event contract | `canonicalMeasurementTraversal.ts`、`canonicalMeasurementTraversal.test.ts`、`canonicalMeasurementTraversal.type-fixture.ts` | scalar/container/canonical-key event、iterative depth、cycle/alias、property insertion permutation、path | byte/work counterなしでmeasurement traversalを検証できる | deferred |
 | SC02A8I-B | exact canonical UTF-8 byte measurement | `canonicalByteMeasurement.ts`、`canonicalByteMeasurement.test.ts` | ID01 byte oracle、escape/number/key punctuation、key order/permutation、exact/limit+1 | T eventだけからbyte countを求められる | pending |
 | SC02A8I-W | canonical work upper-bound measurement | `canonicalWorkMeasurement.ts`、`canonicalWorkMeasurement.test.ts` | comparison/move/common-prefix、key permutation、saturation、exact/limit+1 | T eventだけからwork boundを求められる | pending |
 | SC02A8I-R | byte/work ledger reservation integration | `canonicalMeasurement.ts`、`canonicalMeasurement.test.ts`、`canonicalMeasurement.type-fixture.ts` | meter/builder二重予約、failure時zero canonicalize/digest | B/W結果をA8A ledgerへ予約するintegrationだけを所有する | pending |
@@ -522,11 +573,11 @@ SC01/ID01 failureは元のpathへ現在のfield prefixを付けてこのerrorへ
 
 | revision | 契約 | 状態 | 次のdependency |
 | --- | --- | --- | --- |
-| AR01-E | exact package-local error vocabulary | implementing | accepted design R1とcanonical integration R2 |
+| AR01-E | exact package-local error vocabulary | completed | commit `b05c061b6be3be35bbb6f21c3fb9de128c35edcb`をpush済み |
 | AR01-B | hard budget/operation-local ledger aggregate | superseded | B-C/B-Lへ分割 |
 | AR01-B-C | exact budget contractとnarrow-only override | pending | AR01-Eとexact counter/cap design |
 | AR01-B-L | operation-local cumulative/peak ledger | pending | AR01-B-C |
-| AR01-CM-T | canonical measurement traversal/event contract | ready | ID01-CB。artifact shared SPEC/test ownership待ち |
+| AR01-CM-T | canonical measurement traversal/event contract | deferred | ID01-CB完了済み。WS01-E後に再開する |
 | AR01-CM-B | exact canonical UTF-8 byte measurement | pending | AR01-CM-T |
 | AR01-CM-W | canonical work upper-bound measurement | pending | AR01-CM-T |
 | AR01-CM-R | byte/work/downstream builder reservation integration | pending | AR01-CM-B、AR01-CM-W、AR01-B-L |
