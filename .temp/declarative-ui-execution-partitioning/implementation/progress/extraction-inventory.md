@@ -65,8 +65,8 @@ PR #90は既存exampleを現行component contractへ移行し、PR #91はbuilt N
 | 元commitまたは範囲 | 候補 | 現在の判断 |
 | --- | --- | --- |
 | `8fe6c60` | application verification gates | 回収中。5件をPR #81から#85へ提出済み |
-| `d2822b1` | workspace test artifact生成とCI安定化 | 再評価対象。feature固有testへの変更を除き、mainで再現する問題だけを抽出する |
-| `6565c76`、`63f4597` | transformer stress testの資源分離 | consumer非依存だが、mainのtest構成で再現と効果を測定してから回収する |
+| `d2822b1` | workspace test artifact生成とCI安定化 | 保留。mainの`pnpm test`は8 package、1,330 testsが並列実行で成功し、直列化が必要な失敗を再現しなかった |
+| `6565c76`、`63f4597` | transformer stress testの資源分離 | 保留。対象の`src/executionGraph/implementation.test.ts`はmainに存在せず、現行transformer test 607件も成功した |
 | `686fa4d`、`dd7826f` | deterministic review evidence | 現行の巨大feature運用に強く依存する。default branchの日常開発で利用するworkflowが決まるまで保留する |
 
 ## Consumerと同時に回収する成果
@@ -103,3 +103,14 @@ PR #90は既存exampleを現行component contractへ移行し、PR #91はbuilt N
 4. stacked PR #90と#91のCI結果を確認し、PR #90から順にmerge可能な状態を維持する。
 5. mainでCI不安定性を再現できる場合に限り、`d2822b1`、`6565c76`、`63f4597`から最小修正を抽出する。
 6. consumer未接続contractは、最初のvertical consumerの設計が固定されるまで開始しない。
+
+## Evergreen再現評価
+
+2026-07-13にmainの`pnpm test`を実行し、8 package、1,330 testsの成功を確認した。
+対象範囲はshared 64件、reactivity 84件、store 52件、runtime 285件、components 136件、core 55件、transformer 607件、plugin 47件である。
+
+この結果だけで将来の資源競合が起きないとは断定しない。
+ただし、再現のない並列実行を直列化すると通常実行時間を増やすため、`d2822b1`のroot script変更は回収しない。
+
+`6565c76`と`63f4597`が分離するdeep execution graph fixtureはmainに存在しない。
+feature固有stress testの運用修正として元branchへ保持し、該当機能をconsumerと同時に回収するときに再評価する。
