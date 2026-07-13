@@ -11,7 +11,7 @@ import "./main-runtime";
 // Mount the counter component
 const app = document.getElementById("app");
 if (app) {
-  const counterElement = Counter();
+  const counterElement = Counter({});
   app.appendChild(counterElement);
   console.log("Dathra playground initialized!");
 } else {
@@ -20,7 +20,7 @@ if (app) {
 
 const fcExampleApp = document.getElementById("fc-example-app");
 if (fcExampleApp) {
-  fcExampleApp.appendChild(FCExample());
+  fcExampleApp.appendChild(FCExample({}));
 } else {
   console.error("FC example element not found");
 }

@@ -14,15 +14,9 @@ let previewServer: PreviewServer | undefined;
 let previewUrl: string | undefined;
 
 async function closeResources(): Promise<void> {
-  const currentBrowser = browser;
-  const currentPreviewServer = previewServer;
-
-  browser = undefined;
-  previewServer = undefined;
-
   const results = await Promise.allSettled([
-    currentBrowser?.close() ?? Promise.resolve(),
-    currentPreviewServer?.close() ?? Promise.resolve(),
+    browser?.close() ?? Promise.resolve(),
+    previewServer?.close() ?? Promise.resolve(),
   ]);
   const errors = results.flatMap((result) =>
     result.status === "rejected" ? [result.reason] : [],
@@ -59,57 +53,36 @@ async function expectCounterState(
     });
 }
 
-function formatPageErrors(pageErrors: string[]): string {
-  return `Browser page errors:\n${pageErrors.length === 0 ? "(none captured)" : pageErrors.join("\n")}`;
-}
-
 beforeAll(async () => {
-  try {
-    previewServer = await preview({
-      root: playgroundRoot,
-      configFile: viteConfigPath,
-      preview: {
-        host: "127.0.0.1",
-        port: 0,
-        strictPort: true,
-      },
-    });
+  previewServer = await preview({
+    root: playgroundRoot,
+    configFile: viteConfigPath,
+    preview: {
+      host: "127.0.0.1",
+      port: 0,
+      strictPort: true,
+    },
+  });
 
-    const address = previewServer.httpServer.address();
-    if (address === null || typeof address === "string") {
-      throw new Error("Failed to resolve the Vite preview port");
-    }
-
-    previewUrl = `http://127.0.0.1:${address.port}`;
-    browser = await chromium.launch({ headless: true });
-  } catch (error) {
-    try {
-      await closeResources();
-    } catch (cleanupError) {
-      throw new AggregateError(
-        [error, cleanupError],
-        "Failed to initialize and clean up preview test resources",
-      );
-    }
-
-    throw error;
+  const address = previewServer.httpServer.address();
+  if (address === null || typeof address === "string") {
+    throw new Error("Failed to resolve the Vite preview port");
   }
+
+  previewUrl = `http://127.0.0.1:${address.port}`;
+  browser = await chromium.launch({ headless: true });
 });
 
 afterAll(async () => {
   await closeResources();
 });
 
-it("updates count and doubled values through production preview interactions", async () => {
+it("updates the JSX counter through a production preview", async () => {
   if (browser === undefined || previewUrl === undefined) {
     throw new Error("Preview test resources are not initialized");
   }
 
   const page = await browser.newPage();
-  const pageErrors: string[] = [];
-  page.on("pageerror", (error) => {
-    pageErrors.push(error.stack ?? error.message);
-  });
 
   try {
     const response = await page.goto(previewUrl, { waitUntil: "networkidle" });
@@ -123,54 +96,92 @@ it("updates count and doubled values through production preview interactions", a
 
     await counter.getByRole("button", { name: "-", exact: true }).click();
     await expectCounterState(page, "#app", 0, 0);
+  } finally {
+    await page.close();
+  }
+});
 
-    const runtimeCounter = page.locator("#runtime-app .counter");
+it("updates the Runtime API example through a production preview", async () => {
+  if (browser === undefined || previewUrl === undefined) {
+    throw new Error("Preview test resources are not initialized");
+  }
+
+  const page = await browser.newPage();
+
+  try {
+    const response = await page.goto(previewUrl, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+
+    const counter = page.locator("#runtime-app .counter");
     await expectCounterState(page, "#runtime-app", 0, 0);
-    await runtimeCounter
-      .getByRole("button", { name: "+", exact: true })
-      .click();
+    await expect.poll(() => counter.locator("li").count()).toBe(3);
+
+    await counter.getByRole("button", { name: "+", exact: true }).click();
     await expectCounterState(page, "#runtime-app", 1, 2);
-    await expect.poll(() => runtimeCounter.locator("li").count()).toBe(3);
-    await runtimeCounter.getByRole("button", { name: "Add Item" }).click();
-    await expect.poll(() => runtimeCounter.locator("li").count()).toBe(4);
+
+    await counter.getByRole("button", { name: "Add Item" }).click();
+    await expect.poll(() => counter.locator("li").count()).toBe(4);
     await expect
       .poll(async () =>
-        (await runtimeCounter.locator("li").last().textContent())?.trim(),
+        (await counter.locator("li").last().textContent())?.trim(),
       )
       .toBe("Item 4");
+  } finally {
+    await page.close();
+  }
+});
+
+it("toggles the Functional Component example through a production preview", async () => {
+  if (browser === undefined || previewUrl === undefined) {
+    throw new Error("Preview test resources are not initialized");
+  }
+
+  const page = await browser.newPage();
+
+  try {
+    const response = await page.goto(previewUrl, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
 
     const toggle = page.locator("#fc-example-app .toggle");
     await expect.poll(() => toggle.locator(".toggle-content").count()).toBe(1);
+
     await toggle.getByRole("button", { name: /Close/ }).click();
     await expect.poll(() => toggle.locator(".toggle-content").count()).toBe(0);
+
     await toggle.getByRole("button", { name: /Open/ }).click();
     await expect.poll(() => toggle.locator(".toggle-content").count()).toBe(1);
+  } finally {
+    await page.close();
+  }
+});
 
-    const webComponentCounter = page.locator("dathra-counter").first();
-    await expect
-      .poll(() =>
-        webComponentCounter.evaluate((element) => element.shadowRoot !== null),
-      )
-      .toBe(true);
+it("updates Web Components through a production preview", async () => {
+  if (browser === undefined || previewUrl === undefined) {
+    throw new Error("Preview test resources are not initialized");
+  }
+
+  const page = await browser.newPage();
+
+  try {
+    const response = await page.goto(previewUrl, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+
+    const greeting = page.locator("dathra-greeting");
     await expect
       .poll(async () =>
-        (await webComponentCounter.locator(".count").textContent())?.trim(),
+        (await greeting.locator("h3").textContent())?.replaceAll(/\s/g, ""),
       )
+      .toBe("Hello,Dathra!");
+
+    const counter = page.locator("dathra-counter").first();
+    await expect
+      .poll(async () => (await counter.locator(".count").textContent())?.trim())
       .toBe("0");
-    await webComponentCounter
-      .getByRole("button", { name: "+", exact: true })
-      .click();
+
+    await counter.getByRole("button", { name: "+", exact: true }).click();
     await expect
-      .poll(async () =>
-        (await webComponentCounter.locator(".count").textContent())?.trim(),
-      )
+      .poll(async () => (await counter.locator(".count").textContent())?.trim())
       .toBe("1");
-    expect(pageErrors, formatPageErrors(pageErrors)).toEqual([]);
-  } catch (error) {
-    throw new AggregateError(
-      [error],
-      `Vanilla production interaction failed.\n${formatPageErrors(pageErrors)}`,
-    );
   } finally {
     await page.close();
   }

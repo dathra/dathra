@@ -8,8 +8,8 @@ export default defineConfig({
   root: playgroundRoot,
   test: {
     environment: "node",
-    include: ["src/Counter.test.ts"],
     hookTimeout: 60000,
+    include: ["src/Counter.test.ts"],
     testTimeout: 30000,
   },
 });

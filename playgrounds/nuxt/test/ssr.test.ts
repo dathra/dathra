@@ -4,14 +4,10 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { chromium, type Browser } from "playwright";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, expect, it } from "vitest";
 
-const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SERVER_ENTRY = resolve(PACKAGE_ROOT, ".output/server/index.mjs");
-const SERVER_START_TIMEOUT_MS = 30000;
-const SERVER_STOP_TIMEOUT_MS = 5000;
-const READINESS_REQUEST_TIMEOUT_MS = 1000;
-const TEST_REQUEST_TIMEOUT_MS = 5000;
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const serverEntry = resolve(packageRoot, ".output/server/index.mjs");
 
 let baseUrl = "";
 let browser: Browser | undefined;
@@ -20,19 +16,19 @@ let serverProcess: ChildProcessWithoutNullStreams | undefined;
 
 function findAvailablePort(): Promise<number> {
   return new Promise((resolvePort, reject) => {
-    const portProbe = createServer();
+    const probe = createServer();
 
-    portProbe.once("error", reject);
-    portProbe.listen(0, "127.0.0.1", () => {
-      const address = portProbe.address();
+    probe.once("error", reject);
+    probe.listen(0, "127.0.0.1", () => {
+      const address = probe.address();
 
       if (address === null || typeof address === "string") {
-        portProbe.close();
-        reject(new Error("Unable to allocate a TCP port for the Nitro server."));
+        probe.close();
+        reject(new Error("Unable to allocate a port for the Nitro server"));
         return;
       }
 
-      portProbe.close((error) => {
+      probe.close((error) => {
         if (error) {
           reject(error);
           return;
@@ -54,85 +50,78 @@ function waitForProcessExit(
       return;
     }
 
-    const timeout = setTimeout(() => {
-      childProcess.off("exit", handleExit);
-      resolveExit(false);
-    }, timeoutMs);
-    timeout.unref();
-
+    const timeouts: { exit?: NodeJS.Timeout } = {};
     const handleExit = () => {
-      clearTimeout(timeout);
+      if (timeouts.exit !== undefined) {
+        clearTimeout(timeouts.exit);
+      }
       resolveExit(true);
     };
 
+    timeouts.exit = setTimeout(() => {
+      childProcess.off("exit", handleExit);
+      resolveExit(false);
+    }, timeoutMs);
+    timeouts.exit.unref();
     childProcess.once("exit", handleExit);
   });
 }
 
 async function stopServer(): Promise<void> {
+  const childProcess = serverProcess;
+  serverProcess = undefined;
+
   if (
-    serverProcess === undefined ||
-    serverProcess.exitCode !== null ||
-    serverProcess.signalCode !== null
+    childProcess === undefined ||
+    childProcess.exitCode !== null ||
+    childProcess.signalCode !== null
   ) {
     return;
   }
 
-  serverProcess.kill("SIGTERM");
-  const stopped = await waitForProcessExit(serverProcess, SERVER_STOP_TIMEOUT_MS);
-
-  if (stopped) {
+  childProcess.kill("SIGTERM");
+  if (await waitForProcessExit(childProcess, 5000)) {
     return;
   }
 
-  serverProcess.kill("SIGKILL");
-  const forceStopped = await waitForProcessExit(serverProcess, SERVER_STOP_TIMEOUT_MS);
-  if (!forceStopped) {
-    throw new Error(`Nitro server did not exit after SIGKILL.\n${serverOutput}`);
+  childProcess.kill("SIGKILL");
+  if (!(await waitForProcessExit(childProcess, 5000))) {
+    throw new Error(`Nitro server did not exit after SIGKILL\n${serverOutput}`);
   }
 }
 
 async function waitForServer(): Promise<void> {
-  const deadline = Date.now() + SERVER_START_TIMEOUT_MS;
-  let lastError: unknown = null;
+  const deadline = Date.now() + 30000;
+  let lastError: unknown;
 
   while (Date.now() < deadline) {
     if (
       serverProcess !== undefined &&
       (serverProcess.exitCode !== null || serverProcess.signalCode !== null)
     ) {
-      throw new Error(`Nitro server exited before accepting requests.\n${serverOutput}`);
+      throw new Error(`Nitro server exited before readiness\n${serverOutput}`);
     }
 
     try {
-      const requestTimeout = Math.max(
-        1,
-        Math.min(READINESS_REQUEST_TIMEOUT_MS, deadline - Date.now()),
-      );
       const response = await fetch(baseUrl, {
-        signal: AbortSignal.timeout(requestTimeout),
+        signal: AbortSignal.timeout(1000),
       });
       await response.text();
       return;
     } catch (error) {
       lastError = error;
-      const retryDelay = Math.min(100, Math.max(0, deadline - Date.now()));
-      if (retryDelay > 0) {
-        await new Promise((resolveDelay) => setTimeout(resolveDelay, retryDelay));
-      }
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 100));
     }
   }
 
-  throw new Error(
-    `Timed out waiting for the Nitro server. Last error: ${String(lastError)}\n${serverOutput}`,
-  );
+  throw new Error(`Timed out waiting for the Nitro server: ${String(lastError)}\n${serverOutput}`);
 }
 
 beforeAll(async () => {
   const port = await findAvailablePort();
   baseUrl = `http://127.0.0.1:${port}/`;
-  serverProcess = spawn(process.execPath, [SERVER_ENTRY], {
-    cwd: PACKAGE_ROOT,
+  serverProcess = spawn(process.execPath, [serverEntry], {
+    cwd: packageRoot,
     env: {
       ...process.env,
       HOST: "127.0.0.1",
@@ -150,109 +139,61 @@ beforeAll(async () => {
   serverProcess.stderr.on("data", (chunk: string) => {
     serverOutput += chunk;
   });
-  serverProcess.on("error", (error) => {
-    serverOutput += `${error.stack ?? error.message}\n`;
-  });
 
   try {
     await waitForServer();
+    browser = await chromium.launch({ headless: true });
   } catch (error) {
-    try {
-      await stopServer();
-    } catch (cleanupError) {
-      throw new AggregateError([error, cleanupError], "Nitro server startup and cleanup failed");
-    }
+    await stopServer();
     throw error;
   }
 });
 
 afterAll(async () => {
-  const cleanupResults = await Promise.allSettled([
-    browser?.close() ?? Promise.resolve(),
-    stopServer(),
-  ]);
+  const results = await Promise.allSettled([browser?.close() ?? Promise.resolve(), stopServer()]);
   browser = undefined;
-  const cleanupErrors = cleanupResults.flatMap((result) =>
-    result.status === "rejected" ? [result.reason] : [],
-  );
+  const errors = results.flatMap((result) => (result.status === "rejected" ? [result.reason] : []));
 
-  if (cleanupErrors.length > 0) {
-    throw new AggregateError(cleanupErrors, "Failed to close Nuxt test resources");
+  if (errors.length > 0) {
+    throw new AggregateError(errors, "Failed to close Nuxt test resources");
   }
 });
 
-describe("Nuxt production SSR", () => {
-  it("serves DSD and activates the counter in Chromium", async () => {
-    const response = await fetch(baseUrl, {
-      signal: AbortSignal.timeout(TEST_REQUEST_TIMEOUT_MS),
-    });
-    const html = await response.text();
-    const failureContext = `Response body:\n${html}\nNitro output:\n${serverOutput}`;
+it("serves DSD and activates the counter in Chromium", async () => {
+  if (browser === undefined) {
+    throw new Error("Chromium was not initialized");
+  }
 
-    expect(response.status, failureContext).toBe(200);
-    expect(html).toMatch(/<my-counter\b[^>]*>\s*<template shadowrootmode="open">/);
-    expect(html).toContain("Counter Component");
-
-    browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage();
-    const browserOutput: Array<string> = [];
-
-    page.on("console", (message) => {
-      browserOutput.push(`[console:${message.type()}] ${message.text()}`);
-    });
-    page.on("pageerror", (error) => {
-      browserOutput.push(`[pageerror] ${error.stack ?? error.message}`);
-    });
-    page.on("requestfailed", (request) => {
-      browserOutput.push(
-        `[requestfailed] ${request.url()} ${request.failure()?.errorText ?? "unknown error"}`,
-      );
-    });
-    page.on("response", (pageResponse) => {
-      if (pageResponse.request().resourceType() === "script") {
-        browserOutput.push(`[script:${pageResponse.status()}] ${pageResponse.url()}`);
-      }
-    });
-
-    try {
-      const navigationResponse = await page.goto(baseUrl, {
-        waitUntil: "domcontentloaded",
-      });
-      expect(navigationResponse?.status()).toBe(200);
-
-      const counter = page.locator("my-counter");
-      const count = counter.locator("span");
-      const increment = counter.locator("button").filter({ hasText: "+" });
-
-      const counterWasDefined = await page
-        .waitForFunction(() => customElements.get("my-counter") !== undefined, undefined, {
-          timeout: 10000,
-        })
-        .then(
-          () => true,
-          () => false,
-        );
-      const pageState = await page.evaluate(() => ({
-        customElementsAvailable: typeof customElements !== "undefined",
-        readyState: document.readyState,
-        scripts: Array.from(document.scripts, (script) => script.src),
-      }));
-      expect(
-        counterWasDefined,
-        `Page state:\n${JSON.stringify(pageState)}\nBrowser output:\n${browserOutput.join("\n")}`,
-      ).toBe(true);
-      await expect
-        .poll(() => counter.evaluate((element) => element.shadowRoot !== null))
-        .toBe(true);
-      await expect.poll(async () => (await count.textContent())?.trim()).toBe("5");
-      await increment.click();
-      await expect
-        .poll(async () => (await count.textContent())?.trim(), {
-          message: `Browser output:\n${browserOutput.join("\n")}`,
-        })
-        .toBe("6");
-    } finally {
-      await page.close();
-    }
+  const response = await fetch(baseUrl, {
+    signal: AbortSignal.timeout(5000),
   });
+  const html = await response.text();
+
+  expect(response.status).toBe(200);
+  expect(html).toMatch(/<my-counter\b[^>]*>\s*<template shadowrootmode="open">/);
+  expect(html).toContain("Counter Component");
+
+  const page = await browser.newPage();
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => {
+    pageErrors.push(error.stack ?? error.message);
+  });
+
+  try {
+    const navigation = await page.goto(baseUrl, {
+      waitUntil: "networkidle",
+    });
+    expect(navigation?.status()).toBe(200);
+
+    const counter = page.locator("my-counter");
+    const count = counter.locator("span");
+    await expect.poll(() => counter.evaluate((element) => element.shadowRoot !== null)).toBe(true);
+    await expect.poll(async () => (await count.textContent())?.trim()).toBe("5");
+
+    await counter.getByRole("button", { name: "+", exact: true }).click();
+    await expect.poll(async () => (await count.textContent())?.trim()).toBe("6");
+    expect(pageErrors).toEqual([]);
+  } finally {
+    await page.close();
+  }
 });

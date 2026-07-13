@@ -1,7 +1,7 @@
 {
   "name": "@playground/ssr",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "build:deps": "pnpm -r --filter @dathra/shared --filter @dathra/reactivity --filter @dathra/store --filter @dathra/runtime --filter @dathra/components --filter @dathra/core --filter @dathra/transformer --filter @dathra/plugin build",
@@ -14,8 +14,8 @@
     "test": "pnpm build:server && vitest run --config vitest.config.ts"
   },
   "dependencies": {
-    "@dathra/core": "workspace:*",
     "@dathra/components": "workspace:*",
+    "@dathra/core": "workspace:*",
     "@dathra/runtime": "workspace:*"
   },
   "devDependencies": {

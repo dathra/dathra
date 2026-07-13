@@ -126,8 +126,33 @@ async function stopPreviewServer(previewProcess: ChildProcess): Promise<void> {
   }
 
   await new Promise<void>((resolve, reject) => {
-    let forceExitTimeout: ReturnType<typeof setTimeout> | undefined;
-    const terminateTimeout = setTimeout(() => {
+    const timeouts: {
+      forceExit?: ReturnType<typeof setTimeout>;
+      terminate?: ReturnType<typeof setTimeout>;
+    } = {};
+    let finish = () => {};
+
+    const cleanup = () => {
+      if (timeouts.terminate !== undefined) {
+        clearTimeout(timeouts.terminate);
+      }
+      if (timeouts.forceExit !== undefined) {
+        clearTimeout(timeouts.forceExit);
+      }
+      previewProcess.off("exit", finish);
+    };
+
+    finish = () => {
+      cleanup();
+      resolve();
+    };
+
+    const fail = (message: string) => {
+      cleanup();
+      reject(new Error(message));
+    };
+
+    timeouts.terminate = setTimeout(() => {
       if (
         previewProcess.exitCode !== null ||
         previewProcess.signalCode !== null
@@ -149,7 +174,7 @@ async function stopPreviewServer(previewProcess: ChildProcess): Promise<void> {
         return;
       }
 
-      forceExitTimeout = setTimeout(() => {
+      timeouts.forceExit = setTimeout(() => {
         cleanup();
         reject(
           new Error(
@@ -158,24 +183,6 @@ async function stopPreviewServer(previewProcess: ChildProcess): Promise<void> {
         );
       }, 1000);
     }, 5000);
-
-    const cleanup = () => {
-      clearTimeout(terminateTimeout);
-      if (forceExitTimeout !== undefined) {
-        clearTimeout(forceExitTimeout);
-      }
-      previewProcess.off("exit", finish);
-    };
-
-    const finish = () => {
-      cleanup();
-      resolve();
-    };
-
-    const fail = (message: string) => {
-      cleanup();
-      reject(new Error(message));
-    };
 
     previewProcess.once("exit", finish);
 

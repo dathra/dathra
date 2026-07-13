@@ -11,11 +11,11 @@ const MyCounter = defineComponent(
     const count = signal(props.initial.value);
 
     const increment = () => {
-      count.set(count.value + 1);
+      count.set((value) => value + 1);
     };
 
     const decrement = () => {
-      count.set(count.value - 1);
+      count.set((value) => value - 1);
     };
 
     return (
