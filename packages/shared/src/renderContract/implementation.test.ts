@@ -1,7 +1,4 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 
 import {
   canHaveModifiers,
@@ -37,6 +34,10 @@ import {
   vi,
 } from "vitest";
 
+import {
+  readSharedBrowserArtifactBundle,
+  sharedRootArtifactPath,
+} from "../../test/publicationArtifacts";
 import type * as CanonicalIdentityImplementation from "../canonicalIdentity/implementation";
 
 const canonicalIdentityMock = vi.hoisted(() => ({
@@ -649,9 +650,9 @@ describe("createRenderDefinition", () => {
     const digestResult = deferred<Sha256Digest>();
     let capturedPreimage: unknown;
     canonicalIdentityMock.digestCanonicalJson.mockImplementationOnce(
-      (preimage: unknown) => {
+      async (preimage: unknown) => {
         capturedPreimage = preimage;
-        return digestResult.promise;
+        return await digestResult.promise;
       },
     );
     const input = creatorInput();
@@ -741,9 +742,9 @@ describe("createRenderDefinition", () => {
   it("freezes only a fresh root after reusing the DI2B preimage", async () => {
     let capturedPreimage: unknown;
     canonicalIdentityMock.digestCanonicalJson.mockImplementationOnce(
-      (preimage: unknown) => {
+      async (preimage: unknown) => {
         capturedPreimage = preimage;
-        return Promise.resolve(DEFERRED_ID);
+        return await Promise.resolve(DEFERRED_ID);
       },
     );
 
@@ -804,9 +805,9 @@ describe("parseRenderDefinition", () => {
     canonicalIdentityMock.digestCanonicalJson.mockClear();
     let capturedPreimage: unknown;
     canonicalIdentityMock.digestCanonicalJson.mockImplementationOnce(
-      (preimage: unknown) => {
+      async (preimage: unknown) => {
         capturedPreimage = preimage;
-        return Promise.resolve(computedDigest);
+        return await Promise.resolve(computedDigest);
       },
     );
     const input: ParserValue = { id: computedDigest, preimage: inputPreimage };
@@ -880,9 +881,9 @@ describe("parseRenderDefinition", () => {
     const digestResult = deferred<Sha256Digest>();
     let capturedPreimage: unknown;
     canonicalIdentityMock.digestCanonicalJson.mockImplementationOnce(
-      (preimage: unknown) => {
+      async (preimage: unknown) => {
         capturedPreimage = preimage;
-        return digestResult.promise;
+        return await digestResult.promise;
       },
     );
     const input = parserValue(DEFERRED_ID);
@@ -1003,9 +1004,9 @@ describe("parseRenderDefinition", () => {
   it("freezes only a fresh returned root after reusing the DI2B preimage", async () => {
     let capturedPreimage: unknown;
     canonicalIdentityMock.digestCanonicalJson.mockImplementationOnce(
-      (preimage: unknown) => {
+      async (preimage: unknown) => {
         capturedPreimage = preimage;
-        return Promise.resolve(DEFERRED_ID);
+        return await Promise.resolve(DEFERRED_ID);
       },
     );
     const freezeSpy = vi.spyOn(Object, "freeze");
@@ -1079,88 +1080,30 @@ describe("render operation publication boundary", () => {
   });
 
   it("keeps creator and parser out of root declarations and runtime bundles", () => {
-    const packageRoot = new URL("../../", import.meta.url);
-    const outputDirectory = mkdtempSync(
-      join(tmpdir(), "dathra-render-contract-di3b-root-"),
-    );
-
-    try {
-      execFileSync(
-        "pnpm",
-        ["exec", "tsdown", "--out-dir", outputDirectory, "--logLevel", "error"],
-        {
-          cwd: packageRoot,
-          stdio: "pipe",
-        },
+    for (const artifactFile of [
+      "index.d.mts",
+      "index.d.cts",
+      "index.mjs",
+      "index.cjs",
+    ]) {
+      const artifact = readFileSync(
+        sharedRootArtifactPath(artifactFile),
+        "utf8",
       );
-
-      for (const artifactFile of [
-        "index.d.mts",
-        "index.d.cts",
-        "index.mjs",
-        "index.cjs",
-      ]) {
-        const artifact = readFileSync(
-          join(outputDirectory, artifactFile),
-          "utf8",
-        );
-        expect(artifact).not.toContain("createRenderDefinition");
-        expect(artifact).not.toContain("parseRenderDefinition");
-      }
-    } finally {
-      rmSync(outputDirectory, { force: true, recursive: true });
+      expect(artifact).not.toContain("createRenderDefinition");
+      expect(artifact).not.toContain("parseRenderDefinition");
     }
   });
 
   it("emits a browser-compatible opt-in facade without activation code", () => {
-    const packageRoot = new URL("../../", import.meta.url);
-    const outputDirectory = mkdtempSync(
-      join(tmpdir(), "dathra-render-contract-di3b-browser-"),
+    const browserEmit = readSharedBrowserArtifactBundle();
+    expect(browserEmit).toContain("createRenderDefinition");
+    expect(browserEmit).not.toMatch(/(?:from\s*["']node:|require\(["']node:)/u);
+    expect(browserEmit).not.toContain("Buffer");
+    expect(browserEmit).not.toMatch(
+      /\b(?:window|document|customElements|addEventListener)\b/u,
     );
-
-    try {
-      execFileSync(
-        "pnpm",
-        [
-          "exec",
-          "tsdown",
-          "src/renderContract/implementation.ts",
-          "--no-config",
-          "--format",
-          "esm",
-          "--platform",
-          "browser",
-          "--target",
-          "es2022",
-          "--out-dir",
-          outputDirectory,
-          "--logLevel",
-          "error",
-        ],
-        {
-          cwd: packageRoot,
-          stdio: "pipe",
-        },
-      );
-
-      const browserEmit = readdirSync(outputDirectory)
-        .filter((fileName) => /\.(?:js|mjs)$/u.test(fileName))
-        .map((fileName) =>
-          readFileSync(join(outputDirectory, fileName), "utf8"),
-        )
-        .join("\n");
-      expect(browserEmit).toContain("createRenderDefinition");
-      expect(browserEmit).not.toMatch(
-        /(?:from\s*["']node:|require\(["']node:)/u,
-      );
-      expect(browserEmit).not.toContain("Buffer");
-      expect(browserEmit).not.toMatch(
-        /\b(?:window|document|customElements|addEventListener)\b/u,
-      );
-      expect(browserEmit).toContain("parseRenderDefinition");
-      expect(browserEmit).not.toContain("RenderEnvelope");
-    } finally {
-      rmSync(outputDirectory, { force: true, recursive: true });
-    }
+    expect(browserEmit).toContain("parseRenderDefinition");
+    expect(browserEmit).not.toContain("RenderEnvelope");
   });
 });

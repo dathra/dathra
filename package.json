@@ -23,7 +23,7 @@
     "release:all": "nr p:shared release && nr p:reactivity release && nr p:store release && nr p:components release && nr p:runtime release && nr p:core release && nr p:transformer release && nr p:plugin release",
     "test:e2e": "pnpm --filter @playground/e2e test",
     "test:apps": "pnpm -r --workspace-concurrency=1 --filter \"./docs\" --filter \"./playgrounds/**\" run test",
-    "test": "pnpm -r --filter \"./packages/**\" --parallel run test",
+    "test": "pnpm -r --filter \"./packages/**\" --workspace-concurrency=1 run test",
     "dev": "pnpm -r --filter \"./packages/**\" --parallel run dev",
     "lint": "pnpm -r --filter \"./packages/**\" --parallel run lint",
     "lint:type-aware": "pnpm build && pnpm -r --filter \"./packages/**\" --parallel run lint:type-aware",

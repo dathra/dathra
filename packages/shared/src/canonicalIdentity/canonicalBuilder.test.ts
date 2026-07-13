@@ -6,7 +6,12 @@ import {
   createCanonicalBuilderInstrumentation,
   type CanonicalBuilderInstrumentation,
 } from "./canonicalBuilder";
-import { canonicalizeJson } from "./implementation";
+import {
+  CanonicalIdentityError,
+  canonicalizeJson,
+  type CanonicalIdentityErrorCode,
+  type CanonicalIdentityPathSegment,
+} from "./implementation";
 
 function failBuilder(
   code: string,
@@ -23,6 +28,32 @@ function buildInstrumented(value: unknown): {
   const instrumentation = createCanonicalBuilderInstrumentation();
   const text = buildCanonicalJson(value, failBuilder, instrumentation);
   return { text, instrumentation };
+}
+
+function expectCanonicalError(
+  operation: () => unknown,
+  code: CanonicalIdentityErrorCode,
+  path: readonly CanonicalIdentityPathSegment[],
+): void {
+  try {
+    operation();
+  } catch (error) {
+    if (!(error instanceof CanonicalIdentityError)) throw error;
+    if (error.code !== code) {
+      throw new Error(`Expected error code ${code}, received ${error.code}`);
+    }
+    if (
+      error.path.length !== path.length ||
+      error.path.some((segment, index) => segment !== path[index])
+    ) {
+      throw new Error(
+        `Expected error path ${JSON.stringify(path)}, received ${JSON.stringify(error.path)}`,
+      );
+    }
+    return;
+  }
+
+  throw new Error("Expected a CanonicalIdentityError");
 }
 
 function calculateLevels(propertyCount: number): number {
@@ -190,19 +221,17 @@ describe("canonical JSON builder", () => {
   it("rejects only active-ancestor aliases as cycles", () => {
     const direct: Record<string, unknown> = {};
     direct.self = direct;
-    expect(() => canonicalizeJson(direct)).toThrowError(
-      expect.objectContaining({ code: "cyclic-value", path: ["self"] }),
-    );
+    expectCanonicalError(() => canonicalizeJson(direct), "cyclic-value", [
+      "self",
+    ]);
 
     const first: Record<string, unknown> = {};
     const second: Record<string, unknown> = { first };
     first.second = second;
-    expect(() => canonicalizeJson(first)).toThrowError(
-      expect.objectContaining({
-        code: "cyclic-value",
-        path: ["second", "first"],
-      }),
-    );
+    expectCanonicalError(() => canonicalizeJson(first), "cyclic-value", [
+      "second",
+      "first",
+    ]);
   });
 
   it("preserves child failure precedence over a later sparse slot", () => {
@@ -210,8 +239,10 @@ describe("canonical JSON builder", () => {
     value.length = 2;
     value[0] = undefined;
 
-    expect(() => canonicalizeJson(value)).toThrowError(
-      expect.objectContaining({ code: "unsupported-value", path: [0] }),
+    expectCanonicalError(
+      () => canonicalizeJson(value),
+      "unsupported-value",
+      [0],
     );
   });
 

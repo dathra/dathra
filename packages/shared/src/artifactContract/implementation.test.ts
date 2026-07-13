@@ -1,7 +1,4 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 
 import {
   createSourceFile,
@@ -16,6 +13,7 @@ import {
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { type Sha256Digest } from "../canonicalIdentity/implementation";
+import { sharedRootArtifactPath } from "../../test/publicationArtifacts";
 import * as artifactContractApi from "./implementation";
 import {
   ArtifactContractError,
@@ -360,50 +358,32 @@ describe("artifact contract type domains", () => {
   });
 
   it("keeps artifact contract APIs out of built root declarations", () => {
-    const packageRoot = new URL("../../", import.meta.url);
-    const outputDirectory = mkdtempSync(
-      join(tmpdir(), "dathra-artifact-contract-"),
-    );
-
-    try {
-      execFileSync(
-        "pnpm",
-        ["exec", "tsdown", "--out-dir", outputDirectory, "--logLevel", "error"],
-        {
-          cwd: packageRoot,
-          stdio: "pipe",
-        },
+    for (const declarationFile of ["index.d.mts", "index.d.cts"]) {
+      const exportedNames = readNamedExportNames(
+        sharedRootArtifactPath(declarationFile),
       );
 
-      for (const declarationFile of ["index.d.mts", "index.d.cts"]) {
-        const exportedNames = readNamedExportNames(
-          join(outputDirectory, declarationFile),
-        );
-
-        expect(exportedNames).toContain("Sha256Digest");
-        expect(exportedNames).not.toContain("ArtifactContractError");
-        expect(exportedNames).not.toContain("ArtifactContractErrorCode");
-        expect(exportedNames).not.toContain("ArtifactContractPath");
-        expect(exportedNames).not.toContain("ArtifactContractPathSegment");
-        expect(exportedNames).not.toContain("fail");
-        expect(exportedNames).not.toContain("formatPath");
-        expect(exportedNames).not.toContain("ArtifactAddressId");
-        expect(exportedNames).not.toContain("ArtifactFinalizationTemplate");
-        expect(exportedNames).not.toContain("ArtifactEntryRole");
-        expect(exportedNames).not.toContain("ArtifactEntryBinding");
-        expect(exportedNames).not.toContain("ArtifactDependencyBinding");
-        expect(exportedNames).not.toContain("ArtifactDependencyKind");
-        expect(exportedNames).not.toContain("ArtifactExportBinding");
-        expect(exportedNames).not.toContain("ArtifactExportRole");
-        expect(exportedNames).not.toContain("DeploymentIdentityPreimage");
-        expect(exportedNames).not.toContain("DeploymentIdentityDigest");
-        expect(exportedNames).not.toContain("DeploymentIdentityId");
-        expect(exportedNames).not.toContain("ArtifactAddressPreimage");
-        expect(exportedNames).not.toContain("ArtifactAddressPreimageSource");
-        expect(exportedNames).not.toContain("ArtifactKind");
-      }
-    } finally {
-      rmSync(outputDirectory, { force: true, recursive: true });
+      expect(exportedNames).toContain("Sha256Digest");
+      expect(exportedNames).not.toContain("ArtifactContractError");
+      expect(exportedNames).not.toContain("ArtifactContractErrorCode");
+      expect(exportedNames).not.toContain("ArtifactContractPath");
+      expect(exportedNames).not.toContain("ArtifactContractPathSegment");
+      expect(exportedNames).not.toContain("fail");
+      expect(exportedNames).not.toContain("formatPath");
+      expect(exportedNames).not.toContain("ArtifactAddressId");
+      expect(exportedNames).not.toContain("ArtifactFinalizationTemplate");
+      expect(exportedNames).not.toContain("ArtifactEntryRole");
+      expect(exportedNames).not.toContain("ArtifactEntryBinding");
+      expect(exportedNames).not.toContain("ArtifactDependencyBinding");
+      expect(exportedNames).not.toContain("ArtifactDependencyKind");
+      expect(exportedNames).not.toContain("ArtifactExportBinding");
+      expect(exportedNames).not.toContain("ArtifactExportRole");
+      expect(exportedNames).not.toContain("DeploymentIdentityPreimage");
+      expect(exportedNames).not.toContain("DeploymentIdentityDigest");
+      expect(exportedNames).not.toContain("DeploymentIdentityId");
+      expect(exportedNames).not.toContain("ArtifactAddressPreimage");
+      expect(exportedNames).not.toContain("ArtifactAddressPreimageSource");
+      expect(exportedNames).not.toContain("ArtifactKind");
     }
-  }, 30_000);
+  });
 });

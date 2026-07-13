@@ -1,11 +1,9 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 
 import { ModuleKind, ScriptTarget, transpileModule } from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import { sharedRootArtifactPath } from "../../test/publicationArtifacts";
 import {
   createOccurrencePlanBuilder,
   type ClosedDataOccurrence,
@@ -373,10 +371,6 @@ describe("occurrence plan internal boundary", () => {
       new URL("./implementation.ts", import.meta.url),
       "utf8",
     );
-    const packageRoot = new URL("../../", import.meta.url);
-    const outputDirectory = mkdtempSync(
-      join(tmpdir(), "dathra-occurrence-plan-"),
-    );
     const internalNames = [
       "ClosedDataOccurrence",
       "ClosedDataPathSegment",
@@ -391,26 +385,16 @@ describe("occurrence plan internal boundary", () => {
     expect(rootSource).not.toContain("./executionContract/occurrencePlan");
     expect(facadeSource).not.toContain("./occurrencePlan");
 
-    try {
-      execFileSync(
-        "pnpm",
-        ["exec", "tsdown", "--out-dir", outputDirectory, "--logLevel", "error"],
-        { cwd: packageRoot, stdio: "pipe" },
+    for (const declarationFile of ["index.d.mts", "index.d.cts"]) {
+      const declaration = readFileSync(
+        sharedRootArtifactPath(declarationFile),
+        "utf8",
       );
-
-      for (const declarationFile of ["index.d.mts", "index.d.cts"]) {
-        const declaration = readFileSync(
-          join(outputDirectory, declarationFile),
-          "utf8",
-        );
-        for (const internalName of internalNames) {
-          expect(declaration).not.toContain(internalName);
-        }
+      for (const internalName of internalNames) {
+        expect(declaration).not.toContain(internalName);
       }
-    } finally {
-      rmSync(outputDirectory, { force: true, recursive: true });
     }
-  }, 30_000);
+  });
 });
 
 const exactOccurrence: ClosedDataOccurrence =

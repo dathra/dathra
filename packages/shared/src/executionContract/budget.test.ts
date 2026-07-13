@@ -1,11 +1,9 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 
 import { ModuleKind, ScriptTarget, transpileModule } from "typescript";
 import { describe, expect, it, vi } from "vitest";
 
+import { sharedRootArtifactPath } from "../../test/publicationArtifacts";
 import {
   BudgetLedger,
   DEFAULT_EXECUTION_CONTRACT_BUDGET,
@@ -109,15 +107,14 @@ describe("execution contract budget override", () => {
     const ordinaryLedger = createBudgetLedger({ maximumFacts: 1 });
     ordinaryLedger.chargeTotal("maximumFacts", 1, []);
 
-    const nullPrototypeBudget: object = Object.create(null);
+    const nullPrototypeBudget: ExecutionContractBudget = {};
+    expect(Reflect.setPrototypeOf(nullPrototypeBudget, null)).toBe(true);
     Reflect.defineProperty(
       nullPrototypeBudget,
       "maximumRelations",
       dataProperty(0),
     );
-    const nullPrototypeLedger = Reflect.apply(createBudgetLedger, undefined, [
-      nullPrototypeBudget,
-    ]);
+    const nullPrototypeLedger = createBudgetLedger(nullPrototypeBudget);
     nullPrototypeLedger.chargeTotal("maximumRelations", 0, []);
     expectExecutionContractError(
       () => nullPrototypeLedger.chargeTotal("maximumRelations", 1, []),
@@ -132,11 +129,9 @@ describe("execution contract budget override", () => {
       [],
     );
     for (const counter of CUMULATIVE_COUNTERS) {
-      const zeroBudget = {};
+      const zeroBudget: ExecutionContractBudget = {};
       Reflect.defineProperty(zeroBudget, counter, dataProperty(0));
-      const zeroLedger = Reflect.apply(createBudgetLedger, undefined, [
-        zeroBudget,
-      ]);
+      const zeroLedger = createBudgetLedger(zeroBudget);
       zeroLedger.chargeTotal(counter, 0, []);
       expectExecutionContractError(
         () => zeroLedger.chargeTotal(counter, 1, []),
@@ -407,32 +402,17 @@ describe("budget publication boundary", () => {
       new URL("../index.ts", import.meta.url),
       "utf8",
     );
-    const packageRoot = new URL("../../", import.meta.url);
-    const outputDirectory = mkdtempSync(
-      join(tmpdir(), "dathra-execution-contract-budget-"),
-    );
-
     expect(rootSource).not.toContain("./executionContract/implementation");
 
-    try {
-      execFileSync(
-        "pnpm",
-        ["exec", "tsdown", "--out-dir", outputDirectory, "--logLevel", "error"],
-        { cwd: packageRoot, stdio: "pipe" },
+    for (const declarationFile of ["index.d.mts", "index.d.cts"]) {
+      const declaration = readFileSync(
+        sharedRootArtifactPath(declarationFile),
+        "utf8",
       );
-
-      for (const declarationFile of ["index.d.mts", "index.d.cts"]) {
-        const declaration = readFileSync(
-          join(outputDirectory, declarationFile),
-          "utf8",
-        );
-        expect(declaration).not.toContain("ExecutionContractBudget");
-        expect(declaration).not.toContain("BudgetLedger");
-        expect(declaration).not.toContain("createBudgetLedger");
-        expect(declaration).not.toContain("maximumCanonicalWorkSteps");
-      }
-    } finally {
-      rmSync(outputDirectory, { force: true, recursive: true });
+      expect(declaration).not.toContain("ExecutionContractBudget");
+      expect(declaration).not.toContain("BudgetLedger");
+      expect(declaration).not.toContain("createBudgetLedger");
+      expect(declaration).not.toContain("maximumCanonicalWorkSteps");
     }
-  }, 30_000);
+  });
 });

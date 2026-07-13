@@ -1,10 +1,8 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
+import { sharedRootArtifactPath } from "../../test/publicationArtifacts";
 import {
   isSha256Digest,
   type Sha256Digest,
@@ -682,42 +680,25 @@ describe("render definition validated construction", () => {
   });
 
   it("keeps all DI2B internals out of built root artifacts", () => {
-    const packageRoot = new URL("../../", import.meta.url);
-    const outputDirectory = mkdtempSync(
-      join(tmpdir(), "dathra-render-contract-di2b-"),
-    );
     const forbiddenNames = [
       "UnbrandedRenderDefinitionSnapshot",
       "validateRenderDefinitionCreatorSnapshot",
       "validateRenderDefinitionParserSnapshot",
     ];
 
-    try {
-      execFileSync(
-        "pnpm",
-        ["exec", "tsdown", "--out-dir", outputDirectory, "--logLevel", "error"],
-        {
-          cwd: packageRoot,
-          stdio: "pipe",
-        },
+    for (const artifactFile of [
+      "index.d.mts",
+      "index.d.cts",
+      "index.mjs",
+      "index.cjs",
+    ]) {
+      const artifact = readFileSync(
+        sharedRootArtifactPath(artifactFile),
+        "utf8",
       );
-
-      for (const artifactFile of [
-        "index.d.mts",
-        "index.d.cts",
-        "index.mjs",
-        "index.cjs",
-      ]) {
-        const artifact = readFileSync(
-          join(outputDirectory, artifactFile),
-          "utf8",
-        );
-        for (const forbiddenName of forbiddenNames) {
-          expect(artifact).not.toContain(forbiddenName);
-        }
+      for (const forbiddenName of forbiddenNames) {
+        expect(artifact).not.toContain(forbiddenName);
       }
-    } finally {
-      rmSync(outputDirectory, { force: true, recursive: true });
     }
   });
 });

@@ -1,7 +1,4 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 
 import {
   canHaveModifiers,
@@ -20,6 +17,7 @@ import {
 } from "typescript";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
+import { sharedRootArtifactPath } from "../../test/publicationArtifacts";
 import type { RegistryId } from "../executionRegistry/implementation";
 import {
   // @ts-expect-error AS01 owns shared-root publication.
@@ -214,34 +212,16 @@ describe("export summary publication boundary", () => {
       new URL("../index.ts", import.meta.url),
       "utf8",
     );
-    const packageRoot = new URL("../../", import.meta.url);
-    const outputDirectory = mkdtempSync(
-      join(tmpdir(), "dathra-execution-export-contract-"),
-    );
-
     expect(rootSource).not.toContain("./executionContract/implementation");
 
-    try {
-      execFileSync(
-        "pnpm",
-        ["exec", "tsdown", "--out-dir", outputDirectory, "--logLevel", "error"],
-        {
-          cwd: packageRoot,
-          stdio: "pipe",
-        },
+    for (const declarationFile of ["index.d.mts", "index.d.cts"]) {
+      const declaration = readFileSync(
+        sharedRootArtifactPath(declarationFile),
+        "utf8",
       );
 
-      for (const declarationFile of ["index.d.mts", "index.d.cts"]) {
-        const declaration = readFileSync(
-          join(outputDirectory, declarationFile),
-          "utf8",
-        );
-
-        expect(declaration).toContain("Sha256Digest");
-        expect(declaration).not.toContain("ExportExecutionContract");
-      }
-    } finally {
-      rmSync(outputDirectory, { force: true, recursive: true });
+      expect(declaration).toContain("Sha256Digest");
+      expect(declaration).not.toContain("ExportExecutionContract");
     }
   });
 });
