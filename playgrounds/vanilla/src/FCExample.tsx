@@ -3,6 +3,8 @@
  */
 import { signal, type FC, type FCWithChildren } from "@dathra/core";
 
+type RenderableChildren = Node | Node[];
+
 /**
  * Simple greeting component without children.
  */
@@ -13,11 +15,11 @@ export const Greeting: FC<{ name: string }> = ({ name }) => {
 /**
  * Container component with children support.
  */
-export const Card: FCWithChildren<{ title: string; highlighted?: boolean }> = ({
-  title,
-  highlighted = false,
-  children,
-}) => {
+export const Card: FCWithChildren<{
+  title: string;
+  highlighted?: boolean;
+  children?: RenderableChildren;
+}> = ({ title, highlighted = false, children }) => {
   return (
     <div
       class={highlighted ? "card highlighted" : "card"}
@@ -37,15 +39,15 @@ export const Card: FCWithChildren<{ title: string; highlighted?: boolean }> = ({
 /**
  * Interactive component with state.
  */
-export const Toggle: FCWithChildren<{ initialOpen?: boolean }> = ({
-  initialOpen = false,
-  children,
-}) => {
+export const Toggle: FCWithChildren<{
+  initialOpen?: boolean;
+  children?: RenderableChildren;
+}> = ({ initialOpen = false, children }) => {
   const isOpen = signal(initialOpen);
 
   return (
     <div class="toggle">
-      <button onClick={() => isOpen.update((v) => !v)}>
+      <button onClick={() => isOpen.set((value) => !value)}>
         {isOpen.value ? "▼" : "▶"} {isOpen.value ? "Close" : "Open"}
       </button>
       {isOpen.value && <div class="toggle-content">{children}</div>}
