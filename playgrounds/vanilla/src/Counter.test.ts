@@ -5,7 +5,9 @@ import { preview, type PreviewServer } from "vite";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
 const playgroundRoot = fileURLToPath(new URL("..", import.meta.url));
-const viteConfigPath = fileURLToPath(new URL("../vite.config.ts", import.meta.url));
+const viteConfigPath = fileURLToPath(
+  new URL("../vite.config.ts", import.meta.url),
+);
 
 let browser: Browser | undefined;
 let previewServer: PreviewServer | undefined;
@@ -16,14 +18,20 @@ async function closeResources(): Promise<void> {
     browser?.close() ?? Promise.resolve(),
     previewServer?.close() ?? Promise.resolve(),
   ]);
-  const errors = results.flatMap((result) => (result.status === "rejected" ? [result.reason] : []));
+  const errors = results.flatMap((result) =>
+    result.status === "rejected" ? [result.reason] : [],
+  );
 
   if (errors.length > 0) {
     throw new AggregateError(errors, "Failed to close preview test resources");
   }
 }
 
-async function expectCounterState(page: Page, count: number, doubled: number): Promise<void> {
+async function expectCounterState(
+  page: Page,
+  count: number,
+  doubled: number,
+): Promise<void> {
   const values = page.locator("#app .counter p");
 
   await expect
