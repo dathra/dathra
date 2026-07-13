@@ -6,9 +6,10 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   vite: {
-    plugins: [
-      dathraVitePlugin(),
-    ],
+    plugins: [dathraVitePlugin()],
+    vueJsx: {
+      defineComponentName: [],
+    },
     esbuild: {
       jsx: "preserve",
     },
