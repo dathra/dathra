@@ -68,22 +68,22 @@ const counterStyles = css`
 // Define the Web Component
 defineComponent(
   "dathra-counter",
-  ({ initial }) => {
-    const count = signal(initial.value);
+  ({ props }) => {
+    const count = signal(props.initial.value);
 
     return (
       <div class="counter">
         <h2>Web Component Counter</h2>
         <div class="count">{count.value}</div>
         <div class="buttons">
-          <button onClick={() => count.update((v) => v - 1)}>−</button>
+          <button onClick={() => count.set((value) => value - 1)}>−</button>
           <button onClick={() => count.set(0)}>Reset</button>
-          <button onClick={() => count.update((v) => v + 1)}>+</button>
+          <button onClick={() => count.set((value) => value + 1)}>+</button>
         </div>
         <div class="info">
           This is a Web Component using Shadow DOM!
           <br />
-          Initial value: {initial.value}
+          Initial value: {props.initial.value}
         </div>
       </div>
     );
@@ -116,10 +116,10 @@ const greetingStyles = css`
 
 defineComponent(
   "dathra-greeting",
-  ({ name }) => {
+  ({ props }) => {
     return (
       <div>
-        <h3>Hello, {name.value}!</h3>
+        <h3>Hello, {props.name.value}!</h3>
         <p>This is a custom Web Component created with Dathra.</p>
       </div>
     );
