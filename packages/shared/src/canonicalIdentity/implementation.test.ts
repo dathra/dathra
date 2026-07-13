@@ -13,6 +13,27 @@ import {
   type Sha256Digest,
 } from "./implementation";
 
+/* eslint-disable @typescript-eslint/consistent-type-imports -- Negative export probes must query missing types. */
+// @ts-expect-error Canonical Identity types remain package-internal.
+type _T01 = import("../index").CanonicalIdentityErrorCode;
+// @ts-expect-error Canonical Identity types remain package-internal.
+type _T02 = import("../index").CanonicalIdentityPathSegment;
+// @ts-expect-error Canonical Identity types remain package-internal.
+type _T03 = import("../index").CanonicalJsonEncoding;
+// @ts-expect-error Canonical Identity types remain package-internal.
+type _T04 = import("../index").CanonicalJsonText;
+// @ts-expect-error Canonical Identity types remain package-internal.
+type _T05 = import("../index").CanonicalJsonValue;
+// @ts-expect-error Canonical Identity types remain package-internal.
+type _T06 = import("../index").QualifiedId<string>;
+// @ts-expect-error Canonical Identity types remain package-internal.
+type _T07 = import("../index").QualifiedIdInput<string>;
+// @ts-expect-error Canonical Identity types remain package-internal.
+type _T08 = import("../index").QualifiedIdPreimage<string>;
+// @ts-expect-error Canonical Identity types remain package-internal.
+type _T09 = import("../index").Sha256Digest;
+/* eslint-enable @typescript-eslint/consistent-type-imports */
+
 const EMPTY_SHA256 = "sha-256:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU";
 const ABC_SHA256 = "sha-256:ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0";
 
@@ -293,18 +314,60 @@ describe("SHA-256 digest", () => {
     await expect(digestPromise).resolves.toBe(ABC_SHA256);
   });
 
-  it("copies typed array bytes without invoking an overridden iterator", async () => {
+  it("copies typed array bytes without invoking overridden input hooks", async () => {
     const bytes = new TextEncoder().encode("abc");
     let iteratorCalls = 0;
+    let methodCalls = 0;
     Object.defineProperty(bytes, Symbol.iterator, {
       value: () => {
         iteratorCalls += 1;
         return new Uint8Array([0])[Symbol.iterator]();
       },
     });
+    Object.defineProperty(bytes, "set", {
+      value: () => {
+        methodCalls += 1;
+      },
+    });
 
     await expect(sha256Digest(bytes)).resolves.toBe(ABC_SHA256);
     expect(iteratorCalls).toBe(0);
+    expect(methodCalls).toBe(0);
+  });
+
+  it("rejects Uint8Array proxies without invoking their traps", async () => {
+    const bytes = new TextEncoder().encode("abc");
+    let trapCalls = 0;
+    const proxy = new Proxy(bytes, {
+      get(_target, property) {
+        trapCalls += 1;
+        if (property === Symbol.iterator) {
+          return function* iterator(): Generator<number> {
+            yield 0;
+          };
+        }
+        return undefined;
+      },
+    });
+
+    await expect(sha256Digest(proxy)).rejects.toMatchObject({
+      code: "unsupported-value",
+      path: [],
+    });
+    expect(trapCalls).toBe(0);
+  });
+
+  it("rejects non-Uint8 views and detached Uint8Array buffers", async () => {
+    await expect(
+      Reflect.apply(sha256Digest, undefined, [new Uint16Array([0x6162])]),
+    ).rejects.toMatchObject({ code: "unsupported-value", path: [] });
+
+    const detached = new Uint8Array([1, 2, 3]);
+    structuredClone(detached.buffer, { transfer: [detached.buffer] });
+    await expect(sha256Digest(detached)).rejects.toMatchObject({
+      code: "unsupported-value",
+      path: [],
+    });
   });
 
   it("snapshots canonical values before returning the promise", async () => {
@@ -324,6 +387,28 @@ describe("SHA-256 digest", () => {
       code: "crypto-unavailable",
       path: [],
     });
+  });
+
+  it("rejects noncanonical WebCrypto SHA-256 output", async () => {
+    const digest = vi.fn().mockResolvedValue(new Uint8Array([0]).buffer);
+    vi.stubGlobal("crypto", { subtle: { digest } });
+
+    await expect(sha256Digest(new Uint8Array())).rejects.toMatchObject({
+      code: "crypto-unavailable",
+      path: [],
+    });
+    expect(digest).toHaveBeenCalledOnce();
+  });
+
+  it("normalizes WebCrypto SHA-256 operation failures", async () => {
+    const digest = vi.fn().mockRejectedValue(new Error("host failure"));
+    vi.stubGlobal("crypto", { subtle: { digest } });
+
+    await expect(sha256Digest(new Uint8Array())).rejects.toMatchObject({
+      code: "crypto-unavailable",
+      path: [],
+    });
+    expect(digest).toHaveBeenCalledOnce();
   });
 
   it.each([
@@ -555,9 +640,11 @@ describe("createQualifiedId", () => {
 
 describe("package boundary", () => {
   it("keeps canonical identity internal until a production consumer exists", () => {
+    expect(publicApi).not.toHaveProperty("CanonicalIdentityError");
     expect(publicApi).not.toHaveProperty("canonicalizeJson");
     expect(publicApi).not.toHaveProperty("sha256Digest");
     expect(publicApi).not.toHaveProperty("digestCanonicalJson");
     expect(publicApi).not.toHaveProperty("createQualifiedId");
+    expect(publicApi).not.toHaveProperty("isSha256Digest");
   });
 });

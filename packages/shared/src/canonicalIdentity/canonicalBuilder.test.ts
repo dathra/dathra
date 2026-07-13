@@ -13,6 +13,15 @@ import {
   type CanonicalIdentityPathSegment,
 } from "./implementation";
 
+/* eslint-disable @typescript-eslint/consistent-type-imports -- Negative export probes must query missing types. */
+// @ts-expect-error Canonical builder types remain package-internal.
+type _T01 = import("../index").CanonicalBuilderFailure;
+// @ts-expect-error Canonical builder types remain package-internal.
+type _T02 = import("../index").CanonicalBuilderInstrumentation;
+// @ts-expect-error Canonical builder types remain package-internal.
+type _T03 = import("../index").CanonicalSortInstrumentation;
+/* eslint-enable @typescript-eslint/consistent-type-imports */
+
 function failBuilder(
   code: string,
   path: readonly (string | number)[],

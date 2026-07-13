@@ -88,6 +88,8 @@ class CanonicalIdentityError extends TypeError {
 const SHA256_DIGEST_PATTERN = /^sha-256:[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/;
 const BASE64URL_ALPHABET =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+// eslint-disable-next-line @typescript-eslint/unbound-method -- The intrinsic is invoked with an internal snapshot as its this value.
+const UINT8_ARRAY_SET = Uint8Array.prototype.set;
 
 function formatPath(path: readonly CanonicalIdentityPathSegment[]): string {
   if (path.length === 0) {
@@ -113,6 +115,57 @@ function fail(
     path,
     `[dathra] ${detail} at ${formatPath(path)}`,
   );
+}
+
+function readTypedArrayIntrinsic(
+  value: unknown,
+  property: "length" | typeof Symbol.toStringTag,
+): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(
+    Object.getPrototypeOf(Uint8Array.prototype),
+    property,
+  );
+  if (descriptor?.get === undefined) {
+    return undefined;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/unbound-method -- The intrinsic getter must receive the candidate as its this value.
+  return Reflect.apply(descriptor.get, value, []);
+}
+
+function hasUint8ArrayBrand(value: unknown): value is Uint8Array {
+  if (!ArrayBuffer.isView(value)) {
+    return false;
+  }
+
+  return readTypedArrayIntrinsic(value, Symbol.toStringTag) === "Uint8Array";
+}
+
+function snapshotUint8Array(value: unknown): Uint8Array<ArrayBuffer> {
+  if (!hasUint8ArrayBrand(value)) {
+    fail("unsupported-value", [], "SHA-256 input must be a genuine Uint8Array");
+  }
+
+  const length = readTypedArrayIntrinsic(value, "length");
+  if (typeof length !== "number") {
+    fail(
+      "unsupported-value",
+      [],
+      "SHA-256 input must expose an intrinsic byte length",
+    );
+  }
+
+  try {
+    const snapshot = new Uint8Array(length);
+    Reflect.apply(UINT8_ARRAY_SET, snapshot, [value]);
+    return snapshot;
+  } catch {
+    return fail(
+      "unsupported-value",
+      [],
+      "SHA-256 input must use an attached backing buffer",
+    );
+  }
 }
 
 function validateUnicode(
@@ -270,14 +323,26 @@ function isSha256Digest(value: unknown): value is Sha256Digest {
 
 /** Computes a canonical SHA-256 digest from an exact byte snapshot. */
 async function sha256Digest(bytes: Uint8Array): Promise<Sha256Digest> {
-  const snapshot = new Uint8Array(bytes);
+  const snapshot = snapshotUint8Array(bytes);
   const cryptoHost: { readonly crypto?: Crypto } = globalThis;
   const subtle = cryptoHost.crypto?.subtle;
-  if (subtle === undefined) {
+  if (subtle === undefined || typeof subtle.digest !== "function") {
     fail("crypto-unavailable", [], "WebCrypto SubtleCrypto is unavailable");
   }
 
-  const digest = new Uint8Array(await subtle.digest("SHA-256", snapshot));
+  let digest: Uint8Array;
+  try {
+    digest = new Uint8Array(await subtle.digest("SHA-256", snapshot));
+  } catch {
+    return fail("crypto-unavailable", [], "WebCrypto SHA-256 operation failed");
+  }
+  if (digest.byteLength !== 32) {
+    fail(
+      "crypto-unavailable",
+      [],
+      "WebCrypto returned a noncanonical SHA-256 result",
+    );
+  }
   return `sha-256:${encodeBase64Url(digest)}` as Sha256Digest;
 }
 
