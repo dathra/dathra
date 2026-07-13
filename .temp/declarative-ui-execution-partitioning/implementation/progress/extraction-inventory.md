@@ -14,6 +14,7 @@
 - main起点のbranchで差分を説明できる。
 - 対象範囲のtest、型検査、lint、formatを実行できる。
 - push後にPRを作成し、default branchへ入れる判断を独立して行える。
+- PR作成時に`takuma-ru`をassigneeへ設定し、CI結果を確認する。
 
 「将来使う可能性がある」だけでは回収しない。
 consumerが存在しないcontractは、consumerと同じPRで有効性を検証できるまで元branchへ保留する。
