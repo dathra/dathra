@@ -8085,6 +8085,14 @@ SC02A8D-Wはplanを構築するがsource固有fieldを解釈せず、`beforeDesc
 SC02A8E-C、A8E-R、A8E-Pはdisjoint focused module/testとして並列reviewできる。
 SC02A8E-Iだけが三profileを組み合わせ、source profile全体をwalkerへ渡す。
 
+C、R、Pのprofile hookはframework-ownedなinternal boundaryとし、public extensibility pointにしない。
+hookへ渡すoccurrence、captured header、captured view、およびviewから到達できるcaller-owned valueはread-only observationである。
+hookが変更してよいのは、渡されたoperation-local ledgerとcaller objectを保持しないboundedなprofile-owned operation-local stateだけとする。
+
+Iは各phaseで適用可能なC、R、Pのmethodをこの順に一回だけ呼び、同じoccurrence、headerまたはview、同一ledger objectを転送する。
+先行methodが失敗した場合は後続methodを呼ばず、errorとfailure pathを変換しない。
+I自身はcounterを課金せず、successとfailureの両方でhook入力とcaller descriptorが変化しないことをfocused testで検証する。
+
 #### bounded canonical measurement の実装分割
 
 canonical identity workはhostile-input boundaryからさらに分ける。
