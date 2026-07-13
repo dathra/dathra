@@ -1588,3 +1588,17 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - factoryとprofileがpackage-local facade、shared root、generated root declarationへ公開されないことを検査する
   ],
 )
+
+#feature_spec(
+  name: "Execution-source profile post-call lifetime",
+  summary: [
+    liveなsource profileが同期hook callの完了後にhook引数またはcaller-owned valueを保持しないことを、composition coreと独立して検査する。
+  ],
+  test_cases: [
+    - composite profileをstrongly liveに保ったまま、successとchild failureの両方でoccurrence、header、view、ledger、caller-owned valueが回収可能になることを検査する
+    - 同じharnessへ引数を保持するmutant profileを渡し、negative controlのWeakRef targetが回収されないことを検査する
+    - child failureのerror identityを変換せず、failure後にもprofileがliveであることを検査する
+    - 明示GC collector取得後とtest cleanup後にV8 expose-GC flagをdisabledへ戻し、新しいVM contextへ`gc`を残さないことを検査する
+    - production、counter、hook順序、facade、shared root、generated artifact、public APIを変更しないことを検査する
+  ],
+)
