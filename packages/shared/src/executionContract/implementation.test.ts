@@ -411,6 +411,7 @@ describe("ExecutionContractError", () => {
     expect("createSourceCollectionProfile" in executionContractApi).toBe(false);
     expect("createSourceReferenceProfile" in executionContractApi).toBe(false);
     expect("createSemanticPathProfile" in executionContractApi).toBe(false);
+    expect("createSourceProfile" in executionContractApi).toBe(false);
     expect("ActiveAncestorTracker" in executionContractApi).toBe(false);
     expect("ClosedDataOccurrence" in executionContractApi).toBe(false);
     expect("ClosedDataPlan" in executionContractApi).toBe(false);

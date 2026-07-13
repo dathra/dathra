@@ -38,6 +38,8 @@ SC02A8E-Rはexecution sourceのpotential reference cardinalityだけをwalkerの
 
 SC02A8E-Pはexecution sourceのpotential SemanticPath segment cardinalityだけをwalkerのdescriptor前profileとして追加する。
 
+SC02A8E-IはC、R、Pのinternal profileを一つのexecution-source profileへcompositionする。
+
 unknown input preflight、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
@@ -337,6 +339,26 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - shared path aliasもtarget occurrenceごとに再課金し、failure pathは対象path arrayとする
     - role stateはoccurrence IDとstructural roleだけをown data propertyとして保持し、mutableな`Map.prototype`へ依存しない
     - occurrence、header、caller objectを変更または保持せず、factoryとprofileをpackage-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
+#adr(
+  header("source profile compositionをcounter semanticsから分離する", Status.Accepted, "2026-07-13"),
+  [
+    C、R、Pをwalker call siteごとに個別呼び出しすると、hook順序、ledger identity、exactly-once、failure short-circuitが複数箇所へ分散する。
+    composition adapterが独自counterまたはsource ruleを持つと、child profileとの二重課金とowner重複が生じる。
+  ],
+  [
+    freshなsource profileはcompleted C、R、P profileを一つずつ作成し、両hook phaseで同じ引数をC、R、Pの順に一回ずつ同期転送する。
+    先行methodが失敗した場合は後続methodを呼ばず、errorとfailure pathを変換しない。
+    adapter自身はcounterを課金せず、hook引数を変更または同期call後に保持しない。
+  ],
+  [
+    - `beforeDescriptors`と`beforeChildren`はoccurrence、headerまたはview、ledgerのobject identityを保つ
+    - adapterはC、R、Pのbounded operation-local stateだけを所有し、caller objectへ新しい参照を保持しない
+    - child profile inputとcaptured viewから到達できるcaller-owned valueをread-only observationとして扱う
+    - source field、counter、parser、closure、clone、identity、trust、authority、client permissionを追加しない
+    - factoryとprofileをpackage-local facade、shared root、generated root declarationへ公開しない
   ],
 )
 
@@ -1080,6 +1102,28 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   ],
 )
 
+#interface_spec(
+  name: "Execution-source profile composition",
+  summary: [
+    collection、reference、SemanticPathのcompleted profileを一つのwalker profileへexactly-onceでcompositionするinternal factoryを提供する。
+  ],
+  format: [
+    ```typescript
+    function createSourceProfile(): ClosedDataProfile
+    ```
+  ],
+  constraints: [
+    - factoryはfreshなC、R、P child profileとfreshなcomposite profileを毎回作成する
+    - `beforeDescriptors`は同じoccurrence、header、ledgerをC、R、Pの順に各一回転送する
+    - `beforeChildren`は同じoccurrence、view、ledgerをC、R、Pの順に各一回転送する
+    - 先行child methodが失敗したphaseでは後続child methodを呼ばず、error identity、code、pathを変換しない
+    - adapter自身はledger methodを呼ばず、counterとfailure pathを追加しない
+    - hook引数とcaptured viewから到達できるcaller-owned valueを変更せず、同期call完了後に保持しない
+    - child profile、source field、parser、closure、clone、canonical、identity、trust、authority、client permissionを変更しない
+    - internal moduleだけがfactoryをexportし、package-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -1525,5 +1569,22 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - mutableな`Map.prototype`とinherited array setterに依存せずrole stateを構築することを検査する
     - successとfailureの両方でcaller data、occurrence、headerを変更せず、caller objectをrole stateへ保持しないことを検査する
     - factory、profile、role stateがpackage-local facade、shared root、generated root declarationへ公開されないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Execution-source profile composition",
+  summary: [
+    C、R、P profileを同一walker phaseへ一回ずつcompositionし、counter semanticsを追加せずsource preflightを提供する。
+  ],
+  test_cases: [
+    - 両hook phaseでC、R、Pが固定順に一回ずつ呼ばれ、occurrence、headerまたはview、ledgerのidentityが同一であることを検査する
+    - C、R、Pのactual counterを一つのsourceでexactまで受理し、各counterのlimit+1がchild profile固有pathで失敗することを検査する
+    - descriptor phaseとchildren phaseの各先行failureが後続methodを呼ばず、同じerrorとimmutable pathを送出することを検査する
+    - adapterがledger methodを直接呼ばず、child profile chargeを二重適用しないことを検査する
+    - successとfailureの両方でoccurrence、header、view、caller descriptorとcaller-owned valueを変更しないことを検査する
+    - fresh composite operationがC、R、Pのchild stateを共有しないことを検査する
+    - exact internal signatureとtype fixtureのruntime code不在を検査する
+    - factoryとprofileがpackage-local facade、shared root、generated root declarationへ公開されないことを検査する
   ],
 )
