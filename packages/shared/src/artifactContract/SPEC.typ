@@ -20,7 +20,8 @@ deployment identityのpersistent identity inputをexactなclosed productとし�
 
 artifact addressのpersistent identity inputをcanonical schema順序のexactなclosed productとして固定し、unsupportedなkind、欠落したfield、変更されたproperty modifierを後続のvalidationとidentity operationへ混入させないpackage-localなtypeを定義する。
 
-これらのAPIはtype-only foundationであり、runtime operationとshared package rootの公開面を増やさない。
+identity input APIはtype-only foundationとして維持し、artifact contract errorだけをpackage-localなruntime foundationとして追加する。
+shared package rootの公開面は増やさない。
 
 == 設計判断
 
@@ -199,6 +200,33 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
     2. *kindをopenなstringにする*: unsupportedなartifact kindをidentity inputから拒否できないため採用しない
     3. *collection invariantをtypeへ埋め込む*: ordering、duplicates、referent existence、cross-field consistencyをstructural typeだけでは証明できないため採用しない
     4. *validatorまたはdigest operationを同時に提供する*: untrustedなtype-level vocabularyへcanonicalityまたはidentityの証明責務を混入させるため採用しない
+  ],
+)
+
+#adr(
+  header("artifact contract failureをimmutableなpackage-local errorにする", Status.Accepted, "2026-07-13"),
+  [
+    後続のsnapshot、validator、digest、URL、closure operationは、failure categoryとinput root相対pathを同じerror contractで伝える必要がある。
+    operationごとのad hoc error、mutable path、openなstring codeを許すと、caller mutationと未定義codeによりfailure observationが不安定になる。
+  ],
+  [
+    `ArtifactContractErrorCode`を採択済み10 literalのexact union、`ArtifactContractError`を`TypeError`のsubclassとして定義する。
+    constructorはcaller pathをfresh arrayへcopyしてfreezeし、`name`、`code`、`path`を初期化した後にerror object自身をfreezeする。
+    stable observationはclass、`TypeError`継承、`name`、`code`、root-relative `path`だけとし、message文言とstackはcontractにしない。
+    internal operation向けに`fail(code, path, detail): never`をerror moduleから提供するが、package-local facadeは`ArtifactContractError`と`ArtifactContractErrorCode`だけを提供する。
+    path alias、path formatter、`fail`、budget、ledger、snapshot、parser、validator、canonical meter、digest、URL、closureはfacadeへ追加しない。
+  ],
+  [
+    - 後続contract operationはexact codeとimmutable pathを共通のfailure boundaryとして再利用できる
+    - callerが元pathまたは元code variableを変更しても構築済みerrorの観測は変化しない
+    - error objectの存在はidentity、trust、provenance、placement、client inclusion、runtime admissionを証明しない
+    - shared package rootとgenerated root declarationへの公開はAS01に残る
+  ],
+  alternatives: [
+    1. *plain `TypeError`とmessageだけを使う*: stableなfailure categoryとmachine-readable pathを失うため採用しない
+    2. *path aliasまたはformatterをfacadeへ公開する*: 採択済みsurfaceを越えてhelper contractを固定するため採用しない
+    3. *budgetまたはvalidatorと同時に実装する*: 独立してgreenにできるerror foundationへoperation semanticsを混入させるため採用しない
+    4. *message全文またはstackをstable contractにする*: engine差とdiagnostic改善をAPI compatibilityへ結びつけるため採用しない
   ],
 )
 
@@ -444,6 +472,57 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
   ],
 )
 
+#interface_spec(
+  name: "Artifact contract error",
+  summary: [
+    artifact contract operationのfailure categoryとinput root相対pathを、immutableなpackage-local `TypeError`として表す。
+  ],
+  format: [
+    ```typescript
+    type ArtifactContractErrorCode =
+      | "invalid-closed-record"
+      | "invalid-field"
+      | "invalid-url"
+      | "noncanonical-order"
+      | "duplicate-record"
+      | "dangling-reference"
+      | "kind-mismatch"
+      | "semantic-mismatch"
+      | "budget-exceeded"
+      | "crypto-unavailable"
+
+    class ArtifactContractError extends TypeError {
+      readonly code: ArtifactContractErrorCode
+      readonly path: readonly (string | number)[]
+
+      constructor(
+        code: ArtifactContractErrorCode,
+        path: readonly (string | number)[],
+        message: string,
+      )
+    }
+
+    function fail(
+      code: ArtifactContractErrorCode,
+      path: readonly (string | number)[],
+      detail: string,
+    ): never
+    ```
+  ],
+  constraints: [
+    - error codeは記載した10 literalと双方向に一致し、`never`または`string`へ変化しない
+    - unsupportedなerror codeを代入できない
+    - `ArtifactContractError`は`TypeError`を継承し、`name`を`ArtifactContractError`に固定する
+    - `code`と`path`はrequiredかつreadonlyであり、constructorのpath typeはhelper aliasを介さずinlineにする
+    - constructorはcaller pathとidentityが異なるfresh arrayをfreezeし、error object自身もfreezeする
+    - source path、source code variable、error path、error codeの変更を試みても構築済みerrorの観測は変化しない
+    - `fail`は受け取ったexact codeとpathを新しいimmutable errorへ転送し、detailとpath diagnosticをmessageへ含める
+    - message全文とstackはstable contractにしない
+    - facadeはruntime valueとして`ArtifactContractError`、typeとして`ArtifactContractErrorCode`だけをerror moduleから提供する
+    - `fail`、path alias、path formatterはfacadeまたはshared package rootから提供しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -592,6 +671,30 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
   ],
 )
 
+#behavior_spec(
+  name: "Immutable artifact contract failure boundary",
+  summary: [
+    後続operationが受け取ったexact failure codeとroot-relative pathを、caller mutationから分離したerrorとしてthrowする。
+  ],
+  preconditions: [
+    - codeが採択済み10 literalのいずれかである
+    - pathがstringまたはnumberからなるreadonly sequenceである
+    - detailがdiagnostic用stringである
+  ],
+  steps: [
+    1. constructorまたは`fail`へ渡されたpathをfresh arrayへcopyする
+    2. copied pathをfreezeし、fixed name、exact code、copied pathをerrorへ設定する
+    3. error objectをfreezeする
+    4. `fail`はdetailとpath diagnosticをmessageに含む`ArtifactContractError`をthrowする
+  ],
+  postconditions: [
+    - errorは`TypeError`かつ`ArtifactContractError`であり、name、code、pathを安定して観測できる
+    - source pathとerror pathはidentityを共有せず、両者への後続mutationでerror observationは変わらない
+    - message全文とstackには互換性保証を与えない
+    - error constructionだけではinput acceptance、canonicality、identity、trust、provenance、placement、client inclusion、runtime admissionを表さない
+  ],
+)
+
 == 機能仕様
 
 #feature_spec(
@@ -618,8 +721,8 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
     - `ArtifactAddressId`からgeneric digestとstringへの代入成功を検査する
     - 別brandとの直接代入を両方向で拒否することを検査する
     - creator、parser、guardがfacadeに存在しないことを検査する
-    - facadeのASTが7個のfocused modelから現行の8 typeだけを採択済み順序でtype-only exportすることを検査する
-    - facade、全7 model、全type fixtureのmemory emitがmodule marker `export {};`だけであることを検査する
+    - facadeのASTがerror moduleと7個のfocused modelから`ArtifactContractError` runtime valueと現行の9 typeだけを採択済み順序でexportすることを検査する
+    - error moduleとfacadeのmemory emitが意図したruntime valueだけを持ち、全7 modelと全type fixtureはmodule marker `export {};`だけであることを検査する
     - type-only consumerのmemory emitにruntime import edgeがないことを検査する
     - shared package rootから`ArtifactAddressId`をimportできないことを検査する
   ],
@@ -661,11 +764,11 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
     - `keyof`と全property typeが期待型と双方向に一致することを検査する
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing、extra、optional、mutable、widened variantがexact contractと一致しないことを検査する
-    - facadeのASTが7個のfocused modelから現行の`ArtifactAddressId`、`ArtifactFinalizationTemplate`、`ArtifactEntryRole`、`ArtifactEntryBinding`、`ArtifactDependencyBinding`、`ArtifactExportBinding`、`DeploymentIdentityPreimage`、`ArtifactAddressPreimage`だけをこの順でtype-only exportすることを検査する
-    - facade、全model、全type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - facadeのASTが`ArtifactContractError`をruntime value、`ArtifactContractErrorCode`と現行8 typeを採択済み順序でtype-only exportすることを検査する
+    - facadeのruntime emitはerror classだけをre-exportし、全model、全type fixture、type-only consumerはruntime edge、value、effectを持たないことを検査する
     - validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared package rootから`ArtifactFinalizationTemplate`をimportできないことを検査する
-    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の8 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceにartifact contract errorと現行の8 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
   ],
 )
 
@@ -700,11 +803,11 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
     - `keyof`と全property typeが期待型と双方向に一致することを検査する
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing、extra、optional、mutable、widened、role変更、ordinal変更variantがexact contractと一致しないことを非空なnegative fixtureで検査する
-    - facadeのASTが7個のfocused modelから現行の8 typeだけを採択済み順序でtype-only exportすることを検査する
-    - facade、全model、type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - facadeのASTがerror moduleと7個のfocused modelから`ArtifactContractError` runtime valueと現行の9 typeだけを採択済み順序でexportすることを検査する
+    - facadeのruntime emitはerror classだけをre-exportし、全model、type fixture、type-only consumerはruntime edge、value、effectを持たないことを検査する
     - validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared package rootから`ArtifactEntryRole`と`ArtifactEntryBinding`をimportできないことを検査する
-    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の8 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceにartifact contract errorと現行の8 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
   ],
 )
 
@@ -744,11 +847,11 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
     - kind unionが期待する4 literalと双方向に一致することを検査する
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing、extra、optional、mutable、widened、kind変更、target address変更、target export nullability変更variantがexact contractと一致しないことを非空なnegative fixtureで検査する
-    - facadeのASTが7個のfocused modelから採択済み8 typeだけを採択済み順序でtype-only exportし、禁止されたhelper aliasをexportしないことを検査する
-    - facade、全7 model、全type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - facadeのASTがerror moduleと7個のfocused modelから`ArtifactContractError` runtime valueと現行の9 typeだけを採択済み順序でexportし、禁止されたhelper aliasをexportしないことを検査する
+    - facadeのruntime emitはerror classだけをre-exportし、全7 model、全type fixture、type-only consumerはruntime edge、value、effectを持たないことを検査する
     - validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared package rootから`ArtifactDependencyBinding`をimportできないことを検査する
-    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに現行の8 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
+    - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceにartifact contract errorと現行の8 typeと禁止されたhelper aliasが存在せず、既存root typeが存在することを検査する
   ],
 )
 
@@ -788,8 +891,8 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing `memberSemanticId`、extra `integrity`、optional、all-mutable、両string fieldの`string | null` widening、unsupported role variantがexact contractと一致しないことを非空なnegative fixtureで検査する
     - model ASTが1個のinterface、`exportName`、`memberSemanticId`、`exportRole`の順の3 property、directな6-string-literal role union、0個のtype alias、`ArtifactExportBinding`だけのnamed type-only exportを持つことを検査する
-    - facadeのASTが7個のfocused modelから採択済み8 typeだけを採択済み順序でtype-only exportし、追加statementを持たないことを検査する
-    - facade、export binding model、type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - facadeのASTがerror moduleと7個のfocused modelから`ArtifactContractError` runtime valueと現行の9 typeだけを採択済み順序でexportし、追加statementを持たないことを検査する
+    - facadeのruntime emitはerror classだけをre-exportし、export binding model、type fixture、type-only consumerはruntime edge、value、effectを持たないことを検査する
     - package-local facadeから`ArtifactExportBinding`をtype-only importでき、shared package rootからはimportできないことを検査する
     - standalone export table、validator、identity operation、URL、integrity、closureがfacadeに存在しないことを検査する
     - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに`ArtifactExportBinding`と`ArtifactExportRole`が存在せず、positive controlとして`Sha256Digest`が存在することを検査する
@@ -830,8 +933,8 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
     - 全propertyがrequiredかつreadonlyであることをmodifier-sensitive fixtureで検査する
     - missing、extra、optional、mutable、wrong schema、widened digest、widened string variantがexact contractと一致しないことを非空なnegative fixtureで検査する
     - model ASTが1個のinterface、採択済み順序の7 property、0個のtype alias、`Sha256Digest`だけのtype-only import、`DeploymentIdentityPreimage`だけのnamed type-only exportを持つことを検査する
-    - facadeのASTが7個のfocused modelから採択済み8 typeだけを採択済み順序でtype-only exportし、追加statementを持たないことを検査する
-    - facade、deployment identity model、type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - facadeのASTがerror moduleと7個のfocused modelから`ArtifactContractError` runtime valueと現行の9 typeだけを採択済み順序でexportし、追加statementを持たないことを検査する
+    - facadeのruntime emitはerror classだけをre-exportし、deployment identity model、type fixture、type-only consumerはruntime edge、value、effectを持たないことを検査する
     - package-local facadeから`DeploymentIdentityPreimage`をtype-only importでき、shared package rootからはimportできないことを検査する
     - deployment identity alias、brand、snapshot、validator、parser、creator、digest operation、URLがfacadeに存在しないことを検査する
     - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに`DeploymentIdentityPreimage`、`DeploymentIdentityDigest`、`DeploymentIdentityId`が存在せず、positive controlとして`Sha256Digest`が存在することを検査する
@@ -876,11 +979,45 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
     - missing、extra、optional、mutable、wrong schema、widened digest、widened kind、mutable collection variantがexact contractと一致しないことを非空なnegative fixtureで検査する
     - empty、duplicate、unsorted、dangling、role mismatch、kind/template mismatch stateが`ArtifactAddressPreimage`へ代入可能であることを検査する
     - model ASTが1個のinterface、canonical schema順序の10 property、directな3-string-literal `kind` union、0個のtype alias、必要なtypeだけのtype-only import、`ArtifactAddressPreimage`だけのnamed type-only exportを持つことを検査する
-    - facadeのASTが7個のfocused modelから採択済み8 typeだけを採択済み順序でtype-only exportし、追加statementを持たないことを検査する
-    - facade、artifact address preimage model、type fixture、type-only consumerのmemory emitがruntime edge、value、effectを持たないことを検査する
+    - facadeのASTがerror moduleと7個のfocused modelから`ArtifactContractError` runtime valueと現行の9 typeだけを採択済み順序でexportし、追加statementを持たないことを検査する
+    - facadeのruntime emitはerror classだけをre-exportし、artifact address preimage model、type fixture、type-only consumerはruntime edge、value、effectを持たないことを検査する
     - package-local facadeから`ArtifactAddressPreimage`をtype-only importでき、shared package rootからはimportできないことを検査する
     - `ArtifactKind`、source alias、validator、normalizer、parser、creator、digest operation、address issuance、URL、integrity、trust、provenance、closureがfacadeに存在しないことを検査する
     - shared packageを一時出力先へbuildし、生成された`index.d.mts`と`index.d.cts`のexport surfaceに`ArtifactAddressPreimage`、`ArtifactKind`、`ArtifactAddressPreimageSource`が存在せず、positive controlとして`Sha256Digest`が存在することを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Package-local artifact contract error foundation",
+  summary: [
+    後続operationのbudget、snapshot、parser、validator、canonical meter、digest、URL、closureを先取りせず、exact codeを持つimmutable error foundationだけを提供する。
+  ],
+  api: [
+    ```typescript
+    export { ArtifactContractError } from "./error"
+    export type { ArtifactContractErrorCode } from "./error"
+    ```
+  ],
+  edge_cases: [
+    - code unionへ`digest-mismatch`、`integrity-mismatch`、`authentication-failed`またはfallback codeを追加しない
+    - schema version違反とaddress lexical formは後続operationで`invalid-field`を使い、新しいcodeを追加しない
+    - caller pathを保持または共有せず、fresh frozen copyだけをerrorへ保持する
+    - `fail`、path alias、path formatterをfacadeへexportしない
+    - shared package rootまたはgenerated root declarationへerror classとcodeをexportしない
+    - budget、ledger、snapshot、parser、validator、precedence、canonical meter、digest、URL、closureを実装しない
+    - errorをidentity、trust、provenance、placement、client inclusion、runtime admissionの証拠として扱わない
+  ],
+  test_cases: [
+    - code unionが採択済み10 literalと双方向に一致し、`never`ではなく、unsupported codeを拒否することをtype fixtureで検査する
+    - constructor signature、required readonly fields、inline path typeをtype fixtureで検査する
+    - `TypeError`継承、fixed name、exact code、source pathとのidentity分離、path freeze、error freezeをruntimeで検査する
+    - source path、source code variable、error path、error codeへのmutation後もerror observationが変わらないことを検査する
+    - `fail`がexact codeとpathを転送してimmutable errorをthrowし、messageにdetailとpath diagnosticが存在することだけを検査する
+    - facadeのruntime inventoryが`ArtifactContractError`だけ、type inventoryが現行8 typeと`ArtifactContractErrorCode`だけであることをASTとmemory emitで検査する
+    - error moduleが`ArtifactContractError`とinternal `fail`だけをruntime exportし、`ArtifactContractErrorCode`だけをtype exportし、path aliasとformatterをexportしないことを検査する
+    - shared root sourceとbuild後の`index.d.mts`、`index.d.cts`にerror class、code、`fail`、path aliasが存在しないことを検査する
+    - facadeに`fail`、path alias、formatter、budget、ledger、snapshot、parser、validator、precedence、canonical meter、digest、URL、closureが存在しないことを検査する
+    - error type fixtureのmemory emitがmodule marker `export {};`だけであることを検査する
   ],
 )
 
@@ -894,6 +1031,9 @@ artifact addressのpersistent identity inputをcanonical schema順序のexactな
 - deployment identityのhostile input snapshotはAR01-DS、semantic canonical validationはAR01-DV、validated preimage全体のcanonical digestはAR01-DDが所有する
 - artifact address preimageのtype-only aggregateはAR01-Pが所有し、AR01-DDのgeneric digestを入力として受け取る
 - artifact URL、exact-byte integrity、artifact closureは後続unitが所有する
+- AR01-Eはimmutable error constructionだけを所有し、budgetとledgerはAR01-B、descriptor snapshotはAR01-DSとAR01-PS、canonical meterは後続resource revisionが所有する
+- error codeごとのnested path prefix、failure precedence、budget counter pathは各operationのSPECが所有する
+- `fail`、path formatter、path helper aliasはpackage-local facadeとshared package rootへ公開しない
 - SC01 migrationはAR01-I後のintegration unitが所有する
 - このunitはcanonicality、provenance acceptance、trust admission、referent closure、artifact existence、exact-byte integrityを表さない
 - runtime cast helperと任意のcanonical SHA-256文字列をbrand化するAPIを追加しない

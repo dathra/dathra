@@ -18,7 +18,9 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import { type Sha256Digest } from "../canonicalIdentity/implementation";
 import * as artifactContractApi from "./implementation";
 import {
+  ArtifactContractError,
   type ArtifactAddressPreimage,
+  type ArtifactContractErrorCode,
   type ArtifactDependencyBinding,
   type ArtifactEntryBinding,
   type ArtifactExportBinding,
@@ -167,11 +169,17 @@ describe("artifact contract type domains", () => {
     expectTypeOf<ExpectedArtifactAddressPreimage>().toEqualTypeOf<ArtifactAddressPreimage>();
   });
 
-  it("exposes no runtime values from the package-local facade", () => {
-    expect(Object.keys(artifactContractApi)).toEqual([]);
+  it("exposes only the artifact contract error at runtime", () => {
+    expect(Object.keys(artifactContractApi)).toEqual(["ArtifactContractError"]);
+    expect(artifactContractApi.ArtifactContractError).toBe(
+      ArtifactContractError,
+    );
+    expectTypeOf<ArtifactContractErrorCode>().toEqualTypeOf<
+      ArtifactContractError["code"]
+    >();
   });
 
-  it("exports exactly eight package-local types from seven focused models", () => {
+  it("exports exactly one value and nine package-local types", () => {
     const relativePath = "./implementation.ts";
     const source = readFileSync(new URL(relativePath, import.meta.url), "utf8");
     const sourceFile = createSourceFile(
@@ -210,6 +218,26 @@ describe("artifact contract type domains", () => {
         };
       }),
     ).toEqual([
+      {
+        isTypeOnly: false,
+        moduleSpecifier: "./error",
+        exports: [
+          {
+            exportedName: "ArtifactContractError",
+            localName: "ArtifactContractError",
+          },
+        ],
+      },
+      {
+        isTypeOnly: true,
+        moduleSpecifier: "./error",
+        exports: [
+          {
+            exportedName: "ArtifactContractErrorCode",
+            localName: "ArtifactContractErrorCode",
+          },
+        ],
+      },
       {
         isTypeOnly: true,
         moduleSpecifier: "./model",
@@ -287,9 +315,9 @@ describe("artifact contract type domains", () => {
     ]);
   });
 
-  it("emits the facade and all seven models only as module markers", () => {
+  it("emits only the error runtime edge from the facade", () => {
     expect(emitTypeScriptModule("./implementation.ts").trim()).toBe(
-      "export {};",
+      'export { ArtifactContractError } from "./error";',
     );
     expect(emitTypeScriptModule("./model.ts").trim()).toBe("export {};");
     expect(emitTypeScriptModule("./finalizationTemplateModel.ts").trim()).toBe(
@@ -318,6 +346,9 @@ describe("artifact contract type domains", () => {
         "./artifactAddressPreimageModel.type-fixture.ts",
       ).trim(),
     ).toBe("export {};");
+    expect(emitTypeScriptModule("./error.type-fixture.ts").trim()).toBe(
+      "export {};",
+    );
   });
 
   it("emits the type-only consumer without a runtime import edge", () => {
@@ -328,7 +359,7 @@ describe("artifact contract type domains", () => {
     expect(output).not.toMatch(/\bimport\b/u);
   });
 
-  it("keeps artifact contract types out of built root declarations", () => {
+  it("keeps artifact contract APIs out of built root declarations", () => {
     const packageRoot = new URL("../../", import.meta.url);
     const outputDirectory = mkdtempSync(
       join(tmpdir(), "dathra-artifact-contract-"),
@@ -350,6 +381,12 @@ describe("artifact contract type domains", () => {
         );
 
         expect(exportedNames).toContain("Sha256Digest");
+        expect(exportedNames).not.toContain("ArtifactContractError");
+        expect(exportedNames).not.toContain("ArtifactContractErrorCode");
+        expect(exportedNames).not.toContain("ArtifactContractPath");
+        expect(exportedNames).not.toContain("ArtifactContractPathSegment");
+        expect(exportedNames).not.toContain("fail");
+        expect(exportedNames).not.toContain("formatPath");
         expect(exportedNames).not.toContain("ArtifactAddressId");
         expect(exportedNames).not.toContain("ArtifactFinalizationTemplate");
         expect(exportedNames).not.toContain("ArtifactEntryRole");
@@ -368,5 +405,5 @@ describe("artifact contract type domains", () => {
     } finally {
       rmSync(outputDirectory, { force: true, recursive: true });
     }
-  });
+  }, 30_000);
 });

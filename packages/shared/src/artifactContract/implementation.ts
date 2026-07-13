@@ -1,3 +1,5 @@
+export { ArtifactContractError } from "./error";
+export type { ArtifactContractErrorCode } from "./error";
 export type { ArtifactAddressId } from "./model";
 export type { ArtifactFinalizationTemplate } from "./finalizationTemplateModel";
 export type {
