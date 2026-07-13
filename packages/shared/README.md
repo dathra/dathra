@@ -7,6 +7,7 @@ Internal shared utilities for Dathra packages. Not intended for direct use.
 - `entries(obj)` — Type-safe `Object.entries()` wrapper
 - `fromEntries(entries)` — Type-safe `Object.fromEntries()` wrapper
 - `camelCase`, `pascalCase`, `kebabCase`, etc. — String case conversion utilities (from [scule](https://github.com/unjs/scule))
+- `@dathra/shared/canonical-identity` — Canonical JSON and SHA-256 identity primitives for cross-package Dathra integrations
 
 ## License
 

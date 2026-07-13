@@ -1,7 +1,7 @@
 import { defineConfig } from "@dathra/config/tsdown";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/canonicalIdentity/index.ts"],
   dts: true,
   outDir: "dist",
   clean: true,
