@@ -21,14 +21,10 @@ import { MyCounter } from "@/lib/dathra/MyCounter";
 
 // SSR: compute DSD content
 const greetingHtml = useState<string>("dathra-greeting", () =>
-  import.meta.server
-    ? renderDSDContent(MyGreeting, { name: "Nuxt" })
-    : "",
+  import.meta.server ? renderDSDContent(MyGreeting, { name: "Nuxt" }) : "",
 );
 const counterHtml = useState<string>("dathra-counter", () =>
-  import.meta.server
-    ? renderDSDContent(MyCounter, { initial: "5" })
-    : "",
+  import.meta.server ? renderDSDContent(MyCounter, { initial: "5" }) : "",
 );
 </script>
 
