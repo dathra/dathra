@@ -5,6 +5,8 @@ import {
   type ActiveAncestorTracker as _RootActiveAncestorTrackerMustNotExist,
   // @ts-expect-error SC02A8D-P occurrence plans remain internal.
   type ClosedDataPlan as _RootClosedDataPlanMustNotExist,
+  // @ts-expect-error SC02A8F closed data clones remain internal.
+  type ClosedDataClone as _RootClosedDataCloneMustNotExist,
   // @ts-expect-error SC02A8D-W source profiles remain internal.
   type ClosedDataProfile as _RootClosedDataProfileMustNotExist,
   // @ts-expect-error SC02A8B descriptor capture remains internal.
@@ -31,6 +33,8 @@ import {
   type ActiveAncestorTracker as _ActiveAncestorTrackerMustNotExist,
   // @ts-expect-error SC02A8D-P occurrence plan builders remain internal.
   type OccurrencePlanBuilder as _OccurrencePlanBuilderMustNotExist,
+  // @ts-expect-error SC02A8F closed data clones remain internal.
+  type ClosedDataClone as _ClosedDataCloneMustNotExist,
   // @ts-expect-error SC02A8D-W source profiles remain internal.
   type ClosedDataProfile as _ClosedDataProfileMustNotExist,
   // @ts-expect-error SC02A8B descriptor capture remains internal.

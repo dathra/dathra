@@ -40,6 +40,8 @@ SC02A8E-Pはexecution sourceのpotential SemanticPath segment cardinalityだけ�
 
 SC02A8E-IはC、R、Pのinternal profileを一つのexecution-source profileへcompositionする。
 
+SC02A8Fはcompleted occurrence planだけからalias-expanded mutable cloneを構築するinternal APIを追加する。
+
 unknown input preflight、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
@@ -359,6 +361,28 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - child profile inputとcaptured viewから到達できるcaller-owned valueをread-only observationとして扱う
     - source field、counter、parser、closure、clone、identity、trust、authority、client permissionを追加しない
     - factoryとprofileをpackage-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
+#adr(
+  header("completed occurrence planからalias-expanding cloneを分離する", Status.Accepted, "2026-07-13"),
+  [
+    admission後にcaller inputを再reflectionすると、descriptor captureとcloneの間にTOCTOUが生じる。
+    shared alias identityをoutputへ保持すると、path occurrenceごとに課金するclosed-data semanticsと異なるidentity couplingがdomain parserへ漏れる。
+    cloneとparser、canonical measurement、final freeze、digestを一revisionへ含めると、plan materializationだけを単独で検証できない。
+  ],
+  [
+    `cloneClosedDataPlan()`はcompleted `ClosedDataPlan`だけを読み、preorder node sequenceからrecursive call stackを使わずfreshなclosed-data treeを構築する。
+    container occurrenceごとにfresh containerを作るため、shared aliasは各path occurrenceの独立subtreeへ展開する。
+    recordはnull prototype、arrayはcurrent realmのstandard arrayへ正規化し、childはenumerable、writable、configurableなown data propertyとして定義する。
+  ],
+  [
+    - null、boolean、number、stringはplanのscalar valueをexactに保持する
+    - cloneはcaller input、descriptor view、ledger、profileを参照せず、input planとnodeを変更しない
+    - 同じplanの反復cloneと、同一plan内の各container occurrenceは異なるobject identityを持つ
+    - output propertyはrecordのstring segmentまたはarrayのdense numeric segmentをplan順に定義し、inherited setterまたはmutableな`Array.prototype` traversalへ依存しない
+    - raw cloneはA9からA12の同期domain conversionだけが消費し、A8Fではfreeze、validation、budget charge、canonical measurement、digest、identity、trust、authority、client permissionを追加しない
+    - clone typeとfactoryはinternal moduleだけがexportし、package-local facade、shared root、generated root declarationへ公開しない
   ],
 )
 
@@ -1124,6 +1148,34 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   ],
 )
 
+#interface_spec(
+  name: "Alias-expanding closed data clone",
+  summary: [
+    completed occurrence planをcaller非依存なfresh closed-data treeへmaterializeするinternal helperを提供する。
+  ],
+  format: [
+    ```typescript
+    type ClosedDataClone =
+      | null
+      | boolean
+      | number
+      | string
+      | { [key: string]: ClosedDataClone }
+      | ClosedDataClone[]
+
+    function cloneClosedDataPlan(plan: ClosedDataPlan): ClosedDataClone
+    ```
+  ],
+  constraints: [
+    - inputはD-P builderとD-W walkerが完成したinternal `ClosedDataPlan`だけとし、caller objectをargumentまたはplan nodeから取得しない
+    - node sequenceをindexで一回走査し、parent occurrenceはcurrent nodeより前にmaterialize済みであるpreorder invariantを使う
+    - container nodeごとにfreshなnull-prototype recordまたはstandard arrayを作る
+    - record childはstring segment、array childは0から連続するnumeric segmentへown data propertyとして定義する
+    - output containerとpropertyはA8Fではmutableであり、final snapshotのfreezeはA8Gだけが所有する
+    - factoryとclone typeはinternal moduleだけがexportし、package-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -1309,6 +1361,27 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - depthまたはdata node超過をcurrent occurrence path、property、key unit、array length超過をcurrent container pathの`budget-exceeded`にする
     - descriptor failureをA8Bが定めるcontainerまたはproperty path、active cycleをcycle child occurrence pathの`invalid-closed-record`にする
     - unsupported structural scalarをcurrent occurrence pathの`invalid-closed-record`にする
+  ],
+)
+
+#behavior_spec(
+  name: "completed planをalias-expanded treeへmaterializeする",
+  summary: "completed occurrence planだけからcaller非依存なfresh closed-data treeを反復的に構築する。",
+  preconditions: [
+    - D-P/D-Wが完成したnon-empty preorder planを受け取る
+    - root nodeはoccurrence ID 0で、各childのparent occurrenceはそのchildより前にある
+  ],
+  steps: [
+    - node sequenceをindex loopで先頭から一回走査する
+    - scalar nodeはexact value、record nodeはfresh null-prototype object、array nodeはfresh standard arrayへ変換する
+    - root以外はmaterialize済みparentへsegmentに対応するown data propertyとして接続する
+  ],
+  postconditions: [
+    - rootと全container occurrenceは当該callで生成したfresh identityである
+    - 同じcaller identityから作られた複数occurrenceもoutputでは異なるsubtree identityになる
+    - callerをrevokeまたは変更した後でもplanだけから同じ構造を構築し、caller trapを呼ばない
+    - input plan、node sequence、node identityとscalar valueを変更しない
+    - 12,000段のplanをJavaScript call stackに依存せずmaterializeする
   ],
 )
 
@@ -1600,5 +1673,22 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - child failureのerror identityを変換せず、failure後にもprofileがliveであることを検査する
     - 明示GC collector取得後とtest cleanup後にV8 expose-GC flagをdisabledへ戻し、新しいVM contextへ`gc`を残さないことを検査する
     - production、counter、hook順序、facade、shared root、generated artifact、public APIを変更しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Alias-expanding closed source clone",
+  summary: [
+    admitted occurrence planからcallerを再読せず、path occurrenceごとのfresh normalized treeを構築する。
+  ],
+  test_cases: [
+    - null、boolean、number、stringのexact scalar fidelityとnested record/array structureを検査する
+    - recordのnull prototype、arrayのstandard prototype、全childのenumerable、writable、configurable data descriptorを検査する
+    - shared recordとarray aliasがpath occurrenceごとの異なるsubtree identityへ展開され、同じplanの反復callもidentityを共有しないことを検査する
+    - plan作成後にcaller Proxyをrevokeしてもtrapを呼ばずcloneでき、caller mutationとinput planへ変更を加えないことを検査する
+    - 12,000段をrecursive call stackとmutableな`Array.prototype` traversalへ依存せずmaterializeすることを検査する
+    - A8F outputがまだfreezeされず、parser、domain record、canonical measurement、digest、identity、trust、authority、client permissionを追加しないことを検査する
+    - exact internal signatureとtype fixtureのruntime code不在を検査する
+    - factoryとclone typeがpackage-local facade、shared root、generated root declarationへ公開されないことを検査する
   ],
 )
