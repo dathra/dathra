@@ -34,6 +34,8 @@ SC02A8D-WはA8A、A8B、A8CとD-Pを一つのiterative walkerへ統合し、gene
 
 SC02A8E-Cはexecution sourceのcollection cardinalityだけをwalkerのdescriptor前profileとして追加する。
 
+SC02A8E-Rはexecution sourceのpotential reference cardinalityだけをwalkerの二段階profileとして追加する。
+
 unknown input preflight、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
@@ -292,6 +294,27 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - shared aliasもtarget occurrenceごとに再課金し、failure pathは対象container occurrenceとする
     - occurrence、header、caller objectを変更または保持せず、boundedなoperation-local role stateだけを保持する
     - factoryとprofileはpackage-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
+#adr(
+  header("source reference cardinalityをsemantic validation前のprofileへ分離する", Status.Accepted, "2026-07-13"),
+  [
+    reference slotはsource root、fact、relation endpoint、export summary、transfer bindingに分散しており、generic walkerへfield名を埋め込むとclosed-data admissionとsource schemaのownerが混在する。
+    semantic discriminatorやreference valueを検証した後に課金すると、malformed inputがhard capを回避してdescriptorとvalidation workを先に発生させる。
+  ],
+  [
+    freshなsource reference profileはparent-linked occurrence roleだけを保持する。
+    array-valued potential referenceは`beforeDescriptors`でlengthを、presentなscalar potential referenceは`beforeChildren`で一件を`maximumReferences`へ課金する。
+    課金対象はstructural locationとfield presenceだけで決め、discriminator、reference value、closure、registry kindを検証しない。
+  ],
+  [
+    - array-valued referenceはrootのhost assumption、factのhost profile、sink policy、capability policy、exportのfact ID collectionとする
+    - scalar referenceはfact attribute、relation endpoint、exportのreceiver brandとvalue domain、factまたはexportのtransfer bindingにあるregistry IDとする
+    - missing slotは課金せず、presentなnullable slotとmalformed discriminator上のpotential slotは一件として課金する
+    - shared array aliasもtarget occurrenceごとに再課金し、failure pathはarray containerまたはscalar slotとする
+    - role stateはoccurrence IDとstructural roleだけをown data propertyとして保持し、captured record entryはown lengthとindexで走査する
+    - occurrence、header、view、caller objectを変更または保持せず、factoryとprofileをpackage-local facade、shared root、generated root declarationへ公開しない
   ],
 )
 
@@ -987,6 +1010,31 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   ],
 )
 
+#interface_spec(
+  name: "Execution-source reference cardinality profile",
+  summary: [
+    structurally presentなsource reference slotをsemantic validation前に専用hard capへ課金するinternal profileを提供する。
+  ],
+  format: [
+    ```typescript
+    function createSourceReferenceProfile(): ClosedDataProfile
+    ```
+  ],
+  constraints: [
+    - factoryはfreshなoperation-local profileを毎回作成する
+    - rootの`hostAssumptionFactIds`、factの`hostProfileIds`、`sinkPolicyIds`、`capabilityPolicyIds`、exportの`factIds`がarrayの場合は各lengthを`maximumReferences`へ累積課金する
+    - factの`environmentFactId`、`exposureFactId`、`receiverBrandId`、`brandId`、`schemaId`、`audiencePolicyId`、`releasePolicyId`、`endorsementPolicyId`をpresentなscalar potential referenceとして課金する
+    - relation endpointの`factId`、exportの`receiverBrandId`と`valueDomainId`をpresentなscalar potential referenceとして課金する
+    - fact bindingまたはexport transferの`codecId`、`resolverId`、`capabilityPolicyId`、`sourceId`、`operationId`をpresentなscalar potential referenceとして課金する
+    - array-valued referenceはgeneric header課金後かつchild descriptor completion前、scalar referenceはcompleted record viewの取得後かつchild traversal前に課金する
+    - missing slotは課金せず、presentな`null`とmalformed discriminator上のpotential slotはvalueを解釈せず課金する
+    - declaration ID、version、locator、fact kind、callback parameter indexをreferenceとして課金しない
+    - role stateはoccurrence IDとstructural roleだけをown data propertyとして保持し、caller object、header、view、full pathを保持しない
+    - captured record entryはmutableなarray iteratorに依存せずown lengthとindexで走査する
+    - internal moduleだけがfactoryをexportし、package-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -1396,6 +1444,24 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - shared aliasをtarget occurrenceごとに再課金し、fresh profile operationがstateを共有しないことを検査する
     - non-target field、collection element semantics、reference、SemanticPathを課金または検証しないことを検査する
     - successとfailureの両方でcaller data、occurrence、headerを変更せず、caller objectをrole stateへ保持しないことを検査する
+    - factory、profile、role stateがpackage-local facade、shared root、generated root declarationへ公開されないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Execution-source reference cardinality precharge",
+  summary: [
+    source reference slotのcardinalityをsemantic validationとchild traversalより前に専用counterへ課金する。
+  ],
+  test_cases: [
+    - root、fact、relation endpoint、export summary、transfer bindingにあるscalar reference各族のexactとlimit+1、およびslot failure pathを検査する
+    - host assumption、host profile、sink policy、capability policy、export fact ID collectionのarray lengthを累積課金することを検査する
+    - target arrayのchild descriptorがinvalidでもreference cardinality breachが先に失敗することを検査する
+    - presentなnullable slotとmalformed discriminator上のpotential slotを課金し、missing slotを課金しないことを検査する
+    - shared array aliasをtarget occurrenceごとに再課金し、fresh profile operationがstateを共有しないことを検査する
+    - declaration、version、locator、fact kind、callback parameter indexと非対象fieldを課金または検証しないことを検査する
+    - mutableな`Map.prototype`、inherited array setter、`Array.prototype[Symbol.iterator]`に依存せずroleとcaptured entryを走査することを検査する
+    - successとfailureの両方でcaller data、occurrence、header、viewを変更せず、caller objectをrole stateへ保持しないことを検査する
     - factory、profile、role stateがpackage-local facade、shared root、generated root declarationへ公開されないことを検査する
   ],
 )

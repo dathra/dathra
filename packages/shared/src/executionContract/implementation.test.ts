@@ -208,7 +208,10 @@ describe("source semantic subject model", () => {
 
     expectTypeOf<
       Extract<SemanticPathSegment, { readonly kind: "property" }>
-    >().toEqualTypeOf<{ readonly kind: "property"; readonly key: string }>();
+    >().toEqualTypeOf<{
+      readonly kind: "property";
+      readonly key: string;
+    }>();
     expectTypeOf<
       Extract<SemanticPathSegment, { readonly kind: "tuple-index" }>
     >().toEqualTypeOf<{
@@ -217,11 +220,15 @@ describe("source semantic subject model", () => {
     }>();
     expectTypeOf<
       Extract<SemanticPathSegment, { readonly kind: "element" }>
-    >().toEqualTypeOf<{ readonly kind: "element" }>();
+    >().toEqualTypeOf<{
+      readonly kind: "element";
+    }>();
 
     expectTypeOf<
       Extract<SemanticSubject, { readonly kind: "module-evaluation" }>
-    >().toEqualTypeOf<{ readonly kind: "module-evaluation" }>();
+    >().toEqualTypeOf<{
+      readonly kind: "module-evaluation";
+    }>();
     expectTypeOf<
       Extract<SemanticSubject, { readonly kind: "export-value" }>
     >().toEqualTypeOf<{
@@ -402,6 +409,7 @@ describe("ExecutionContractError", () => {
     expect("createOccurrencePlanBuilder" in executionContractApi).toBe(false);
     expect("createClosedDataPlan" in executionContractApi).toBe(false);
     expect("createSourceCollectionProfile" in executionContractApi).toBe(false);
+    expect("createSourceReferenceProfile" in executionContractApi).toBe(false);
     expect("ActiveAncestorTracker" in executionContractApi).toBe(false);
     expect("ClosedDataOccurrence" in executionContractApi).toBe(false);
     expect("ClosedDataPlan" in executionContractApi).toBe(false);
