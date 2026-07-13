@@ -34,7 +34,7 @@
   "scripts": {
     "oxlint": "oxlint",
     "lint": "oxlint && eslint .",
-    "lint:type-aware": "oxlint --type-aware --ignore-pattern \"reviewEvidence/**\" && eslint ."
+    "lint:type-aware": "oxlint --type-aware && eslint ."
   },
   "dependencies": {
     "@stryker-mutator/api": "^9.5.1",

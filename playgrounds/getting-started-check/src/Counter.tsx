@@ -17,15 +17,7 @@ const Counter = defineComponent(
     );
   },
   {
-    styles: [
-      css`
-        :host {
-          display: block;
-          padding: 1rem;
-          border: 1px solid #ccc;
-        }
-      `,
-    ],
+    styles: [css`:host { display: block; padding: 1rem; border: 1px solid #ccc; }`],
     props: {
       initial: { type: Number, default: 0 },
     },

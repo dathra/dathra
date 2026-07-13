@@ -29,14 +29,5 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm --filter @playground/e2e exec playwright install --with-deps chromium
 
-      - name: Build packages
-        run: pnpm build
-
-      - name: Check formatting
-        run: pnpm fmt:check
-
-      - name: Build applications
-        run: pnpm build:apps
-
-      - name: Test applications
-        run: pnpm test:apps
+      - name: Run e2e tests
+        run: pnpm test:e2e

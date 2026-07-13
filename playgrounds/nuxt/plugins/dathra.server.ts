@@ -1,6 +1,6 @@
 /**
  * Dathra Web Components server-side plugin
- *
+ * 
  * This plugin imports and registers Dathra Web Components
  * on the server side for SSR rendering.
  */

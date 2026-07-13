@@ -20,7 +20,11 @@ const isSSR = buildTarget !== "client";
 export default defineConfig({
   root: projectRoot,
   plugins: [
-    dathraVitePlugin(isSSR ? { mode: "ssr", ssr: { entry: "/src/entry-server.tsx" } } : {}),
+    dathraVitePlugin(
+      isSSR
+        ? { mode: "ssr", ssr: { entry: "/src/entry-server.tsx" } }
+        : {},
+    ),
   ],
   optimizeDeps: {
     exclude: workspacePackages,

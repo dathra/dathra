@@ -484,9 +484,6 @@ importers:
         specifier: ^3.5.13
         version: 3.5.28(typescript@6.0.3)
     devDependencies:
-      '@dathra/config':
-        specifier: workspace:*
-        version: link:../../config
       '@dathra/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin
@@ -8652,7 +8649,7 @@ snapshots:
   '@parcel/watcher-wasm@2.5.6':
     dependencies:
       is-glob: 4.0.3
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   '@parcel/watcher-win32-arm64@2.5.6':
     optional: true
@@ -12783,7 +12780,7 @@ snapshots:
       rolldown-plugin-dts: 0.25.0(@typescript/native-preview@7.0.0-dev.20260421.2)(rolldown@1.0.0)(typescript@6.0.3)
       semver: 7.7.4
       tinyexec: 1.1.2
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.16
       tree-kill: 1.2.2
       unconfig-core: 7.5.0
     optionalDependencies:
