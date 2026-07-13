@@ -1,3 +1,8 @@
+> [!CAUTION]
+> Historical, provisional design from reverted PR #80. It is not a current specification or implementation plan. Embedded revision, slice, review, owner, branch, commit, push, and write-set instructions are non-operative historical context. Current `SPEC.typ` files and executable tests are authoritative; see [RFC 0001](../README.md).
+
+# Request graph-table payload
+
 ### request graph-table payload
 
 request ごとの materialization data は、versioned な **graph-table payload** で送る。
@@ -271,3 +276,5 @@ envelope の `digest` は、digest field を空 string にした canonical UTF-8
 manifestDigest は canonical JCS manifest bytes、artifact digest は host decoder が module parser または WebAssembly compiler へ渡す exact bytes の SHA-256 digest とする。
 
 plan-independent な ProjectionManifestCore は、次の mapping を持つ。
+
+The split mapping continues with the definition, artifact, and registry records in [D52](52-registry-and-manifest.md), then completes `ProjectionManifestCore` and its boot contracts in [D53](53-projection-and-boot.md).

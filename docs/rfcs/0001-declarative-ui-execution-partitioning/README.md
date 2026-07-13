@@ -15,8 +15,18 @@ Repository and package specifications remain authoritative:
 - package details and ADRs: `packages/**/SPEC.typ`
 - executable behavior: `packages/**/implementation.test.ts`
 
-When this RFC conflicts with those sources, the current specification and implementation win.
+When this RFC conflicts with those sources, the current specifications and executable tests take precedence, and the implementation must conform to them.
 Any part adopted into production must first be transferred to the responsible package specification and tests.
+
+## How to read the preserved decisions
+
+The decision files retain the technical rationale and implementation decomposition recorded on the reverted PR #80 branch.
+Some source bodies therefore contain historical revision names, slice boundaries, reviewer roles, ownership tables, branch operations, or write sets.
+Those passages are provenance, not current instructions, progress, authorization, or evidence that the referenced files and APIs exist.
+
+Each decision file starts with a caution banner so that a direct link cannot be mistaken for a current package specification.
+Within a preserved body, a later statement that explicitly supersedes an earlier statement is the effective historical proposal.
+If the latest effective statement is unclear or conflicts with the acceptance and restart documents, treat it as unresolved rather than combining multiple schema generations.
 
 ## Design documents
 
@@ -57,6 +67,6 @@ Any part adopted into production must first be transferred to the responsible pa
 
 - Treat every decision in this RFC as provisional until adopted by the responsible `SPEC.typ` and tests.
 - Do not infer current API availability or implementation status from this RFC.
-- Do not record branches, scheduler state, agent authorization, or mutable progress here.
+- Do not add new branches, scheduler state, agent authorization, mutable progress, or executable workflow instructions here.
 - Preserve rejected alternatives because they explain why the proposed architecture has its current shape.
 - Record semantic changes as explicit successor decisions instead of silently rewriting the historical rationale.

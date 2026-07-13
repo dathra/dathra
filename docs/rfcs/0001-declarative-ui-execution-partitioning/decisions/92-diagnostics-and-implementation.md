@@ -1,3 +1,10 @@
+> [!CAUTION]
+> Historical, provisional design from reverted PR #80. It is not a current specification or implementation plan. Embedded revision, slice, review, owner, branch, commit, push, and write-set instructions are non-operative historical context. Current `SPEC.typ` files and executable tests are authoritative; see [RFC 0001](../README.md).
+
+# Diagnostics and implementation direction
+
+> Successor clarification: [Acceptance evidence](../implementation/acceptance.md#observationcontract-open-obligations) and the [restart inventory](../restart-inventory.md#observationcontract-open-proof-obligations) identify unresolved repeated-event and long-lived-subscription semantics. They supersede any preserved statement below that every pre-implementation design question was resolved or that the listed implementation order is active.
+
 ## diagnostic policy
 
 diagnostic は、component 単位の「unsupported」だけを返さない。

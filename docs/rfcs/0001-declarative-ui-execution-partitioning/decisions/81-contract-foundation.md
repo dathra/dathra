@@ -1,3 +1,8 @@
+> [!CAUTION]
+> Historical, provisional design from reverted PR #80. It is not a current specification or implementation plan. Embedded revision, slice, review, owner, branch, commit, push, and write-set instructions are non-operative historical context. Current `SPEC.typ` files and executable tests are authoritative; see [RFC 0001](../README.md).
+
+# Contract, codec, and remote-operation foundations
+
 ### contract、codec、remote operation
 
 build-time extension API は次の型を持つ。

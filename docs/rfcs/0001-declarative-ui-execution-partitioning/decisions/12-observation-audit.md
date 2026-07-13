@@ -1,3 +1,10 @@
+> [!CAUTION]
+> Historical, provisional design from reverted PR #80. It is not a current specification or implementation plan. Embedded revision, slice, review, owner, branch, commit, push, and write-set instructions are non-operative historical context. Current `SPEC.typ` files and executable tests are authoritative; see [RFC 0001](../README.md).
+
+# Observation contract implementation audit
+
+> Successor clarification: the later composition `/4` section in this file supersedes the earlier composition `/3` schema. The preserved opening reference to `/2` and `/3` is historical and does not exclude `/4`.
+
 #### 実装監査後の OC01 `/3` 契約
 
 この節は、OC01 の実装監査で見つかった保証上の不足を解消するため、前節の BehaviorSummary、rule application、comparison claim、composition、coverage、witness schema を supersede する。

@@ -1,3 +1,6 @@
+> [!CAUTION]
+> Historical, provisional design from reverted PR #80. It is not a current specification or implementation plan. Embedded revision, slice, review, owner, branch, commit, push, and write-set instructions are non-operative historical context. Current `SPEC.typ` files and executable tests are authoritative; see [RFC 0001](../README.md).
+
 # Declarative UI execution partitioning design
 
 作成日: 2026-07-08
@@ -10,8 +13,8 @@ PR #80 の実装は revert 済みであり、この文書は現在の production
 本文は将来案の規範的表現を保持しているが、担当仕様とテストへ採用されるまでは provisional decision として扱う。
 「破棄した案」は設計経緯であり、現在または将来の実装要件ではない。
 
-後方互換性は設計上の制約にしない。
-現行の hydration API、island scheduler、directive、runtime semantics は、必要であれば破壊的に変更する。
+PR #80 で保存した設計案は、後方互換性を設計上の制約にしていなかった。
+将来この方針を採用する場合、現行の hydration API、island scheduler、directive、runtime semantics の破壊的変更には、担当 package の successor ADR、テスト、移行判断が必要になる。
 
 設計判断は再検証可能な参照資料として固定し、production code への実装開始をこの文書だけから推論しない。
 
@@ -35,7 +38,7 @@ Reactive graph、hydration、island、directive は実現手段であり、最�
 
 ## 保証する範囲
 
-現行方針は、次の性質を保証対象にする。
+保存した設計案は、次の性質を保証対象にしていた。
 
 - 初期 UI root は、明示的な client-only opt-out がない限り server artifact から実現する。
 - server でだけ必要な計算と依存は server に閉じる。
@@ -47,7 +50,7 @@ Reactive graph、hydration、island、directive は実現手段であり、最�
 「必要最小限」は、任意の JavaScript 変換に対する大域的な最適解を意味しない。
 compiler がサポートする有限候補集合の中で、契約を満たす候補を比較し、server 配置と client cost に関する設定済みの順序で最良の候補を選ぶ。
 
-現行方針は、任意の JavaScript と host の完全な形式検証を保証しない。
+保存した設計案は、任意の JavaScript と host の完全な形式検証を保証しない。
 任意の第三者 code と同じ authority realm を共有した場合の noninterference、network effect の無条件な exactly-once、すべての scheduler に対する liveness も baseline の保証に含めない。
 
 ## 基本用語

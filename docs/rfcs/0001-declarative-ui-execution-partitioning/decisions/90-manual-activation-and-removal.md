@@ -1,3 +1,8 @@
+> [!CAUTION]
+> Historical, provisional design from reverted PR #80. It is not a current specification or implementation plan. Embedded revision, slice, review, owner, branch, commit, push, and write-set instructions are non-operative historical context. Current `SPEC.typ` files and executable tests are authoritative; see [RFC 0001](../README.md).
+
+# Manual activation and API removal
+
 ### manual activation
 
 通常利用では `hydrate()` または manual activation を要求しない。

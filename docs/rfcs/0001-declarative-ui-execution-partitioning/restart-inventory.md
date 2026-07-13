@@ -26,8 +26,9 @@ This RFC preserves only:
 - process-independent acceptance obligations
 - this restart inventory
 
-It deliberately excludes mutable progress, active slices, blockers, scheduler state, R7/R8 workflow, review-evidence tooling, branch authorization, milestones, and byte-identical monolith snapshots.
-The excluded evidence remains available from the source revision when historical investigation is necessary.
+It deliberately excludes the standalone mutable progress, active-slice, blocker, scheduler, R7/R8 workflow, review-evidence, branch-authorization, milestone, and byte-identical monolith documents.
+Some preserved decision bodies contain contemporaneous implementation decomposition, reviewer-role, or write-set passages intertwined with technical rationale; their caution banners classify those passages as non-operative historical context.
+The excluded standalone evidence remains available from the source revision when historical investigation is necessary.
 
 ## Foundations eligible for independent extraction
 
@@ -53,7 +54,7 @@ The excluded evidence remains available from the source revision when historical
 
 | Candidate | Current disposition | Reason | Restart condition |
 | --- | --- | --- | --- |
-| ModuleCoordinator | Deferred | Depends on Canonical Identity and Module Graph, requires a root export in the historical test, and has no bundler/transform adapter or measured incremental-build bound | Add a minimal real adapter, keep the API internal, and measure cold/incremental time and peak memory |
+| ModuleCoordinator | Deferred | Depends on Canonical Identity and Module Graph, requires a root export in the historical test, and has no bundler/transform adapter or measured incremental-build bound | Define a representative fixture and explicit cold-time, incremental-time, and peak-memory budgets; add a minimal real adapter, keep the API internal, and demonstrate that it meets those budgets |
 | ExecutionGraph | Deferred | Internal IR is bounded, but it depends on Module Graph and ObservationContract and has no source producer, accepted-analysis path, or artifact consumer | Connect one source-analysis path to server/client artifacts and rerun deep-fixture resource checks |
 | Execution Registry | Deferred | Large public contract with no compiler or runtime consumer; future registry taxonomy can still change | Consume the exact catalog/projection contract from a practical compiler or runtime path without forcing a public root export |
 | Execution Contract | Deferred | Depends on Execution Registry; semantic parsing, closure, source assembly, and digest work remain incomplete | Complete the minimum bounded source contract and feed it to a vertical compiler consumer |
@@ -86,8 +87,8 @@ This RFC extraction does not include application gates, review-evidence tooling,
 ## Restart order
 
 1. Revalidate Canonical Identity and Module Graph independently on the current default branch.
-2. Resolve the ObservationContract repeated-event and subscription boundary before adopting its general behavior algebra.
-3. Choose one practical vertical workflow and define the smallest required consumer chain.
+2. Choose one practical vertical workflow and define the smallest required consumer chain.
+3. Resolve the repeated-event and subscription semantics required by that workflow; do not promote a general ObservationContract algebra until broader evidence proves it.
 4. Add or supersede package ADRs and failing tests before production implementation.
 5. Connect source analysis to server and client artifacts.
 6. Verify unit, integration, browser, artifact-closure, resource, and package-boundary evidence.

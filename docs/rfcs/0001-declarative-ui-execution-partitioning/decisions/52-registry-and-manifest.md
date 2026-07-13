@@ -1,3 +1,8 @@
+> [!CAUTION]
+> Historical, provisional design from reverted PR #80. It is not a current specification or implementation plan. Embedded revision, slice, review, owner, branch, commit, push, and write-set instructions are non-operative historical context. Current `SPEC.typ` files and executable tests are authoritative; see [RFC 0001](../README.md).
+
+This file continues the split `ProjectionManifestCore` mapping introduced in [D51](51-graph-table-payload.md); [D53](53-projection-and-boot.md) completes the mapping and boot contracts.
+
 # Definition, artifact, and registry manifests
 
 ```ts
