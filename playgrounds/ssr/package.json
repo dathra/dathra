@@ -1,7 +1,7 @@
 {
   "name": "@playground/ssr",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "build:deps": "pnpm -r --filter @dathra/shared --filter @dathra/reactivity --filter @dathra/store --filter @dathra/runtime --filter @dathra/components --filter @dathra/core --filter @dathra/transformer --filter @dathra/plugin build",
@@ -10,11 +10,12 @@
     "build:server": "vite build --outDir dist/server --ssr src/entry-server.tsx",
     "build": "pnpm build:deps && pnpm build:client && pnpm build:server",
     "fmt": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --write \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\"",
-    "fmt:check": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\""
+    "fmt:check": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\"",
+    "test": "pnpm build:server && vitest run --config vitest.config.ts"
   },
   "dependencies": {
-    "@dathra/core": "workspace:*",
     "@dathra/components": "workspace:*",
+    "@dathra/core": "workspace:*",
     "@dathra/runtime": "workspace:*"
   },
   "devDependencies": {
@@ -22,6 +23,7 @@
     "@dathra/plugin": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "~5.8.3",
-    "vite": "^6.3.4"
+    "vite": "^6.3.4",
+    "vitest": "catalog:"
   }
 }
