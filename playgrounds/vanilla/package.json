@@ -1,12 +1,13 @@
 {
   "name": "@playground/vanilla",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "pnpm build && vitest run",
     "fmt": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --write \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\"",
     "fmt:check": "oxfmt --ignore-path ../../.gitignore --no-error-on-unmatched-pattern --check \"**/*.{ts,tsx,js,mjs,cjs,cts,mts,json}\""
   },
@@ -16,7 +17,10 @@
   "devDependencies": {
     "@dathra/config": "workspace:*",
     "@dathra/plugin": "workspace:*",
+    "@types/node": "catalog:",
+    "playwright": "^1.56.1",
     "typescript": "~5.8.3",
-    "vite": "^6.3.4"
+    "vite": "^6.3.4",
+    "vitest": "catalog:"
   }
 }

@@ -525,12 +525,21 @@ importers:
       '@dathra/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.2.0
+      playwright:
+        specifier: ^1.56.1
+        version: 1.56.1
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^6.3.4
         version: 6.4.1(@types/node@24.2.0)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.4(@types/node@24.2.0)(@vitest/browser-playwright@4.0.4)(happy-dom@20.5.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.20.6)(yaml@2.8.2)
 
 packages:
 
