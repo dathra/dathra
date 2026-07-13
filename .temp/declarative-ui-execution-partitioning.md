@@ -8093,6 +8093,34 @@ Iは各phaseで適用可能なC、R、Pのmethodをこの順に一回だけ呼�
 先行methodが失敗した場合は後続methodを呼ばず、errorとfailure pathを変換しない。
 I自身はcounterを課金せず、successとfailureの両方でhook入力とcaller descriptorが変化しないことをfocused testで検証する。
 
+#### source profile integration reviewの追加分割
+
+この決定は、`SC02A8E-I`のruntime semanticsを変更せず、composition実装とpost-call lifetime evidenceを一つのreview unitとして扱う部分だけをsupersedeする。
+旧`SC02A8E-I` combined revisionを新しい名前のまま再reviewせず、次の直列revisionへ分ける。
+
+| revision | owner | dependency | 独立した検証 |
+| --- | --- | --- | --- |
+| SC02A8E-I-C | C、R、P factoryと両hook phaseのcomposition core | completedなSC02A8E-C、A8E-R、A8E-P | child stateのfreshness、C/R/P順、exactly once、同一引数とledger、二重課金なし、first failure、入力非変更、internal signature |
+| SC02A8E-I-L | live compositeがhook引数またはcaller-owned valueを同期call後に保持しないlifetime evidence | review済みexact SC02A8E-I-C | successとfailureのcollectability、retaining mutantによるnegative control、GC flag復元、反復安定性 |
+
+SC02A8E-I-Cはuntrusted source preflightのruntime admission、failure order、read-only boundaryを統合するため`high` tierとし、primary、implementation、boundaryの三役で初期reviewする。
+SC02A8E-I-Lはproduction contractを変更しないが、明示GC、memory lifetime、process-global flagのtest isolationを扱うため`medium` tierとし、primaryとimplementationの二役で初期reviewする。
+各unitでblockerを修正した場合の収束reviewは、初期reviewへ参加していない一名だけが担当する。
+
+SC02A8E-I-Cだけが`executionContract/sourceProfile.ts`、`executionContract/sourceProfile.test.ts`、`executionContract/sourceProfile.type-fixture.ts`を所有する。
+SC02A8E-I-Lはproductionを変更せず、`executionContract/sourceProfileLifetime.test.ts`だけを所有する。
+`executionContract/SPEC.typ`とcumulative testはmain integration ownerが各revisionで逐次更新する。
+
+I-Lのcollectability testは、検査終了までcomposite profileへのstrong referenceを保持する。
+これにより、profileまたはprofileが保持するchild stateがhook引数を保持した実装ではWeakRef targetが回収されず、testが失敗する。
+retaining mutantを同じharnessへ通し、negative controlが実際に失敗状態を観測できることも検査する。
+
+明示GCを取得するためにV8 flagを一時変更する場合は、collector取得直後に`finally`で元のdisabled状態へ戻し、新しいVM contextに`gc`が残らないことを検査する。
+I-Lはtest harnessのprocess-global stateをsuccess、failure、test failureのいずれでも残さない。
+
+I-CとI-Lの両方が完了した時点だけをsource profile integration completionとする。
+この追加分割はcounter、hook順序、failure、read-only boundary、package publication、public APIを変更しない。
+
 #### bounded canonical measurement の実装分割
 
 canonical identity workはhostile-input boundaryからさらに分ける。
@@ -8125,7 +8153,8 @@ SC02A8I-Rまで完了してもcanonical text生成とdigestはSC02A13のownerに
 | SC02A8E-C | `executionContract/sourceCollectionProfile.ts` | `executionContract/sourceCollectionProfile.test.ts` | N/A。runtime hookだけを所有する |
 | SC02A8E-R | `executionContract/sourceReferenceProfile.ts` | `executionContract/sourceReferenceProfile.test.ts` | N/A。runtime hookだけを所有する |
 | SC02A8E-P | `executionContract/semanticPathProfile.ts` | `executionContract/semanticPathProfile.test.ts` | N/A。runtime hookだけを所有する |
-| SC02A8E-I | `executionContract/sourceProfile.ts` | `executionContract/sourceProfile.test.ts` | `executionContract/sourceProfile.type-fixture.ts` |
+| SC02A8E-I-C | `executionContract/sourceProfile.ts` | `executionContract/sourceProfile.test.ts` | `executionContract/sourceProfile.type-fixture.ts` |
+| SC02A8E-I-L | N/A。test-only lifetime evidence | `executionContract/sourceProfileLifetime.test.ts` | N/A。runtime APIを追加しない |
 | SC02A8I-T | `executionContract/canonicalMeasurementTraversal.ts` | `executionContract/canonicalMeasurementTraversal.test.ts` | `executionContract/canonicalMeasurementTraversal.type-fixture.ts` |
 | SC02A8I-B | `executionContract/canonicalByteMeasurement.ts` | `executionContract/canonicalByteMeasurement.test.ts` | N/A。T event consumerだけを所有する |
 | SC02A8I-W | `executionContract/canonicalWorkMeasurement.ts` | `executionContract/canonicalWorkMeasurement.test.ts` | N/A。T event consumerだけを所有する |
