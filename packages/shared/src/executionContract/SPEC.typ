@@ -30,6 +30,8 @@ SC02A8Cは同時にactiveなcontainer identityだけをcycleとして拒否す�
 
 SC02A8D-Pはoccurrence ID、parent link、single segmentだけを保持するoperation-local plan builderと、failure時だけpathをmaterializeするinternal APIを追加する。
 
+SC02A8D-WはA8A、A8B、A8CとD-Pを一つのiterative walkerへ統合し、genericな二段階profile hookをinternal APIとして追加する。
+
 unknown input preflight、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
@@ -247,6 +249,27 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - plan nodeはfull path、caller object、descriptor、ledger、profile、clone、source fieldを保持しない
     - builderはempty finish、repeated finish、finish後のappend、second root、unknown parentをinternal `TypeError`で拒否する
     - occurrence、plan、builderとfactoryはpackage-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
+#adr(
+  header("generic closed-data admissionをiterative occurrence walkerへ統合する", Status.Accepted, "2026-07-13"),
+  [
+    distinct container identityだけを課金するとshared aliasのpath occurrence costを過小評価する。
+    descriptor completionより前にproperty、key code unit、array lengthを課金しなければ、hostile containerの全descriptor allocationをhard capで停止できない。
+    source-specific field ruleをgeneric walkerへ埋め込むと、closed-data admissionとexecution source schemaのownerが混在する。
+  ],
+  [
+    freshなwalkerはA8A ledger、A8B descriptor capture、A8C active-ancestor tracker、D-P builderとexplicit visit/leave frame stackを一つのoperationで使う。
+    depth、data node、string scalarとheader-derived counterは全path occurrenceへ課金し、shared aliasでも両profile hookを再実行する一方、descriptor header/viewはidentityごとに再利用する。
+    generic profileは`beforeDescriptors`と`beforeChildren`だけを定義し、source-specific cardinalityとreference ruleは後続A8Eが所有する。
+  ],
+  [
+    - root depthは1とし、array intrinsic `length`はproperty countからだけ除外してstring key unitへ含める
+    - `beforeDescriptors`はgeneric header課金後かつview completion前、`beforeChildren`はcompletion後かつcycle判定とchild scheduling前に呼ぶ
+    - full pathはframeまたはplanへ保存せず、budget、descriptor、cycle、profile failureが観測した時だけD-P parent linkからmaterializeする
+    - walkerはsource field、clone、final freeze、parser、canonical meter、digest、identity、trust、authority、client permissionを追加しない
+    - profileとwalker factoryはpackage-local facade、shared root、generated root declarationへ公開しない
   ],
 )
 
@@ -881,6 +904,44 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   ],
 )
 
+#interface_spec(
+  name: "Profile-driven iterative closed data walker",
+  summary: [
+    generic structural admissionとsource-specific precharge hookを統合し、D-Pのparent-linked planを構築するinternal walkerを提供する。
+  ],
+  format: [
+    ```typescript
+    interface ClosedDataProfile {
+      beforeDescriptors(
+        occurrence: ClosedDataOccurrence,
+        header: ClosedContainerHeader,
+        ledger: BudgetLedger,
+      ): void
+      beforeChildren(
+        occurrence: ClosedDataOccurrence,
+        view: ClosedContainerView,
+        ledger: BudgetLedger,
+      ): void
+    }
+
+    function createClosedDataPlan(
+      value: unknown,
+      ledger: BudgetLedger,
+      profile?: ClosedDataProfile,
+    ): ClosedDataPlan
+    ```
+  ],
+  constraints: [
+    - factoryは呼び出しごとにfresh descriptor capture、active-ancestor tracker、occurrence-plan builder、frame stackを作る
+    - walkerはrecursive call stackを使わず、visit frameへcaller value、parent occurrence ID、single segment、1-based depthだけを保持する
+    - scalarはnull、boolean、number、stringだけを受理し、containerはA8Bのheader/view contractに従う
+    - default profileはno-opとし、injected profileはcaller-owned ledgerへsource-specific counterだけを課金する
+    - `beforeDescriptors`はcontainer occurrence、captured header、ledgerをgeneric header課金後かつ`completeView()`前に受け取る
+    - `beforeChildren`は同じoccurrence、completed view、同じledgerをactive-ancestor enterとchild schedulingの前に受け取る
+    - factoryとprofileはinternal moduleだけがexportし、package-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -1039,6 +1100,33 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   errors: [
     - root未追加のchild、unknown parent、second root、finish後のappendをinternal `TypeError`で拒否し、failure前のnode sequenceを保持する
     - empty planとrepeated finishをinternal `TypeError`で拒否する
+  ],
+)
+
+#behavior_spec(
+  name: "closed-data occurrenceを課金してparent-linked planを作る",
+  summary: "distinct identityのcaptureを再利用しながら、shared aliasを含む全path occurrenceを反復的にadmitする。",
+  preconditions: [
+    - callerは一つのoperation用にfresh ledgerと、必要な場合はexecution-source profileを保持している
+  ],
+  steps: [
+    - current occurrenceの1-based depth peakとdata node 1を課金し、string valueならraw UTF-16 code unit数を課金する
+    - containerならheaderをcaptureし、array intrinsic `length`以外のown key数、symbol以外の全string key code unit数、array declared lengthをcurrent container pathで課金する
+    - generic header-derived課金の後に`beforeDescriptors`を呼び、その後だけdescriptor viewを完成する
+    - completed viewで`beforeChildren`を呼び、active ancestorへenterし、captured orderのchild frameとleave frameをexplicit stackへ積む
+    - scalarまたはcontainer occurrenceをD-P builderへpreorder appendし、最後にfrozen planを返す
+  ],
+  postconditions: [
+    - null、boolean、number、string、record、arrayの全occurrenceは`maximumInputDataNodes`へ1ずつ課金される
+    - shared aliasはoccurrenceごとにdepth、node、property、array length、string unit、両profile hookを再適用されるが、headerとviewはidentityごとに再利用される
+    - symbol、hidden、accessor、array extra keyはdescriptor validationに失敗する前にproperty課金され、symbolはstring unitへ課金されない
+    - directまたはindirect active cycleだけを拒否し、leave済みidentityを後続aliasとして再訪できる
+    - 別のfactory呼び出しはdescriptor cache、active ancestor、frame、builder stateを共有しない
+  ],
+  errors: [
+    - depthまたはdata node超過をcurrent occurrence path、property、key unit、array length超過をcurrent container pathの`budget-exceeded`にする
+    - descriptor failureをA8Bが定めるcontainerまたはproperty path、active cycleをcycle child occurrence pathの`invalid-closed-record`にする
+    - unsupported structural scalarをcurrent occurrence pathの`invalid-closed-record`にする
   ],
 )
 
@@ -1227,5 +1315,25 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - fresh builderのoperation isolationを検査する
     - exact internal signatureとtype fixtureのruntime code不在を検査する
     - descriptor、budget、active ancestor、walker、profile、source field、clone、freeze、parser、identity、trust、authority、client permissionを追加せず、facade、shared root、generated root declarationにplan internalを公開しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Iterative occurrence walker and generic profile hooks",
+  summary: [
+    A8A、A8B、A8C、D-Pを統合し、後続source profileとsnapshot cloneが利用できるinternal traversal boundaryを提供する。
+  ],
+  test_cases: [
+    - root depth 1、null/boolean/number/string/object occurrence、property、array length、raw string key/value code unitのexactとlimit+1を検査する
+    - array intrinsic `length`がpropertyには含まれずstring key unitには含まれることを検査する
+    - symbol、hidden、accessor、array extra keyがdescriptor failure前にpropertyへ課金され、symbolがstring unitへ課金されないことを検査する
+    - shared aliasの全input budgetと両profile hookをoccurrenceごとに再課金し、descriptor header/viewはidentityごとに一度だけcaptureすることを検査する
+    - `beforeDescriptors`がview completion前、`beforeChildren`がcompletion後かつcycle/child前に呼ばれ、occurrence、header/view、ledger contextが正しいことを検査する
+    - getterを実行せず、deep iterative fixtureがJavaScript call stackに依存せずdepth budgetで停止することを検査する
+    - direct/indirect cycle、sparse/descriptor failure、budget failureがD-P parent linkから正しいimmutable pathをmaterializeすることを検査する
+    - captured record entryとarray itemの順序でpreorder planを構築することを検査する
+    - fresh walkerのdescriptor/cycle/frame/builder stateとfresh ledgerのoperation isolationを検査する
+    - exact internal signatureとtype fixtureのruntime code不在を検査する
+    - execution-source-specific cardinality/reference accounting、clone、final freeze、parser、identity、trust、authority、client permissionを追加せず、facade、shared root、generated root declarationにprofile/walkerを公開しないことを検査する
   ],
 )

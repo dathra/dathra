@@ -5,6 +5,8 @@ import {
   type ActiveAncestorTracker as _RootActiveAncestorTrackerMustNotExist,
   // @ts-expect-error SC02A8D-P occurrence plans remain internal.
   type ClosedDataPlan as _RootClosedDataPlanMustNotExist,
+  // @ts-expect-error SC02A8D-W source profiles remain internal.
+  type ClosedDataProfile as _RootClosedDataProfileMustNotExist,
   // @ts-expect-error SC02A8B descriptor capture remains internal.
   type ClosedContainerHeader as _RootClosedContainerHeaderMustNotExist,
   // @ts-expect-error AS01 owns shared-root publication.
@@ -29,6 +31,8 @@ import {
   type ActiveAncestorTracker as _ActiveAncestorTrackerMustNotExist,
   // @ts-expect-error SC02A8D-P occurrence plan builders remain internal.
   type OccurrencePlanBuilder as _OccurrencePlanBuilderMustNotExist,
+  // @ts-expect-error SC02A8D-W source profiles remain internal.
+  type ClosedDataProfile as _ClosedDataProfileMustNotExist,
   // @ts-expect-error SC02A8B descriptor capture remains internal.
   type ClosedDescriptorCapture as _ClosedDescriptorCaptureMustNotExist,
   // @ts-expect-error SC02A8B descriptor capture remains internal.
@@ -396,11 +400,13 @@ describe("ExecutionContractError", () => {
     expect("createClosedDescriptorCapture" in executionContractApi).toBe(false);
     expect("createActiveAncestorTracker" in executionContractApi).toBe(false);
     expect("createOccurrencePlanBuilder" in executionContractApi).toBe(false);
+    expect("createClosedDataPlan" in executionContractApi).toBe(false);
     expect("ActiveAncestorTracker" in executionContractApi).toBe(false);
     expect("ClosedDataOccurrence" in executionContractApi).toBe(false);
     expect("ClosedDataPlan" in executionContractApi).toBe(false);
     expect("ClosedDataPlanNode" in executionContractApi).toBe(false);
     expect("OccurrencePlanBuilder" in executionContractApi).toBe(false);
+    expect("ClosedDataProfile" in executionContractApi).toBe(false);
     expect("ClosedDescriptorCapture" in executionContractApi).toBe(false);
     expect("ClosedContainerHeader" in executionContractApi).toBe(false);
     expect("ClosedContainerView" in executionContractApi).toBe(false);
