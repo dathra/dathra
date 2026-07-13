@@ -77,6 +77,25 @@ reviewerが複数の場合は、互いに独立したsessionへ並列に渡し�
 dependencyとwrite setが独立した複数のreview unitは、unitごとにrevisionとreviewer setを固定したうえで同時にレビューして構いません。
 異なるunitの指摘と収束状態を混ぜず、各unitの結果を別々に統合してください。
 
+### レビュー回数の上限
+
+同一review unitの有効なレビューは、初期レビュー一回と、blocker修正後の収束レビュー一回を上限とします。
+初期レビューはrisk tierで定めたreviewerを同一revisionへ並列に割り当て、全結果を回収してからblockerを一括修正してください。
+収束レビューは初期レビューへ参加していない一人だけが、採用したblockerの解消と変更範囲のregressionを確認します。
+
+| risk tier | 初期reviewer | 収束reviewer | 同一unitの最大session数 |
+| --- | ---: | ---: | ---: |
+| `low` | 1 | 1 | 2 |
+| `medium` | 2 | 1 | 3 |
+| `high` | 3 | 1 | 4 |
+
+収束レビューでcorrectness blockerが残った場合は、同じscopeの三回目のレビューを開始してはいけません。
+そのreview unitを過大または契約未確定と判定し、依存順の小さいreview unitへ分割するか、前提をtestまたはprobeで確定して提案を作り直してください。
+同じscopeを別名のreview unitへ変更して回数をresetしてはいけません。
+
+文章表現、命名、最適化、将来拡張だけのfollow-upは再レビューの理由にしません。
+proposal、write set、dependency、decision anchorの外部変更によって`REVIEW INVALID`になった試行は有効な回数へ含めませんが、無関係なbranch HEAD前進を理由に無効化してはいけません。
+
 固定revisionはreview-unit manifestとimmutable review snapshotで表してください。
 
 manifestは次の入力を固定します。
@@ -205,6 +224,7 @@ reviewer 同士の結論が対立した場合は、メインセッションが�
 
 `blocker` を取り込んで提案を意味上変更した場合は、最初の並列レビューに参加していない一人の独立した sub-agent へ収束確認を依頼してください。
 収束確認は原則一回とし、文章表現または `follow-up` だけを変更した場合は実施しないでください。
+収束確認でblockerが残った場合は同一review unitのレビューを終了し、手順4の回数上限に従ってunit分割または前提の再設計へ戻ってください。
 
 収束確認用capsuleは、初期revision、採用したblocker、変更したblobとhunk、影響するdependency closure、targeted gate attestationだけを含めてください。
 収束reviewerには、採用した`blocker`の解消と変更範囲に新しいcorrectness blockerが生じていないことだけをdelta reviewさせ、初期snapshot全体を最初から再評価させないでください。
