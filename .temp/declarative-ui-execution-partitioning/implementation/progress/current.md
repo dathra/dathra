@@ -1,7 +1,7 @@
 # 宣言的 UI 実行分割の実装進捗
 
 更新日: 2026-07-13
-状態: 実装中
+状態: default branch回収中
 
 ## 再開情報
 
@@ -12,9 +12,20 @@
 - 作業 branch: `feature/declarative-ui-execution-partitioning`
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
-- 次のscheduler action: SC02A8F完了で解放されたKahn L5の`SC02A9`、`SC02A10-R`、`SC02A10-E`について、owner、排他的focused write set、exact dependency、integration gateを別々のprocess revisionとして固定する。三unitはprocess reviewとpush後だけ並列実装し、共有SPECとcumulative testはmain integration ownerが逐次統合する。
+- 次のscheduler action: [`default branch回収inventory`](extraction-inventory.md)のEvergreen候補をmain起点の独立branchへ抽出し、検証、push、PR作成まで完了する。`SC02A9`、`SC02A10-R`、`SC02A10-E`は、既存consumerまたは最初のvertical consumerと同じPRへ接続できるまで開始しない。
 - 期限付きgoal: [`DocCodeBlock動作実証`](../milestones/doc-code-block-demonstration-2026-07-14.md)のlifecycleは`active`だが、schedulerには未選択であり、この分類は次のactionを変更しない。
 - 外部 blocker: なし
+
+## default branch回収checkpoint
+
+巨大feature branchの一括mergeは行わない。
+設計変更後も価値が残り、main上で独立検証できる成果だけを小さなPRへ抽出する。
+
+Verification Gateの最初の5件はDraft PR #81から#85として提出済みである。
+回収済みcommit、PR、残る候補、consumer未接続成果の保留条件は[`extraction-inventory.md`](extraction-inventory.md)を正本とする。
+
+回収作業は元branchのcommitを移動または削除しない。
+元branchを履歴証拠として保持し、抽出先ではmainの現行lint、型、test、format条件を再検証する。
 
 ## 文書再編checkpoint
 
