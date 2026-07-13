@@ -41,11 +41,16 @@ async function renderProductionRoute(
   html: string;
   status: number;
 }> {
-  const serverBundleUrl = new URL("../dist/server/entry-server.js", import.meta.url);
+  const serverBundleUrl = new URL(
+    "../dist/server/entry-server.js",
+    import.meta.url,
+  );
   const serverEntryModule: unknown = await import(serverBundleUrl.href);
 
   if (!isServerEntryModule(serverEntryModule)) {
-    throw new TypeError("The production server bundle has no default render entry.");
+    throw new TypeError(
+      "The production server bundle has no default render entry.",
+    );
   }
 
   const result: unknown = await serverEntryModule.default({
@@ -59,7 +64,9 @@ async function renderProductionRoute(
   }
 
   if (!isHtmlRenderResult(result)) {
-    throw new TypeError("The production server entry returned an invalid result.");
+    throw new TypeError(
+      "The production server entry returned an invalid result.",
+    );
   }
 
   return { html: result.html, status: result.statusCode ?? 200 };
