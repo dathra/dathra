@@ -36,6 +36,8 @@ SC02A8E-Cはexecution sourceのcollection cardinalityだけをwalkerのdescripto
 
 SC02A8E-Rはexecution sourceのpotential reference cardinalityだけをwalkerの二段階profileとして追加する。
 
+SC02A8E-Pはexecution sourceのpotential SemanticPath segment cardinalityだけをwalkerのdescriptor前profileとして追加する。
+
 unknown input preflight、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
@@ -315,6 +317,26 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - shared array aliasもtarget occurrenceごとに再課金し、failure pathはarray containerまたはscalar slotとする
     - role stateはoccurrence IDとstructural roleだけをown data propertyとして保持し、captured record entryはown lengthとindexで走査する
     - occurrence、header、view、caller objectを変更または保持せず、factoryとprofileをpackage-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
+#adr(
+  header("SemanticPath cardinalityをsubject validation前のprofileへ分離する", Status.Accepted, "2026-07-13"),
+  [
+    SemanticPathは各source factのsubject内に分散しており、generic walkerへsource fieldを埋め込むとclosed-data admissionとsemantic subject schemaのownerが混在する。
+    path segmentを検証した後にcardinalityを課金すると、malformed subjectやsegmentがhard capを回避してchild descriptor workを先に発生させる。
+  ],
+  [
+    freshなSemanticPath profileはparent-linked occurrence roleだけを保持する。
+    source root、facts、fact item、subjectをstructural locationで追跡し、direct childの`path`がarrayなら`beforeDescriptors`でlengthを`maximumSemanticPathSegments`へ課金する。
+    subject discriminator、pathのrequiredness、segment discriminatorとscalar、source closureを検証しない。
+  ],
+  [
+    - empty pathは0件、同じsegmentの反復は各occurrenceを一件として課金する
+    - structurally presentなfact subject pathはmissingまたはmalformed discriminatorでも課金し、fact subject外の同名fieldは課金しない
+    - shared path aliasもtarget occurrenceごとに再課金し、failure pathは対象path arrayとする
+    - role stateはoccurrence IDとstructural roleだけをown data propertyとして保持し、mutableな`Map.prototype`へ依存しない
+    - occurrence、header、caller objectを変更または保持せず、factoryとprofileをpackage-local facade、shared root、generated root declarationへ公開しない
   ],
 )
 
@@ -1035,6 +1057,29 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   ],
 )
 
+#interface_spec(
+  name: "Execution-source SemanticPath cardinality profile",
+  summary: [
+    structurally presentなfact subject path segmentをsemantic validation前に専用hard capへ課金するinternal profileを提供する。
+  ],
+  format: [
+    ```typescript
+    function createSemanticPathProfile(): ClosedDataProfile
+    ```
+  ],
+  constraints: [
+    - factoryはfreshなoperation-local profileを毎回作成する
+    - source rootがrecord、`facts`がarray、fact itemとその`subject`がrecord、subjectの`path`がarrayであるstructural chainだけを対象にする
+    - target path arrayのlengthを`maximumSemanticPathSegments`へ累積課金する
+    - target pathはgeneric header課金後かつchild descriptor completion前に課金する
+    - empty pathは0件、反復segmentは各array occurrenceを一件として課金する
+    - subject discriminatorのmissingまたはmalformed、pathが許可されないsubject kind、segment semanticsをcardinality課金では検証しない
+    - fact subject外の`path`、fact直下の`path`、subject直下の`valuePath`を課金しない
+    - role stateはoccurrence IDとstructural roleだけをown data propertyとして保持し、caller object、header、full pathを保持しない
+    - internal moduleだけがfactoryをexportし、package-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -1462,6 +1507,23 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - declaration、version、locator、fact kind、callback parameter indexと非対象fieldを課金または検証しないことを検査する
     - mutableな`Map.prototype`、inherited array setter、`Array.prototype[Symbol.iterator]`に依存せずroleとcaptured entryを走査することを検査する
     - successとfailureの両方でcaller data、occurrence、header、viewを変更せず、caller objectをrole stateへ保持しないことを検査する
+    - factory、profile、role stateがpackage-local facade、shared root、generated root declarationへ公開されないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Execution-source SemanticPath cardinality precharge",
+  summary: [
+    fact subjectにstructurally presentなpath segment cardinalityをsemantic validationとchild descriptor completionより前に専用counterへ課金する。
+  ],
+  test_cases: [
+    - empty path、repeated segment、複数fact subjectの累積exactとlimit+1、およびpath failureを検査する
+    - parameter、return、callback-invocationだけでなく、pathが不正なsubject kind、missingまたはmalformed discriminatorでもstructurally presentなarrayを課金することを検査する
+    - target path arrayのchild descriptorがinvalidでもSemanticPath cardinality breachが先に失敗することを検査する
+    - shared path aliasをtarget occurrenceごとに再課金し、fresh profile operationがstateを共有しないことを検査する
+    - source root、fact直下、fact subject外、`valuePath`にある同じshapeのarrayを課金または検証しないことを検査する
+    - mutableな`Map.prototype`とinherited array setterに依存せずrole stateを構築することを検査する
+    - successとfailureの両方でcaller data、occurrence、headerを変更せず、caller objectをrole stateへ保持しないことを検査する
     - factory、profile、role stateがpackage-local facade、shared root、generated root declarationへ公開されないことを検査する
   ],
 )
