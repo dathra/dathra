@@ -14,6 +14,7 @@
 | `P60` | review log | [`review-log.md`](review-log.md) |
 | `P70` | commitとpushのlog | [`commit-log.md`](commit-log.md) |
 | `P80` | 未完了事項と外部blocker | [`blockers.md`](blockers.md) |
+| `P90` | default branchへの回収状況と保留理由 | [`extraction-inventory.md`](extraction-inventory.md) |
 
 進捗文書はmain integration ownerだけが編集します。
 文書更新のrisk tierとreview要否は[POLICY-R8-DOCUMENT](../../process/review-policy.md#policy-r8-document)に従います。
