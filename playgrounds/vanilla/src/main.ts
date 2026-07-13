@@ -5,10 +5,12 @@
  */
 import { Counter } from "./Counter";
 
+import "./main-runtime";
+
 // Mount the counter component
 const app = document.getElementById("app");
 if (app) {
-  const counterElement = Counter();
+  const counterElement = Counter({});
   app.appendChild(counterElement);
   console.log("Dathra playground initialized!");
 } else {
