@@ -401,6 +401,7 @@ describe("ExecutionContractError", () => {
     expect("createActiveAncestorTracker" in executionContractApi).toBe(false);
     expect("createOccurrencePlanBuilder" in executionContractApi).toBe(false);
     expect("createClosedDataPlan" in executionContractApi).toBe(false);
+    expect("createSourceCollectionProfile" in executionContractApi).toBe(false);
     expect("ActiveAncestorTracker" in executionContractApi).toBe(false);
     expect("ClosedDataOccurrence" in executionContractApi).toBe(false);
     expect("ClosedDataPlan" in executionContractApi).toBe(false);

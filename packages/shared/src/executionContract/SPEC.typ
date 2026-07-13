@@ -32,6 +32,8 @@ SC02A8D-Pはoccurrence ID、parent link、single segmentだけを保持するope
 
 SC02A8D-WはA8A、A8B、A8CとD-Pを一つのiterative walkerへ統合し、genericな二段階profile hookをinternal APIとして追加する。
 
+SC02A8E-Cはexecution sourceのcollection cardinalityだけをwalkerのdescriptor前profileとして追加する。
+
 unknown input preflight、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
@@ -270,6 +272,26 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - full pathはframeまたはplanへ保存せず、budget、descriptor、cycle、profile failureが観測した時だけD-P parent linkからmaterializeする
     - walkerはsource field、clone、final freeze、parser、canonical meter、digest、identity、trust、authority、client permissionを追加しない
     - profileとwalker factoryはpackage-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
+#adr(
+  header("source collection cardinalityをdescriptor completion前のprofileへ分離する", Status.Accepted, "2026-07-13"),
+  [
+    generic walkerへexecution sourceのfield名を埋め込むと、closed-data admissionとsource schemaのownerが混在する。
+    collection elementのdescriptorを完成した後にsource固有capを検査すると、limitを超えるinputがchild descriptor workを先に発生させる。
+  ],
+  [
+    freshなsource collection profileはparent-linked occurrence roleだけを保持し、`beforeDescriptors`で対象containerのcardinalityをoperation-local ledgerへ課金する。
+    facts、relations、exports、10個のregistry collection、各registry entryのimplementationsを、それぞれ既存の専用counterへ課金する。
+    profileはcollection element semantics、reference、SemanticPath、closureを検査しない。
+  ],
+  [
+    - factsとrelationsはarray length、exportsはrecord own-key countを専用counterへ課金する
+    - 10個のregistry collectionは`maximumRegistryEntries`、implementationsは`maximumRegistryImplementations`へ累積課金する
+    - shared aliasもtarget occurrenceごとに再課金し、failure pathは対象container occurrenceとする
+    - occurrence、header、caller objectを変更または保持せず、boundedなoperation-local role stateだけを保持する
+    - factoryとprofileはpackage-local facade、shared root、generated root declarationへ公開しない
   ],
 )
 
@@ -942,6 +964,29 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   ],
 )
 
+#interface_spec(
+  name: "Execution-source collection cardinality profile",
+  summary: [
+    source collectionの専用hard capをchild descriptor completion前に課金するinternal profileを提供する。
+  ],
+  format: [
+    ```typescript
+    function createSourceCollectionProfile(): ClosedDataProfile
+    ```
+  ],
+  constraints: [
+    - factoryはfreshなoperation-local profileを毎回作成する
+    - rootのfactsとrelationsがarrayの場合はlengthを`maximumFacts`と`maximumRelations`へ課金する
+    - rootのexportsがrecordの場合はraw own-key countを`maximumExports`へ課金する
+    - rootのregistriesにある10個のsource collectionがarrayの場合は各lengthを`maximumRegistryEntries`へ累積課金する
+    - 各registry collection itemのimplementationsがarrayの場合はlengthを`maximumRegistryImplementations`へ累積課金する
+    - target containerはgeneric header課金後かつchild descriptor completion前に課金する
+    - source field以外、collection element、reference、SemanticPath、semantic discriminator、closureを解釈しない
+    - role stateはoccurrence IDとstructural roleだけを保持し、caller object、header、view、full pathを保持しない
+    - internal moduleだけがfactoryをexportし、package-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -1335,5 +1380,22 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - fresh walkerのdescriptor/cycle/frame/builder stateとfresh ledgerのoperation isolationを検査する
     - exact internal signatureとtype fixtureのruntime code不在を検査する
     - execution-source-specific cardinality/reference accounting、clone、final freeze、parser、identity、trust、authority、client permissionを追加せず、facade、shared root、generated root declarationにprofile/walkerを公開しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Execution-source collection cardinality precharge",
+  summary: [
+    source collectionのcardinalityをsemantic validationとchild descriptor completionより前に専用counterへ課金する。
+  ],
+  test_cases: [
+    - facts、relations、exportsのexactとlimit+1、および対象containerのfailure pathを検査する
+    - 10個すべてのregistry collectionを`maximumRegistryEntries`へ累積課金することを検査する
+    - 各registry entryのimplementationsを`maximumRegistryImplementations`へ累積課金することを検査する
+    - target arrayのchild descriptorがinvalidでもcardinality breachが先に失敗することを検査する
+    - shared aliasをtarget occurrenceごとに再課金し、fresh profile operationがstateを共有しないことを検査する
+    - non-target field、collection element semantics、reference、SemanticPathを課金または検証しないことを検査する
+    - successとfailureの両方でcaller data、occurrence、headerを変更せず、caller objectをrole stateへ保持しないことを検査する
+    - factory、profile、role stateがpackage-local facade、shared root、generated root declarationへ公開されないことを検査する
   ],
 )
