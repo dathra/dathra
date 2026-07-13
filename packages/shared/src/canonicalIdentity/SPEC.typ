@@ -11,7 +11,7 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
 == 設計判断
 
 #adr(
-  header("Canonical JSON の入力を副作用のない closed value に制限する", Status.Accepted, "2026-07-12"),
+  header("Canonical JSON の入力を副作用のない closed value に制限する", Status.Superseded, "2026-07-12"),
   [
     content-addressed identity は property insertion order や host object の暗黙変換に依存できない。
     getter、`toJSON`、custom prototype を実行すると canonicalization 自体が観測可能な副作用を持つ。
@@ -33,6 +33,25 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
 )
 
 #adr(
+  header("Canonical JSON identity を observable な JSON snapshot に限定する", Status.Accepted, "2026-07-13"),
+  [
+    JavaScript の reflection は、prototype を後から `Object.prototype` へ変更した exotic object と通常の record を常には区別できない。
+    private field、internal slot、外部 `WeakMap` に保持された state の不在も証明できないため、前の ADR が述べた hidden state の一般的な拒否は実装可能な保証ではない。
+  ],
+  [
+    canonical identity は、supported input の observable な own data-property graph だけに対して定義する。
+    caller は strict parser または domain snapshot factory から得た semantically closed JSON snapshot を渡し、Proxy、re-prototyped exotic object、private state や外部 state を意味に含む object を渡してはならない。
+    canonicalizer は observable な prototype、descriptor、property、value shape を検査するが、arbitrary object の provenance や semantic closure を証明する sanitizer にはしない。
+  ],
+  [
+    - supported snapshot では author callback を実行せず、同じ observable JSON graph を同じ bytes にできる
+    - identity は object identity、internal slot、private field、外部 state を表現しない
+    - untrusted wire text は duplicate key を検査する strict parser、domain object は明示的な JSON snapshot factory を先に通す必要がある
+  ],
+  supersedes: ("Canonical JSON の入力を副作用のない closed value に制限する",),
+)
+
+#adr(
   header("Digest は browser-compatible な非同期 WebCrypto で生成する", Status.Accepted, "2026-07-12"),
   [
     shared primitive は build、server-request、browser のすべてから利用される。
@@ -47,6 +66,44 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
     - build と browser で同じ algorithm と byte contract を共有できる
     - digest API は非同期になる
     - supported host は WebCrypto を提供する必要がある
+  ],
+  references: (
+    link("https://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-digest")[Web Cryptography API],
+  ),
+)
+
+#adr(
+  header("Digest の byte snapshot と branded result を runtime で検証する", Status.Accepted, "2026-07-13"),
+  [
+    `Proxy<Uint8Array>` は TypeScript 上 `Uint8Array` として渡せるが、typed-array internal slot を持たないため、`new Uint8Array(proxy)` は caller の iterator を実行し得る。
+    また、非準拠 host が32 bytes以外を返した場合、そのまま brand すると `isSha256Digest()` が拒否する文字列を `Sha256Digest` として返してしまう。
+  ],
+  [
+    input は intrinsic typed-array brand が `Uint8Array` で attached buffer を持つ値だけに制限し、brand 検査後に iterator や instance method を使わず同期 copy する。
+    Proxy、別種の view、detached buffer は `unsupported-value` として拒否する。
+    WebCrypto の SHA-256 operation が失敗するか32 bytes以外を返す場合は `crypto-unavailable` とし、branded digest を返さない。
+  ],
+  [
+    - caller が差し替えた iterator、method、Proxy trap を byte snapshot 中に実行しない
+    - `sha256Digest()` が返す値は常に canonical digest guard を満たす
+    - digest の暗号学的な正しさは準拠 WebCrypto host を信頼し、別実装による二重計算は行わない
+  ],
+)
+
+#adr(
+  header("WebCrypto result は intrinsic ArrayBuffer brand で受理する", Status.Accepted, "2026-07-13"),
+  [
+    WebCrypto の `digest()` は `ArrayBuffer` を返すが、TypeScript の戻り値型だけでは非準拠 host の runtime value を保証できない。
+    array-like object を `Uint8Array` constructor へ直接渡すと、`length` や indexed property の getter を実行し、author-controlled bytes を正規 digest として brand し得る。
+  ],
+  [
+    digest result は intrinsic `ArrayBuffer.prototype.byteLength` getter が受理する genuine `ArrayBuffer` に限定し、Proxy と array-like object を property access なしで拒否する。
+    genuine `ArrayBuffer` でない result、32 bytes でない result、WebCrypto capability の取得または operation の失敗は `crypto-unavailable` とし、branded digest を返さない。
+  ],
+  [
+    - 非準拠 host result の getter、iterator、Proxy trap を digest encoding 中に実行しない
+    - cross-realm を含む genuine `ArrayBuffer` の exact 32 bytes だけを canonical digest 表記へ変換する
+    - digest bytes の暗号学的な正しさは引き続き準拠 WebCrypto host を信頼する
   ],
   references: (
     link("https://www.w3.org/TR/WebCryptoAPI/#SubtleCrypto-method-digest")[Web Cryptography API],
@@ -177,7 +234,8 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
     - current-realm `Object.prototype` と null prototype の record を受理する
     - standard `Array.prototype` を持つ dense array だけを受理する
     - accessor は descriptor から検出し、getter と setter を実行しない
-    - Proxy は入力契約外であり、untrusted text の duplicate key 検査は strict parser の責務とする
+    - runtime 検査は observable な shape を対象とし、Proxy、re-prototyped exotic object、hidden state を意味に含む object は caller が snapshot 化する
+    - untrusted text の duplicate key 検査は strict parser の責務とする
   ],
   test_cases: [
     - insertion order が異なる同値 object が同じ text と bytes になる
@@ -210,11 +268,15 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
     - digest 部分は43文字で、最後の base64url character の未使用 bit は0とする
     - `=`, `+`, `/`, whitespace、別 prefix、別長、non-zero pad bit を拒否する
     - `sha256Digest()` は caller の `Uint8Array` を同期 copy し、上書き可能な iterator や method を実行しない
+    - genuine `Uint8Array` 以外の view、Proxy、detached buffer を author code の実行前に `unsupported-value` として拒否する
+    - WebCrypto capability の取得失敗、operation の失敗、genuine `ArrayBuffer` でない result、32 bytes以外の result を `crypto-unavailable` として拒否する
   ],
   test_cases: [
     - empty bytes と `abc` の既知 SHA-256 vector に一致する
     - 呼び出し直後に input bytes または preimage を変更しても開始時 snapshot の digest になる
     - input bytes の iterator を上書きしても実行せず、typed array の exact bytes を hash する
+    - Proxy、別種の view、detached buffer を typed failure として拒否し、Proxy trap を実行しない
+    - 非準拠 WebCrypto result の array-like getter または Proxy trap を実行せず、branded digest を生成しない
     - canonical digest guard が canonical 表記だけを受理する
   ],
 )

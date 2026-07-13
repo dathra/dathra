@@ -13,6 +13,21 @@ import {
   type CanonicalIdentityPathSegment,
 } from "./implementation";
 
+/* eslint-disable @typescript-eslint/consistent-type-imports, import/no-duplicates -- Each negative import must fail independently for mutation sensitivity. */
+// @ts-expect-error Canonical builder runtime declarations remain package-internal in the type namespace.
+import type { buildCanonicalJson as _BuildCanonicalJsonExport } from "../index";
+// @ts-expect-error Canonical builder runtime declarations remain package-internal in the type namespace.
+import type { createCanonicalBuilderInstrumentation as _CreateCanonicalBuilderInstrumentationExport } from "../index";
+// @ts-expect-error Canonical builder types remain package-internal.
+type _T01 = import("../index").CanonicalBuilderFailure;
+// @ts-expect-error Canonical builder types remain package-internal.
+type _T02 = import("../index").CanonicalBuilderInstrumentation;
+// @ts-expect-error Canonical builder types remain package-internal.
+type _T03 = import("../index").CanonicalSortInstrumentation;
+type _T04 = typeof _BuildCanonicalJsonExport;
+type _T05 = typeof _CreateCanonicalBuilderInstrumentationExport;
+/* eslint-enable @typescript-eslint/consistent-type-imports, import/no-duplicates */
+
 function failBuilder(
   code: string,
   path: readonly (string | number)[],
