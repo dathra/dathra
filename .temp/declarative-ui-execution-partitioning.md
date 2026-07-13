@@ -1770,6 +1770,78 @@ AR01-DPの手書き差分は合計700行、最大test file 300行以下を見込
 AR01-Pはruntime JCS matrixをAR01-PIへ移したうえで合計900行、最大test file 350行以下を見込む。
 合計1,500行または一file 1,000行の停止条件へ達した場合は実装を止め、fixture責務を別review revisionへ再分割する。
 
+#### artifact contract error と resource foundation の実装分割
+
+AR01-DSとAR01-PSを開始する前に、error contract、budget/ledger、descriptor snapshotの課金順を固定する。
+errorとbudgetは別々にgreenへできるため、`AR01-E -> AR01-B -> {AR01-DS, AR01-PS}`の独立revisionに分ける。
+AR01-DDとAR01-PIの前には、canonical textを生成せずexact byte/workを課金するbounded canonical meterを別revisionとして置く。
+
+AR01-Eは次のpackage-localなexact error codeだけを提供する。
+
+```ts
+type ArtifactContractErrorCode =
+  | "invalid-closed-record"
+  | "invalid-field"
+  | "invalid-url"
+  | "noncanonical-order"
+  | "duplicate-record"
+  | "dangling-reference"
+  | "kind-mismatch"
+  | "semantic-mismatch"
+  | "budget-exceeded"
+  | "crypto-unavailable";
+
+class ArtifactContractError extends TypeError {
+  readonly code: ArtifactContractErrorCode;
+  readonly path: readonly (string | number)[];
+
+  constructor(
+    code: ArtifactContractErrorCode,
+    path: readonly (string | number)[],
+    message: string,
+  );
+}
+```
+
+`ArtifactContractError`は`name`を`"ArtifactContractError"`に固定する。
+constructorはcaller pathをfresh arrayへcopyしてfreezeし、初期化後のerror object自身もfreezeする。
+stable observationはclass、`TypeError`継承、name、code、root-relative pathだけであり、message文言とstackはcontractにしない。
+path helper aliasはpackage-local facadeへ追加せず、path typeをerror fieldとconstructorへinlineにする。
+
+後続internal moduleは`fail(code, path, detail): never`をerror moduleから使えるが、package-local facadeは`ArtifactContractError`をruntime value、`ArtifactContractErrorCode`をtypeとしてだけexportする。
+`fail`、path formatter、helper typeをfacadeからexportしない。
+shared package rootへの公開はAS01だけが所有する。
+
+各codeの意味とownerを次に固定する。
+
+| code | 意味 | owner |
+| --- | --- | --- |
+| `invalid-closed-record` | prototype、own key、descriptor、accessor、hidden/symbol property、sparse collection、reflection failureによりclosed dataとして観測できない | AR01-DS、AR01-PS、AR01-IT |
+| `invalid-field` | closed snapshot内のscalar、literal、digest lexical form、number、schema、required relation endpointの値自体がfield contractを満たさない | AR01-DV、AR01-DD、AR01-PV、AR01-PI、AR01-IT |
+| `invalid-url` | URLがparse不能、許可scheme/origin/path条件違反、canonical serializerまたはderived URLと不一致 | AR01-DV、AR01-PV、AR01-URL |
+| `noncanonical-order` | collection elementは個別にvalidだが採択済みcomparator順ではない | AR01-PV、AR01-IT |
+| `duplicate-record` | canonical keyまたはidentity tupleがcollection内で重複する | AR01-PV、AR01-IT |
+| `dangling-reference` | graph closure時に要求されたartifact、member、exportなどのreferentが存在しない | AR01-PC |
+| `kind-mismatch` | referentは存在するがartifact、dependency、finalization kindの組合せが許可されない | AR01-PV、AR01-PC |
+| `semantic-mismatch` | referentとkindは存在するがentry、export、member roleまたはsemantic bindingが一致しない | AR01-PV、AR01-PC |
+| `budget-exceeded` | AR01-Bが定義するoperation-local hard limitを課金前検査で超える | AR01-B以降の課金operation |
+| `crypto-unavailable` | canonical digestに必要なWebCrypto capabilityが利用できない | AR01-DD、AR01-PI |
+
+schema version違反と不正なaddress lexical formは`invalid-field`にする。
+`digest-mismatch`、`integrity-mismatch`、`authentication-failed`、actual-byte mismatch、fallback codeはAR01へ追加しない。
+artifact exact bytesとselected evidenceの照合はAF01、SL01、RR01が所有する。
+
+pathは各operationが直接受け取ったinput rootに相対なproperty名またはarray indexのsequenceとする。
+WebCrypto不在とinput内の一箇所へ帰属できないcanonical byte/work budget failureは空path `[]`にする。
+nested operationのprefix、複数failureのprecedence、budget counterごとのpathは各operationのSPECで固定し、AR01-Eでは決めない。
+
+AR01-Eはerror objectを作る能力だけを提供し、input acceptance、canonicality、identity、trust、provenance、placement、client inclusion、runtime admissionの証拠を生成しない。
+完全なAR01 parser、validator、producer surfaceはbuild/server側に残し、error classの存在をclient artifactへの到達許可にしない。
+
+AR01-BはAR01-Eの`budget-exceeded`を再利用するが、AR01-Eはbudget type、ledger、default、override、counterを持たない。
+AR01-Bはexact counter、hard cap、narrow-only override、operation-local ledger、課金順を独立して設計、review、実装する。
+generic shared snapshot utilityは現時点で追加せず、artifact-local descriptor kernelをDSとPSで共有できるかを各snapshot revisionで判断する。
+
 `dathra.cost/1` は各 metric を次のように数える。
 
 - **client-delivered-bytes**：request-envelope class ごとに各 joint variant から cold client が取得する ProjectionManifestCore exact bytes、candidate-invariant な固定長 ProjectionManifest envelope bytes、reachable JavaScript、WebAssembly、data artifact exact bytes を数える。artifact は ArtifactAddressId ごとに variant 内で一回だけ数え、class 内の最大 variant 値を class ID 順に saturation 加算する。別 class から同じ core または shared artifact へ到達する場合は class ごとに数える。client が取得しない source map と debug metadata は除外するが、取得する signature envelope、decoder table、static data は含める。
