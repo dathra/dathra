@@ -1774,6 +1774,7 @@ async function parseRecordArray<Id extends Sha256Digest, Preimage>(
   const records: ModuleIdentityRecord<Id, Preimage>[] = [];
   let nextIndex = 0;
   let stopped = false;
+  let failure: Error | undefined;
   async function parseNext(): Promise<void> {
     while (!stopped) {
       const index = nextIndex;
@@ -1783,7 +1784,14 @@ async function parseRecordArray<Id extends Sha256Digest, Preimage>(
         records[index] = await parser(input[index], [...path, index]);
       } catch (error) {
         stopped = true;
-        throw error;
+        if (failure === undefined) {
+          failure =
+            error instanceof Error
+              ? error
+              : new Error("Record parser rejected with a non-Error value", {
+                  cause: error,
+                });
+        }
       }
     }
   }
@@ -1791,6 +1799,8 @@ async function parseRecordArray<Id extends Sha256Digest, Preimage>(
   await Promise.all(
     Array.from({ length: workerCount }, async () => await parseNext()),
   );
+  // eslint-disable-next-line no-throw-literal -- The failure is normalized to Error when captured.
+  if (failure instanceof Error) throw failure;
 
   const sorted = [...records].sort((left, right) =>
     left.id < right.id ? -1 : left.id > right.id ? 1 : 0,

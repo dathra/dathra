@@ -1794,6 +1794,59 @@ describe("module graph snapshot", () => {
     expect(maximumActive).toBeLessThanOrEqual(32);
   });
 
+  it("waits for active record digest workers before rejecting", async () => {
+    const profiles: ModuleSemanticProfile[] = [];
+    for (let index = 0; index < 64; index += 1) {
+      profiles.push(await createProfile(`failed-digest-${index}`));
+    }
+    profiles.sort((left, right) =>
+      left.id < right.id ? -1 : left.id > right.id ? 1 : 0,
+    );
+
+    const originalDigest = globalThis.crypto.subtle.digest.bind(
+      globalThis.crypto.subtle,
+    );
+    let releaseBlockedDigests: () => void = () => undefined;
+    const blockedDigests = new Promise<void>((resolve) => {
+      releaseBlockedDigests = resolve;
+    });
+    let digestCallCount = 0;
+    let active = 0;
+    vi.spyOn(globalThis.crypto.subtle, "digest").mockImplementation(
+      async (algorithm, data) => {
+        const callIndex = digestCallCount;
+        digestCallCount += 1;
+        active += 1;
+        try {
+          if (callIndex === 0) return new Uint8Array(32).buffer;
+          await blockedDigests;
+          return await originalDigest(algorithm, data);
+        } finally {
+          active -= 1;
+        }
+      },
+    );
+
+    const releaseTimer = setTimeout(releaseBlockedDigests, 50);
+    let activeAtRejection = -1;
+    try {
+      await expectModuleGraphError(
+        parseModuleGraphSnapshot(malformedSnapshotWithProfiles(profiles)),
+        "digest-mismatch",
+      );
+      activeAtRejection = active;
+    } finally {
+      clearTimeout(releaseTimer);
+      releaseBlockedDigests();
+      await vi.waitFor(() => {
+        expect(active).toBe(0);
+      });
+    }
+
+    expect(digestCallCount).toBe(32);
+    expect(activeAtRejection).toBe(0);
+  });
+
   it("rejects forged IDs and noncanonical record order", async () => {
     const profile = await createProfile("strict");
     const domain = await createDomain("strict");

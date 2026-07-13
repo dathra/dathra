@@ -296,6 +296,7 @@ ModuleCoordinator が resolver、loader、transform、extractor の結果を gra
     - 通常のcall stack限界を超える malformed closed input を raw `RangeError` ではなく typed failure で拒否する
     - nested inventory site は creator と strict parser のどちらから返しても freeze され、record ID と preimage digest の一致を維持する
     - duplicate record ID を digest 前に拒否し、unique record array の digest concurrency を32以下に保つ
+    - record digest worker が失敗した場合は新規処理を停止し、同じ呼び出しの進行中 worker がすべて settle してから failure を返す
     - production adapter が確定するまでは transformer root export に creator、parser、error type を含めない
     - transformer root export の全 runtime value と explicit type を declaration ごとに negative probe する
   ],
