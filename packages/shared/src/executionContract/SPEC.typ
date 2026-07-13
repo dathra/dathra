@@ -28,6 +28,8 @@ SC02A8Bはdistinct container identityごとのoperation-localな二段階descrip
 
 SC02A8Cは同時にactiveなcontainer identityだけをcycleとして拒否するoperation-local trackerをinternal APIとして追加する。
 
+SC02A8D-Pはoccurrence ID、parent link、single segmentだけを保持するoperation-local plan builderと、failure時だけpathをmaterializeするinternal APIを追加する。
+
 unknown input preflight、strict parser、closure、creator、freeze、digestは後続の独立review unitが追加する。
 
 == 設計判断
@@ -226,6 +228,25 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - tracker stateはactive depthに比例し、recursive traversalまたはmutableなArray prototypeのstack behaviorへ依存しない
     - descriptor、budget、walker、profile、clone、freeze、parser、meterを追加しない
     - trackerとfactoryはpackage-local facadeまたはshared rootへ公開しない
+  ],
+)
+
+#adr(
+  header("parent-linked occurrence planをwalkerから分離する", Status.Accepted, "2026-07-13"),
+  [
+    full pathを各occurrenceへ保存すると、depthとnode数の積に比例するallocationがwalkerのbudget admissionより前に発生する。
+    parent-linked planとdescriptor、budget、cycle、profileを同じrevisionで実装すると、単独で検証できるpath modelとhostile-data traversalが一つのreview unitへ結合する。
+  ],
+  [
+    freshなbuilderはoccurrence ID、parent occurrence ID、single segment、1-based depthと、scalar valueまたはrecord/array kindだけをpreorder planへ追加する。
+    current pathとdirect child pathはparent linkを参照するdeferred immutable arrayとし、pathが観測された時だけrecursive call stackを使わず反復的にmaterializeする。
+    descriptor、budget、active ancestor、generic profileを統合するwalkerは、完成したbuilderへ依存する後続SC02A8D-Wが所有する。
+  ],
+  [
+    - root occurrence IDは0、parentとsegmentは`null`、depthは1とする
+    - plan nodeはfull path、caller object、descriptor、ledger、profile、clone、source fieldを保持しない
+    - builderはempty finish、repeated finish、finish後のappend、second root、unknown parentをinternal `TypeError`で拒否する
+    - occurrence、plan、builderとfactoryはpackage-local facade、shared root、generated root declarationへ公開しない
   ],
 )
 
@@ -806,6 +827,60 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   ],
 )
 
+#interface_spec(
+  name: "Parent-linked closed data occurrence plan",
+  summary: [
+    後続walkerがcaller objectやfull pathを保持せずにpreorder occurrence sequenceを構築するinternal builderを提供する。
+  ],
+  format: [
+    ```typescript
+    type ClosedDataPlanNodeValue =
+      | { readonly kind: "null"; readonly value: null }
+      | { readonly kind: "boolean"; readonly value: boolean }
+      | { readonly kind: "number"; readonly value: number }
+      | { readonly kind: "string"; readonly value: string }
+      | { readonly kind: "record" }
+      | { readonly kind: "array" }
+
+    interface ClosedDataOccurrence {
+      readonly occurrenceId: number
+      readonly parentOccurrenceId: number | null
+      readonly segment: string | number | null
+      readonly depth: number
+      readonly path: readonly (string | number)[]
+      childPath(segment: string | number): readonly (string | number)[]
+    }
+
+    interface ClosedDataPlan {
+      readonly nodes: readonly ClosedDataPlanNode[]
+    }
+
+    interface OccurrencePlanBuilder {
+      rootPath(): readonly (string | number)[]
+      childPath(parentOccurrenceId: number, segment: string | number): readonly (string | number)[]
+      appendRoot(value: ClosedDataPlanNodeValue): ClosedDataOccurrence
+      appendChild(
+        parentOccurrenceId: number,
+        segment: string | number,
+        value: ClosedDataPlanNodeValue,
+      ): ClosedDataOccurrence
+      finish(): ClosedDataPlan
+    }
+
+    function createOccurrencePlanBuilder(): OccurrencePlanBuilder
+    ```
+  ],
+  constraints: [
+    - factoryは呼び出しごとにfreshなoperation-local builderを作る
+    - rootは一度だけ追加し、occurrence ID 0、parentとsegmentは`null`、depthは1とする
+    - child occurrence IDはappend順、depthはparent depth + 1とし、既存parent IDと一つのstring keyまたはnumeric array indexだけを保持する
+    - scalar nodeはclassified value、container nodeはrecord/array kindだけを保持し、caller object、descriptor view、ledger、profile、clone、full path arrayを保持しない
+    - root path、child path、occurrenceの`path`と`childPath()`は観測時だけparent chainを反復的にmaterializeするimmutable arrayとする
+    - `finish()`はplan、node sequence、全nodeをfreezeし、同じbuilderでのappendと再finishを不能にする
+    - plan、node、occurrence、builder、factoryはinternal moduleだけがexportし、package-local facade、shared root、generated root declarationへ公開しない
+  ],
+)
+
 == 振る舞い仕様
 
 #behavior_spec(
@@ -939,6 +1014,31 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
   errors: [
     - active identityの再enterを`invalid-closed-record`とcurrent occurrence pathで拒否し、failed enter前のstateを保持する
     - out-of-order、duplicate、unknown leaveをinternal `TypeError`で拒否し、failure前のstateを保持する
+  ],
+)
+
+#behavior_spec(
+  name: "parent linkからoccurrence pathをdeferred materializeする",
+  summary: "preorder nodeへfull pathを保存せず、failure consumerが観測したpathだけを反復的に構築する。",
+  preconditions: [
+    - callerはfresh builderへrootを追加済みであり、child追加時は既存parent occurrence IDを指定する
+  ],
+  steps: [
+    - rootまたはchild用のdeferred pathを作る
+    - classified scalar valueまたはcontainer kindをappendし、append順のoccurrence IDとparent由来のdepthを決める
+    - pathが観測された場合だけcurrent segmentからparent linkをrootまで反復し、root-relative順序のarrayを作る
+    - traversal完了後に`finish()`し、frozen node sequenceを返す
+  ],
+  postconditions: [
+    - plan nodeはoccurrence locationとclassified value/kindだけを保持する
+    - root pathはempty、record propertyはstring segment、array itemはnumber segmentとして順序を保持する
+    - materialized path、occurrence、node、node sequence、planはimmutableである
+    - 12,000-level parent chainのpath materializationはJavaScript call stackへ依存しない
+    - 別のbuilder呼び出しはnode sequenceとlifecycle stateを共有しない
+  ],
+  errors: [
+    - root未追加のchild、unknown parent、second root、finish後のappendをinternal `TypeError`で拒否し、failure前のnode sequenceを保持する
+    - empty planとrepeated finishをinternal `TypeError`で拒否する
   ],
 )
 
@@ -1109,5 +1209,23 @@ unknown input preflight、strict parser、closure、creator、freeze、digestは
     - mutableなArray prototype traversal/stateへ依存しないことを検査する
     - exact internal signatureとtype fixtureのruntime code不在を検査する
     - descriptor、budget、walker、profile、clone、freeze、parser、meterを追加せず、facade、shared root、generated root declarationにtrackerを公開しないことを検査する
+  ],
+)
+
+#feature_spec(
+  name: "Parent-linked occurrence plan and deferred path",
+  summary: [
+    後続walkerがbudget、descriptor、profileと独立して利用できるoperation-local plan/path boundaryを提供する。
+  ],
+  test_cases: [
+    - root、record property、array itemとnull/boolean/number/stringのpreorder node、occurrence ID、parent ID、single segment、1-based depthを検査する
+    - plan nodeがfull path、caller object、descriptor、ledger、profile、cloneを保持しないことを検査する
+    - root、current、direct child pathが観測時だけparent chainからimmutable arrayへmaterializeされることを検査する
+    - plan、node sequence、全node、occurrence、materialized pathのimmutabilityを検査する
+    - 12,000-level parent chainをrecursive call stackとmutable Array prototype traversalなしでmaterializeできることを検査する
+    - unknown parent、root未追加child、second root、empty/repeated finish、finish後appendのfailureとrollbackを検査する
+    - fresh builderのoperation isolationを検査する
+    - exact internal signatureとtype fixtureのruntime code不在を検査する
+    - descriptor、budget、active ancestor、walker、profile、source field、clone、freeze、parser、identity、trust、authority、client permissionを追加せず、facade、shared root、generated root declarationにplan internalを公開しないことを検査する
   ],
 )
