@@ -13,6 +13,7 @@
 - 起点 commit: `71186a8e919c44d0dbc626effdf08ed5120cd790`
 - push 先: `origin/feature/declarative-ui-execution-partitioning`
 - 次のscheduler action: 完了したSC02A8E source-profile integrationをdependencyへ固定し、SC02A8F以降のWS01-A closureを依存順の細粒度process revisionへ分ける。旧aggregate sliceを実装またはreviewせず、最初にSC02A8Fのowner、write set、dependency、integration gateを独立revisionとして確定する。
+- 期限付きgoal: [`DocCodeBlock動作実証`](../milestones/doc-code-block-demonstration-2026-07-14.md)のlifecycleは`active`だが、schedulerには未選択であり、この分類は次のactionを変更しない。
 - 外部 blocker: なし
 
 ## 文書再編checkpoint

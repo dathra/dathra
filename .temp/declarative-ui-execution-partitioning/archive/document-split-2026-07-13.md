@@ -116,6 +116,17 @@ activeな分割文書には分割後のstatus更新とcanonical path置換が入
 
 ## 期限付きgoalの分類
 
-期限付きgoalのprovenance、状態判定、`implementation/milestones/`または`archive/goals/`への配置は、owner再編から分離した後続revisionで扱います。
-このrevisionは期限付きgoal本文をwrite setに含めず、ignored user changeとして保持します。
-既存の次actionである`SC02A8F`は変更しません。
+期限付きgoalのprovenanceと状態分類は、owner再編coreから独立したrevisionで扱いました。
+
+| Input | Git blob | SHA-256 |
+| --- | --- | --- |
+| [文書再編のuser goal snapshot](snapshots/document-owner-reorganization-goal-v1.md) | `761b175dc7cc908b15168eadd4a9e2efedd4d011` | `93aadc1c9f4523eef3fe95f9d3da5076e6fbda2c6842463d2de80c9efcadbc70` |
+| [DocCodeBlock動作実証](../implementation/milestones/doc-code-block-demonstration-2026-07-14.md) | `43b26be4aa0b77ba9995e979eea7736cbde6d085` | `ea3040601452d94b44b6db2f52c7af86c6ba1238feda32c5feebc3802f695367` |
+
+二つのinputは、分類前のsynthetic checkpoint `a131ea9e1e4ad38c4c12da49958fa7dac912216b`へ固定しました。
+user goal snapshotは受領した指示とbyte-identicalであり、`.temp/declarative-ui-execution-partitioning/`配下の分割文書とarchiveをuser changesとして保持するよう明記しています。
+snapshotはprovenance evidenceであり、現在の実行指示または正本として使用しません。
+
+進捗、commit、review、blockerの各logには`DR00`から`DR04`の完了、明示的な中断、supersedeの記録がありません。
+この証拠に基づくlifecycle判定は[Milestone index](../implementation/milestones/README.md)、scheduler actionは[現在の進捗](../implementation/progress/current.md)が所有します。
+本文のruntime条件、期限、DR00からDR04、完了条件はcheckpoint blobから変更していません。
