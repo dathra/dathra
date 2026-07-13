@@ -5,7 +5,7 @@ import {
   isSha256Digest,
   sha256Digest,
   type Sha256Digest,
-} from "@dathra/shared";
+} from "@dathra/shared/canonical-identity";
 
 declare const canonicalModuleUrlBrand: unique symbol;
 declare const moduleContentDigestBrand: unique symbol;
@@ -568,6 +568,8 @@ const DEFINITION_PARSE_GOAL = {
   text: "text",
 } as const satisfies Record<ModuleDefinitionKind, ModuleParseGoal>;
 
+const RECORD_PARSE_CONCURRENCY = 32;
+
 function formatPath(path: ValidationPath): string {
   return path.reduce<string>(
     (result, segment) =>
@@ -591,20 +593,33 @@ function fail(
 }
 
 function deepFreeze(value: unknown): void {
-  if (typeof value !== "object" || value === null || Object.isFrozen(value)) {
-    return;
-  }
-  if (Array.isArray(value)) {
-    for (const item of value) deepFreeze(item);
-  } else {
-    for (const key of Object.keys(value)) {
-      const descriptor = Object.getOwnPropertyDescriptor(value, key);
-      if (descriptor !== undefined && "value" in descriptor) {
-        deepFreeze(descriptor.value);
-      }
+  if (typeof value !== "object" || value === null) return;
+
+  const pending: object[] = [value];
+  const visited = new WeakSet<object>();
+  function enqueue(candidate: unknown): void {
+    if (typeof candidate === "object" && candidate !== null) {
+      pending.push(candidate);
     }
   }
-  Object.freeze(value);
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (current === undefined || visited.has(current)) continue;
+    visited.add(current);
+
+    if (Array.isArray(current)) {
+      for (const item of current) enqueue(item);
+    } else {
+      for (const key of Object.keys(current)) {
+        const descriptor = Object.getOwnPropertyDescriptor(current, key);
+        if (descriptor !== undefined && "value" in descriptor) {
+          enqueue(descriptor.value);
+        }
+      }
+    }
+
+    Object.freeze(current);
+  }
 }
 
 function snapshotClosed(value: unknown): unknown {
@@ -1745,16 +1760,38 @@ async function parseRecordArray<Id extends Sha256Digest, Preimage>(
   normalize: boolean,
 ): Promise<readonly ModuleIdentityRecord<Id, Preimage>[]> {
   const input = expectArray(value, path);
-  const records = await Promise.all(
-    input.map(async (item, index) => await parser(item, [...path, index])),
-  );
   const seen = new Set<string>();
-  for (let index = 0; index < records.length; index += 1) {
-    if (seen.has(records[index].id)) {
+  for (let index = 0; index < input.length; index += 1) {
+    const itemPath = [...path, index];
+    const record = expectRecord(input[index], itemPath, ["id", "preimage"]);
+    const id = expectDigest(record.id, [...itemPath, "id"]);
+    if (seen.has(id)) {
       fail("duplicate-record", [...path, index, "id"], "Duplicate record ID");
     }
-    seen.add(records[index].id);
+    seen.add(id);
   }
+
+  const records: ModuleIdentityRecord<Id, Preimage>[] = [];
+  let nextIndex = 0;
+  let stopped = false;
+  async function parseNext(): Promise<void> {
+    while (!stopped) {
+      const index = nextIndex;
+      nextIndex += 1;
+      if (index >= input.length) return;
+      try {
+        records[index] = await parser(input[index], [...path, index]);
+      } catch (error) {
+        stopped = true;
+        throw error;
+      }
+    }
+  }
+  const workerCount = Math.min(input.length, RECORD_PARSE_CONCURRENCY);
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => await parseNext()),
+  );
+
   const sorted = [...records].sort((left, right) =>
     left.id < right.id ? -1 : left.id > right.id ? 1 : 0,
   );
@@ -2693,9 +2730,10 @@ function validateSnapshotGraph(snapshot: ModuleGraphSnapshotPreimage): void {
     );
     promote(loaderEntry.preimage.runtimeBindingId, 2);
   }
-  while (queue.length > 0) {
-    const bindingId = queue.shift();
-    if (bindingId === undefined) break;
+  let queueCursor = 0;
+  while (queueCursor < queue.length) {
+    const bindingId = queue[queueCursor];
+    queueCursor += 1;
     if ((phaseByBinding.get(bindingId) ?? 0) < 2) continue;
     const binding = requireReference(bindings, bindingId, []);
     const definition = requireReference(

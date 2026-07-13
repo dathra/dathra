@@ -200,6 +200,24 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
   ],
 )
 
+#adr(
+  header("Canonical Identity の公開を専用 subpath に限定する", Status.Accepted, "2026-07-13"),
+  [
+    前の ADR が追加した `@dathra/shared` root export は、既存の wildcard re-export を通って `@dathra/core` root と `@dathra/core/shared` にも伝播する。
+    Module Graph が必要とする package 間 contract のために、consumer ではない core の公開互換性まで固定してはならない。
+  ],
+  [
+    Canonical Identity の implementation API は `@dathra/shared/canonical-identity` 専用 subpath から公開し、`@dathra/shared` root からは公開しない。
+    Module Graph は専用 subpath を直接消費し、builder と instrumentation はその subpath からも公開しない。
+  ],
+  [
+    - Module Graph は package-private path を参照せず、必要な canonical identity contract だけを利用できる
+    - `@dathra/shared`、`@dathra/core`、`@dathra/core/shared` の既存公開 API は増えない
+    - Canonical Identity の公開 artifact と builder の内部境界を独立して検証できる
+  ],
+  supersedes: ("Module Graph consumer の導入時に Canonical Identity を package root へ公開する",),
+)
+
 == 機能仕様
 
 #feature_spec(
@@ -322,6 +340,19 @@ compiler、server runtime、browser runtime が同じ preimage と exact bytes �
     - namespace、kind、local ID の domain separation を検証する
     - invalid namespace、empty kind、invalid Unicode を拒否する
     - accessor を実行せず拒否し、malformed root と closed record 違反を stable code と path で拒否する
+  ],
+)
+
+#feature_spec(
+  name: "Canonical Identity package boundary",
+  summary: [
+    Module Graph が利用する implementation API だけを専用 package subpath から公開する。
+  ],
+  test_cases: [
+    - `@dathra/shared/canonical-identity` は runtime value 6件と explicit type 9件を公開する
+    - canonical builder の runtime value と type は専用 subpath から公開しない
+    - `@dathra/shared` root、`@dathra/core` root、`@dathra/core/shared` は Canonical Identity の runtime value と type を公開しない
+    - build artifact の ESM、CJS、DTS が source-level boundary と一致する
   ],
 )
 

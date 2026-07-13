@@ -1,5 +1,8 @@
-import { digestCanonicalJson, type Sha256Digest } from "@dathra/shared";
-import { describe, expect, it } from "vitest";
+import {
+  digestCanonicalJson,
+  type Sha256Digest,
+} from "@dathra/shared/canonical-identity";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import * as publicApi from "../index";
 import {
@@ -30,6 +33,178 @@ import {
   type ModuleResolutionDomain,
   type ModuleSemanticProfile,
 } from "./implementation";
+
+const MODULE_GRAPH_RUNTIME_EXPORT_NAMES = [
+  "ModuleGraphError",
+  "canonicalizeModuleUrl",
+  "createExternalModuleDefinitionContract",
+  "createExternalRuntimeClosureEvidence",
+  "createModuleDefinition",
+  "createModuleGraphEntry",
+  "createModuleGraphSnapshot",
+  "createModuleLoaderEntry",
+  "createModuleRequestInventory",
+  "createModuleRequestSite",
+  "createModuleRequestSiteEvidence",
+  "createModuleResolutionDomain",
+  "createModuleResolutionEvidence",
+  "createModuleSemanticProfile",
+  "createResolvedModuleRequest",
+  "createRuntimeModuleBinding",
+  "createSemanticModuleRequest",
+  "digestModuleContent",
+  "parseModuleGraphSnapshot",
+] as const;
+
+type ModuleGraphRuntimeExportName =
+  (typeof MODULE_GRAPH_RUNTIME_EXPORT_NAMES)[number];
+type AssertNever<Value extends never> = Value;
+type _NoModuleGraphRuntimeExport = AssertNever<
+  Extract<ModuleGraphRuntimeExportName, keyof typeof publicApi>
+>;
+
+/* eslint-disable @typescript-eslint/consistent-type-imports -- Each negative type query must fail independently for mutation sensitivity. */
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT01 = import("../index").CanonicalModuleUrl;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT02 = import("../index").CommonJsModuleResolutionEvidenceInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT03 = import("../index").CommonJsSemanticModuleRequestInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT04 = import("../index").ContentModuleDefinitionInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT05 = import("../index").ExternalModuleDefinitionContract;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT06 = import("../index").ExternalModuleDefinitionContractId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT07 = import("../index").ExternalModuleDefinitionContractInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT08 = import("../index").ExternalModuleDefinitionInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT09 = import("../index").ExternalRuntimeClosureEvidence;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT10 = import("../index").ExternalRuntimeClosureEvidenceId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT11 = import("../index").ExternalRuntimeClosureEvidenceInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT12 = import("../index").ModuleConditionProfile;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT13 = import("../index").ModuleConditionProfileInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT14 = import("../index").ModuleContentDigest;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT15 = import("../index").ModuleDefinition;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT16 = import("../index").ModuleDefinitionId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT17 = import("../index").ModuleDefinitionInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT18 = import("../index").ModuleDefinitionKind;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT19 = import("../index").ModuleGraphEntry;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT20 = import("../index").ModuleGraphEntryId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT21 = import("../index").ModuleGraphEntryInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT22 = import("../index").ModuleGraphErrorCode;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT23 = import("../index").ModuleGraphPathSegment;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT24 = import("../index").ModuleGraphSnapshot;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT25 = import("../index").ModuleGraphSnapshotId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT26 = import("../index").ModuleGraphSnapshotInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT27 = import("../index").ModuleGraphSnapshotPreimage;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT28 = import("../index").ModuleIdentityRecord<unknown, unknown>;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT29 = import("../index").ModuleImportAttribute;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT30 = import("../index").ModuleImportAttributeInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT31 = import("../index").ModuleImportPhase;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT32 = import("../index").ModuleLoaderEntry;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT33 = import("../index").ModuleLoaderEntryId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT34 = import("../index").ModuleLoaderEntryInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT35 = import("../index").ModuleLoaderNamespaceKind;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT36 = import("../index").ModuleParseGoal;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT37 = import("../index").ModuleRequestInventory;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT38 = import("../index").ModuleRequestInventoryId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT39 = import("../index").ModuleRequestInventoryInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT40 = import("../index").ModuleRequestInventorySite;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT41 = import("../index").ModuleRequestInventorySiteInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT42 = import("../index").ModuleRequestSite;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT43 = import("../index").ModuleRequestSiteEvidence;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT44 = import("../index").ModuleRequestSiteEvidenceId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT45 = import("../index").ModuleRequestSiteEvidenceInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT46 = import("../index").ModuleRequestSiteId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT47 = import("../index").ModuleRequestSiteInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT48 = import("../index").ModuleRequestSiteKind;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT49 = import("../index").ModuleResolutionDomain;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT50 = import("../index").ModuleResolutionDomainId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT51 = import("../index").ModuleResolutionDomainInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT52 = import("../index").ModuleResolutionEvidence;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT53 = import("../index").ModuleResolutionEvidenceId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT54 = import("../index").ModuleResolutionEvidenceInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT55 = import("../index").ModuleSemanticProfile;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT56 = import("../index").ModuleSemanticProfileId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT57 = import("../index").ModuleSemanticProfileInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT58 = import("../index").NativeModuleResolutionEvidenceInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT59 = import("../index").NativeSemanticModuleRequestInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT60 = import("../index").ResolvedModuleRequest;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT61 = import("../index").ResolvedModuleRequestId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT62 = import("../index").ResolvedModuleRequestInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT63 = import("../index").RuntimeModuleBinding;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT64 = import("../index").RuntimeModuleBindingId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT65 = import("../index").RuntimeModuleBindingInput;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT66 = import("../index").SemanticModuleRequest;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT67 = import("../index").SemanticModuleRequestId;
+// @ts-expect-error Module Graph types remain transformer-internal.
+type _NoPublicT68 = import("../index").SemanticModuleRequestInput;
+/* eslint-enable @typescript-eslint/consistent-type-imports */
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const ABC_SHA256 = "sha-256:ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0";
 
@@ -325,6 +500,31 @@ function snapshotInput(input: {
   };
 }
 
+function malformedSnapshotWithProfiles(
+  semanticProfiles: readonly ModuleSemanticProfile[],
+): unknown {
+  return {
+    id: ABC_SHA256,
+    preimage: {
+      schema: "dathra.module-graph-snapshot/1",
+      semanticProfiles,
+      resolutionDomains: [],
+      requestInventories: [],
+      externalDefinitionContracts: [],
+      moduleDefinitions: [],
+      runtimeBindings: [],
+      loaderEntries: [],
+      externalRuntimeEvidence: [],
+      semanticRequests: [],
+      resolutionEvidence: [],
+      resolvedRequests: [],
+      requestSiteEvidence: [],
+      requestSites: [],
+      entries: [],
+    },
+  };
+}
+
 async function createEmptyGraph(label = "browser") {
   const profile = await createProfile(label);
   const domain = await createDomain(label);
@@ -514,6 +714,30 @@ describe("module graph primitives", () => {
     );
     expect(getterCalls).toBe(0);
   });
+
+  it("deep-freezes nested inventory site records", async () => {
+    const profile = await createProfile("immutable-inventory");
+    const transformedContentDigest = await digestModuleContent(
+      new TextEncoder().encode("immutable transformed content"),
+    );
+    const inventory = await createModuleRequestInventory({
+      transformedContentDigest,
+      semanticProfileId: profile.id,
+      extractorProfileDigest: await digest("immutable extractor"),
+      sites: [
+        {
+          kind: "static-import",
+          phase: "evaluation",
+          normalizedSyntaxDigest: await digest("immutable syntax"),
+        },
+      ],
+    });
+    const site = inventory.preimage.sites[0];
+
+    expect(Object.isFrozen(site)).toBe(true);
+    expect(Reflect.set(site, "kind", "dynamic-import")).toBe(false);
+    expect(inventory.id).toBe(await digestCanonicalJson(inventory.preimage));
+  });
 });
 
 describe("module graph snapshot", () => {
@@ -527,6 +751,85 @@ describe("module graph snapshot", () => {
     await expect(
       parseModuleGraphSnapshot(JSON.parse(JSON.stringify(snapshot))),
     ).resolves.toEqual(snapshot);
+  });
+
+  it("consumes the phase fixed-point queue without removing its head", async () => {
+    const graph = await createEmptyGraph("cursor-queue");
+    const shiftSpy = vi.spyOn(Array.prototype, "shift");
+
+    const snapshot = await createModuleGraphSnapshot(graph.input);
+    const shiftCalls = shiftSpy.mock.calls.length;
+    shiftSpy.mockRestore();
+
+    expect(snapshot).toBeDefined();
+    expect(shiftCalls).toBe(0);
+  });
+
+  it("deep-freezes nested records returned by the strict parser", async () => {
+    const profile = await createProfile("parsed-immutability");
+    const domain = await createDomain("parsed-immutability");
+    const syntaxDigest = await digest("parsed immutable syntax");
+    const importer = await createContentNode({
+      label: "parsed-immutable-importer",
+      profile,
+      domain,
+      sites: [
+        {
+          kind: "static-import",
+          phase: "evaluation",
+          normalizedSyntaxDigest: syntaxDigest,
+        },
+      ],
+    });
+    const target = await createContentNode({
+      label: "parsed-immutable-target",
+      profile,
+      domain,
+      sites: [],
+    });
+    const edge = await createNativeEdge({
+      domain,
+      importer,
+      target,
+      inventoryOrdinal: 0,
+      siteKind: "static-import",
+      phase: "evaluation",
+      syntaxDigest,
+      specifier: "./parsed-immutable-target.js",
+    });
+    const entry = await createEntry(domain, importer);
+    const snapshot = await createModuleGraphSnapshot(
+      snapshotInput({
+        profiles: [profile],
+        domains: [domain],
+        inventories: [importer.inventory, target.inventory],
+        definitions: [importer.definition, target.definition],
+        bindings: [importer.binding, target.binding],
+        loaderEntries: [importer.loaderEntry, target.loaderEntry],
+        requests: [edge.request],
+        resolutionEvidence: [edge.resolutionEvidence],
+        resolvedRequests: [edge.resolvedRequest],
+        siteEvidence: [edge.siteEvidence],
+        sites: [edge.site],
+        entries: [entry],
+      }),
+    );
+    const parsed = await parseModuleGraphSnapshot(
+      JSON.parse(JSON.stringify(snapshot)),
+    );
+    const parsedInventory = parsed.preimage.requestInventories.find(
+      (inventory) => inventory.id === importer.inventory.id,
+    );
+    const parsedSite = parsedInventory?.preimage.sites[0];
+    if (parsedInventory === undefined || parsedSite === undefined) {
+      throw new Error("Expected parsed inventory site");
+    }
+
+    expect(Object.isFrozen(parsedSite)).toBe(true);
+    expect(Reflect.set(parsedSite, "kind", "dynamic-import")).toBe(false);
+    expect(parsedInventory.id).toBe(
+      await digestCanonicalJson(parsedInventory.preimage),
+    );
   });
 
   it("stores multiple resolution domains in one snapshot", async () => {
@@ -1443,6 +1746,54 @@ describe("module graph snapshot", () => {
     );
   });
 
+  it("rejects duplicate record IDs before starting digest work", async () => {
+    const profile = await createProfile("duplicate-preflight");
+    const digestSpy = vi.spyOn(globalThis.crypto.subtle, "digest");
+
+    await expectModuleGraphError(
+      parseModuleGraphSnapshot(
+        malformedSnapshotWithProfiles([profile, profile]),
+      ),
+      "duplicate-record",
+    );
+    expect(digestSpy).not.toHaveBeenCalled();
+  });
+
+  it("bounds concurrent record digest validation", async () => {
+    const profiles: ModuleSemanticProfile[] = [];
+    for (let index = 0; index < 64; index += 1) {
+      profiles.push(await createProfile(`bounded-digest-${index}`));
+    }
+    profiles.sort((left, right) =>
+      left.id < right.id ? -1 : left.id > right.id ? 1 : 0,
+    );
+
+    const originalDigest = globalThis.crypto.subtle.digest.bind(
+      globalThis.crypto.subtle,
+    );
+    let active = 0;
+    let maximumActive = 0;
+    const digestSpy = vi
+      .spyOn(globalThis.crypto.subtle, "digest")
+      .mockImplementation(async (algorithm, data) => {
+        active += 1;
+        maximumActive = Math.max(maximumActive, active);
+        try {
+          return await originalDigest(algorithm, data);
+        } finally {
+          active -= 1;
+        }
+      });
+
+    await expectModuleGraphError(
+      parseModuleGraphSnapshot(malformedSnapshotWithProfiles(profiles)),
+      "invalid-field",
+    );
+    expect(digestSpy).toHaveBeenCalledTimes(profiles.length);
+    expect(maximumActive).toBeGreaterThan(1);
+    expect(maximumActive).toBeLessThanOrEqual(32);
+  });
+
   it("rejects forged IDs and noncanonical record order", async () => {
     const profile = await createProfile("strict");
     const domain = await createDomain("strict");
@@ -1514,10 +1865,22 @@ describe("module graph snapshot", () => {
     expect(getterCalls).toBe(0);
   });
 
+  it("rejects deeply nested malformed input without overflowing the call stack", async () => {
+    let value: unknown = null;
+    for (let depth = 0; depth < 20_000; depth += 1) {
+      value = [value];
+    }
+
+    await expectModuleGraphError(
+      parseModuleGraphSnapshot(value),
+      "invalid-field",
+      [],
+    );
+  });
+
   it("keeps the producer API internal until a production adapter exists", () => {
-    expect(publicApi).not.toHaveProperty("canonicalizeModuleUrl");
-    expect(publicApi).not.toHaveProperty("createModuleGraphSnapshot");
-    expect(publicApi).not.toHaveProperty("parseModuleGraphSnapshot");
-    expect(publicApi).not.toHaveProperty("ModuleGraphError");
+    for (const name of MODULE_GRAPH_RUNTIME_EXPORT_NAMES) {
+      expect(publicApi).not.toHaveProperty(name);
+    }
   });
 });

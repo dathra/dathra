@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import * as rootApi from "../index";
 import {
   CanonicalIdentityError as PublicCanonicalIdentityError,
   canonicalizeJson as publicCanonicalizeJson,
@@ -16,7 +17,7 @@ import {
   type QualifiedIdInput as PublicQualifiedIdInput,
   type QualifiedIdPreimage as PublicQualifiedIdPreimage,
   type Sha256Digest as PublicSha256Digest,
-} from "../index";
+} from "./index";
 import {
   CanonicalIdentityError,
   canonicalizeJson,
@@ -28,6 +29,45 @@ import {
   type CanonicalIdentityPathSegment,
   type Sha256Digest,
 } from "./implementation";
+
+/* eslint-disable @typescript-eslint/consistent-type-imports, import/no-duplicates -- Each negative root import must fail independently for mutation sensitivity. */
+// @ts-expect-error Canonical Identity runtime declarations are exposed only by the dedicated subpath.
+import type { CanonicalIdentityError as _RootCanonicalIdentityErrorExport } from "../index";
+// @ts-expect-error Canonical Identity runtime declarations are exposed only by the dedicated subpath.
+import type { canonicalizeJson as _RootCanonicalizeJsonExport } from "../index";
+// @ts-expect-error Canonical Identity runtime declarations are exposed only by the dedicated subpath.
+import type { createQualifiedId as _RootCreateQualifiedIdExport } from "../index";
+// @ts-expect-error Canonical Identity runtime declarations are exposed only by the dedicated subpath.
+import type { digestCanonicalJson as _RootDigestCanonicalJsonExport } from "../index";
+// @ts-expect-error Canonical Identity runtime declarations are exposed only by the dedicated subpath.
+import type { isSha256Digest as _RootIsSha256DigestExport } from "../index";
+// @ts-expect-error Canonical Identity runtime declarations are exposed only by the dedicated subpath.
+import type { sha256Digest as _RootSha256DigestExport } from "../index";
+// @ts-expect-error Canonical Identity types are exposed only by the dedicated subpath.
+type _RootT01 = import("../index").CanonicalIdentityErrorCode;
+// @ts-expect-error Canonical Identity types are exposed only by the dedicated subpath.
+type _RootT02 = import("../index").CanonicalIdentityPathSegment;
+// @ts-expect-error Canonical Identity types are exposed only by the dedicated subpath.
+type _RootT03 = import("../index").CanonicalJsonEncoding;
+// @ts-expect-error Canonical Identity types are exposed only by the dedicated subpath.
+type _RootT04 = import("../index").CanonicalJsonText;
+// @ts-expect-error Canonical Identity types are exposed only by the dedicated subpath.
+type _RootT05 = import("../index").CanonicalJsonValue;
+// @ts-expect-error Canonical Identity types are exposed only by the dedicated subpath.
+type _RootT06 = import("../index").QualifiedId<string>;
+// @ts-expect-error Canonical Identity types are exposed only by the dedicated subpath.
+type _RootT07 = import("../index").QualifiedIdInput<string>;
+// @ts-expect-error Canonical Identity types are exposed only by the dedicated subpath.
+type _RootT08 = import("../index").QualifiedIdPreimage<string>;
+// @ts-expect-error Canonical Identity types are exposed only by the dedicated subpath.
+type _RootT09 = import("../index").Sha256Digest;
+type _RootT10 = typeof _RootCanonicalIdentityErrorExport;
+type _RootT11 = typeof _RootCanonicalizeJsonExport;
+type _RootT12 = typeof _RootCreateQualifiedIdExport;
+type _RootT13 = typeof _RootDigestCanonicalJsonExport;
+type _RootT14 = typeof _RootIsSha256DigestExport;
+type _RootT15 = typeof _RootSha256DigestExport;
+/* eslint-enable @typescript-eslint/consistent-type-imports, import/no-duplicates */
 
 type _T01 = PublicCanonicalIdentityErrorCode;
 type _T02 = PublicCanonicalIdentityPathSegment;
@@ -704,12 +744,25 @@ describe("createQualifiedId", () => {
 });
 
 describe("public export", () => {
-  it("exports the complete canonical identity API for the Module Graph consumer", () => {
+  it("exports the complete canonical identity API from the dedicated subpath", () => {
     expect(PublicCanonicalIdentityError).toBe(CanonicalIdentityError);
     expect(publicCanonicalizeJson).toBe(canonicalizeJson);
     expect(publicSha256Digest).toBe(sha256Digest);
     expect(publicDigestCanonicalJson).toBe(digestCanonicalJson);
     expect(publicCreateQualifiedId).toBe(createQualifiedId);
     expect(publicIsSha256Digest).toBe(isSha256Digest);
+  });
+
+  it("keeps the canonical identity runtime API out of the shared root", () => {
+    for (const name of [
+      "CanonicalIdentityError",
+      "canonicalizeJson",
+      "createQualifiedId",
+      "digestCanonicalJson",
+      "isSha256Digest",
+      "sha256Digest",
+    ]) {
+      expect(rootApi).not.toHaveProperty(name);
+    }
   });
 });

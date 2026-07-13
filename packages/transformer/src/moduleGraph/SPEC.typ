@@ -114,6 +114,25 @@ ModuleCoordinator が resolver、loader、transform、extractor の結果を gra
   ],
 )
 
+#adr(
+  header("未信頼 snapshot の検証資源を入力の深さと件数から分離する", Status.Accepted, "2026-07-13"),
+  [
+    strict parser は未信頼の closed value を受けるが、再帰的な freeze は深い入力で call stack を枯渇させ、record array 全体の `Promise.all` は入力件数と同数の WebCrypto operation を同時に起動する。
+    また、phase fixed point の先頭 `shift` は幅の広い graph で queue の後続要素を繰り返し移動する。
+  ],
+  [
+    deep freeze は明示的な node stack で実行し、既に freeze 済みの container でも未走査の子を辿る。
+    record array は ID の形式と重複を digest 前に検査し、digest parser は最大32 workerで処理する。
+    phase fixed point は append-only queue を index cursor で消費する。
+  ],
+  [
+    - 通常の call stack 限界を超える malformed input も stable な `ModuleGraphError` で拒否できる
+    - nested record を含む creator/parser output の深い immutability を維持できる
+    - digest concurrency は入力件数に依存せず、duplicate ID に暗号処理を使わない
+    - fixed-point queue の消費は promotion 数に対して linear になる
+  ],
+)
+
 == インターフェース仕様
 
 #interface_spec(
@@ -161,6 +180,7 @@ ModuleCoordinator が resolver、loader、transform、extractor の結果を gra
     - creator は URL、set、import attributes、ID set を canonicalize する
     - strict snapshot parser は canonical form を変更せず、noncanonical URL/order/set を拒否する
     - 全 record は versioned preimage の canonical digest と deep-frozen snapshot を返す
+    - 先に freeze 済みの collection を含め、全 nested data record を変更不能にする
   ],
 )
 
@@ -207,6 +227,8 @@ ModuleCoordinator が resolver、loader、transform、extractor の結果を gra
     - resolution evidence の condition sequence は対応 domain の ESM/CommonJS sequence と重複・順序を含め完全一致させる
     - site、site evidence、semantic request、resolution evidence、resolved request の importer/domain/kind/phase/key set を一致させる
     - source/evaluation fixed point で全 record の exact reachability と exact use を検証する
+    - record array の duplicate ID は digest 前に拒否し、record digest の同時実行数を32以下にする
+    - phase fixed-point queue は先頭削除を使わず cursor で消費する
   ],
 )
 
@@ -271,7 +293,11 @@ ModuleCoordinator が resolver、loader、transform、extractor の結果を gra
     - forged nested ID と snapshot ID を拒否する
     - reversed record order、unsorted attributes/set、noncanonical URL を拒否する
     - extra/missing/accessor property を getter 実行なしで拒否する
+    - 通常のcall stack限界を超える malformed closed input を raw `RangeError` ではなく typed failure で拒否する
+    - nested inventory site は creator と strict parser のどちらから返しても freeze され、record ID と preimage digest の一致を維持する
+    - duplicate record ID を digest 前に拒否し、unique record array の digest concurrency を32以下に保つ
     - production adapter が確定するまでは transformer root export に creator、parser、error type を含めない
+    - transformer root export の全 runtime value と explicit type を declaration ごとに negative probe する
   ],
 )
 

@@ -1,4 +1,3 @@
-export * from "./canonicalIdentity/implementation";
 export * from "./entries/implementation";
 export * from "./fromEntries/implementation";
 export * from "./islandsContract/implementation";
