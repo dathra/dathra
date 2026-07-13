@@ -23,6 +23,7 @@
 
 Verification Gateの最初の5件はDraft PR #81から#85として提出済みである。
 vanillaの追加3経路はstacked Draft PR #87から#89として提出済みである。
+NuxtのAPI互換修正とSSR gateはstacked Draft PR #90と#91として提出済みである。
 回収済みcommit、PR、残る候補、consumer未接続成果の保留条件は[`extraction-inventory.md`](extraction-inventory.md)を正本とする。
 
 回収作業は元branchのcommitを移動または削除しない。

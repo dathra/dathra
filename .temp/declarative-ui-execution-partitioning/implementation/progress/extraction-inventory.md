@@ -33,6 +33,8 @@ consumerが存在しないcontractは、consumerと同じPRで有効性を検証
 | vanilla Runtime API | `ec947a8` | [#87](https://github.com/dathra/dathra/pull/87) | PR #84 | production browser test 2件、対象ファイルの型検査、lint、format |
 | vanilla Functional Component | `7497346` | [#88](https://github.com/dathra/dathra/pull/88) | PR #87 | production browser test 3件、対象ファイルの型検査、lint、format |
 | vanilla Web Components | `5da249e` | [#89](https://github.com/dathra/dathra/pull/89) | PR #88 | production browser test 4件、対象ファイルの型検査、lint、format |
+| Nuxt API互換修正 | `dcde69e` | [#90](https://github.com/dathra/dathra/pull/90) | `main` | production build、Nitro HTTP 200とDSD、対象ファイルの型検査、lint、format |
+| Nuxt SSR gate | `91099ef` | [#91](https://github.com/dathra/dathra/pull/91) | PR #90 | production build、SSRとChromium test 1件、対象ファイルの型検査、lint、format、frozen lockfile |
 
 PR #84は回帰testだけでなく、既存counterが使用していた廃止済み`Signal.update()`を現在の`Signal.set()`へ移行する。
 production buildだけでは操作時の失敗を検出できなかったため、Chromiumで`0 -> 1 -> 0`とcomputed値を検証する。
@@ -43,6 +45,9 @@ PR #85は元commitのharness差分をmainへ移した後、現行lintが検出�
 PR #87から#89はPR #84を起点にしたstacked PRである。
 各PRは一つの実行経路だけを接続し、直前PRをbaseにすることでbrowser test基盤の重複と経路間の責任混在を避ける。
 
+PR #90と#91はNuxtのAPI互換修正と検証基盤を分離したstacked PRである。
+PR #90は既存exampleを現行component contractへ移行し、PR #91はbuilt Nitro serverのDSDとChromium hydrationを検証する。
+
 ## Verification Gateの残作業
 
 次の差分は、元commitに含まれるがまだ回収していない。
@@ -50,7 +55,6 @@ PR #87から#89はPR #84を起点にしたstacked PRである。
 | 対象 | 状態 | 保留理由 | 再開条件 |
 | --- | --- | --- | --- |
 | root `build:apps`、`test:apps`、CI接続 | deferred | 個別appのtest commandがmainへ入る前にroot gateだけを追加すると、PR間dependencyを隠す | 必要な個別app PRをmergeした後、root scriptsとCIだけのPRを作る |
-| Nuxt SSR gate | deferred | 9ファイルの差分がAPI移行、format、plugin設定、SSR testを混在させている | API互換修正とSSR gateを独立して説明できる単位へ分ける |
 
 ## Evergreen候補
 
@@ -95,6 +99,6 @@ PR #87から#89はPR #84を起点にしたstacked PRである。
 1. PR #81から#85のCI結果を確認し、指摘があれば各PR内で修正する。
 2. 個別app gateのmerge後、root scriptsとCI接続を一つのPRへ抽出する。
 3. stacked PR #87から#89のCI結果を確認し、PR #84から順にmerge可能な状態を維持する。
-4. NuxtのAPI互換修正とSSR gateを分離する。
+4. stacked PR #90と#91のCI結果を確認し、PR #90から順にmerge可能な状態を維持する。
 5. mainでCI不安定性を再現できる場合に限り、`d2822b1`、`6565c76`、`63f4597`から最小修正を抽出する。
 6. consumer未接続contractは、最初のvertical consumerの設計が固定されるまで開始しない。
