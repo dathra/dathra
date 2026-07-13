@@ -29,10 +29,11 @@ async function closeResources(): Promise<void> {
 
 async function expectCounterState(
   page: Page,
+  rootSelector: string,
   count: number,
   doubled: number,
 ): Promise<void> {
-  const values = page.locator("#app .counter p");
+  const values = page.locator(`${rootSelector} .counter p`);
 
   await expect
     .poll(async () => {
@@ -87,14 +88,100 @@ it("updates the JSX counter through a production preview", async () => {
     const response = await page.goto(previewUrl, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
 
-    await expectCounterState(page, 0, 0);
+    await expectCounterState(page, "#app", 0, 0);
 
     const counter = page.locator("#app .counter");
     await counter.getByRole("button", { name: "+", exact: true }).click();
-    await expectCounterState(page, 1, 2);
+    await expectCounterState(page, "#app", 1, 2);
 
     await counter.getByRole("button", { name: "-", exact: true }).click();
-    await expectCounterState(page, 0, 0);
+    await expectCounterState(page, "#app", 0, 0);
+  } finally {
+    await page.close();
+  }
+});
+
+it("updates the Runtime API example through a production preview", async () => {
+  if (browser === undefined || previewUrl === undefined) {
+    throw new Error("Preview test resources are not initialized");
+  }
+
+  const page = await browser.newPage();
+
+  try {
+    const response = await page.goto(previewUrl, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+
+    const counter = page.locator("#runtime-app .counter");
+    await expectCounterState(page, "#runtime-app", 0, 0);
+    await expect.poll(() => counter.locator("li").count()).toBe(3);
+
+    await counter.getByRole("button", { name: "+", exact: true }).click();
+    await expectCounterState(page, "#runtime-app", 1, 2);
+
+    await counter.getByRole("button", { name: "Add Item" }).click();
+    await expect.poll(() => counter.locator("li").count()).toBe(4);
+    await expect
+      .poll(async () =>
+        (await counter.locator("li").last().textContent())?.trim(),
+      )
+      .toBe("Item 4");
+  } finally {
+    await page.close();
+  }
+});
+
+it("toggles the Functional Component example through a production preview", async () => {
+  if (browser === undefined || previewUrl === undefined) {
+    throw new Error("Preview test resources are not initialized");
+  }
+
+  const page = await browser.newPage();
+
+  try {
+    const response = await page.goto(previewUrl, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+
+    const toggle = page.locator("#fc-example-app .toggle");
+    await expect.poll(() => toggle.locator(".toggle-content").count()).toBe(1);
+
+    await toggle.getByRole("button", { name: /Close/ }).click();
+    await expect.poll(() => toggle.locator(".toggle-content").count()).toBe(0);
+
+    await toggle.getByRole("button", { name: /Open/ }).click();
+    await expect.poll(() => toggle.locator(".toggle-content").count()).toBe(1);
+  } finally {
+    await page.close();
+  }
+});
+
+it("updates Web Components through a production preview", async () => {
+  if (browser === undefined || previewUrl === undefined) {
+    throw new Error("Preview test resources are not initialized");
+  }
+
+  const page = await browser.newPage();
+
+  try {
+    const response = await page.goto(previewUrl, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+
+    const greeting = page.locator("dathra-greeting");
+    await expect
+      .poll(async () =>
+        (await greeting.locator("h3").textContent())?.replaceAll(/\s/g, ""),
+      )
+      .toBe("Hello,Dathra!");
+
+    const counter = page.locator("dathra-counter").first();
+    await expect
+      .poll(async () => (await counter.locator(".count").textContent())?.trim())
+      .toBe("0");
+
+    await counter.getByRole("button", { name: "+", exact: true }).click();
+    await expect
+      .poll(async () => (await counter.locator(".count").textContent())?.trim())
+      .toBe("1");
   } finally {
     await page.close();
   }
