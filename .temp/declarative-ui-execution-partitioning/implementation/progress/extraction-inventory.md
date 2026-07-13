@@ -30,12 +30,18 @@ consumerが存在しないcontractは、consumerと同じPRで有効性を検証
 | request-scoped SSR | `cb017f6` | [#83](https://github.com/dathra/dathra/pull/83) | `main` | production server build、1 test、追加ファイルの型検査、lint、format、frozen lockfile |
 | vanilla JSX counter | `e882738` | [#84](https://github.com/dathra/dathra/pull/84) | `main` | production browser test、追加ファイルの型検査、lint、format、frozen lockfile |
 | E2E harness lifecycle | `96a0b0a` | [#85](https://github.com/dathra/dathra/pull/85) | `main` | 全production build、全E2E、package型検査、lint、format |
+| vanilla Runtime API | `ec947a8` | [#87](https://github.com/dathra/dathra/pull/87) | PR #84 | production browser test 2件、対象ファイルの型検査、lint、format |
+| vanilla Functional Component | `7497346` | [#88](https://github.com/dathra/dathra/pull/88) | PR #87 | production browser test 3件、対象ファイルの型検査、lint、format |
+| vanilla Web Components | `5da249e` | [#89](https://github.com/dathra/dathra/pull/89) | PR #88 | production browser test 4件、対象ファイルの型検査、lint、format |
 
 PR #84は回帰testだけでなく、既存counterが使用していた廃止済み`Signal.update()`を現在の`Signal.set()`へ移行する。
 production buildだけでは操作時の失敗を検出できなかったため、Chromiumで`0 -> 1 -> 0`とcomputed値を検証する。
 
 PR #85は元commitのharness差分をmainへ移した後、現行lintが検出したcallback宣言順を修正した。
 したがって、PR #85のcontentは元commitの機械的な複製ではなく、mainの現行gateを満たす後継revisionである。
+
+PR #87から#89はPR #84を起点にしたstacked PRである。
+各PRは一つの実行経路だけを接続し、直前PRをbaseにすることでbrowser test基盤の重複と経路間の責任混在を避ける。
 
 ## Verification Gateの残作業
 
@@ -44,7 +50,6 @@ PR #85は元commitのharness差分をmainへ移した後、現行lintが検出�
 | 対象 | 状態 | 保留理由 | 再開条件 |
 | --- | --- | --- | --- |
 | root `build:apps`、`test:apps`、CI接続 | deferred | 個別appのtest commandがmainへ入る前にroot gateだけを追加すると、PR間dependencyを隠す | 必要な個別app PRをmergeした後、root scriptsとCIだけのPRを作る |
-| vanilla Runtime API、functional component、Web Components | deferred | 元差分は三つの実行経路のAPI移行とmount先変更を一つのbrowser testへまとめている | PR #84をmergeし、実行経路ごとにproduction browser testと修正を分ける |
 | Nuxt SSR gate | deferred | 9ファイルの差分がAPI移行、format、plugin設定、SSR testを混在させている | API互換修正とSSR gateを独立して説明できる単位へ分ける |
 
 ## Evergreen候補
@@ -89,7 +94,7 @@ PR #85は元commitのharness差分をmainへ移した後、現行lintが検出�
 
 1. PR #81から#85のCI結果を確認し、指摘があれば各PR内で修正する。
 2. 個別app gateのmerge後、root scriptsとCI接続を一つのPRへ抽出する。
-3. vanillaの残る三経路を、実行経路ごとのbrowser testへ分ける。
+3. stacked PR #87から#89のCI結果を確認し、PR #84から順にmerge可能な状態を維持する。
 4. NuxtのAPI互換修正とSSR gateを分離する。
 5. mainでCI不安定性を再現できる場合に限り、`d2822b1`、`6565c76`、`63f4597`から最小修正を抽出する。
 6. consumer未接続contractは、最初のvertical consumerの設計が固定されるまで開始しない。

@@ -22,6 +22,7 @@
 設計変更後も価値が残り、main上で独立検証できる成果だけを小さなPRへ抽出する。
 
 Verification Gateの最初の5件はDraft PR #81から#85として提出済みである。
+vanillaの追加3経路はstacked Draft PR #87から#89として提出済みである。
 回収済みcommit、PR、残る候補、consumer未接続成果の保留条件は[`extraction-inventory.md`](extraction-inventory.md)を正本とする。
 
 回収作業は元branchのcommitを移動または削除しない。
