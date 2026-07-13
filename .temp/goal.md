@@ -11,7 +11,7 @@
 Reactive graph、hydration、island、directive、client scope DAG は、最終目標を達成するための手段です。
 特定の手段を維持すること自体を目的にしてはいけません。
 
-`.temp/declarative-ui-execution-partitioning.md` を設計判断の正本として扱ってください。
+`.temp/declarative-ui-execution-partitioning/README.md` と、そこから参照される `decisions/` 配下の担当文書を設計判断の正本として扱ってください。
 同文書の合意済み事項を制約とし、履歴として残された過去案を現行方針と混同してはいけません。
 後方互換性は制約とせず、必要な破壊的変更を許容してください。
 設計検討が目的であるため、production code の実装は開始しないでください。
@@ -20,12 +20,44 @@ Reactive graph、hydration、island、directive、client scope DAG は、最終�
 実装 goal から参照された場合はレビュー手順だけを適用し、この文書の「production code の実装は開始しない」という作業条件を実装 goal へ持ち込まないでください。
 実装 goal に固有の検証、commit、push、完了条件は、実装 goal の記述を優先してください。
 
+## Review protocol R8：意味判断へレビューを集中する
+
+この節は、手順 4 から手順 6 にあるreviewer数、手書きmanifest／attestation、機械照合の反復、進捗文書だけの独立reviewに関する旧規則をsupersedeする。
+runtime semantics、review unit分割、immutable candidate、`blocker`／`follow-up`分類、blocker修正後の一回だけの収束reviewは変更しない。
+R8固定前にreviewを開始したrevisionには遡及適用せず、そのrevisionだけは開始時の規則で完了させる。
+
+| risk tier | 初期semantic reviewer | blocker修正後の収束reviewer | 最大session数 |
+| --- | ---: | ---: | ---: |
+| `low` | 0 | 0 | 0 |
+| `medium` | 1 | 1 | 2 |
+| `high` | 2 | 1 | 3 |
+
+`low`はAccepted decisionを適用するtype-only、pure helper、deterministicなtest-only evidence、またはstatus/evidence-only文書更新に限定し、新しいsemantic decision、runtime behavior、public surface、boundaryを含めない。
+明示GC、process-global state、timer/race、module-loader isolationなど、test harness自体の正しさが証明対象になるtest-only changeは`medium`とする。
+`low`はdeterministic gateとメインセッションのdiff確認だけで完了し、sub-agent review、proposal、manifest、attestationを作らない。
+
+`medium`はprimary reviewer一人がcorrectness、SPEC/test/implementation、実現可能性を一つのdeltaとして確認する。
+`high`はprimary reviewerとrisk reviewerの二人を同一revisionへ並列に割り当てる。
+risk reviewerは変更に応じてimplementation/performance/testまたはidentity/trust/authority/package boundaryを担当し、関係のない役割を形式的に追加しない。
+
+hash、blob、path inventory、dependency OID、decision anchor、synthetic commit、gate結果の固定と再照合はrepository-ownedのdeterministic commandへ集約する。
+manifestとattestationが必要な`medium`と`high`では、このcommandがmachine-readable evidenceを生成し、review開始前、結果統合前、commit前に同じ入力で検証する。
+gateの実行はメインセッションがexact candidateのisolated worktreeで先に完了し、実行command、exit code、summaryをcommandへのgate result inputとする。
+evidence commandはgateを再実行せず、渡されたsuccess resultをcandidateやほかの固定入力と一緒に検証、固定する。
+未実行または失敗したgateをsuccess resultとして入力することはprocess violationとする。
+メインセッションは通常の成功時にmanifestやattestationを手書きせず、reviewerも機械照合を再実行しない。
+automationの不一致、または具体的なcorrectness疑義がある場合だけ、対象を限定して再計算する。
+exact OIDで固定済みのdependency evidenceは再利用し、dependency contentが変わらない限りfull gateや意味reviewを繰り返さない。
+
+status、commit OID、gate結果、review結果だけを更新する進捗文書は、次のprocessまたはimplementation commitへまとめ、独立reviewを行わない。
+文書変更がruntime contract、owner、dependency、write set、acceptance obligation、gate義務を変更する場合だけ、内容に応じて`medium`または`high`としてreviewする。
+
 通常の未決事項を検討する前に、手順 0 の baseline audit を一度だけ実行してください。
 baseline audit の完了後は、手順 1 から手順 8 を未決事項がなくなるまで繰り返してください。
 
 ## 0. 既存決定を baseline audit する
 
-`.temp/declarative-ui-execution-partitioning.md` から、現行方針として扱われている決定事項を抽出してください。
+`.temp/declarative-ui-execution-partitioning/README.md` のindexから担当文書をたどり、現行方針として扱われている決定事項を抽出してください。
 抽出した決定事項の依存関係を整理し、ほかの判断の前提になるものから順番に監査してください。
 
 最終目標、破壊的変更を許容する方針、production code の実装をまだ開始しないという作業条件は、監査によって変更する対象に含めないでください。
@@ -45,7 +77,7 @@ historical または superseded と明記された過去案も、現行の決定
 
 ## 1. 未決事項を一つ選ぶ
 
-`.temp/declarative-ui-execution-partitioning.md` の「実装前に決めること」と、検討中に新しく発見した未決事項から、次に扱う項目を一つ選んでください。
+`.temp/declarative-ui-execution-partitioning/README.md` が参照する担当文書の未決事項と、検討中に新しく発見した未決事項から、次に扱う項目を一つ選んでください。
 他の判断の前提になる事項、最終目標への影響が大きい事項、設計の手戻りを生みやすい事項を優先してください。
 選んだ事項が別の未決事項に依存している場合は、その依存先を先に扱ってください。
 
@@ -70,8 +102,9 @@ historical または superseded と明記された過去案も、現行の決定
 
 ## 4. 独立レビューを並列実行する
 
-提案を作ったセッション自身だけで評価を完結させてはいけません。
-同一 revision の提案を、後述するrisk tierで定めた一人以上の新しい独立sub-agentへ渡してください。
+`medium`と`high`の提案は、提案を作ったセッション自身だけで評価を完結させてはいけません。
+同一 revision の提案を、後述するrisk tierで定めた新しい独立sub-agentへ渡してください。
+`low`はR8のdeterministic gateだけで完了します。
 reviewerが複数の場合は、互いに独立したsessionへ並列に渡してください。
 レビュー中に提案を変更せず、全 reviewer が同じ入力を評価できる状態を維持してください。
 dependencyとwrite setが独立した複数のreview unitは、unitごとにrevisionとreviewer setを固定したうえで同時にレビューして構いません。
@@ -85,9 +118,9 @@ dependencyとwrite setが独立した複数のreview unitは、unitごとにrevi
 
 | risk tier | 初期reviewer | 収束reviewer | 同一unitの最大session数 |
 | --- | ---: | ---: | ---: |
-| `low` | 1 | 1 | 2 |
-| `medium` | 2 | 1 | 3 |
-| `high` | 3 | 1 | 4 |
+| `low` | 0 | 0 | 0 |
+| `medium` | 1 | 1 | 2 |
+| `high` | 2 | 1 | 3 |
 
 収束レビューでcorrectness blockerが残った場合は、同じscopeの三回目のレビューを開始してはいけません。
 そのreview unitを過大または契約未確定と判定し、依存順の小さいreview unitへ分割するか、前提をtestまたはprobeで確定して提案を作り直してください。
@@ -96,7 +129,8 @@ dependencyとwrite setが独立した複数のreview unitは、unitごとにrevi
 文章表現、命名、最適化、将来拡張だけのfollow-upは再レビューの理由にしません。
 proposal、write set、dependency、decision anchorの外部変更によって`REVIEW INVALID`になった試行は有効な回数へ含めませんが、無関係なbranch HEAD前進を理由に無効化してはいけません。
 
-固定revisionはreview-unit manifestとimmutable review snapshotで表してください。
+`medium`と`high`の固定revisionはreview-unit manifestとimmutable review snapshotで表してください。
+`low`はimmutable synthetic commit、exact path一覧、deterministic gate結果だけを固定してください。
 
 manifestは次の入力を固定します。
 
@@ -106,14 +140,14 @@ manifestは次の入力を固定します。
 - decision excerptごとのcanonical source path、stable decision IDまたは決定的な抽出command、抽出結果のSHA-256とGit blob OID
 - 上記blobをcurrent dependency baseへ重ねて作ったsynthetic Git treeまたはcommit OID
 
-manifestの機械的整合性は、reviewerごとに同じhash、blob、dependency、decision anchorを再計算させず、メインセッションが一回の決定的なreview attestationとして検証してください。
+manifestの機械的整合性はrepository-owned commandで生成・検証し、reviewerごとに同じhash、blob、dependency、decision anchorを再計算させないでください。
 attestationは、manifest自身のSHA-256、proposal、write set、dependency、decision anchor、synthetic treeまたはcommit、実行したgate commandと終了状態をmanifest revisionへ束縛します。
 reviewerはmanifest hash、synthetic commit、attestationのbindingを確認し、担当論点に関係する入力だけをspot checkしてください。
 attestationに不整合がある場合、またはreviewerが具体的な疑義を示した場合だけ、対象を限定して再計算またはtestを再実行してください。
 semantic correctness、owner boundary、実装可能性の評価を、機械的OID照合の重複で置き換えてはいけません。
 
 共有文書から本文をmanifestへcopyするだけではdecision anchorになりません。
-メインセッションはreview開始前、結果統合直前、commit直前に同じ抽出commandをsource pathへ再実行し、抽出結果をmanifestと照合してattestationを更新してください。
+メインセッションはreview開始前、結果統合直前、commit直前に同じdeterministic evidence commandを実行し、抽出結果をmanifestと照合してください。
 共有文書全体のhashは固定せず、関連excerptの変更だけを検出してください。
 
 workerは実装と検証を終え、実行中commandを終了し、対象fileのwrite ownershipをメインセッションへ返してからmanifestを発行します。
@@ -139,7 +173,7 @@ proposal、write-set membership、対象file content、dependency content、deci
 proposalを固定する前に、`low`、`medium`、`high`のrisk tierと判定根拠を明記してください。
 このrisk tier、attestation、output limit、delta convergence規則は、新たに固定するrevisionから適用し、すでにreviewを開始したrevisionへ遡及適用しません。
 
-`low`は一人のreviewerを使います。
+`low`はsemantic reviewerを使いません。
 次のすべてを満たす提案だけを`low`にできます。
 
 - 一つのpackage-local contractまたはtype-only surfaceだけを変更する
@@ -147,10 +181,10 @@ proposalを固定する前に、`low`、`medium`、`high`のrisk tierと判定�
 - public API、wire schema、永続identity、trustまたはauthority boundaryを変更しない
 - 既存のAccepted decisionを適用し、新しい不可逆な意味判断を追加しない
 
-`medium`は二人のreviewerを使います。
+`medium`は一人のprimary reviewerを使います。
 `low`にも`high`にも該当しないproposalを`medium`とします。
 
-`high`は三人のreviewerを使います。
+`high`はprimary reviewerとrisk reviewerの二人を使います。
 次のいずれかに該当する提案を`high`とします。
 
 - 複数 package の責務境界を変更する
@@ -164,14 +198,13 @@ proposalを固定する前に、`low`、`medium`、`high`のrisk tierと判定�
 reviewer には提案、設計文書のパス、関連コードの場所、評価基準を渡し、特定の結論へ誘導してはいけません。
 各 reviewer 自身にも、設計文書と関連コードを確認させてください。
 
-reviewer の役割は次のように分け、全員へ同じgeneral reviewを依頼しないでください。
+reviewer の役割は次のように分け、同じgeneral reviewを重複させないでください。
 
-1. primary reviewer：contract correctness、合意済み事項、blocker全体
-2. implementation reviewer：実装可能性、性能、budget、test、実コードとの接続（`medium`と`high`）
-3. boundary reviewer：identity、trust、authority、最終目標、package boundary、過剰設計（`high`）
+1. primary reviewer：contract correctness、合意済み事項、SPEC/test/implementation、blocker全体（`medium`と`high`）
+2. risk reviewer：実装可能性、性能、budget、test、またはidentity、trust、authority、最終目標、package boundary、過剰設計のうち変更riskに該当する論点（`high`）
 
 primary reviewerには次の共通事項をすべて評価させてください。
-implementation reviewerとboundary reviewerは担当範囲と交差する項目だけを評価し、primaryの前提に具体的な矛盾を見つけた場合は担当外でも報告してください。
+risk reviewerは担当範囲と交差する項目だけを評価し、primaryの前提に具体的な矛盾を見つけた場合は担当外でも報告してください。
 
 - 提案内部に矛盾がないか
 - 現行実装、最終目標、外部仕様に関する前提が正しいか
@@ -244,7 +277,7 @@ write set、owner、public contract、trust boundaryがblocker解消範囲を越
 
 ## 7. 決定を設計文書へ反映する
 
-収束した決定だけを `.temp/declarative-ui-execution-partitioning.md` に記録してください。
+収束した決定だけを `.temp/declarative-ui-execution-partitioning/README.md` が示す一つの担当文書に記録してください。
 決定内容、理由、却下した主要な代替案、制約、diagnostic、実装時の検証事項を記載してください。
 「実装前に決めること」と「現時点の整理」も更新し、解決済みの事項を未決定のまま残してはいけません。
 過去案を残す場合は、現行方針ではないことと、どの決定によって supersede されたかを明記してください。

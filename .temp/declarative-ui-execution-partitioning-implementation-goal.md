@@ -9,7 +9,7 @@
 
 > 宣言的 UI から server と client の実行配置を導出し、server-first な出力と必要最小限の client runtime を両立する設計を、Dathra の production code、仕様、テスト、公開 API、文書、playground に実装する。
 
-`.temp/declarative-ui-execution-partitioning.md` を execution partitioning の設計判断の正本として扱ってください。
+`.temp/declarative-ui-execution-partitioning/README.md` と、そこから参照される `decisions/` 配下の担当文書を execution partitioning の設計判断の正本として扱ってください。
 同文書の「破棄した案」を除く規範本文、解決済みの設計事項、実装時の検証事項を実装要件とします。
 
 この goal は production code の変更を明示的に許可します。
@@ -24,7 +24,7 @@
 この goal の実行開始を、大規模変更の実装アプローチに対するユーザーの承認として扱ってください。
 設計、優先順位、実装方法についてユーザーへ追加承認を求めないでください。
 
-設計および実装の独立レビューは、`.temp/goal.md` の手順 4 から手順 6 にある並列レビュー、`blocker` / `follow-up` 分類、収束確認の規則に従ってください。
+設計および実装の独立レビューは、`.temp/goal.md` のReview protocol R8と手順 4 から手順 6にある`blocker` / `follow-up`分類、収束確認の規則に従ってください。
 本文中の逐次レビュー、または実質的な指摘がなくなるまで無制限に反復する規則は、この並列レビュー規則によって supersede されます。
 `.temp/goal.md` の設計検討専用の作業条件はこの implementation goal へ持ち込まず、レビュー手順だけを共通規則として参照してください。
 
@@ -33,7 +33,7 @@
 実装判断では、次の資料を照合してください。
 
 1. root と対象 package の `AGENTS.md`
-2. `.temp/declarative-ui-execution-partitioning.md` の現行方針
+2. `.temp/declarative-ui-execution-partitioning/README.md` が参照する担当文書の現行方針
 3. 対象 API と同じディレクトリの `SPEC.typ`
 4. 対象 API と同じディレクトリの `implementation.test.ts`
 5. compiler、runtime、plugin、components、core、docs、playground の実コード
@@ -77,7 +77,7 @@ interface と placeholder だけを追加した状態、旧実装と新実装を
 
 ## 作業記録
 
-実装開始時に `.temp/declarative-ui-execution-partitioning-implementation-progress.md` を作成してください。
+実装進捗は `.temp/declarative-ui-execution-partitioning/implementation/progress/README.md` と、そこから参照される分割文書へ記録してください。
 この進捗文書には、少なくとも次の内容を記録してください。
 
 - 設計要件と acceptance work の一覧
@@ -88,6 +88,10 @@ interface と placeholder だけを追加した状態、旧実装と新実装を
 - 独立レビューの結果と採否
 - slice ごとの commit hash と push 先
 - 未完了事項と外部 blocker
+
+status、commit OID、gate結果、review結果だけの進捗更新は独立review unitにしません。
+次のprocessまたはimplementation commitへまとめるか、複数sliceのcheckpointとして一括commitしてください。
+runtime contract、owner、dependency、write set、acceptance obligation、gate義務を変更する文書更新だけをsemantic process revisionとしてreviewします。
 
 設計正本の acceptance work を要約だけで消化せず、一項目につき一つ以上の直接的な検証証拠へ対応付けてください。
 長期作業の context が圧縮されても、この進捗文書から次の作業を再開できる状態を維持してください。
@@ -147,23 +151,41 @@ fixed revisionになる前の未commit差分は破棄せず、実行中command�
 
 ## Reviewとgateの負荷配分
 
-同一review unitの回数上限は`.temp/goal.md`の手順4から手順6に従います。
+この節はReview protocol R8を実装へ適用し、R7の旧reviewer数、手書き証跡、sliceごとのfull package gate、status-only文書review規則をsupersedeします。
+同一review unitの回数上限は`.temp/goal.md`のReview protocol R8と手順4から手順6に従います。
 有効な初期レビューは一回、blocker修正後の収束レビューは一回だけです。
 収束後もblockerが残る場合は、三回目を開始せずreview unitを分割するか前提を再設計してください。
 
-`low`のimplementation sliceは、review対象のsynthetic commit OID、exact path一覧、focused gate結果を進捗文書へ記録すればよく、別のproposal、manifest、attestationを必須としません。
-`medium`と`high`、package境界、公開API、identity、trust、authority、race、server/client artifact inclusionを変更するsliceはslice-local manifestとattestationを維持してください。
-process文書だけを変更しruntime contractを変更しないrevisionは、一人のreviewerが義務保持、dependency、実行可能性だけを確認します。
+`low`のimplementation sliceはreview対象のsynthetic commit OID、exact path一覧、focused gate結果を記録し、semantic reviewer、proposal、manifest、attestationを使いません。
+`medium`はprimary reviewer一人、`high`はprimaryと変更riskに対応するrisk reviewerの二人を使います。
+blocker修正後だけ、初期reviewへ参加していない一人がdelta convergenceを行います。
+
+`medium`と`high`のmanifest、attestation、hash、blob、dependency、decision anchor、synthetic commit、gate結果はrepository-ownedのdeterministic `review:evidence` commandで生成・検証してください。
+通常成功時にこれらを手書きせず、reviewerへ同じ機械照合やfull gateを繰り返させてはいけません。
+exact OIDで固定済みのdependency evidenceはcontentが変わらない限り再利用します。
+
+R8 bootstrap toolingはcommit `686fa4d454460efecf70a6370a902c4f2c3217e0`で完了済みです。
+新規implementation reviewを固定する前に、このexact commitがcandidateのancestorであり、rootの`review:evidence` commandとfocused fixtureが同じcontentであることを確認して再利用してください。
+commandまたはfixtureが存在しないか、固定済みcontentと一致しない場合だけ、別のtooling revisionとして修正してください。
+このcommandはcandidate、base、exact write set、dependency、decision anchor、gate resultを入力し、idempotentなmachine-readable evidenceを生成して、不一致時にnon-zeroで終了するfixtureを持たなければなりません。
+各gateはexact candidateのisolated worktreeで先に実行し、完了したcommand、exit code、summaryだけをgate resultとして入力してください。
+`review:evidence`はgateを再実行せず、入力されたsuccess resultをほかの固定入力と一緒に検証、固定します。
+未実行または失敗したgateをsuccessとして入力してはいけません。
+完了済みbootstrap tooling sliceはsynthetic commit、exact path、focused fixture、primary reviewer一人で検証しており、手書きmanifest／attestationを持ちません。
+
+status/evidence-only文書更新はreviewせずまとめてcommitします。
+process文書がruntime contract、owner、dependency、write set、acceptance obligation、gate義務を変更する場合だけ、riskに応じて`medium`または`high`のsemantic reviewを行います。
 
 | gate level | 必須commandとartifact |
 | --- | --- |
-| `low` | focused test、scoped typecheckまたはcompile、scoped lint、format、diff check |
-| `medium` | `low`に加え、変更packageのtest、typecheck、lint、build |
-| `high` | `medium`に加え、影響するconsumer package、artifact inspection、関連E2E |
+| slice | focused test、scoped typecheckまたはcompile、scoped lint、変更pathのformat、diff check |
+| boundary-sensitive slice | slice gateに加え、変更したboundaryへ直接対応するartifact inspection、consumer test、またはE2Eだけ |
+| package integration | 関連slice群をdownstreamへ渡す前に変更packageのtest、typecheck、lint、buildを一回 |
 | WS01 integration | WS01の累積integration test、browser E2E、server/client bundle inspection |
 | milestone / final | root build、test、typecheck、lint、format、全関連E2E |
 
-同じfull package test、declaration build、root buildをdisjointなpure helperごとに繰り返してはいけません。
+同じcontentに対するfull package test、declaration build、root buildをsliceごとに繰り返してはいけません。
+最後のpackage integration gate以降に対象packageまたはdependency contentが変わった場合だけ再実行してください。
 correctness上の具体的な疑義、baselineとの差分、package境界変更がある場合は、表の最低条件を超えるtargeted gateを追加してください。
 
 ## 手順 0：実装 branch と baseline を準備する
@@ -290,13 +312,13 @@ WS01の待ち時間に並行実行できるのは、主経路とwrite setが分�
 API directory内のSPEC、test、production moduleは担当laneだけが編集し、進捗文書、root barrel、package export、共通config、複数laneの統合箇所はメインセッションだけが編集してください。
 担当laneは共有統合ファイルを変更せず、メインセッションがslice revisionを固定する前に必要なexport変更を統合してください。
 
-`medium`と`high`の各laneの固定revisionは、proposal、割当write setの完全なpath inventoryと全fileのmode、SHA-256、Git blob OID、直接dependency OID、decision anchor、synthetic review commit OIDを持つslice-local manifestで表してください。
+`medium`と`high`の各laneの固定revisionは、`review:evidence` commandが生成したproposal参照、割当write setの完全なpath inventoryと全fileのmode、SHA-256、Git blob OID、直接dependency OID、decision anchor、synthetic review commit OIDを持つslice-local manifestで表してください。
 `low`のimplementation sliceは前節の軽量化規則に従い、immutable synthetic commit、exact path一覧、gate結果だけを固定してください。
 decision anchorはcanonical source path、stable decision IDまたは決定的な抽出command、抽出結果のSHA-256とGit blob OIDを持ちます。
 共有文書からcopyした抜粋だけをanchorとしてはいけません。
 
-`medium`と`high`のmanifestの全path、mode、hash、blob、dependency、decision anchor、synthetic commit、gate commandを一回の決定的なreview attestationで検証してください。
-attestationはmanifest SHA-256とsynthetic commitへ束縛し、メインセッションがreview開始前、結果統合直前、commit直前に再生成または再検証してください。
+`medium`と`high`のmanifestの全path、mode、hash、blob、dependency、decision anchor、synthetic commit、gate commandは、同じ`review:evidence` commandが一回の決定的なreview attestationへ束縛します。
+メインセッションはreview開始前、結果統合直前、commit直前にcommandを再実行し、同じ入力から同じ結果が得られることを確認してください。
 reviewerごとに全OID照合とfull gateを重複実行させず、reviewerはattestation bindingと担当論点に必要な対象だけをspot checkします。
 具体的な不整合またはcorrectness上の疑義がある場合は、対象を限定したhash照合、test、artifact inspectionを追加できます。
 
@@ -304,7 +326,7 @@ workerは実装と検証を終え、実行中commandを終了し、write ownersh
 メインセッションは固定blobをGit object databaseへ保存し、current dependency baseへ重ねたsynthetic commitをbranch移動なしで作成します。
 reviewerはそのisolated snapshotを評価し、shared worktreeを正本にしません。
 
-review proposal、slice-local manifest、進捗文書はメインセッションだけが編集します。
+review proposalとmachine-generated slice-local evidenceはメインセッションだけが発行し、進捗文書はメインセッションだけが編集します。
 review中のproposal、manifest、割当write setはfreezeし、workerとreviewerに編集させてはいけません。
 
 別laneのcommitでbranch HEADが進んだことや、共有文書の無関係な節が変わったことだけをreview無効化の理由にしてはいけません。
@@ -497,32 +519,31 @@ coverage は可能な限り 100% を維持してください。
 
 ## 手順 6：独立レビューを並列実行する
 
-各 vertical slice の実装と検証が完了した後、実装を担当していない新しい独立した sub-agent に同一 revision を並列レビューさせてください。
+`medium`と`high`のvertical sliceは、実装と検証が完了した後、実装を担当していない新しい独立したsub-agentに同一revisionをreviewさせてください。
+`low`はdeterministic gateとメインセッションのdiff確認だけで完了し、sub-agent reviewを開始しません。
 同じ agent session に提案、実装、最終評価を完結させてはいけません。
 write setとdependencyが独立した複数sliceは、それぞれのrevisionを固定し、sliceごとのreviewer setを混同せず同時にreviewして構いません。
 一つのsliceが`reviewing`である間も、無関係なsliceのimplementation、verification、reviewを継続してください。
 
-`medium`と`high`のreviewerにはslice-local manifestを渡し、manifestに含まれないbranch HEADの前進やdisjoint write setの変更を`REVIEW INVALID`にしないよう明示してください。
-`low`のimplementation sliceでは、manifestの代わりに前節で固定したsynthetic commit OID、exact path一覧、gate結果、適用したAccepted decisionのpathまたはIDを渡してください。
+`medium`と`high`のreviewerには`review:evidence` commandが生成したslice-local manifestを渡し、manifestに含まれないbranch HEADの前進やdisjoint write setの変更を`REVIEW INVALID`にしないよう明示してください。
+`low`のimplementation sliceでは、前節で固定したsynthetic commit OID、exact path一覧、gate結果、適用したAccepted decisionのpathまたはIDを進捗記録へ残すだけとします。
 `medium`と`high`が共有設計文書を参照する場合は、文書全体のhashではなく、source pathと決定的な抽出規則を持つdecision anchorをmanifestへ固定してください。
 `medium`と`high`のreviewerはmanifestのsynthetic commitをisolated worktreeで読み、manifest hash、synthetic commit、review attestationのbindingを確認してください。
-`low`のreviewerは同じくisolatedなsynthetic commitを読み、exact path一覧とgate結果を確認してください。
 
 review開始前にrisk tierと根拠を進捗文書へ記録し、`medium`と`high`ではproposalにも記録してください。
 このrisk tier、output limit、delta convergence規則と、`medium`、`high`のattestation規則は、新たに固定するrevisionから適用し、すでにreviewを開始したrevisionへ遡及適用しません。
 
-- `low`：一package内のtype-only surface、またはAccepted decisionを適用するpure internal helperであり、state transition、untrusted input reflection、parser、public API、wire、identity、trust、authority、server/client artifact inclusionを変更しないslice。reviewerは一人
-- `medium`：`low`と`high`のどちらにも該当しないslice。reviewerは二人
-- `high`：複数package境界、identity、trust、authority、concurrency、race、state machine、untrusted可変長parser/serializer、server/client artifact inclusion、runtime admission、公開API、wire schema、永続identityのいずれかを変更するslice。reviewerは三人
+- `low`：一package内のtype-only surface、Accepted decisionを適用するpure internal helper、deterministicなtest-only evidence、またはstatus/evidence-only文書更新であり、state transition、untrusted input reflection、parser、public API、wire、identity、trust、authority、server/client artifact inclusion、新しいsemantic decisionを変更しないslice。明示GC、process-global state、timer/race、module-loader isolationを使うtest-only changeは含めない。reviewerはゼロ
+- `medium`：`low`と`high`のどちらにも該当しないslice。primary reviewerは一人
+- `high`：複数package境界、identity、trust、authority、concurrency、race、state machine、untrusted可変長parser/serializer、server/client artifact inclusion、runtime admission、公開API、wire schema、永続identityのいずれかを変更するslice。primaryとrisk reviewerの二人
 
 reviewer の役割は次のように分けてください。
 
-1. primary：correctness、failure、型安全性、既決定事項との整合性
-2. implementation：SPEC / test / implementation、artifact、性能、budget、公開 API（`medium`と`high`）
-3. boundary：最終目標、identity、trust、authority、race、package boundary、暗黙fallback、過剰設計（`high`）
+1. primary：correctness、failure、型安全性、既決定事項、SPEC / test / implementationとの整合性（`medium`と`high`）
+2. risk：artifact、性能、budget、公開 API、または最終目標、identity、trust、authority、race、package boundary、暗黙fallback、過剰設計のうち変更riskに該当する論点（`high`）
 
 primary reviewerには、少なくとも次をすべて確認させてください。
-implementation reviewerとboundary reviewerは担当範囲と交差する項目だけを確認し、primaryの前提に具体的な矛盾を見つけた場合は担当外でも報告してください。
+risk reviewerは担当範囲と交差する項目だけを確認し、primaryの前提に具体的な矛盾を見つけた場合は担当外でも報告してください。
 
 - 設計正本、SPEC、test、implementation が一致するか
 - old hydration semantics または暗黙 fallback が残っていないか
@@ -542,7 +563,7 @@ reviewerの通常出力は800 tokens以内、blocker最大3件、follow-up最大
 メインセッションは全 review result の重複を除き、根拠とコードを照合して、正しい指摘だけを採用してください。
 一人がblockerを報告しても、同じfixed revisionの初期reviewer setを停止せず、全roleの結果を回収してから修正してください。
 外部変更でfixed inputが無効になった場合だけ早期停止でき、その場合は新revisionへ通常人数の初期reviewer setを再実行してください。
-結果統合直前にmanifest、proposal、全write-set blob、dependency OID、decision anchorを再照合し、不一致なら`REVIEW INVALID`としてください。
+結果統合直前に`review:evidence` commandでmanifest、proposal、全write-set blob、dependency OID、decision anchorを再照合し、不一致なら`REVIEW INVALID`としてください。
 指摘は `.temp/goal.md` の規則に従って `blocker` と `follow-up` に分類してください。
 `blocker` はまとめて修正し、targeted test と slice gate を再実行してください。
 `follow-up` は進捗文書へ記録し、現在の slice を停止する理由にしないでください。
@@ -562,17 +583,17 @@ sub-agent は調査、fixture、独立した write set の実装にも使えま�
 
 ## 手順 7：slice を commit して push する
 
-review が収束した slice だけを stage してください。
+`medium`と`high`はreviewが収束し、`low`はdeterministic slice gateが成功した場合だけstageしてください。
 無関係な変更、生成 cache、coverage output、debug log を commit に含めてはいけません。
 
-commit直前にmanifest自身、proposal、全dependency OID、decision anchorを再照合してください。
-staged path inventory、file mode、blob OIDがmanifestの割当write setと完全一致しない場合はcommitしてはいけません。
+`medium`と`high`はcommit直前に`review:evidence` commandを再実行し、manifest自身、proposal、全dependency OID、decision anchorを再照合してください。
+全tierでstaged path inventory、file mode、blob OIDが固定したwrite setと完全一致しない場合はcommitしてはいけません。
 commit 前に `git diff --check` と staged file listを確認してください。
 変更内容を特定できる commit message で commit し、`feature/declarative-ui-execution-partitioning` へ push してください。
-commit後にcommit treeの対象path、mode、blob OIDをmanifestへ再照合してください。
+commit後にdeterministic commandでcommit treeの対象path、mode、blob OIDを固定evidenceへ再照合してください。
 push 後は local HEAD と tracking branch が同じ commit を指すことを確認してください。
 
-進捗文書へ commit hash と検証証拠を記録してください。
+進捗文書へcommit hashと検証証拠を記録し、status/evidence-only更新は次のprocess／implementation commitまたは複数sliceのcheckpointへまとめてください。
 未完了 slice がある場合は、ユーザーへ確認を求めず手順 2 に戻ってください。
 
 ## 手順 8：旧実装を削除する
