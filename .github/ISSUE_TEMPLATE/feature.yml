@@ -1,0 +1,84 @@
+name: Feature
+description: Deliver a usable behavior or capability with its specification and tests.
+title: ""
+labels:
+  - enhancement
+type: Feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use a Feature for a usable implementation outcome. Keep design decisions in separate Proposal Issues.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: Parent issue
+      description: Reference the Epic that owns this Feature, or enter None when no coherent parent exists.
+      placeholder: "#123 or None"
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: Describe the user-visible or developer-visible capability delivered by this Feature.
+      placeholder: Describe the behavior that becomes usable when this Feature is complete.
+    validations:
+      required: true
+
+  - type: textarea
+    id: preconditions
+    attributes:
+      label: Preconditions
+      description: List Accepted Proposals, dependencies, and evidence required before implementation.
+      placeholder: |
+        - #123 is Accepted.
+        - The production fixture and support boundary are fixed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: work
+    attributes:
+      label: Work
+      description: Define the implementation boundary without prescribing incidental file-level steps.
+      placeholder: |
+        - Update the authoritative specification and tests.
+        - Implement the accepted behavior.
+        - Integrate the production consumer.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: List observable success, failure, and regression conditions.
+      placeholder: |
+        - Supported input produces the declared behavior.
+        - Unsupported input fails explicitly.
+        - Relevant tests and checks pass.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Reference native blocked-by dependencies that must also be configured on the Issue.
+      placeholder: |
+        - Blocked by #123
+    validations:
+      required: false
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: State functionality and migration work excluded from this Feature.
+      placeholder: |
+        - Unrelated refactoring
+    validations:
+      required: true

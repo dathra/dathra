@@ -1,0 +1,93 @@
+name: Proposal
+description: Decide a design, product, or support boundary before implementation starts.
+title: ""
+type: Proposal
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use a Proposal to make an explicit decision. Do not hide implementation work inside this Issue.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: Parent issue
+      description: Reference the Epic that owns this decision.
+      placeholder: "#123"
+    validations:
+      required: true
+
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision to make
+      description: State the single decision this Proposal must resolve.
+      placeholder: Describe the choice that must become Accepted, Rejected, Deferred, or Superseded.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context-evidence
+    attributes:
+      label: Context and evidence
+      description: Provide current behavior, constraints, consumers, and direct evidence.
+      placeholder: |
+        - Current production behavior
+        - Consumer requirement
+        - Relevant specification or artifact evidence
+    validations:
+      required: true
+
+  - type: textarea
+    id: options
+    attributes:
+      label: Options considered
+      description: List credible options and their product consequences.
+      placeholder: |
+        1. Option A — consequence
+        2. Option B — consequence
+    validations:
+      required: true
+
+  - type: textarea
+    id: decision-criteria
+    attributes:
+      label: Decision criteria
+      description: Define how the options will be judged.
+      placeholder: |
+        - Practical production value
+        - Correctness and safety
+        - Compatibility and maintenance cost
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Define the evidence required to record a final Proposal Progress value.
+      placeholder: |
+        - The selected option and rationale are recorded.
+        - Follow-up Features and Tasks can be scoped without reopening this decision.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Reference decisions or evidence that must exist before this Proposal can resolve.
+      placeholder: |
+        - Blocked by #123
+    validations:
+      required: false
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: State decisions and implementation work excluded from this Proposal.
+      placeholder: |
+        - Production implementation
+    validations:
+      required: true
