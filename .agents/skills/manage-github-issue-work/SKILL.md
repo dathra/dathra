@@ -1,6 +1,6 @@
 ---
 name: manage-github-issue-work
-description: Manage all Dathomir repository work through GitHub Issues as the canonical task record. Use before planning or performing code, specification, documentation, configuration, CI, GitHub, or other repository changes; when resuming work across sessions; when refining Initiative/Epic/Proposal/Feature/Task/Bug hierarchies; when recording progress or blockers; and when completing work through a pull request. Do not create an Issue for a one-shot read-only explanation, inspection, or status answer unless the user explicitly asks to track it.
+description: Manage all Dathomir repository work through GitHub Issues as the canonical task record, including provider-neutral delegation across subagents and model capability tiers. Use before planning or performing code, specification, documentation, configuration, CI, GitHub, or other repository changes; when resuming work across sessions; when refining Initiative/Epic/Proposal/Feature/Task/Bug hierarchies; when recording progress or blockers; and when completing work through a pull request. Do not create an Issue for a one-shot read-only explanation, inspection, or status answer unless the user explicitly asks to track it.
 ---
 
 # Manage GitHub Issue Work
@@ -91,6 +91,46 @@ Move Proposal Progress only when evidence supports the transition:
 - `Interruption`: The decision is paused by an explicit blocker.
 - `Superseded` or `Deprecated`: A later decision replaced or retired it.
 
+## Delegate by role and capability
+
+Keep delegation independent of the active agent host, model provider, model family, model slug, reasoning-level name, and configuration path.
+Express the workflow with roles and capability tiers, then let the active host map each tier to an available model and reasoning setting.
+
+Use these capability tiers:
+
+- `economy`: Use for deterministic searches, extraction, classification, command execution, and concise evidence collection.
+- `balanced`: Use for bounded repository exploration and implementation with a fixed specification and acceptance boundary.
+- `advanced`: Use for ambiguous design, complex implementation, security or correctness analysis, and independent final review.
+
+Start with the lowest tier that can satisfy the declared acceptance criteria.
+Escalate only when evidence reveals unresolved ambiguity, cross-cutting behavior, elevated correctness or security risk, or a failed independent review.
+
+Use these delegation roles when the host supports subagents:
+
+- `issue-scout` (`economy`, read-only): Search open and closed Issues, inspect type, hierarchy, dependencies, fields, and possible duplicates.
+- `repo-explorer` (`economy` or `balanced`, read-only): Read the relevant instructions, specifications, tests, implementation, and dependencies, then return file-backed findings.
+- `writer` (`balanced` or `advanced`, write): Implement an accepted scope. Allow only one writer for overlapping files or behavior at a time.
+- `verifier` (`economy`, no source edits): Run declared checks and return exact commands, outcomes, and concise failure evidence.
+- `reviewer` (`advanced`, read-only): Independently compare the Issue, specification, tests, implementation, and diff for correctness, safety, and missing evidence.
+
+Keep the orchestrating agent responsible for Issue admission, Issue type, scope, acceptance boundaries, final design decisions, integration, staging, commit, push, PR creation, and final GitHub verification.
+Treat subagent results as evidence, not as automatic decisions.
+
+Delegate only bounded, independent work when parallel execution or context isolation is worth the additional model and coordination cost.
+Prefer read-only delegation.
+Do not spawn a subagent for a trivial serial action such as creating a branch, setting one field, committing, pushing, or opening a PR unless permission isolation requires it.
+Do not ask multiple agents the same question unless independent hypotheses or reviews are intentional.
+Use parallel writers only when their file ownership and behavior ownership are disjoint and the integration order is explicit.
+Require each subagent to return a distilled result with source paths, Issue references, commands, or other reproducible evidence instead of raw logs.
+
+Honor an explicit user choice of agent host, provider, model, reasoning effort, latency target, or budget.
+When the host supports per-agent model, reasoning, tool, or permission configuration, map the capability tiers in that host's native configuration instead of encoding provider-specific model names in this skill.
+When the host cannot select a model per subagent, use its inherited or default model while preserving the role boundary.
+When subagents are unavailable, execute the same operational roles sequentially in the main context and continue the workflow, but label a same-context review as self-review rather than independent review.
+When independent review is an acceptance requirement, use a separate session, a human reviewer, or another isolated review mechanism; report missing independent evidence instead of substituting self-review.
+Do not make task completion depend on one provider's subagent feature or configuration format.
+Do not add or change host-specific agent configuration unless the user requests that configuration as part of the task.
+
 ## Execute within the Issue boundary
 
 Use the Issue outcome, acceptance criteria, non-goals, and dependencies as the work authorization boundary.
@@ -153,5 +193,6 @@ Before handing off, verify through GitHub rather than relying on local memory:
 - the PR and Issue describe the same scope;
 - the local worktree and remote branch are synchronized.
 
-Prefer the GitHub connector for Issue and PR data and mutations.
-Use `gh` only for capabilities the connector does not expose well, such as native dependency endpoints, current-branch PR discovery, authentication checks, or Actions logs.
+Use any available GitHub access path that supports the required Issue fields, native relationships, PR data, and mutations, including a host integration, `gh`, or the GitHub API.
+When multiple paths are available, prefer the path that exposes the required semantics directly and use another path for unsupported operations such as native dependency endpoints, current-branch PR discovery, authentication checks, or Actions logs.
+Re-read the resulting GitHub state after every mutation path instead of trusting a local command result.
