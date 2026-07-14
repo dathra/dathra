@@ -2,6 +2,12 @@ name: CI / E2E
 
 on:
   workflow_call:
+    inputs:
+      run:
+        description: Run the end-to-end test job
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -9,6 +15,7 @@ permissions:
 jobs:
   e2e:
     name: e2e
+    if: inputs.run
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

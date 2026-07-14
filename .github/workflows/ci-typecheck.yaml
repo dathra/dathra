@@ -2,6 +2,12 @@ name: CI / Typecheck
 
 on:
   workflow_call:
+    inputs:
+      run:
+        description: Run the typecheck verification job
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -9,6 +15,7 @@ permissions:
 jobs:
   typecheck:
     name: typecheck
+    if: inputs.run
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

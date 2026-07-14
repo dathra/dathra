@@ -16,17 +16,125 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      fmt: ${{ steps.detect.outputs.fmt }}
+      lint: ${{ steps.detect.outputs.lint }}
+      typecheck: ${{ steps.detect.outputs.typecheck }}
+      test: ${{ steps.detect.outputs.test }}
+      e2e: ${{ steps.detect.outputs.e2e }}
+    steps:
+      - name: Checkout repository history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Test change classification
+        run: node --test .github/scripts/classify-ci-changes.test.mjs
+
+      - name: Detect relevant changes
+        id: detect
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.sha }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+        run: |
+          set -u
+
+          write_all_checks() {
+            {
+              echo "fmt=true"
+              echo "lint=true"
+              echo "typecheck=true"
+              echo "test=true"
+              echo "e2e=true"
+            } >> "$GITHUB_OUTPUT"
+          }
+
+          fall_back_to_all_checks() {
+            echo "::warning::$1; running all verification jobs"
+            write_all_checks
+            exit 0
+          }
+
+          case "$EVENT_NAME" in
+            workflow_dispatch)
+              write_all_checks
+              exit 0
+              ;;
+            pull_request)
+              base_sha="$PULL_REQUEST_BASE_SHA"
+              ;;
+            merge_group)
+              base_sha="$MERGE_GROUP_BASE_SHA"
+              ;;
+            push)
+              base_sha="$PUSH_BASE_SHA"
+              ;;
+            *)
+              fall_back_to_all_checks "Unknown event '$EVENT_NAME'"
+              ;;
+          esac
+
+          if [[ -z "$base_sha" || "$base_sha" =~ ^0+$ ]]; then
+            fall_back_to_all_checks "A usable base revision is unavailable"
+          fi
+
+          changed_files="$RUNNER_TEMP/ci-changed-files"
+
+          if ! git diff --no-renames --name-only -z "$base_sha" "$HEAD_SHA" -- > "$changed_files"; then
+            fall_back_to_all_checks "Changed files could not be determined"
+          fi
+
+          if ! classification="$(node .github/scripts/classify-ci-changes.mjs < "$changed_files")"; then
+            fall_back_to_all_checks "Changed files could not be classified"
+          fi
+
+          for check_name in fmt lint typecheck test e2e; do
+            if ! grep -Eq "^${check_name}=(true|false)$" <<< "$classification"; then
+              fall_back_to_all_checks "The change classification was incomplete"
+            fi
+          done
+
+          printf '%s\n' "$classification" >> "$GITHUB_OUTPUT"
+
   fmt:
+    needs: changes
+    if: ${{ always() && !cancelled() }}
     uses: ./.github/workflows/ci-fmt.yaml
+    with:
+      run: ${{ needs.changes.result != 'success' || needs.changes.outputs.fmt != 'false' }}
 
   lint:
+    needs: changes
+    if: ${{ always() && !cancelled() }}
     uses: ./.github/workflows/ci-lint.yaml
+    with:
+      run: ${{ needs.changes.result != 'success' || needs.changes.outputs.lint != 'false' }}
 
   typecheck:
+    needs: changes
+    if: ${{ always() && !cancelled() }}
     uses: ./.github/workflows/ci-typecheck.yaml
+    with:
+      run: ${{ needs.changes.result != 'success' || needs.changes.outputs.typecheck != 'false' }}
 
   test:
+    needs: changes
+    if: ${{ always() && !cancelled() }}
     uses: ./.github/workflows/ci-test.yaml
+    with:
+      run: ${{ needs.changes.result != 'success' || needs.changes.outputs.test != 'false' }}
 
   e2e:
+    needs: changes
+    if: ${{ always() && !cancelled() }}
     uses: ./.github/workflows/ci-e2e.yaml
+    with:
+      run: ${{ needs.changes.result != 'success' || needs.changes.outputs.e2e != 'false' }}
