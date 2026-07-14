@@ -2,12 +2,6 @@ name: CI / Format
 
 on:
   workflow_call:
-    inputs:
-      run:
-        description: Run the format verification job
-        required: false
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -15,7 +9,6 @@ permissions:
 jobs:
   fmt:
     name: fmt
-    if: inputs.run
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

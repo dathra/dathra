@@ -2,12 +2,6 @@ name: CI / Lint
 
 on:
   workflow_call:
-    inputs:
-      run:
-        description: Run the lint verification job
-        required: false
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -15,7 +9,6 @@ permissions:
 jobs:
   lint:
     name: lint
-    if: inputs.run
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

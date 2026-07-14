@@ -2,12 +2,6 @@ name: CI / Test
 
 on:
   workflow_call:
-    inputs:
-      run:
-        description: Run the package test job
-        required: false
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -15,7 +9,6 @@ permissions:
 jobs:
   test:
     name: test
-    if: inputs.run
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
