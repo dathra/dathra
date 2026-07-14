@@ -2,33 +2,12 @@ name: CI
 
 on:
   pull_request:
-    paths:
-      - packages/**
-      - playgrounds/**
-      - config/**
-      - .github/actions/**
-      - .github/workflows/ci*.yaml
-      - .npmrc
-      - mise.toml
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - docs/package.json
   push:
     branches:
       - main
-    paths:
-      - packages/**
-      - playgrounds/**
-      - config/**
-      - .github/actions/**
-      - .github/workflows/ci*.yaml
-      - .npmrc
-      - mise.toml
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - docs/package.json
+  merge_group:
+    types:
+      - checks_requested
   workflow_dispatch:
 
 concurrency:
@@ -39,17 +18,159 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Detect relevant changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      run_heavy: ${{ steps.decision.outputs.run_heavy }}
+    steps:
+      - name: Checkout repository
+        if: github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@v6
+
+      - name: Filter relevant changes
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+        with:
+          list-files: none
+          filters: |
+            ci:
+              - 'packages/**'
+              - 'playgrounds/**'
+              - 'config/**'
+              - '.github/actions/**'
+              - '.github/workflows/ci*.yaml'
+              - '.github/workflows/ci*.yml'
+              - '.npmrc'
+              - 'mise.toml'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'docs/package.json'
+
+      - name: Decide whether to run full CI
+        id: decision
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          FILTER_RESULT: ${{ steps.filter.outputs.ci }}
+          PR_CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "run_heavy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            if [[ ! "$PR_CHANGED_FILES" =~ ^[0-9]+$ ]]; then
+              echo "::error::Invalid pull-request changed-files count"
+              exit 1
+            fi
+
+            # The pull-request files API returns at most 3,000 files.
+            if ((PR_CHANGED_FILES > 3000)); then
+              echo "run_heavy=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          case "$FILTER_RESULT" in
+            true | false)
+              echo "run_heavy=$FILTER_RESULT" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::warning::Unexpected path-filter result; running full CI"
+              echo "run_heavy=true" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
   fmt:
+    needs: changes
+    if: needs.changes.outputs.run_heavy == 'true'
     uses: ./.github/workflows/ci-fmt.yaml
 
   lint:
+    needs: changes
+    if: needs.changes.outputs.run_heavy == 'true'
     uses: ./.github/workflows/ci-lint.yaml
 
   typecheck:
+    needs: changes
+    if: needs.changes.outputs.run_heavy == 'true'
     uses: ./.github/workflows/ci-typecheck.yaml
 
   test:
+    needs: changes
+    if: needs.changes.outputs.run_heavy == 'true'
     uses: ./.github/workflows/ci-test.yaml
 
   e2e:
+    needs: changes
+    if: needs.changes.outputs.run_heavy == 'true'
     uses: ./.github/workflows/ci-e2e.yaml
+
+  ci-gate:
+    name: CI Gate
+    needs:
+      - changes
+      - fmt
+      - lint
+      - typecheck
+      - test
+      - e2e
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Verify CI results
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          RUN_HEAVY: ${{ needs.changes.outputs.run_heavy }}
+          FMT_RESULT: ${{ needs.fmt.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          TYPECHECK_RESULT: ${{ needs.typecheck.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$CHANGES_RESULT" != "success" ]]; then
+            echo "::error::Change detection did not succeed: $CHANGES_RESULT"
+            exit 1
+          fi
+
+          case "$RUN_HEAVY" in
+            true)
+              expected_result="success"
+              ;;
+            false)
+              expected_result="skipped"
+              ;;
+            *)
+              echo "::error::Unexpected full-CI decision: $RUN_HEAVY"
+              exit 1
+              ;;
+          esac
+
+          verify_result() {
+            local job_name="$1"
+            local actual_result="$2"
+
+            if [[ "$actual_result" != "$expected_result" ]]; then
+              echo "::error::$job_name concluded $actual_result; expected $expected_result"
+              exit 1
+            fi
+          }
+
+          verify_result "fmt" "$FMT_RESULT"
+          verify_result "lint" "$LINT_RESULT"
+          verify_result "typecheck" "$TYPECHECK_RESULT"
+          verify_result "test" "$TEST_RESULT"
+          verify_result "e2e" "$E2E_RESULT"
