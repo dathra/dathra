@@ -1,0 +1,101 @@
+name: Bug
+description: Track an unexpected behavior with reproducible evidence and a regression boundary.
+title: ""
+labels:
+  - bug
+type: Bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use a Bug for behavior that violates an existing specification or accepted expectation.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: Parent issue
+      description: Reference the owning Epic or Feature, or enter None when no coherent parent exists.
+      placeholder: "#123 or None"
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Describe affected users, workflows, packages, and severity.
+      placeholder: Describe what cannot be used safely or correctly because of this bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide the smallest reliable steps, fixture, or command that demonstrates the bug.
+      placeholder: |
+        1. Run ...
+        2. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: State the specification or accepted behavior that should hold.
+      placeholder: Describe the expected observable result and link its source of truth.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual behavior
+      description: State the observed result without assuming an unverified root cause.
+      placeholder: Include exact errors, artifacts, screenshots, or logs when available.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Record the revision, runtime, browser, platform, and configuration needed to reproduce the bug.
+      placeholder: |
+        - Commit or release:
+        - Runtime and platform:
+        - Browser or build adapter:
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Define the regression tests and observable result required to close the Bug.
+      placeholder: |
+        - A regression test fails before the fix and passes after it.
+        - The relevant specification, test, and implementation remain consistent.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Reference native blocked-by dependencies when the fix cannot start immediately.
+      placeholder: |
+        - Blocked by #123
+    validations:
+      required: false
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: State adjacent cleanup or feature work excluded from the fix.
+      placeholder: |
+        - Unrelated refactoring or feature expansion
+    validations:
+      required: false

@@ -1,0 +1,63 @@
+name: Initiative
+description: Track a broad product or repository outcome composed of multiple Epics.
+title: ""
+labels:
+  - enhancement
+type: Initiative
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use an Initiative for a broad outcome that requires multiple independently completable Epics.
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: Describe the durable result that this Initiative must achieve.
+      placeholder: Describe the product or repository state that should exist when this Initiative is complete.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Define the responsibilities and product boundaries owned by this Initiative.
+      placeholder: |
+        - Included capability or workflow
+        - Included package or integration boundary
+    validations:
+      required: true
+
+  - type: textarea
+    id: completion-criteria
+    attributes:
+      label: Completion criteria
+      description: List observable conditions that must hold before the Initiative can close.
+      placeholder: |
+        - All required Epics are complete.
+        - The declared product outcome is reproducible from the default branch.
+    validations:
+      required: true
+
+  - type: textarea
+    id: child-epics
+    attributes:
+      label: Planned child Epics
+      description: List known child Epics or describe how they will be refined.
+      placeholder: |
+        - #123 — Outcome owned by the first Epic
+        - Additional Epics will be added only when they have independent acceptance criteria.
+    validations:
+      required: true
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: State what this Initiative deliberately does not promise.
+      placeholder: |
+        - Capability outside the declared support boundary
+    validations:
+      required: true

@@ -1,0 +1,92 @@
+name: Task
+description: Complete a bounded implementation, migration, validation, or documentation activity.
+title: ""
+type: Task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use a Task for bounded work with a verifiable completion condition. Do not use it to hide unresolved design decisions.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: Parent issue
+      description: Reference the Epic or Feature that owns this Task, or enter None when no coherent parent exists.
+      placeholder: "#123 or None"
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: State the concrete result this Task must leave behind.
+      placeholder: Describe the artifact, migration, evidence, or repository state produced by this Task.
+    validations:
+      required: true
+
+  - type: textarea
+    id: preconditions
+    attributes:
+      label: Preconditions
+      description: List dependencies and decisions required before the Task starts.
+      placeholder: |
+        - #123 is complete.
+        - Required input and acceptance evidence are available.
+    validations:
+      required: true
+
+  - type: textarea
+    id: work
+    attributes:
+      label: Work
+      description: List the bounded actions owned by this Task.
+      placeholder: |
+        - Add or update the declared artifact.
+        - Keep specifications, tests, and implementation consistent.
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: List commands, inspections, or evidence required to verify the result.
+      placeholder: |
+        - Focused test command
+        - Typecheck and lint
+        - Artifact or browser inspection
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Define the conditions that allow the Task to close.
+      placeholder: |
+        - The declared result exists on the default branch after merge.
+        - Required checks pass without skipped coverage.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Reference native blocked-by dependencies that must also be configured on the Issue.
+      placeholder: |
+        - Blocked by #123
+    validations:
+      required: false
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: State work that must be tracked in a separate Issue.
+      placeholder: |
+        - Follow-up capability outside this Task
+    validations:
+      required: true

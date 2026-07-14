@@ -1,0 +1,71 @@
+name: Epic
+description: Track a coherent outcome composed of Proposals, Features, and Tasks.
+title: ""
+labels:
+  - enhancement
+type: Epic
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use an Epic for one coherent outcome with independently trackable design and implementation work.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: Parent issue
+      description: Reference the parent Initiative or parent Epic.
+      placeholder: "#123"
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: Describe the usable result delivered by this Epic.
+      placeholder: Describe the product or repository behavior that will exist when this Epic is complete.
+    validations:
+      required: true
+
+  - type: textarea
+    id: entry-criteria
+    attributes:
+      label: Entry criteria
+      description: List decisions, evidence, or dependencies required before work starts.
+      placeholder: |
+        - #123 is complete.
+        - The production consumer and acceptance fixture are selected.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: List observable conditions that prove the Epic outcome.
+      placeholder: |
+        - The production workflow uses the new path end to end.
+        - Unsupported input fails with an actionable diagnostic.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Reference native blocked-by dependencies that must also be configured on the Issue.
+      placeholder: |
+        - Blocked by #123
+    validations:
+      required: false
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: State behavior that this Epic will not implement or guarantee.
+      placeholder: |
+        - Unrelated public API changes
+    validations:
+      required: true

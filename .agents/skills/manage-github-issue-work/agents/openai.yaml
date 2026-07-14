@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage GitHub Issue Work"
+  short_description: "Manage Dathomir work through GitHub Issues"
+  default_prompt: "Use $manage-github-issue-work to track this Dathomir task from Issue admission through its Draft PR."
