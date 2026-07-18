@@ -63,7 +63,7 @@
   ),
 )
 
-= Decision
+== Decision
 
 #adr(
   header("DocCodeBlock observable behavior baseline", Status.Accepted, "2026-07-17"),
@@ -238,7 +238,7 @@
   ),
 )
 
-= Behavior Contract
+== Behavior Contract
 
 The source snapshot means the normalized source text represented by a block.
 The same block must not copy the source belonging to another block.
@@ -345,7 +345,7 @@ The same block must not copy the source belonging to another block.
   ],
 )
 
-= Current Evidence and Unresolved Baseline
+== Current Evidence and Unresolved Baseline
 
 The following observations were made against the current repository on
 2026-07-15:
@@ -373,7 +373,7 @@ updates belongs to #108. Failure and diagnostic behavior belongs to #109.
 Cross-boundary source identity and exposure belong to #107. Artifact and
 zero-client-root rules belong to #110.
 
-= Adoption Gate
+== Adoption Gate
 
 Before implementation begins, the accepted subset of this proposal must be
 identified for the responsible documentation component owner and represented

@@ -223,27 +223,27 @@
   assert(name != none, message: "design_proposal: name is required")
   assert(summary != none, message: "design_proposal: summary is required")
   [
-    == Proposal #issue: #name
+    = Proposal #issue: #name
 
     #summary
 
     #if scope != none [
-      === Scope
+      == Scope
       #scope
     ]
 
     #if non_goals != none [
-      === Non-goals
+      == Non-goals
       #non_goals
     ]
 
     #if open_questions != none [
-      === Open Questions
+      == Open Questions
       #open_questions
     ]
 
     #if references != none [
-      === References
+      == References
       #for ref in references [
         - #ref
       ]
