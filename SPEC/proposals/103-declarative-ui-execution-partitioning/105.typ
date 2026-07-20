@@ -285,6 +285,58 @@
   ),
 )
 
+#adr(
+  header("DocCodeBlock reactive execution ownership", Status.Accepted, "2026-07-20"),
+  [
+    Reactivity alone must not determine whether a source is supported. A
+    reactive value can be read while producing a server snapshot, while a
+    client-visible mutation of that value requires a client execution path.
+    Treating both cases as unsupported would make the execution partitioning
+    model reject valid reactive components.
+  ],
+  [
+    - The Phase 1 stable-snapshot profile may read reactive values during the
+      server render transaction. Its rendered instance has no post-SSR update
+      owner and the client artifact contains only copy interaction.
+    - A source dependency with a client-visible post-SSR revision is not made
+      server-only by the stable-snapshot profile. The compiler must either
+      select a supported client-reactive profile or report an unsupported
+      execution-profile diagnostic.
+    - A future client-reactive DocCodeBlock profile treats the SSR result as an
+      initial hydration baseline. The client owns the reactive dependency and
+      the update closure required to keep displayed source, highlighting,
+      language presentation, and clipboard source consistent.
+    - A client-reactive profile must include only client-safe normalization,
+      rendering, and update dependencies. It may not reach a server-only
+      highlighter merely because the initial SSR used one.
+    - The distinction is execution ownership, not a permanent restriction on
+      reactive props. A server-owned revision delivered to an existing block is
+      a separate delivery profile and must not be silently substituted for the
+      client-reactive profile.
+  ],
+  [
+    - The Phase 1 fixture remains stable and does not prove the future
+      client-reactive profile.
+    - #115 classifies the required execution profile from dependency and update
+      evidence; it must not diagnose a source solely because it is reactive.
+    - #222 defines the later client-reactive update contract, including any
+      client-safe highlighting strategy and atomic update rules.
+  ],
+  alternatives: [
+    - *Reject every reactive source in Phase 1*: This confuses a reactive input
+      with a source that requires post-SSR delivery.
+    - *Keep reactive updates in the server path by default*: This can leave a
+      client-visible mutation without a client owner and hides the required
+      client closure.
+  ],
+  references: (
+    link("https://github.com/dathra/dathra/issues/105")[#105],
+    link("https://github.com/dathra/dathra/issues/106")[#106],
+    link("https://github.com/dathra/dathra/issues/115")[#115],
+    link("https://github.com/dathra/dathra/issues/222")[#222],
+  ),
+)
+
 == Behavior Contract
 
 The source snapshot means the normalized source text represented by a block.

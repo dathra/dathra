@@ -155,6 +155,58 @@
   ),
 )
 
+#adr(
+  header("DocCodeBlock reactive execution profiles", Status.Accepted, "2026-07-20"),
+  [
+    The server/client split must preserve the framework rule that behavior
+    changing in the browser is owned by a client execution path. The Phase 1
+    static split is therefore one execution profile, not a general claim that
+    reactive DocCodeBlock inputs belong on the server.
+  ],
+  [
+    - In the Phase 1 stable-snapshot profile, the server evaluates the source,
+      normalizes it, and produces the initial display. The client consumes one
+      snapshot for copy behavior and does not observe source revisions.
+    - In a future client-reactive profile, the server still produces the initial
+      SSR display, but the client owns the source dependency and its update
+      closure. That closure includes the client-safe source normalization,
+      display/highlighting update, language presentation update, clipboard
+      snapshot update, and the consistency rules connecting them.
+    - A client-reactive profile must not re-execute the arbitrary component body
+      or import a server-only highlighter. The compiler must emit the smallest
+      client-safe reactive closure, or select another explicitly supported
+      delivery profile.
+    - A source is unsupported for Phase 1 when the stable-snapshot profile is
+      selected but the analysis proves that a client-visible post-SSR revision
+      requires a different profile. The diagnostic names the missing execution
+      profile; it does not classify reactivity itself as unsupported.
+    - #107's Phase 1 handoff carries one stable snapshot. A client-reactive
+      handoff and revision protocol belong to #222 and must not be smuggled into
+      the static profile.
+  ],
+  [
+    - #115 must classify the update owner and required execution profile before
+      #118 creates a placement plan.
+    - The client-reactive profile may require a client-safe highlighter or a
+      precompiled rendering strategy; reusing the server-only highlighter is not
+      an acceptable implicit fallback.
+    - A server-owned revision delivery path is a separate profile and requires
+      an explicit contract for delivery, ownership, and stale-update rejection.
+  ],
+  alternatives: [
+    - *Put all reactive source handling on the server*: This leaves browser
+      mutations without a client execution owner.
+    - *Run the entire component body in the browser*: This leaks unrelated
+      server work and server-only dependencies into the client artifact.
+  ],
+  references: (
+    link("https://github.com/dathra/dathra/issues/106")[#106],
+    link("https://github.com/dathra/dathra/issues/115")[#115],
+    link("https://github.com/dathra/dathra/issues/118")[#118],
+    link("https://github.com/dathra/dathra/issues/222")[#222],
+  ),
+)
+
 == Invariants for Later Proposals
 
 #behavior_spec(
