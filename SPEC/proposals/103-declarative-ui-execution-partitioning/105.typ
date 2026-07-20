@@ -337,6 +337,41 @@
   ),
 )
 
+#adr(
+  header("Client-reactive DocCodeBlock is Core support", Status.Accepted, "2026-07-20"),
+  [
+    The product requires a DocCodeBlock whose browser-visible source can change
+    reactively without assigning that behavior to a server-only path. Leaving
+    the client-reactive profile demand-gated would make the initial support
+    matrix omit a required component behavior.
+  ],
+  [
+    - Initial execution-partitioning support includes both the Phase 1
+      stable-snapshot profile and a client-reactive DocCodeBlock profile.
+    - Phase 1 proves the stable profile first. It remains a valid profile, but
+      it is not the complete initial DocCodeBlock support guarantee.
+    - #222 defines the client-reactive observable contract and #224 validates
+      its production implementation after the stable baseline is proven.
+    - A source requiring client-visible post-SSR revision is diagnosed only when
+      no accepted profile can own the update. It is not rejected merely because
+      it is reactive or because the stable profile was selected first.
+    - Server-owned revision delivery, subscription, and streaming remain
+      separate demand-driven profiles. They are not implicit fallbacks for the
+      required client-reactive profile.
+  ],
+  [
+    - This supersedes the demand-gated roadmap classification for #222, while
+      preserving the earlier Phase 1 scope and its stable-snapshot evidence.
+    - The exact client-safe highlighting strategy remains a #222 decision; this
+      decision requires the profile, not a particular highlighter.
+  ],
+  references: (
+    link("https://github.com/dathra/dathra/issues/105")[#105],
+    link("https://github.com/dathra/dathra/issues/222")[#222],
+    link("https://github.com/dathra/dathra/issues/224")[#224],
+  ),
+)
+
 == Behavior Contract
 
 The source snapshot means the normalized source text represented by a block.

@@ -207,6 +207,45 @@
   ),
 )
 
+#adr(
+  header("Core rollout of the client-reactive profile", Status.Accepted, "2026-07-20"),
+  [
+    The initial support matrix requires client-owned handling when a
+    DocCodeBlock source or language changes in the browser. The stable profile
+    is therefore an initial proof step rather than a permanent boundary around
+    the component.
+  ],
+  [
+    - #222 defines the client-reactive profile before placement analysis treats
+      it as a supported alternative.
+    - #224 implements and validates that profile after #120 and #130 establish
+      the stable artifact and activation baseline.
+    - The placement plan must distinguish the stable-snapshot client closure
+      from the client-reactive update closure. It must not expand the former at
+      runtime when an update occurs.
+    - A browser-visible reactive update belongs to the emitted client-reactive
+      closure. If its dependencies are not client-safe, the compiler reports a
+      profile-specific diagnostic or requires an explicit server-delivery
+      profile; it does not move the update into the server-only closure.
+    - Server-owned revision delivery remains outside initial support unless a
+      separate consumer justifies and specifies it.
+  ],
+  [
+    - This supersedes the earlier demand-gated rollout assumption without
+      changing the stable profile's accepted responsibilities.
+    - #107's one-snapshot handoff remains sufficient only for the stable
+      profile; #222 defines the client-reactive contract before a revision
+      handoff is emitted.
+  ],
+  references: (
+    link("https://github.com/dathra/dathra/issues/106")[#106],
+    link("https://github.com/dathra/dathra/issues/120")[#120],
+    link("https://github.com/dathra/dathra/issues/130")[#130],
+    link("https://github.com/dathra/dathra/issues/222")[#222],
+    link("https://github.com/dathra/dathra/issues/224")[#224],
+  ),
+)
+
 == Invariants for Later Proposals
 
 #behavior_spec(
