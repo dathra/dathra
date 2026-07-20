@@ -238,6 +238,53 @@
   ),
 )
 
+#adr(
+  header("Phase 1 DocCodeBlock source update boundary", Status.Accepted, "2026-07-20"),
+  [
+    The prior source-stability decision intentionally left reactive source-update
+    semantics open. The first execution-partitioning vertical slice instead
+    needs a concrete supported source pattern so that server output, the
+    clipboard value, and emitted client artifacts cannot silently diverge after
+    SSR.
+  ],
+  [
+    Supersede the prior decision only for the Phase 1 acceptance scenario:
+
+    - Phase 1 supports a normalized source snapshot that is stable from server
+      render through client activation and disposal.
+    - A source that analysis classifies as revisable after SSR is outside the
+      supported Phase 1 pattern and must produce an unsupported-source compile
+      diagnostic rather than an emitted block with a silently stale snapshot.
+    - #115 defines the supported analysis subset, the evidence required for the
+      classification, and the exact diagnostic conditions. #118 consumes that
+      accepted evidence when it creates the placement plan.
+    - This is not a permanent rule that makes `code` or `children` unreactive.
+      A later demand-gated capability may define atomic display, highlighting,
+      clipboard, identity, and boundary-value updates for reactive revisions.
+  ],
+  [
+    - The original stability ADR remains the history of why the fixture did not
+      initially decide reactive behavior.
+    - #222 owns the later reactive source-update capability and does not block
+      the Phase 1 vertical slice.
+    - #107 transfers only the accepted stable snapshot; it does not transfer a
+      revision stream or update protocol.
+  ],
+  alternatives: [
+    - *Silently freeze the initial source*: This permits visible code and copied
+      source to become stale without a diagnostic.
+    - *Implement revision synchronization in Phase 1*: This expands the first
+      vertical slice into a subscription and DOM-patching capability before its
+      static server/client partition has been proven.
+  ],
+  references: (
+    link("https://github.com/dathra/dathra/issues/105")[#105],
+    link("https://github.com/dathra/dathra/issues/115")[#115],
+    link("https://github.com/dathra/dathra/issues/118")[#118],
+    link("https://github.com/dathra/dathra/issues/222")[#222],
+  ),
+)
+
 == Behavior Contract
 
 The source snapshot means the normalized source text represented by a block.
