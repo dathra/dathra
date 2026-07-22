@@ -238,6 +238,140 @@
   ),
 )
 
+#adr(
+  header("Phase 1 DocCodeBlock source update boundary", Status.Accepted, "2026-07-20"),
+  [
+    The prior source-stability decision intentionally left reactive source-update
+    semantics open. The first execution-partitioning vertical slice instead
+    needs a concrete supported source pattern so that server output, the
+    clipboard value, and emitted client artifacts cannot silently diverge after
+    SSR.
+  ],
+  [
+    Supersede the prior decision only for the Phase 1 acceptance scenario:
+
+    - Phase 1 supports a normalized source snapshot that is stable from server
+      render through client activation and disposal.
+    - A source that analysis classifies as revisable after SSR is outside the
+      supported Phase 1 pattern and must produce an unsupported-source compile
+      diagnostic rather than an emitted block with a silently stale snapshot.
+    - #115 defines the supported analysis subset, the evidence required for the
+      classification, and the exact diagnostic conditions. #118 consumes that
+      accepted evidence when it creates the placement plan.
+    - This is not a permanent rule that makes `code` or `children` unreactive.
+      A later demand-gated capability may define atomic display, highlighting,
+      clipboard, identity, and boundary-value updates for reactive revisions.
+  ],
+  [
+    - The original stability ADR remains the history of why the fixture did not
+      initially decide reactive behavior.
+    - #222 owns the later reactive source-update capability and does not block
+      the Phase 1 vertical slice.
+    - #107 transfers only the accepted stable snapshot; it does not transfer a
+      revision stream or update protocol.
+  ],
+  alternatives: [
+    - *Silently freeze the initial source*: This permits visible code and copied
+      source to become stale without a diagnostic.
+    - *Implement revision synchronization in Phase 1*: This expands the first
+      vertical slice into a subscription and DOM-patching capability before its
+      static server/client partition has been proven.
+  ],
+  references: (
+    link("https://github.com/dathra/dathra/issues/105")[#105],
+    link("https://github.com/dathra/dathra/issues/115")[#115],
+    link("https://github.com/dathra/dathra/issues/118")[#118],
+    link("https://github.com/dathra/dathra/issues/222")[#222],
+  ),
+)
+
+#adr(
+  header("DocCodeBlock reactive execution ownership", Status.Accepted, "2026-07-20"),
+  [
+    Reactivity alone must not determine whether a source is supported. A
+    reactive value can be read while producing a server snapshot, while a
+    client-visible mutation of that value requires a client execution path.
+    Treating both cases as unsupported would make the execution partitioning
+    model reject valid reactive components.
+  ],
+  [
+    - The Phase 1 stable-snapshot profile may read reactive values during the
+      server render transaction. Its rendered instance has no post-SSR update
+      owner and the client artifact contains only copy interaction.
+    - A source dependency with a client-visible post-SSR revision is not made
+      server-only by the stable-snapshot profile. The compiler must either
+      select a supported client-reactive profile or report an unsupported
+      execution-profile diagnostic.
+    - A future client-reactive DocCodeBlock profile treats the SSR result as an
+      initial hydration baseline. The client owns the reactive dependency and
+      the update closure required to keep displayed source, highlighting,
+      language presentation, and clipboard source consistent.
+    - A client-reactive profile must include only client-safe normalization,
+      rendering, and update dependencies. It may not reach a server-only
+      highlighter merely because the initial SSR used one.
+    - The distinction is execution ownership, not a permanent restriction on
+      reactive props. A server-owned revision delivered to an existing block is
+      a separate delivery profile and must not be silently substituted for the
+      client-reactive profile.
+  ],
+  [
+    - The Phase 1 fixture remains stable and does not prove the future
+      client-reactive profile.
+    - #115 classifies the required execution profile from dependency and update
+      evidence; it must not diagnose a source solely because it is reactive.
+    - #222 defines the later client-reactive update contract, including any
+      client-safe highlighting strategy and atomic update rules.
+  ],
+  alternatives: [
+    - *Reject every reactive source in Phase 1*: This confuses a reactive input
+      with a source that requires post-SSR delivery.
+    - *Keep reactive updates in the server path by default*: This can leave a
+      client-visible mutation without a client owner and hides the required
+      client closure.
+  ],
+  references: (
+    link("https://github.com/dathra/dathra/issues/105")[#105],
+    link("https://github.com/dathra/dathra/issues/106")[#106],
+    link("https://github.com/dathra/dathra/issues/115")[#115],
+    link("https://github.com/dathra/dathra/issues/222")[#222],
+  ),
+)
+
+#adr(
+  header("Client-reactive DocCodeBlock is Core support", Status.Accepted, "2026-07-20"),
+  [
+    The product requires a DocCodeBlock whose browser-visible source can change
+    reactively without assigning that behavior to a server-only path. Leaving
+    the client-reactive profile demand-gated would make the initial support
+    matrix omit a required component behavior.
+  ],
+  [
+    - Initial execution-partitioning support includes both the Phase 1
+      stable-snapshot profile and a client-reactive DocCodeBlock profile.
+    - Phase 1 proves the stable profile first. It remains a valid profile, but
+      it is not the complete initial DocCodeBlock support guarantee.
+    - #222 defines the client-reactive observable contract and #224 validates
+      its production implementation after the stable baseline is proven.
+    - A source requiring client-visible post-SSR revision is diagnosed only when
+      no accepted profile can own the update. It is not rejected merely because
+      it is reactive or because the stable profile was selected first.
+    - Server-owned revision delivery, subscription, and streaming remain
+      separate demand-driven profiles. They are not implicit fallbacks for the
+      required client-reactive profile.
+  ],
+  [
+    - This supersedes the demand-gated roadmap classification for #222, while
+      preserving the earlier Phase 1 scope and its stable-snapshot evidence.
+    - The exact client-safe highlighting strategy remains a #222 decision; this
+      decision requires the profile, not a particular highlighter.
+  ],
+  references: (
+    link("https://github.com/dathra/dathra/issues/105")[#105],
+    link("https://github.com/dathra/dathra/issues/222")[#222],
+    link("https://github.com/dathra/dathra/issues/224")[#224],
+  ),
+)
+
 == Behavior Contract
 
 The source snapshot means the normalized source text represented by a block.
