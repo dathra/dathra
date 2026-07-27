@@ -146,7 +146,7 @@ For execution-partitioning Proposals, preserve the separation among:
 For a Proposal-only change, run the relevant Typst compile and `git diff --check`.
 
 ```bash
-mise exec typst -- typst compile --root "/home/kcatt/dev/dathomir" \
+mise exec typst -- typst compile --root "." \
   "SPEC/proposals/103-declarative-ui-execution-partitioning/{issue}.typ" \
   "/tmp/opencode/{issue}.pdf"
 git diff --check
