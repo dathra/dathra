@@ -300,7 +300,8 @@ The legal transitions are:
   ],
   steps: [
     1. Resolve the host and handoff.
-    2. Recheck root and host liveness immediately before the activation commit.
+    2. Recheck root, host, and copy-control liveness immediately before the
+       activation commit.
     3. Create the activation owner with `copied = false` inside the root scope.
     4. Register cleanup and the one copy listener as one activation commit.
   ],
@@ -311,8 +312,9 @@ The legal transitions are:
     - a repeated activation request does not add another listener or owner
   ],
   errors: [
-    - if the root or host is disposed before the commit, the instance becomes
-      `disposed` without retaining the source or registering behavior
+    - if the root, host, or copy control is disposed before the commit, the
+      instance becomes `disposed` without retaining the source or registering
+      behavior
     - if setup fails during the commit, partial listener and owner state is
       cleaned up before activation reports failure, and the live instance
       becomes `inactive / rejected` without allowing a retry
@@ -329,7 +331,7 @@ The legal transitions are:
     listener or state owner.
   ],
   preconditions: [
-    - an activation attempt is pending for an `inactive` instance
+    - an activation attempt is pending for an `inactive / eligible` instance
     - the owning root or host is disposed before the activation commit
   ],
   steps: [
@@ -490,12 +492,13 @@ success transition defined here.
 
 At starting revision `c283a8b` on 2026-07-27, the current
 `docs/src/components/DocCodeBlock/DocCodeBlock.tsx` starts
-`navigator.clipboard.writeText(source)` and sets `copied = true` before the
-clipboard promise fulfills. It clears an existing timer when another click
-starts, but it does not register a completion callback, represent an operation
-generation, or distinguish an older completion from a newer interaction. This
-is evidence of the gap that motivates the proposal, not an accepted behavior
-baseline.
+`navigator.clipboard.writeText(source)`, attaches a rejection handler that
+discards the error, and sets `copied = true` before the clipboard promise
+fulfills. It clears an existing timer when another click starts, but it does not
+attach fulfillment handling that gates the success state, represent an
+operation generation, or distinguish an older completion from a newer
+interaction. This is evidence of the gap that motivates the proposal, not an
+accepted behavior baseline.
 
 The same implementation revision does not yet implement every normalization
 rule accepted by #105, including CRLF/CR conversion and common indentation that
