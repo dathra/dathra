@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dathomir Proposal Decision"
+  short_description: "Guide Dathomir design decisions to accepted Proposals"
+  default_prompt: "Use $dathomir-proposal-decision to decide and publish a Dathomir Proposal."
