@@ -32,7 +32,8 @@
   ],
   open_questions: [
     - Which exact reset-delay value is appropriate for the final component policy;
-      the state transition is triggered by a reset-timer event independent of that value.
+      #231 owns that decision, and the state transition is triggered by a
+      reset-timer event independent of that value.
     - Which diagnostic category and user-visible result represent a rejected or
       unavailable clipboard operation; #109 owns that decision.
     - Which concrete activation entry and cleanup API carry these semantics into
@@ -55,6 +56,7 @@
     link("https://github.com/dathra/dathra/issues/119")[#119],
     link("https://github.com/dathra/dathra/issues/120")[#120],
     link("https://github.com/dathra/dathra/issues/222")[#222],
+    link("https://github.com/dathra/dathra/issues/231")[#231],
   ),
 )
 
