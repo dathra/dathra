@@ -79,9 +79,10 @@
       existing host and copy control. It registers no listener, state owner, or
       timer before those checks succeed.
     - Just before activation commits, it rechecks that the activation root, host,
-      and copy control still belong to a live activation scope. If the root or
-      host was disposed while activation was pending, activation becomes a
-      no-op and does not retain a source reference or create a client owner.
+      and copy control still belong to a live activation scope. If the root,
+      host, or copy control was disposed while activation was pending, activation
+      becomes a no-op and does not retain a source reference or create a client
+      owner.
     - A successful activation creates one client-owned state owner, initializes
       `copied = false`, registers its cleanup in that root-scoped owner, and
       registers one listener on the existing copy control. Listener, owner, and
@@ -95,9 +96,9 @@
     - A repeated activation request for an already `active` instance is
       idempotent. It does not add another listener, reset the copied state, or
       create another state or timer owner.
-    - If the owning root or host is disposed before activation commits, the
-      `inactive` instance becomes `disposed`. A delayed activation callback must
-      recheck this terminal state and cannot attach behavior later.
+    - If the owning root, host, or copy control is disposed before activation
+      commits, the `inactive` instance becomes `disposed`. A delayed activation
+      callback must recheck this terminal state and cannot attach behavior later.
     - A live instance whose handoff, artifact admission, host, or control fails
       validation becomes `inactive / rejected`. Repeated activation requests for
       that emitted instance are no-ops; a later render must provide a new
@@ -261,9 +262,9 @@ it is not exposed as a handoff field.
 The legal transitions are:
 
 1. Valid handoff admission changes `inactive / eligible` to `active / idle`
-   only when the root, host, and control are still live. A disposed root or
-   host changes `inactive / eligible` directly to `disposed` without creating
-   an activation owner.
+   only when the root, host, and control are still live. Disposal of the root,
+   host, or control changes `inactive / eligible` directly to `disposed` without
+   creating an activation owner.
 2. An invalid live admission or setup failure changes `inactive / eligible` to
    `inactive / rejected` after partial setup is cleaned up.
 3. An event before activation leaves an eligible or rejected instance without
@@ -318,21 +319,22 @@ The legal transitions are:
     - if setup fails during the commit, partial listener and owner state is
       cleaned up before activation reports failure, and the live instance
       becomes `inactive / rejected` without allowing a retry
-    - if handoff or host validation fails while the root remains live, the
-      instance becomes `inactive / rejected` with no listener, state owner, or
-      timer; #109 owns the diagnostic
+    - if handoff, host, or copy-control validation fails while the root remains
+      live, the instance becomes `inactive / rejected` with no listener, state
+      owner, or timer; #109 owns the diagnostic
   ],
 )
 
 #behavior_spec(
   name: "activation after pre-commit disposal",
   summary: [
-    A host removed before delayed activation completes cannot receive a late
-    listener or state owner.
+    A root, host, or copy control removed before delayed activation completes
+    cannot receive a late listener or state owner.
   ],
   preconditions: [
     - an activation attempt is pending for an `inactive / eligible` instance
-    - the owning root or host is disposed before the activation commit
+    - the owning root, host, or copy control is disposed before the activation
+      commit
   ],
   steps: [
     1. Complete the delayed activation attempt.
@@ -478,8 +480,8 @@ browser or an equivalent browser-faithful harness:
 - disposal with pending promise: late fulfillment produces no DOM or state change
 - disposal with active timer: late timer produces no DOM or state change
 - disposal followed by click: no listener or clipboard operation remains
-- root or host disposal before delayed activation commits: no late listener,
-  state owner, timer, or retained source reference is created, and the
+- root, host, or copy-control disposal before delayed activation commits: no late
+  listener, state owner, timer, or retained source reference is created, and the
   server-rendered code remains readable
 - multiple blocks: each block keeps independent generation, timer, source, and
   disposal ownership
