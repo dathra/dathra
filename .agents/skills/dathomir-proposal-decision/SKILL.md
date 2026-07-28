@@ -37,6 +37,42 @@ Before any repository or GitHub write, load `manage-github-issue-work`, read the
 
 If the request is only explanatory and changes no repository or GitHub state, skip Issue admission and do not create an Issue.
 
+### 1a. Create The Task Branch
+
+Create the task branch from the fetched remote base before editing any Proposal
+or skill file:
+
+- Inspect `git status --short --branch`, the current branch, and recent commits.
+- Preserve unrelated worktree changes. Do not stash, reset, or switch away from
+  another agent's or the user's uncommitted work; use a separate worktree or ask
+  before changing branch context when the worktree is dirty.
+- Fetch the declared base from `origin/<base>`, not from a stale local base
+  branch.
+- Create a new outcome-oriented task branch unless an existing branch has been
+  verified to have the same base, scope, and no unrelated commits.
+- Use the repository branch helper `gnb` when it is available. Inspect its usage
+  with `gnb -h` before creating the branch.
+
+```bash
+git fetch origin <base>
+git status --short --branch
+gnb -h
+# Use gnb to create <branch> from origin/<base>.
+git rev-parse HEAD
+```
+
+If `gnb` is unavailable, record that environment limitation in the owning Issue
+comment and use the equivalent explicit command only after confirming that the
+worktree is safe to switch:
+
+```bash
+git switch --create <branch> origin/<base>
+```
+
+Record the new branch, base branch, and starting revision in the owning Issue
+comment before the first repository edit. Do not edit the default branch
+directly.
+
 ### 2. Gather The Decision Context
 
 Read these sources before proposing an option:
