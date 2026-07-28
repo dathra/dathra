@@ -281,8 +281,8 @@ The legal transitions are:
 8. A stale completion, stale timer, or event after disposal leaves the state
    unchanged.
 9. Disposal changes any non-disposed phase to `disposed`; repeated disposal is a
-   no-op. A rejected instance remains non-activatable until disposal and cannot
-   be activated again.
+   no-op. A rejected instance cannot be activated again and may only transition
+   to `disposed`.
 
 == Behavior Contract
 
@@ -490,7 +490,7 @@ success transition defined here.
 
 == Current Evidence and Boundary
 
-At starting revision `c283a8b` on 2026-07-27, the current
+At starting revision `c283a8b` on 2026-07-26, the current
 `docs/src/components/DocCodeBlock/DocCodeBlock.tsx` starts
 `navigator.clipboard.writeText(source)`, attaches a rejection handler that
 discards the error, and sets `copied = true` before the clipboard promise
