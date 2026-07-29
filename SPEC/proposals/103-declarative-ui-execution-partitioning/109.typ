@@ -124,6 +124,10 @@ which module prevents a component-facing invariant from being violated.
 - the diagnostic channel records phase and failure category separately from
   the component-facing result
 
+In this proposal, `emit` names the execution phase and `artifact emitter` names
+the internal module that performs that phase. Likewise, `activation` names the
+phase and `activation runtime` names the module that admits an emitted instance.
+
 ==== Execution order and ownership
 
 The same failure is observed at different points by different owners. The
@@ -353,9 +357,9 @@ without re-owning those accepted mechanisms.
   [
     *Dathra internal consequence*:
 
-    - A supported stable source continues to the emitter even when its initial
-      server evaluation read a reactive value, provided no post-SSR revision
-      requires another owner.
+    - A supported stable source continues to the artifact emitter even when its
+      initial server evaluation read a reactive value, provided no post-SSR
+      revision requires another owner.
 
     *Component-facing consequence*:
 
@@ -389,22 +393,22 @@ without re-owning those accepted mechanisms.
 #adr(
   header("Dathra artifact emission failure", Status.Accepted, "2026-07-28"),
   [
-    The emitter consumes an accepted placement plan and must produce coordinated
-    server entry, client entry, root or instance markers, and stable handoff
-    values. Emitting only part of that result would make activation depend on a
-    guess about which artifact revision is authoritative.
+    The artifact emitter consumes an accepted placement plan and must produce
+    coordinated server entry, client entry, root or instance markers, and stable
+    handoff values. Emitting only part of that result would make activation
+    depend on a guess about which artifact revision is authoritative.
   ],
   [
     *Dathra internal enforcement*:
 
     - A missing plan field, inconsistent artifact identity, invalid root or
       instance association, cap violation, or non-deterministic emission is an
-      `emit` `fatal` outcome when detected by the emitter.
+      `emit` `fatal` outcome when detected by the artifact emitter.
     - When detected before response commitment, an emission failure fails the
       enclosing route/render transaction atomically, even when one block or
       root triggered it. It does not commit a successful route that silently
       omits or disables the affected client-root block.
-    - The emitter publishes none of the affected root's client bootstrap,
+    - The artifact emitter publishes none of the affected root's client bootstrap,
       activation entry, manifest record, marker, or handoff payload. It does not
       reuse an older artifact, emit a partial block, or defer source retrieval
       to a Copy click.
@@ -436,7 +440,7 @@ without re-owning those accepted mechanisms.
     *Dathra diagnostic consequence*:
 
     - The `emit` diagnostic is distinguishable from a `partition` diagnostic
-      even when the emitter is the first phase to observe a missing proof.
+      even when the artifact emitter is the first phase to observe a missing proof.
   ],
   alternatives: [
     - *Emit the server result and omit only the client handoff*: This silently
@@ -689,8 +693,8 @@ activation instance. It is not a component-author API. The component-facing
 contract observes its result through DOM and interaction behavior.
 
 It uses the same actors throughout this internal model: `server-analysis`, `partition`,
-`emitter`, `activation runtime`, `activation root`, `host`, `copy control`,
-`Clipboard API`, and `reset timer`.
+`artifact emitter`, `activation runtime`, `activation root`, `host`, `copy
+control`, `Clipboard API`, and `reset timer`.
 
 `operation-generation` is a local monotonic counter. It is not a handoff field,
 source identity, artifact identity, or cross-route revision number.
@@ -720,8 +724,8 @@ source identity, artifact identity, or cross-route revision number.
 
 The legal transitions are:
 
-1. `server-analysis`, `partition`, and `emitter` must complete their owned
-   transaction before `activation runtime` can admit an instance.
+1. `server-analysis`, `partition`, and `artifact emitter` must complete their
+   owned transaction before `activation runtime` can admit an instance.
 2. A valid activation changes `inactive / eligible` to `active / idle` only
    when `activation root`, `host`, and `copy control` are still live. A
    concurrent admission request that loses the single commit is a no-op.
@@ -819,7 +823,8 @@ primary contract.
   ],
   preconditions: [
     - `partition` lacks accepted evidence or an execution profile, or
-    - `emitter` detects an incomplete plan, cap violation, or artifact mismatch
+    - `artifact emitter` detects an incomplete plan, cap violation, or artifact
+      mismatch
   ],
   steps: [
     1. Stop the owning transaction at the earliest detecting phase.
@@ -959,8 +964,9 @@ outcomes.
   preserved language label, copy control, and stable normalized source
 - run analysis and partition fixtures with missing or contradictory evidence and
   verify that no placement or artifact transaction begins
-- run the emitter with a mismatched plan, cap violation, or non-deterministic
-  result and verify that no affected client handoff is published
+- run the artifact emitter with a mismatched plan, cap violation, or
+  non-deterministic result and verify that no affected client handoff is
+  published
 - run a route/render transaction with a fatal source, partition, or emission
   fixture and verify that the transaction fails before response commitment
   rather than committing a successful response with an omitted or frozen block
