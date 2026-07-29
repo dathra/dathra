@@ -16,6 +16,10 @@
     #106, the stable handoff contract from #107, and the interaction lifetime
     contract from #108. It does not define a logging API, final diagnostic
     wording, or production implementation.
+
+    The decision is expressed in two layers: a component-facing contract that
+    defines observable results, and a Dathra internal contract that assigns
+    execution, artifact, activation, and diagnostic ownership.
   ],
   scope: [
     - source acquisition, normalization, and syntax-highlight failure during
@@ -80,8 +84,86 @@
 
 == Decision
 
+=== Responsibility Boundary
+
+This proposal deliberately describes two layers of one failure contract. The
+layers are related, but they do not have the same owner or the same audience.
+
+==== Component-facing contract
+
+The component-facing contract describes what the DocCodeBlock feature and its
+users can observe. It does not expose compiler phases, artifact fields, root
+markers, or activation tables as component API.
+
+- readable source, language presentation, and Copy control remain available
+  under the permitted server fallback
+- a failed activation does not replace the already-rendered code display
+- a failed Clipboard API operation does not display `Copied!`
+- a failed Clipboard API operation exposes a retryable and accessible failure
+  state
+- a stale completion or a disposal race does not visibly mutate the block
+- one already-delivered activation block's failure does not change another
+  valid block's source or state; a pre-response route failure remains scoped to
+  the enclosing route/render transaction
+
+==== Dathra internal enforcement
+
+The Dathra internal contract describes where the framework performs work and
+which module prevents a component-facing invariant from being violated.
+
+- `server-analysis` evaluates and normalizes source, classifies the language,
+  and performs or falls back from syntax highlighting
+- `partition` consumes analysis evidence and selects an accepted execution
+  profile without rerunning component code in the browser
+- `emit` materializes one accepted plan into coordinated server and client
+  artifacts without publishing partial output
+- `activation` admits an emitted root and instance, validates the handoff, and
+  attaches behavior to existing DOM
+- the browser Clipboard API reports the operation result to the activation
+  owner; it does not trigger server analysis or artifact generation
+- the diagnostic channel records phase and failure category separately from
+  the component-facing result
+
+==== Execution order and ownership
+
+The same failure is observed at different points by different owners. The
+execution order makes that handoff explicit.
+
+1. The DocCodeBlock feature declares the component-facing source and language
+   behavior that users are expected to observe. It does not select a client
+   artifact or inspect activation markers.
+2. `server-analysis` owns acquiring and evaluating that input, normalizing the
+   source, classifying the language, and producing either highlighted output or
+   the permitted plain-code result.
+3. `partition` consumes analysis evidence and decides whether the source uses
+   the stable-snapshot, client-reactive, or explicitly selected delivery
+   profile.
+4. `emit` consumes the accepted placement plan and creates the coordinated
+   server entry, client entry, markers, and handoff values.
+5. The server entry renders the initial SSR output. It does not require the
+   browser to rerun source analysis or syntax highlighting.
+6. `activation runtime` validates the emitted root and instance, then attaches
+   behavior to the existing host and copy control.
+7. The Clipboard API performs only the browser operation. Its result returns to
+   the activation owner and does not invoke server analysis or artifact emit.
+8. Disposal ends the activation owner. Late Clipboard or timer callbacks are
+   evaluated by the activation guard and cannot mutate the component-facing
+   result.
+
+==== Contract handoff
+
+The component-facing layer receives only the result of the internal enforcement
+described above. The internal layer may use root preflight, instance identity,
+operation generations, timers, and owner guards to enforce that result, but
+those mechanisms are not author-facing component configuration.
+
+#107 remains the source of truth for the logical stable handoff. #108 remains
+the source of truth for activation lifetime, generation invalidation, timer
+ownership, and disposal. #109 adds the failure outcome and diagnostic mapping
+without re-owning those accepted mechanisms.
+
 #adr(
-  header("Phase-local failure ownership", Status.Accepted, "2026-07-28"),
+  header("Dathra phase-local failure ownership", Status.Accepted, "2026-07-28"),
   [
     A DocCodeBlock result passes through server analysis, partition analysis,
     artifact emission, and client activation. Each phase has different
@@ -161,7 +243,7 @@
 )
 
 #adr(
-  header("Server source and highlighting failure", Status.Accepted, "2026-07-28"),
+  header("DocCodeBlock server output and highlighting failure", Status.Accepted, "2026-07-28"),
   [
     #105 already defines an empty normalized source and a readable plain-code
     fallback for an unsupported language or unavailable highlighter. A source
@@ -170,38 +252,49 @@
     discarding the author's input.
   ],
   [
+    *Component-facing result*:
+
     - Missing `children` and an absent `code` property are normal inputs. They
       produce the empty source snapshot accepted by #105.
+    - An unsupported non-empty language label is preserved for the user and
+      uses readable plain-code display.
+    - A source acquisition failure produces no misleading code block or active
+      copy control. The enclosing server build or render failure is the
+      user-visible result; the exact error page is outside this proposal.
+    - A highlighter failure leaves readable source, the language presentation,
+      the initial `Copy` control, and the stable copy contract intact.
+
+    *Dathra internal enforcement*:
+
     - A source getter, source evaluation, or normalization failure that prevents
       the server from producing a normalized snapshot is `server-analysis` and
       `fatal`. The server does not substitute an empty source, a stale source,
       or a client request. It emits no client handoff for the failed block and
       reports the failure through the enclosing server build or render failure
       path.
-    - An unsupported non-empty language label is preserved for the user and
-      uses readable plain-code display. It is a `fallback` with a mandatory
-      `server-analysis` `unsupported-language` diagnostic category. An empty
-      language hint is a normal plain-code input and does not produce that
-      category.
-      This language-hint fallback is distinct from unsupported component or
-      program syntax, which belongs to `partition`.
+    - An unsupported non-empty language label is a `fallback` with a
+      `server-analysis` `unsupported-language` diagnostic. An empty language
+      hint is a normal plain-code input and does not produce that category. This
+      language-hint fallback is distinct from unsupported component or program
+      syntax, which belongs to `partition`.
     - Highlighter absence, loading failure, or highlighting exception is a
-      `fallback` when the normalized source is available. The server renders
-      that source as plain code, keeps the supplied language label, and keeps the
-      copy control. When the block has a client root, the stable handoff carries
-      the same normalized source; a zero-client-root route emits no handoff. It
-      does not claim that plain code is highlighted.
+      `fallback` when the normalized source is available. When the block has a
+      client root, the stable handoff carries the same normalized source; a
+      zero-client-root route emits no handoff. Plain code is not presented as
+      highlighted code.
     - Failure of the plain-code fallback is `fatal` in `server-analysis`. A
       failure to encode the logical handoff or emitted artifact is `fatal` in
       `emit`. A highlighter fallback cannot excuse a missing source or an
       invalid handoff.
   ],
   [
-    - A source acquisition failure produces no misleading code block or active
-      copy control. The enclosing server build or render failure is the
-      user-visible result; the exact error page is outside this proposal.
-    - A highlighter failure leaves readable source, the language presentation,
-      the initial `Copy` control, and the stable copy contract intact.
+    *Component-facing consequence*:
+
+    - A source acquisition failure does not appear as a successful empty block.
+    - A highlighter failure cannot remove readable source or the Copy control.
+
+    *Dathra internal consequence*:
+
     - A highlighter failure cannot make the client artifact depend on the
       highlighter.
     - The `server-analysis` diagnostic distinguishes source-unavailable,
@@ -224,7 +317,7 @@
 )
 
 #adr(
-  header("Partition failure and profile selection", Status.Accepted, "2026-07-28"),
+  header("Dathra partition failure and profile selection", Status.Accepted, "2026-07-28"),
   [
     The stable-snapshot profile is allowed to read a reactive value during the
     server render, but a browser-visible revision needs an execution owner.
@@ -233,6 +326,8 @@
     not reject reactivity as a property of the input.
   ],
   [
+    *Dathra internal enforcement*:
+
     - Missing, stale, contradictory, tampered, or out-of-scope analysis evidence
       is a `partition` `fatal` outcome. No accepted placement plan is produced.
       Unsupported language hints are not this case; #105's plain-code language
@@ -256,12 +351,20 @@
       enclosing error path determines the exact page.
   ],
   [
+    *Dathra internal consequence*:
+
     - A supported stable source continues to the emitter even when its initial
       server evaluation read a reactive value, provided no post-SSR revision
       requires another owner.
+
+    *Component-facing consequence*:
+
     - An unsupported profile stops before artifact generation, so the user does
       not receive a block whose displayed source and later behavior are known
       to diverge.
+
+    *Dathra diagnostic consequence*:
+
     - The diagnostic identifies `partition` as the phase and records the
       missing execution-profile reason without exposing compiler internals to
       the browser.
@@ -284,7 +387,7 @@
 )
 
 #adr(
-  header("Artifact emission failure", Status.Accepted, "2026-07-28"),
+  header("Dathra artifact emission failure", Status.Accepted, "2026-07-28"),
   [
     The emitter consumes an accepted placement plan and must produce coordinated
     server entry, client entry, root or instance markers, and stable handoff
@@ -292,6 +395,8 @@
     guess about which artifact revision is authoritative.
   ],
   [
+    *Dathra internal enforcement*:
+
     - A missing plan field, inconsistent artifact identity, invalid root or
       instance association, cap violation, or non-deterministic emission is an
       `emit` `fatal` outcome when detected by the emitter.
@@ -303,6 +408,9 @@
       activation entry, manifest record, marker, or handoff payload. It does not
       reuse an older artifact, emit a partial block, or defer source retrieval
       to a Copy click.
+
+    *Component-facing consequence after response delivery*:
+
     - An emit failure discovered after an already delivered server response is
       treated as an activation admission failure by the browser. The browser
       preserves the delivered SSR DOM and rejects the affected activation; it
@@ -312,13 +420,21 @@
       independent roots remain eligible.
   ],
   [
+    *Dathra internal consequence*:
+
     - A successful artifact transaction provides all values required by #107
       from one logical render result.
     - A build or emit failure cannot produce a route that appears interactive
       while its client entry or handoff is incomplete.
+
+    *Component-facing consequence*:
+
     - A late browser discovery of an artifact mismatch has a non-destructive
       user result: already-rendered code remains readable and the failed copy
       behavior is not installed.
+
+    *Dathra diagnostic consequence*:
+
     - The `emit` diagnostic is distinguishable from a `partition` diagnostic
       even when the emitter is the first phase to observe a missing proof.
   ],
@@ -341,7 +457,7 @@
 )
 
 #adr(
-  header("Fail-closed activation and failure containment", Status.Accepted, "2026-07-28"),
+  header("Dathra fail-closed activation and failure containment", Status.Accepted, "2026-07-28"),
   [
     #107 requires root-scoped instance association, and #108 requires a single
     atomic activation commit after root, host, control, handoff, and artifact
@@ -349,6 +465,8 @@
     highlighted DOM without breaking the source and identity contract.
   ],
   [
+    *Dathra internal enforcement*:
+
     - Root admission is one preflight barrier for an `activation root`. It
       validates the root marker, root-level artifact identity, handoff-table
       structure, and duplicate root associations before any instance in that
@@ -379,9 +497,14 @@
       after the artifact or handoff defect is corrected.
   ],
   [
+    *Component-facing consequence*:
+
     - The user can still read the server-rendered code when activation fails.
     - No failed activation can display `Copied!`, call the Clipboard API, or
       mutate the code-display subtree.
+
+    *Dathra diagnostic and lifetime consequence*:
+
     - The `activation` diagnostic identifies the failed association or target
       lookup without exposing source contents in the browser diagnostic.
     - A normal pre-commit disposal is not reported as an activation defect,
@@ -403,7 +526,11 @@
   ),
 )
 
-== Failure Scope Matrix
+== Dathra Failure Scope Matrix
+
+This is an internal enforcement matrix. Its component-facing projection is the
+preservation of readable SSR output, block-local behavior, and independent
+activation scopes described above.
 
 The failure scope determines which work is rolled back and which already
 rendered content may continue. The scope is decided before a downstream phase
@@ -431,7 +558,7 @@ is allowed to compensate for the failure.
   root, block, or server artifact is affected.
 
 #adr(
-  header("Clipboard failure is visible and retryable", Status.Accepted, "2026-07-28"),
+  header("DocCodeBlock Clipboard failure outcome", Status.Accepted, "2026-07-28"),
   [
     Clipboard writes are asynchronous and can be absent, denied, rejected, or
     synchronously throw. #108 already prevents a pending operation from being
@@ -439,16 +566,21 @@ is allowed to compensate for the failure.
     and its lifetime.
   ],
   [
+    *Component-facing result*:
+
+    - The control displays a visible failure label, and its accessible name
+      identifies the failed copy attempt and retry action. The exact localized
+      wording belongs to #126. It never displays `Copied!` for that operation.
+    - The control remains operable for a later retry unless the containing
+      activation has been disposed.
+
+    *Dathra internal enforcement*:
+
     - An unavailable `navigator.clipboard.writeText`, a synchronous exception,
       a permission denial, or a rejected write is an `activation` `retryable`
       outcome for the current operation generation.
     - The current operation transitions from `active / pending(n)` to
-      `active / failed(n)`. The control displays a visible failure label, and
-      its accessible name identifies the failed copy attempt and retry action.
-      The exact localized wording belongs to #126. It never displays `Copied!`
-      for that operation.
-    - The control remains operable for a later retry unless the containing
-      activation has been disposed.
+      `active / failed(n)`.
     - A failed operation does not schedule the success reset timer. The failure
       state remains until the next accepted click, which invalidates the prior
       generation and starts a new pending operation, or until disposal.
@@ -463,8 +595,13 @@ is allowed to compensate for the failure.
       cannot produce the success state.
   ],
   [
+    *Component-facing consequence*:
+
     - The user receives a visible non-success result and can retry without a
       server request or a page reload.
+
+    *Dathra internal consequence*:
+
     - The copied-state timer remains owned only by a successful current
       generation, so a failure cannot reset or overwrite a later interaction.
     - Clipboard failure does not remove readable code or change the source
@@ -491,7 +628,7 @@ is allowed to compensate for the failure.
 )
 
 #adr(
-  header("Late asynchronous completion is an ignored terminal event", Status.Accepted, "2026-07-28"),
+  header("Dathra late asynchronous completion enforcement", Status.Accepted, "2026-07-28"),
   [
     A clipboard promise or reset-timer callback can settle after disposal even
     when the listener and timer handle were cleaned up. #108 defines disposal
@@ -499,6 +636,8 @@ is allowed to compensate for the failure.
     can update the block.
   ],
   [
+    *Dathra internal enforcement*:
+
     - Disposal invalidates the current operation generation and releases the
       listener, state owner, timer ownership, and normalized-source reference.
     - A fulfillment, rejection, or timer callback that arrives after disposal
@@ -515,9 +654,14 @@ is allowed to compensate for the failure.
       receives a new activation instance rather than reusing the disposed one.
   ],
   [
+    *Component-facing consequence*:
+
     - Disposal never rewrites the server-rendered code display.
     - No callback can resurrect an activation owner or make a disposed block
       appear to have copied successfully.
+
+    *Dathra diagnostic consequence*:
+
     - The absence of a late diagnostic is an intentional failure policy, not a
       silent success path: the callback is explicitly ignored and cannot enter
       a success state.
@@ -538,10 +682,13 @@ is allowed to compensate for the failure.
   ),
 )
 
-== Canonical State Model
+== Dathra Internal Activation State Model
 
-The following model applies to one stable-snapshot activation instance. It
-uses the same actors throughout this proposal: `server analysis`, `partition`,
+The following model is an internal enforcement model for one stable-snapshot
+activation instance. It is not a component-author API. The component-facing
+contract observes its result through DOM and interaction behavior.
+
+It uses the same actors throughout this internal model: `server analysis`, `partition`,
 `emitter`, `activation runtime`, `activation root`, `host`, `copy control`,
 `Clipboard API`, and `reset timer`.
 
@@ -602,10 +749,14 @@ Every active state owns exactly one listener, one state owner, and one current
 source reference. Only `active / copied(n)` owns a reset timer. No state after
 `disposed` owns a resource.
 
-== Behavior Contract
+== Cross-layer Behavior Contracts
+
+The following contracts state both the component-facing result and the Dathra
+internal condition that produces it. The names distinguish which layer owns the
+primary contract.
 
 #behavior_spec(
-  name: "server source failure",
+  name: "component-facing server source failure result",
   summary: [
     Server processing does not convert an unavailable source into an apparently
     valid empty code block.
@@ -632,7 +783,7 @@ source reference. Only `active / copied(n)` owns a reset timer. No state after
 )
 
 #behavior_spec(
-  name: "highlighting fallback",
+  name: "component-facing highlighting fallback result",
   summary: [
     An unavailable or failing highlighter does not make readable source or copy
     behavior unavailable.
@@ -661,7 +812,7 @@ source reference. Only `active / copied(n)` owns a reset timer. No state after
 )
 
 #behavior_spec(
-  name: "partition or emission failure",
+  name: "Dathra partition or emission failure",
   summary: [
     Unproven execution ownership or an inconsistent artifact transaction does
     not produce a partially interactive block.
@@ -692,7 +843,7 @@ source reference. Only `active / copied(n)` owns a reset timer. No state after
 )
 
 #behavior_spec(
-  name: "activation admission failure",
+  name: "Dathra activation admission with SSR preservation",
   summary: [
     A missing or mismatched handoff or target leaves server-rendered code
     readable while refusing partial client activation.
@@ -728,7 +879,7 @@ source reference. Only `active / copied(n)` owns a reset timer. No state after
 )
 
 #behavior_spec(
-  name: "clipboard operation failure",
+  name: "component-facing Clipboard operation failure result",
   summary: [
     The current activation reports a failed browser clipboard operation without
     entering the copied-success state.
@@ -759,7 +910,7 @@ source reference. Only `active / copied(n)` owns a reset timer. No state after
 )
 
 #behavior_spec(
-  name: "late completion after disposal",
+  name: "Dathra late completion guard",
   summary: [
     A clipboard or timer callback that arrives after the activation lifetime has
     ended cannot mutate the disposed instance.
@@ -783,9 +934,11 @@ source reference. Only `active / copied(n)` owns a reset timer. No state after
   ],
 )
 
-== Evidence Assignment
+== Layered Evidence Assignment
 
-The following assignments make each failure contract testable. #112 owns the
+The following assignments make both layers testable. Component-facing evidence
+observes the result presented to users. Dathra internal evidence observes phase
+ownership, artifact boundaries, and enforcement invariants. #112 owns the
 consolidated matrix and may refine the fixture names without changing these
 outcomes.
 
@@ -848,7 +1001,7 @@ outcomes.
 - verify that one failed block does not affect a valid sibling or independent
   activation root
 
-== Invariants for Later Proposals
+== Cross-layer Invariants for Later Proposals
 
 - #105's empty source and readable plain-code fallback remain valid; a failure
   path must not reinterpret them as source acquisition failure.
