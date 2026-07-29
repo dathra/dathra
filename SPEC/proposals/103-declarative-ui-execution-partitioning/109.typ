@@ -120,7 +120,7 @@ which module prevents a component-facing invariant from being violated.
 - `activation` admits an emitted root and instance, validates the handoff, and
   attaches behavior to existing DOM
 - the browser Clipboard API reports the operation result to the activation
-  owner; it does not trigger server analysis or artifact generation
+  owner; it does not trigger `server-analysis` or artifact generation
 - the diagnostic channel records phase and failure category separately from
   the component-facing result
 
@@ -145,7 +145,7 @@ execution order makes that handoff explicit.
 6. `activation runtime` validates the emitted root and instance, then attaches
    behavior to the existing host and copy control.
 7. The Clipboard API performs only the browser operation. Its result returns to
-   the activation owner and does not invoke server analysis or artifact emit.
+   the activation owner and does not invoke `server-analysis` or artifact emit.
 8. Disposal ends the activation owner. Late Clipboard or timer callbacks are
    evaluated by the activation guard and cannot mutate the component-facing
    result.
@@ -165,7 +165,7 @@ without re-owning those accepted mechanisms.
 #adr(
   header("Dathra phase-local failure ownership", Status.Accepted, "2026-07-28"),
   [
-    A DocCodeBlock result passes through server analysis, partition analysis,
+    A DocCodeBlock result passes through `server-analysis`, partition analysis,
     artifact emission, and client activation. Each phase has different
     authority and different recovery options. A downstream phase cannot repair
     an upstream phase's missing proof without changing the execution contract.
@@ -688,7 +688,7 @@ The following model is an internal enforcement model for one stable-snapshot
 activation instance. It is not a component-author API. The component-facing
 contract observes its result through DOM and interaction behavior.
 
-It uses the same actors throughout this internal model: `server analysis`, `partition`,
+It uses the same actors throughout this internal model: `server-analysis`, `partition`,
 `emitter`, `activation runtime`, `activation root`, `host`, `copy control`,
 `Clipboard API`, and `reset timer`.
 
@@ -720,7 +720,7 @@ source identity, artifact identity, or cross-route revision number.
 
 The legal transitions are:
 
-1. `server analysis`, `partition`, and `emitter` must complete their owned
+1. `server-analysis`, `partition`, and `emitter` must complete their owned
    transaction before `activation runtime` can admit an instance.
 2. A valid activation changes `inactive / eligible` to `active / idle` only
    when `activation root`, `host`, and `copy control` are still live. A
@@ -762,12 +762,12 @@ primary contract.
     valid empty code block.
   ],
   preconditions: [
-    - `server analysis` cannot acquire or normalize the required source
+    - `server-analysis` cannot acquire or normalize the required source
     - the input is not merely an absent `children` and absent `code` value,
       which #105 defines as an empty source
   ],
   steps: [
-    1. `server analysis` detects the source failure before a stable handoff is
+    1. `server-analysis` detects the source failure before a stable handoff is
        accepted.
   ],
   postconditions: [
@@ -789,7 +789,7 @@ primary contract.
     behavior unavailable.
   ],
   preconditions: [
-    - `server analysis` has a normalized source snapshot
+    - `server-analysis` has a normalized source snapshot
     - syntax highlighting is unavailable, unsupported, or throws
   ],
   steps: [
