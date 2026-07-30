@@ -299,6 +299,9 @@ git diff --stat origin/<branch>...HEAD
 
 - Commit only the intended Proposal and documentation files.
 - Push the task branch and open a PR against the declared base.
+- Link the PR in the owning Issue's GitHub Development section. A textual issue
+  reference in the PR body is not sufficient; re-read the Issue and verify that
+  the PR appears under Development.
 - Use `Relates to #N` while a Proposal is review-ready or the PR is Draft. Use
   `Closes #N` only when merge should finalize the Issue and its Progress field.
 - Assign the PR to `takuma-ru` when the repository workflow requires it.
@@ -351,4 +354,5 @@ git diff --stat origin/<branch>...HEAD
 - [ ] PR state, base/head, mergeability, and CI conclusions were re-read after
   review changes.
 - [ ] PR and Issue links are recorded.
+- [ ] The PR appears in the owning Issue's GitHub Development section.
 - [ ] Merge and final repository state are verified.
