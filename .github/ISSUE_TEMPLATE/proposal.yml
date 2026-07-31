@@ -7,15 +7,7 @@ body:
     attributes:
       value: |
         Use a Proposal to make an explicit decision. Do not hide implementation work inside this Issue.
-
-  - type: input
-    id: parent-issue
-    attributes:
-      label: Parent issue
-      description: Reference the Epic that owns this decision.
-      placeholder: "#123"
-    validations:
-      required: true
+        If this Proposal belongs to an Epic, attach it as a native sub-issue instead of duplicating the relationship in the body.
 
   - type: textarea
     id: decision
