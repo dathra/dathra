@@ -39,6 +39,19 @@ Use exactly one repository Issue Form for the selected type:
 
 Do not add roadmap IDs or ordering prefixes to titles. Use a concise outcome-oriented title.
 
+## Select The Domain Workflow
+
+After admitting the owning Issue, select the domain skill that owns the Issue's execution contract.
+Keep Issue admission, hierarchy, dependencies, branch state, PR state, and final GitHub verification in this controller.
+
+- `Proposal`: Use `dathomir-proposal-decision` for requirements coverage, option comparison, stress testing, ADRs, and Proposal validation.
+- `Task`: Use `dathomir-task-work` for Task scope, implementation, verification evidence, and Task handoff.
+- `Feature` or `Bug`: Use the package or product skill that owns the affected behavior, then return to this controller for Issue and PR state.
+- `Initiative` or `Epic`: Use this controller for hierarchy and coordination, and delegate each child to its Issue-type workflow.
+
+Do not put domain-specific Proposal or Task execution rules into this controller.
+
+## Construct the Issue from its form
 Read the selected form completely only when creating an Issue, changing its type, or repairing its body. When using an API, reproduce the form semantics:
 
 1. Apply its top-level type, labels, assignees, and title defaults.

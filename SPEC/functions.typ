@@ -205,3 +205,52 @@
     ]
   ]
 }
+
+// ============================================================
+// Design Proposal Template
+// ============================================================
+
+#let design_proposal(
+  issue: none,
+  name: none,
+  summary: none,
+  scope: none,
+  non_goals: none,
+  open_questions: none,
+  references: none,
+) = {
+  assert(issue != none, message: "design_proposal: issue is required")
+  assert(name != none, message: "design_proposal: name is required")
+  assert(summary != none, message: "design_proposal: summary is required")
+  [
+    = Proposal #issue: #name
+
+    #summary
+
+    #if scope != none [
+      == Scope
+      #scope
+    ]
+
+    #if non_goals != none [
+      == Non-goals
+      #non_goals
+    ]
+
+    #if open_questions != none [
+      == Open Questions
+      #open_questions
+    ]
+
+    #if references != none [
+      == References
+      #for ref in references [
+        - #ref
+      ]
+    ]
+
+    #align(start)[
+      #line(length: 80%, stroke: (paint: gray, dash: "dashed"))
+    ]
+  ]
+}
