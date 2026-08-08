@@ -14,311 +14,121 @@ Do not use it for a one-shot explanation, routine implementation with an already
 
 Follow this record hierarchy:
 
-- GitHub Issue: scope, hierarchy, dependencies, progress, acceptance boundary, and completion state.
-- `SPEC/proposals/103-declarative-ui-execution-partitioning/{issue}.typ`: design rationale, accepted ADRs, behavior contracts, and deferred questions for the Proposal.
+- GitHub Issue: scope, hierarchy, dependencies, progress, acceptance boundary, completion state, and the canonical owner and blocking status of deferred work.
+- When present, the issue-numbered Proposal matching `SPEC/proposals/**/{issue}.typ`: design rationale, accepted ADRs, behavior contracts, and deferred questions. The collector searches that whole pattern; treat a missing match as an intentional absent state and expect one unambiguous match when present.
 - Package `SPEC.typ` and `implementation.test.ts`: adopted behavior before production implementation.
 - `implementation.ts`: implementation of the adopted specification, never the source of the design decision.
 
-Do not create a competing `CONTEXT.md`, local task ledger, or generic RFC file for this workflow.
+Do not create a competing `CONTEXT.md`, local decision ledger, or generic RFC file for this workflow.
 Use the Issue and Proposal path above.
 
-Before any repository or GitHub write, load `manage-github-issue-work`, read the relevant `AGENTS.md`, and admit or reuse the owning Issue.
+The `manage-github-issue-work` controller must load the relevant `AGENTS.md`, admit or reuse the owning Proposal Issue, and prepare the work branch before this skill performs domain work.
 
-## Workflow
+## Workflow At A Glance
 
-### 1. Admit The Decision
+Follow these stages in order. Read the linked reference before executing that stage. Repeat Resolve Collection Warnings, Grill Only High-Impact Choices, or Validate Before Publishing whenever its exit conditions are not satisfied.
 
-- Identify the concrete Proposal Issue from the request, current branch, current PR, or parent Issue.
-- Search open and closed Issues before creating a duplicate.
-- Create the smallest `Proposal` or `Task` Issue when no owner exists.
-- Record the branch, base branch, and starting revision in an Issue comment before editing.
-- Create a branch from the correct base.
-- Do not edit the default branch directly.
+If the request is only explanatory and changes no repository or GitHub state, do not enter this flow; answer it as a read-only request without Issue admission.
 
-If the request is only explanatory and changes no repository or GitHub state, skip Issue admission and do not create an Issue.
+```mermaid
+flowchart TD
+  subgraph StartWork["Controller Preconditions"]
+    direction TB
+    start["Start From Admitted Proposal"]
+  end
 
-### 1a. Create The Task Branch
+  subgraph CollectInputs["Collect Decision Inputs"]
+    direction TB
+    collect["Collect Decision Inputs"]
+  end
 
-Create the task branch from the fetched remote base before editing any Proposal
-or skill file:
+  subgraph GatherContext["Gather Context"]
+    direction TB
+    resolve["Resolve Collection Warnings"]
+    resolve -->|"Only explained absent state"| read["Read Targeted Sources"]
+    resolve -->|"Transient or recoverable warning, incomplete group, or source changed"| collect
+    resolve -->|"Permanent collection outage or unresolvable ambiguity"| blocked["Return Collection Blocker Or Scope Clarification"]
+  end
 
-- Inspect `git status --short --branch`, the current branch, and recent commits.
-- Preserve unrelated worktree changes. Do not stash, reset, or switch away from
-  another agent's or the user's uncommitted work; use a separate worktree or ask
-  before changing branch context when the worktree is dirty.
-- Fetch the declared base from `origin/<base>`, not from a stale local base
-  branch.
-- Create a new outcome-oriented task branch unless an existing branch has been
-  verified to have the same base, scope, and no unrelated commits.
-- Use the repository branch helper `gnb` when it is available. Inspect its usage
-  with `gnb -h` before creating the branch.
+  subgraph MakeDecision["Make The Decision"]
+    direction TB
+    classify["Classify The Decision"] --> coverage["Build Coverage And Ownership Map"]
+    coverage --> generate["Generate Options"]
+    generate --> compare["Compare Options"]
+    compare -->|"Interaction, async, activation, disposal, state, or lifetime behavior exists"| model["Model State And Lifetime Decisions"]
+    compare -->|"None of these behaviors exist"| skills["Use Available Design Skills Selectively"]
+    model --> skills
+    skills --> stress["Stress Test Options"]
+    stress --> grill["Grill Only High-Impact Choices"]
+    grill -->|"Requirements or constraints change"| coverage
+    grill -->|"Evidence-only change"| compare
+    grill -->|"Current choices resolved"| converge["Converge"]
+    converge --> status["Separate Decision And Review Status"]
+  end
 
-```bash
-git fetch origin <base>
-git status --short --branch
-gnb -h
-# Use gnb to create <branch> from origin/<base>.
-git rev-parse HEAD
+  subgraph CaptureDecision["Capture The Decision"]
+    direction TB
+    record["Record The Decision"] --> update["Prepare Proposal And Issue Evidence"]
+  end
+
+  subgraph ValidateHandoff["Validate And Return"]
+    direction TB
+    validate["Validate Before Publishing"] -->|"Checks pass"| return["Return To Controller"]
+    validate -->|"Checks fail"| validate
+  end
+
+  start --> collect
+  collect --> resolve
+    read --> classify
+  status --> record
+  update --> validate
 ```
 
-If `gnb` is unavailable, record that environment limitation in the owning Issue
-comment and use the equivalent explicit command only after confirming that the
-worktree is safe to switch:
+The stage and step titles in the diagram are the navigation keys for the detailed workflow. Keep them synchronized when adding, removing, or moving a step.
 
-```bash
-git switch --create <branch> origin/<base>
-```
+## Stage References
 
-Record the new branch, base branch, and starting revision in the owning Issue
-comment before the first repository edit. Do not edit the default branch
-directly.
+Read only the references needed for the current stage, and read them directly from this skill directory. References are one level deep so that each stage can be loaded without reading the entire workflow.
 
-### 2. Gather The Decision Context
+- **Controller Preconditions**: [start-work.md](references/start-work.md)
+  - `Start From Admitted Proposal`
+- **Collect Decision Inputs**: [collector.md](references/collector.md)
+  - Run the Node.js collector before interpreting requirements.
+- **Gather Context**: [gather-context.md](references/gather-context.md)
+  - `Resolve Collection Warnings`
+  - `Return Collection Blocker Or Scope Clarification`
+  - `Read Targeted Sources`
+- **Make The Decision**: [make-decision.md](references/make-decision.md)
+  - `Classify The Decision`
+  - `Build Coverage And Ownership Map`
+  - `Generate Options`
+  - `Compare Options`
+  - `Model State And Lifetime Decisions`
+  - `Use Available Design Skills Selectively`
+  - `Stress Test Options`
+  - `Grill Only High-Impact Choices`
+  - `Converge`
+  - `Separate Decision And Review Status`
+- **Capture The Decision**: [capture-decision.md](references/capture-decision.md)
+  - `Record The Decision`
+  - `Prepare Proposal And Issue Evidence`
+- **Validate And Return**: [validate-and-handoff.md](references/validate-and-handoff.md)
+  - `Validate Before Publishing`
+  - `Return To Controller`
 
-Read these sources before proposing an option:
+## Shared Rules
 
-- repository and relevant package `AGENTS.md` files
-- the owning Issue and its parent, dependencies, and related Issues
-- the current Proposal file, if one exists
-- `SPEC/SPEC.typ` and `SPEC/functions.typ` for Typst conventions
-- relevant package `SPEC.typ` and `implementation.test.ts` when the decision will be adopted by implementation
-- current implementation only as evidence to compare against the specification
-
-Inspect recent commits and the worktree.
-Preserve unrelated user changes.
-
-### 3. Classify The Decision
-
-Put every proposed statement in one of these categories:
-
-- observable behavior
-- execution ownership
-- module interface and seam
-- identity and association
-- lifetime and cleanup
-- failure and diagnostic behavior
-- resource and artifact constraint
-- non-goal or deferred capability
-
-Separate the current supported profile from future profiles.
-Do not reject a capability merely because the first profile does not implement it.
-
-### 3a. Build Coverage And Ownership Map
-
-Before drafting the Proposal, build the following map in working context:
-
-```text
-Issue requirement | classification | Proposal section | status | evidence or deferred owner
-```
-
-- Include every Issue `検討対象`, acceptance criterion, and non-goal.
-- Classify each item as observable behavior, execution ownership, module interface
-  and seam, identity and association, lifetime and cleanup, failure and diagnostic
-  behavior, resource and artifact constraint, or non-goal/deferred capability.
-- Give every item one coverage disposition: `Satisfied`, `Deferred`, `Non-goal`,
-  or `Rejected`. `Satisfied` describes Issue coverage in this ephemeral map; it
-  is not ADR `Status.Accepted` or GitHub `Proposal Progress: Accepted`.
-- Give every `Deferred` item an owning Issue and state whether it blocks the
-  current Proposal. Do not leave a deferred item ownerless or merely implied by
-  another paragraph.
-- Before publication, verify that no Issue requirement is absent from the map and
-  that every map row points to a concrete Proposal section or an explicit Issue
-  owner. Keep the map in working context; do not persist it as a competing record.
-  Persist each deferred owner's relationship and blocking status in the canonical
-  Issue or Proposal; the map and decision ledger must not be the only record.
-
-### 3b. Model State And Lifetime Decisions
-
-When the Proposal contains interaction, async, activation, or disposal behavior,
-define one canonical state model and reuse its terms verbatim in ADRs,
-`behavior_spec` blocks, and evidence:
-
-- entry condition and owner for every state
-- permitted events and exact exit transitions
-- terminality and retry/reuse policy
-- listener, timer, state, source, and other owned resources
-- behavior of late callbacks and events after disposal
-- concurrent admission requests and the single-commit rule for one activation
-  identity; duplicate requests must not create duplicate owners, listeners, or
-  timers
-
-Use the same actor set in every related section. If a decision checks a root,
-host, or control, the corresponding error cases, state transitions, and evidence
-must cover all three or explicitly state why one is outside the contract.
-
-### 4. Use Available Design Skills Selectively
-
-Use model-invoked skills when their question is present:
-
-- `domain-modeling`: define overloaded terms, ownership nouns, identity scope, and lifecycle vocabulary.
-- `codebase-design`: place behavior behind a deep module interface and choose a seam without exposing internal graphs.
-- `research`: verify external standards, dependency behavior, or protocol facts that affect the decision.
-- `prototype`: test a state machine, lifetime rule, or alternative interface when prose cannot distinguish the options.
-- `code-review`: independently inspect the Proposal diff before publication when the decision is cross-cutting or high risk.
-
-Apply the user-invoked `grill-with-docs` terminology and bounded-interview discipline inline.
-Do not recursively invoke user-invoked skills such as `grill-with-docs`, `to-spec`, or `to-tickets`.
-Apply their relevant discipline inline, or let the user invoke them separately.
-Use `tdd` only after an accepted decision is transferred into an implementation scope.
-
-### 5. Grill Only High-Impact Choices
-
-Maintain a decision ledger in working context with this shape:
-
-```text
-Decision | status | chosen option | rationale | invariant | deferred owner
-```
-
-Ask one question at a time.
-Offer two or three concrete options and state the consequence of each option.
-
-Ask only when the answer changes one of these:
-
-- a caller-visible behavior
-- ownership or execution environment
-- an interface or seam
-- identity association
-- lifetime or cleanup
-- failure outcome
-- resource or artifact guarantee
-
-Do not ask the user to choose concrete serialization, attribute names, numeric thresholds, or implementation algorithms when a later Issue owns them.
-Record those as deferred decisions with an owner.
-
-Prefer a safe, reversible default for low-impact details and state the assumption explicitly.
-
-Stop grilling when every current decision has one of `Accepted`, `Deferred`, `Non-goal`, or `Rejected`, and no unanswered question can change the current Proposal's interface, ownership, lifetime, failure, or acceptance criteria.
-
-### 5a. Separate Decision And Review Status
-
-Keep document decision status separate from GitHub review status:
-
-- Proposal ADR `Status.Accepted` means the Proposal has selected that design
-  option within its decision record.
-- GitHub `Proposal Progress: Proposed` means the Proposal is complete enough for
-  review, not that the repository has finalized the decision.
-- GitHub `Proposal Progress: Accepted` means review is complete, the decision is
-  final, and the Proposal may be closed after its PR and Issue state are verified.
-- Do not use an unresolved or ownerless `open_questions` item to hide a missing
-  current decision. Mark it `Deferred` with an owner, or resolve it before using
-  `Status.Accepted`.
-
-### 6. Record The Decision
-
-For each accepted decision, capture:
-
-- the decision statement
-- the problem it prevents
-- the selected option
-- rejected alternatives and their costs
-- invariants for later Proposals
-- the Issue that owns deferred work
-
-For each `open_questions` entry, capture its deferred owner and whether it blocks
-the current Proposal in the canonical Issue or Proposal, then mirror that mapping
-in the decision ledger or an adjacent ADR consequence.
-The rendered `open_questions` list alone is not sufficient evidence that a
-question is intentionally deferred.
-
-Use `#design_proposal`, `#adr`, `#behavior_spec`, and the existing `SPEC/functions.typ` conventions.
-
-Never change the meaning of a `Status.Accepted` ADR in place.
-Add a later ADR that explicitly supersedes the earlier decision, then update downstream behavior contracts to refer to the new decision.
-
-### 7. Update The Proposal And Issue
-
-- Keep the Proposal focused on design semantics, not production implementation.
-- Keep the Issue's required form sections and acceptance boundary stable.
-- Use Issue comments for branch, progress, evidence, blockers, PR, and merge updates.
-- Link later Issues for artifact emission, runtime activation, reactive revisions, adapters, or implementation work.
-- Keep concrete encodings and package APIs deferred until their owner has an accepted contract.
-
-For execution-partitioning Proposals, preserve the separation among:
-
-- stable server snapshot and client activation
-- client-reactive execution
-- server-owned delivery or subscription
-- artifact emission and browser runtime
-
-### 8. Validate Before Publishing
-
-For a Proposal-only change, run the relevant Typst compile and whitespace checks.
-`git diff --check` does not inspect untracked files, so stage the intended file
-before checking it. If staging is not yet appropriate, use the explicit
-no-index form to inspect the output; its exit status is `1` whenever the files
-differ and must not be treated as a whitespace verdict.
-
-```bash
-mise exec typst -- typst compile --root "." \
-  "SPEC/proposals/103-declarative-ui-execution-partitioning/{issue}.typ" \
-  "/tmp/opencode/{issue}.pdf"
-git add -- "path/to/{issue}.typ"
-git diff --cached --check
-# For a new untracked Proposal before staging:
-git diff --no-index --check /dev/null "path/to/{issue}.typ"
-# After commit, check the complete base-to-head diff:
-git diff --check origin/<base>...HEAD
-```
-
-When package specifications, tests, or implementation change, follow the full SPEC-first workflow and run focused tests, integration tests, typecheck, and lint as applicable.
-
-When changing this skill, load `skill-creator` and run its bundled
-`scripts/quick_validate.py` against the skill directory.
-
-Before publication, verify all of the following:
-
-- the coverage and ownership map has a row for every Issue requirement
-- every state, error, retry rule, and owned resource appears consistently in the
-  canonical state model, behavior contracts, and evidence matrix
-- every `open_questions` item has a deferred owner and blocking status
-- the Proposal, Issue, and diff describe the same scope and no unresolved term
-  or stale ADR wording remains
-- the base branch is current and the remote branch is synchronized
-
-```bash
-git fetch origin <base> <branch>
-git merge-base --is-ancestor origin/<base> HEAD
-git diff --stat origin/<base>...HEAD
-git diff --check origin/<base>...HEAD
-git status --short --branch
-```
-
-If the base branch is not an ancestor of `HEAD`, update the task branch before
-opening or updating the PR. Do not report a synchronized handoff while the PR
-is behind its base branch. After the first push, compare the local and remote
-task head explicitly; `git status` alone is insufficient when the branch has no
-upstream or when a remote update was made through GitHub.
-
-```bash
-git rev-parse HEAD
-git rev-parse origin/<branch>
-git diff --stat origin/<branch>...HEAD
-```
-
-### 9. Publish And Hand Off
-
-- Commit only the intended Proposal and documentation files.
-- Push the task branch and open a PR against the declared base.
-- Link the PR in the owning Issue's GitHub Development section. A textual issue
-  reference in the PR body is not sufficient; re-read the Issue and verify that
-  the PR appears under Development.
-- Use `Relates to #N` while a Proposal is review-ready or the PR is Draft. Use
-  `Closes #N` only when merge should finalize the Issue and its Progress field.
-- Assign the PR to `takuma-ru` when the repository workflow requires it.
-- Run `code-review` or request the repository's configured review automation for cross-cutting decisions.
-- After review comments arrive, fetch every review thread and conversation comment,
-  number or group the requested changes, and clarify the selected scope when the
-  user has not already authorized all of them.
-- After applying review changes, rerun Typst, whitespace, metadata, and relevant
-  repository checks; re-fetch the review threads; resolve only comments whose
-  requested behavior is present in the current diff; and record the new commit
-  and evidence in the Issue.
-- Re-read the PR after review changes and verify its base, head, draft/state,
-  mergeability, check conclusions, and remaining conversation comments. Re-read
-  the owning Issue after recording the update.
-- Address terminology and scope comments before merge.
-- Do not merge until the user explicitly requests merge.
-- After merge, verify PR state, merge commit, Issue state, remote branch, and worktree.
+- Keep the owning Issue canonical for scope, requirements, acceptance criteria, and every deferred owner's blocking status. Keep the Proposal canonical for design rationale and contracts; let the Proposal or ADR mirror deferred ownership and blocking status only.
+- Treat the collector output as disposable evidence, not a decision ledger.
+- Keep native Issue relationships separate from textual Proposal fields.
+- Preserve the distinction among current supported behavior, future profiles, deferred work, and non-goals.
+- Treat a missing required field as incomplete input, not as an empty requirement. Treat every `Acceptance criteria` item as mandatory by default; change that boundary only through an explicit scope change recorded in the owning Issue.
+- Do not defer an item listed in the owning Issue's `Decision to make` or `Acceptance criteria`; resolve it in the current Proposal or stop for scope clarification.
+- Keep execution ownership, identity, lifetime, failure, and resource guarantees explicit.
+- Never change the meaning of a `Status.Accepted` ADR in place; supersede it with a later ADR.
+- Do not update implementation before its SPEC and executable tests.
+- Preserve unrelated worktree changes and do not use destructive Git commands.
+- Do not merge a PR until the user explicitly requests merge.
 
 ## Failure Modes To Prevent
 
@@ -328,31 +138,31 @@ git diff --stat origin/<branch>...HEAD
 - Adding a content identity when the client cannot independently verify it.
 - Hiding an unsupported handoff behind click-time network fallback or legacy behavior.
 - Rewriting an Accepted ADR instead of superseding it.
-- Defining a state or ownership rule in one Proposal section while omitting the
-  same actor or transition from its error cases or evidence matrix.
+- Defining a state or ownership rule in one Proposal section while omitting the same actor or transition from its error cases or evidence matrix.
 - Updating implementation before its SPEC and executable tests.
 - Creating a second canonical record outside the Issue and Proposal.
 - Declaring completion while checks, review comments, or merge evidence are missing.
 
 ## Completion Checklist
 
-- [ ] Owning Issue and Issue type are correct.
-- [ ] Branch, base, and starting revision are recorded.
-- [ ] Terms, ownership, identity, lifetime, failure, and deferrals are explicit.
-- [ ] Coverage and ownership map accounts for every Issue requirement.
-- [ ] Canonical state model covers entry, exit, terminality, retry, and resources.
-- [ ] ADR decision status and GitHub review status are explicitly separated.
-- [ ] Grilling stopped under the stated criteria.
-- [ ] Accepted ADRs were superseded rather than silently rewritten.
-- [ ] Proposal and Issue scope agree.
-- [ ] Typst compile, tracked and untracked whitespace checks pass.
-- [ ] Skill metadata validation passes when the skill changes.
-- [ ] Base branch is current and the remote branch is synchronized.
-- [ ] Review comments are addressed.
-- [ ] Review threads and conversation comments were re-fetched and resolved or
-  explicitly deferred against the current diff.
-- [ ] PR state, base/head, mergeability, and CI conclusions were re-read after
-  review changes.
-- [ ] PR and Issue links are recorded.
-- [ ] The PR appears in the owning Issue's GitHub Development section.
-- [ ] Merge and final repository state are verified.
+- [ ] The controller admitted the owning Issue as a `Proposal` and recorded the branch, base, and starting revision.
+- [ ] Collect the input bundle and resolve or explain every warning.
+- [ ] Treat every missing required field as incomplete and restore it or return an explicit owning-Issue scope-change request before continuing.
+- [ ] Confirm every input bundle source group is `collected` or intentionally `absent`; resolve every `incomplete` group.
+- [ ] Treat every `Acceptance criteria` item as mandatory unless an explicit scope change is recorded in the owning Issue.
+- [ ] Classify terms, ownership, identity, lifetime, failure, and deferrals explicitly.
+- [ ] Create one coverage-map row for every collected `requirements.*` candidate and preserve its provenance.
+- [ ] Prepare every `Deferred` item's owner and blocking status for the controller; mirror it only in the Proposal or ADR.
+- [ ] Generate and materially compare options for every current decision requirement.
+- [ ] Apply the decision criteria and every mandatory acceptance criterion to every viable option.
+- [ ] Stress-test every viable option against relevant success, failure, concurrency, and lifetime scenarios.
+- [ ] Publish auditable option-comparison and stress-test evidence in the final Proposal and return the owning Issue summary evidence to the controller.
+- [ ] Record the selected option, rejected alternatives, rationale, trade-offs, and remaining owned deferrals.
+- [ ] For a Proposal with interaction, async, activation, or disposal behavior, define a canonical state model covering entry, exit, terminality, retry, and resources.
+- [ ] Separate ADR decision status from GitHub review status.
+- [ ] Stop grilling under the stated criteria.
+- [ ] Supersede Accepted ADRs rather than silently rewriting them.
+- [ ] Verify that the Proposal and Issue scope agree.
+- [ ] Run Typst compilation and tracked and untracked whitespace checks.
+- [ ] Validate all tracked and untracked files in the skill directory and the shared collector script and test; regenerate metadata only when it is stale.
+- [ ] Return Proposal content, validation evidence, and review findings to the controller for branch, PR, and Issue state management.

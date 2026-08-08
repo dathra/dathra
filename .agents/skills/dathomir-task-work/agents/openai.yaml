@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dathomir Task Work"
+  short_description: "Execute bounded Dathomir Task Issues"
+  default_prompt: "Use $dathomir-task-work to execute a bounded Dathomir Task Issue."
