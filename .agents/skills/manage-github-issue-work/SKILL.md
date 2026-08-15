@@ -1,51 +1,43 @@
 ---
 name: manage-github-issue-work
-description: Manage all Dathomir repository work through GitHub Issues as the canonical task record, including provider-neutral delegation across subagents and model capability tiers. Use before planning or performing code, specification, documentation, configuration, CI, GitHub, or other repository changes; when resuming work across sessions; when refining Initiative/Epic/Proposal/Feature/Task/Bug hierarchies; when recording progress or blockers; and when completing work through a pull request. Do not create an Issue for a one-shot read-only explanation, inspection, or status answer unless the user explicitly asks to track it.
+description: "Keep Dathomir repository work anchored to GitHub Issues as the canonical task record. Use at lifecycle boundaries: before state-changing repository or GitHub work to resolve or create the owning Issue; when resuming work across sessions; when scope, dependencies, blockers, or material progress change; when publishing a pull request; and after merge to verify completion. This skill manages Issue metadata and linkage, not technical planning, implementation, testing strategy, model selection, or subagent orchestration. Do not create an Issue for a one-shot read-only explanation, inspection, or status answer unless the user explicitly asks to track it."
 ---
 
 # Manage GitHub Issue Work
 
-## Canonical records
+## Keep one canonical record
 
-Treat GitHub Issues as the canonical record for task scope, hierarchy, dependencies, progress, and completion.
+Treat the owning GitHub Issue as the canonical record for task scope, hierarchy, dependencies, progress, and completion.
 
-Treat `.github/ISSUE_TEMPLATE/*.yml` as the canonical schema for Issue bodies.
-Do not maintain a separate local task ledger as a competing source of truth.
-Use local documents only as specifications, evidence, or generated artifacts linked from an Issue.
+Treat `.github/ISSUE_TEMPLATE/*.yml` as the canonical schema for Issue bodies. Do not maintain a competing local task ledger. Use local documents only as specifications, evidence, or generated artifacts linked from an Issue.
 
-For any task that changes repository or GitHub state, identify or create the owning Issue before making the change.
-If GitHub access is unavailable, report the blocker instead of starting untracked write work.
+Complete Issue admission before making other repository or GitHub state changes. Creating or repairing the owning Issue is the admission step. If GitHub access is unavailable, report the blocker instead of starting untracked work.
 
-Skip Issue admission only for a one-shot read-only explanation, inspection, review, or status answer that needs no continuity and changes no state.
-Create or reuse an Issue when the user explicitly requests tracking even for read-only work.
+## Admit work
 
-## Admit work before implementation
+1. Resolve an explicit Issue from the user request, current branch, current pull request, or linked parent.
+2. Reuse it without a broad duplicate search when its outcome and acceptance boundary match the requested work.
+3. Search open and closed Issues when the owner is unclear or before creating a new Issue.
+4. Create the smallest Issue that owns a concrete write task when no matching Issue exists.
+5. Ask which outcome to pursue only when the user has not selected a concrete task and no matching Issue exists.
+6. After the work branch exists, record its name, base branch, and starting revision in one Issue comment.
 
-1. Read the repository `AGENTS.md` files relevant to the requested scope.
-2. Resolve an explicit Issue from the user request, current branch, current PR, or linked parent.
-3. Search open and closed Issues before creating anything.
-4. Reuse an existing Issue when its outcome and acceptance boundary match the request.
-5. If the user has not selected a concrete task and no matching Issue exists, ask which outcome to pursue.
-6. If the user requested a concrete write task and no Issue exists, create the smallest Issue that owns the result.
-7. Record the branch, base branch, and starting revision in an Issue comment when work begins.
+Skip Issue admission for a one-shot read-only explanation, inspection, review, or status answer that needs no continuity and changes no state. Create or reuse an Issue when the user explicitly requests tracking.
 
-Do not create a duplicate Issue merely because the wording differs.
-Do not broaden an existing Issue beyond its declared outcome.
-Create a follow-up Issue for newly discovered work outside the current acceptance boundary.
+Do not create a duplicate merely because wording differs. Create a follow-up Issue when the requested outcome or acceptance boundary materially expands beyond the current contract.
 
-## Choose the Issue type
+## Use the repository Issue types
 
 Use exactly one repository Issue Form for the selected type:
 
-- `initiative.yml`: Use for a broad outcome that requires multiple independently completable Epics.
-- `epic.yml`: Use for one coherent outcome composed of Proposals, Features, Tasks, or narrower outcome Epics.
-- `proposal.yml`: Use for one design, product, or support decision. Keep production implementation out of the Proposal.
-- `feature.yml`: Use for a usable behavior or capability with its specification, tests, implementation, and integration evidence.
-- `task.yml`: Use for bounded implementation support, migration, validation, documentation, or repository maintenance work.
-- `bug.yml`: Use for unexpected behavior that violates an existing specification or accepted expectation.
+- `initiative.yml`: A broad outcome requiring multiple independently completable Epics.
+- `epic.yml`: One coherent outcome composed of Proposals, Features, Tasks, or narrower outcome Epics.
+- `proposal.yml`: One design, product, or support decision without production implementation.
+- `feature.yml`: One usable capability including its specification, tests, implementation, and integration evidence.
+- `task.yml`: One bounded implementation-support, migration, validation, documentation, or maintenance activity.
+- `bug.yml`: Unexpected behavior that violates an existing specification or accepted expectation.
 
-Do not encode roadmap IDs such as `EP-01` or ordering prefixes in titles.
-Use a concise outcome-oriented title.
+Do not add roadmap IDs or ordering prefixes to titles. Use a concise outcome-oriented title.
 
 ## Select The Domain Workflow
 
@@ -60,151 +52,83 @@ Keep Issue admission, hierarchy, dependencies, branch state, PR state, and final
 Do not put domain-specific Proposal or Task execution rules into this controller.
 
 ## Construct the Issue from its form
+Read the selected form completely only when creating an Issue, changing its type, or repairing its body. When using an API, reproduce the form semantics:
 
-Read the selected YAML form completely before creating the Issue.
-
-When using the GitHub web UI, submit the matching Issue Form.
-When using an API, reproduce the form semantics:
-
-1. Use the top-level `type`, `labels`, `assignees`, and title defaults declared by the form.
-2. Gather every required non-markdown body field.
-3. Render the fields in form order using the field label as a Markdown heading.
+1. Apply its top-level type, labels, assignees, and title defaults.
+2. Populate every required non-markdown field.
+3. Render fields in form order with their labels as Markdown headings.
 4. Omit empty optional fields.
 5. Preserve the requested language; default Dathomir Issue prose to Japanese while keeping technical identifiers exact.
-6. Reject an Issue body that leaves a required field empty.
 
-Use a half-width space after a complete Issue reference when prose follows.
-Write `#103 のPhase 1`, not `#103のPhase 1`.
+Reject an Issue body that leaves any required field empty.
 
-## Configure hierarchy, dependencies, and fields
+Use a half-width space after a complete Issue reference when prose follows: write `#103 のPhase 1`, not `#103のPhase 1`.
 
-Configure the native GitHub relationship in addition to mentioning it in the body.
+## Maintain relationships and fields
 
-- Attach a child with the native sub-issue relationship when `Parent issue` references an Issue.
-- Permit `None` only when no coherent roadmap owner exists.
+Configure native GitHub relationships in addition to body references:
+
+- Attach a child to the referenced parent Issue.
+- Use `None` only when no coherent roadmap owner exists.
 - Do not create an Initiative solely to contain one isolated leaf Issue.
-- Add native blocked-by relationships for every declared blocking dependency.
-- Keep the native child order aligned with the execution order when order matters.
+- Add every declared blocked-by dependency natively.
+- Keep native child order aligned with execution order when order matters.
 
-Set organization Issue fields after creation:
+Set organization Issue fields when creating or repairing an Issue:
 
 - Proposal: Set `Proposal Progress` to `Not yet` initially.
-- Initiative, Epic, Feature, Task, and Bug: Set `Priority` and `Effort`.
-- Infer Priority from product impact and sequencing pressure.
-- Infer Effort from the accepted scope, not from the number of files.
-- Use `Medium` when the value is genuinely unknown and no sequencing decision depends on it.
+- Initiative, Epic, Feature, Task, and Bug: Infer `Priority` from product impact and sequencing pressure. Infer `Effort` from the accepted scope rather than the number of files. Use `Medium` only when genuinely unknown.
 
-Move Proposal Progress only when evidence supports the transition:
+Move `Proposal Progress` only when evidence supports the transition: `Proposed` when a concrete option is ready, `In Progress` while evaluating it, `Accepted` or `Rejected` when decided, `Interruption` when explicitly paused, and `Superseded` or `Deprecated` when replaced or retired.
 
-- `Not yet`: The decision work has not started.
-- `Proposed`: A concrete option and rationale are ready for review.
-- `In Progress`: Evidence and options are actively being evaluated.
-- `Accepted` or `Rejected`: The decision is final.
-- `Interruption`: The decision is paused by an explicit blocker.
-- `Superseded` or `Deprecated`: A later decision replaced or retired it.
+## Keep the current contract readable
 
-## Delegate by role and capability
+Treat the Issue body as the current contract and comments as chronological state transitions.
 
-Keep delegation independent of the active agent host, model provider, model family, model slug, reasoning-level name, and configuration path.
-Express the workflow with roles and capability tiers, then let the active host map each tier to an available model and reasoning setting.
+- For a method change that preserves the outcome and acceptance boundary, update the body once and add one comment identifying the superseded method.
+- For a materially different outcome or acceptance boundary, create a follow-up Issue.
+- For ordinary progress, leave the body unchanged.
 
-Use these capability tiers:
+Comment only when state materially changes:
 
-- `economy`: Use for deterministic searches, extraction, classification, command execution, and concise evidence collection.
-- `balanced`: Use for bounded repository exploration and implementation with a fixed specification and acceptance boundary.
-- `advanced`: Use for ambiguous design, complex implementation, security or correctness analysis, and independent final review.
+- work starts and the branch, base, and revision become known;
+- scope, dependencies, blockers, or an accepted decision changes;
+- a pull request is published or final evidence becomes available.
 
-Start with the lowest tier that can satisfy the declared acceptance criteria.
-Escalate only when evidence reveals unresolved ambiguity, cross-cutting behavior, elevated correctness or security risk, or a failed independent review.
+Keep comments concise. Do not repeat unchanged status, paste noisy logs, or record every command and checkpoint. When resuming, read the current body, the latest relevant state-transition comments, and the linked pull request instead of replaying the full history.
 
-Use these delegation roles when the host supports subagents:
+## Hand off technical execution
 
-- `issue-scout` (`economy`, read-only): Search open and closed Issues, inspect type, hierarchy, dependencies, fields, and possible duplicates.
-- `repo-explorer` (`economy` or `balanced`, read-only): Read the relevant instructions, specifications, tests, implementation, and dependencies, then return file-backed findings.
-- `writer` (`balanced` or `advanced`, write): Implement an accepted scope. Allow only one writer for overlapping files or behavior at a time.
-- `verifier` (`economy`, no source edits): Run declared checks and return exact commands, outcomes, and concise failure evidence.
-- `reviewer` (`advanced`, read-only): Independently compare the Issue, specification, tests, implementation, and diff for correctness, safety, and missing evidence.
+Use the Issue outcome, acceptance criteria, dependencies, and non-goals as the authorization boundary.
 
-Keep the orchestrating agent responsible for Issue admission, Issue type, scope, acceptance boundaries, final design decisions, integration, staging, commit, push, PR creation, and final GitHub verification.
-Treat subagent results as evidence, not as automatic decisions.
+Perform technical planning, implementation, branching, testing, review, and delegation according to the user's instructions, the repository `AGENTS.md`, and any applicable specialist skills. Do not define or select those methods in this skill.
 
-Delegate only bounded, independent work when parallel execution or context isolation is worth the additional model and coordination cost.
-Prefer read-only delegation.
-Do not spawn a subagent for a trivial serial action such as creating a branch, setting one field, committing, pushing, or opening a PR unless permission isolation requires it.
-Do not ask multiple agents the same question unless independent hypotheses or reviews are intentional.
-Use parallel writers only when their file ownership and behavior ownership are disjoint and the integration order is explicit.
-Require each subagent to return a distilled result with source paths, Issue references, commands, or other reproducible evidence instead of raw logs.
-
-Honor an explicit user choice of agent host, provider, model, reasoning effort, latency target, or budget.
-When the host supports per-agent model, reasoning, tool, or permission configuration, map the capability tiers in that host's native configuration instead of encoding provider-specific model names in this skill.
-When the host cannot select a model per subagent, use its inherited or default model while preserving the role boundary.
-When subagents are unavailable, execute the same operational roles sequentially in the main context and continue the workflow, but label a same-context review as self-review rather than independent review.
-When independent review is an acceptance requirement, use a separate session, a human reviewer, or another isolated review mechanism; report missing independent evidence instead of substituting self-review.
-Do not make task completion depend on one provider's subagent feature or configuration format.
-Do not add or change host-specific agent configuration unless the user requests that configuration as part of the task.
-
-## Execute within the Issue boundary
-
-Use the Issue outcome, acceptance criteria, non-goals, and dependencies as the work authorization boundary.
-
-For production code changes, follow the repository SPEC-first workflow:
-
-1. Read the relevant `SPEC.typ` and `implementation.test.ts` completely.
-2. Update the specification and tests before implementation when behavior changes.
-3. Keep `SPEC.typ`, `implementation.test.ts`, and `implementation.ts` consistent in the same PR.
-4. Run validation proportional to the change risk.
-
-Create a branch with `gnb` from the correct base branch.
-Do not push directly to the default branch.
-Use a stacked PR base only when the owning Issue explicitly depends on unmerged work.
-
-Keep the Issue body stable as the current contract.
-Use Issue comments for chronological updates, including:
-
-- branch and starting revision;
-- accepted implementation plan;
-- completed checkpoints;
-- test and artifact evidence;
-- blockers and native dependency changes;
-- commit and PR links.
-
-Do not paste noisy command logs when a concise result and reproduction command are sufficient.
+Return to this skill only when the Issue lifecycle state changes or work is ready to publish or complete.
 
 ## Publish and complete work
 
-Before publishing:
+Before publishing, confirm that the result and available validation evidence satisfy the Issue contract and that no unrelated work is included.
 
-1. Compare the diff with the Issue scope and non-goals.
-2. Run all relevant checks and record the exact commands and outcomes.
-3. Verify that no unrelated user changes are staged.
-4. Commit intentionally and push the task branch.
-5. Open a Draft PR against the correct base branch.
-6. Assign every PR to `takuma-ru`.
-7. Link the owning leaf Issue in the PR body with `Closes #N` when merge should complete it.
-8. Link parent or related Issues with `Relates to #N`; do not close an Epic or Initiative from a leaf PR.
-9. Add the PR URL, commit, and validation summary to the Issue.
+1. Push the task branch and open a Draft PR against the intended base.
+2. Assign every PR to `takuma-ru`.
+3. Link the completing leaf Issue with `Closes #N`.
+4. Link parent or related Issues with `Relates to #N`; do not close an Epic or Initiative from a leaf PR.
+5. Add one Issue comment containing the PR URL, commit, and concise validation summary.
 
-Leave implementation Issues open until the completing PR merges.
-Close a Proposal only after its decision and rationale are recorded and Proposal Progress is final.
-Close an Epic or Initiative only after all required children are completed and all deferred or not-planned children have an explicit disposition.
+Keep implementation Issues open until the completing PR merges. Close a Proposal only after its decision and rationale are recorded and `Proposal Progress` is final. Close an Epic or Initiative only after required children are complete and deferred or not-planned children have an explicit disposition.
 
-Do not declare completion when acceptance evidence is missing, the PR is absent, the remote branch is stale, or the worktree contains unfinished changes.
+Do not declare completion when required evidence is missing, the PR is absent, the remote branch is stale, or the worktree contains unfinished changes.
 
-## Verify the task record
+## Verify canonical state
 
-Before handing off, verify through GitHub rather than relying on local memory:
+After a logical batch of ordinary Issue or PR mutations, re-read the resulting GitHub state. Verify critical repository-policy mutations immediately. Do not re-read after every individual field or comment mutation when the batch can be verified safely as a whole.
 
-- the Issue type matches the selected form;
-- required body sections are present;
-- custom fields are set;
-- parent and blocked-by relationships are native and correct;
-- there is no duplicate Issue;
-- Issue reference spacing is valid;
-- progress comments identify the current branch and evidence;
-- the Draft PR targets the intended base and is assigned to `takuma-ru`;
-- the PR and Issue describe the same scope;
-- the local worktree and remote branch are synchronized.
+Before handoff, verify only the state relevant to the task:
 
-Use any available GitHub access path that supports the required Issue fields, native relationships, PR data, and mutations, including a host integration, `gh`, or the GitHub API.
-When multiple paths are available, prefer the path that exposes the required semantics directly and use another path for unsupported operations such as native dependency endpoints, current-branch PR discovery, authentication checks, or Actions logs.
-Re-read the resulting GitHub state after every mutation path instead of trusting a local command result.
+- Issue type, required body fields, organization fields, and native relationships;
+- current contract, latest material progress, and PR linkage;
+- PR base, Draft state when applicable, `takuma-ru` assignment, and completion reference;
+- required validation evidence and completion state;
+- local worktree, local revision, tracking branch, and remote revision when local work was performed.
+
+Use any GitHub access path that exposes the required semantics. Prefer one access path for a coherent mutation batch and use another only for unsupported data or final cross-checks.
