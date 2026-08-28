@@ -1136,8 +1136,8 @@ The eight Issue #241 acceptance criteria map to this Proposal as follows:
 
 Each row maps one collected `requirements.*` candidate from Issue #241. The source
 object preserves the collector's `kind`, `issue`, `heading`, and `line` fields.
-The independent collection bundle was
-`/tmp/opencode/proposal-241-independent-20260828-01.json`.
+The independent collection bundle used during preparation is disposable; its local
+path is not part of this canonical record.
 
 === Decision to make
 
