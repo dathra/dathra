@@ -11,12 +11,15 @@
     first supported profile, but does not claim that the selection is universally
     optimal or that the candidate has already met its performance gates.
 
-    The decision evidence is limited to the #103 and #242 requirements, current
+    The decision evidence is limited to the current #241 requirements as the
+    decision boundary, the #103 and #242 Goal and review constraints, current
     repository source, current package specifications and tests, reproducible
     measurements, and official primary documentation for the compared models.
-    The previous #241 draft, PR #244, #111, #105 through #110, and other Dathomir
-    Proposals are excluded from the decision evidence. Existing Issues may still
-    be named as implementation or evidence owners after this decision.
+    The previous #241 draft, prior review artifacts, #111, #105 through #110, and
+    other Dathomir Proposals are excluded from the technical comparison. The
+    current Proposal is the decision record; its publication vehicle supplies no
+    technical evidence. Existing Issues may still be named as implementation or
+    evidence owners after this decision.
   ],
   scope: [
     - explain when server and client execution need separate responsibilities
@@ -58,6 +61,7 @@
   ],
   references: (
     link("https://github.com/dathra/dathra/issues/103")[#103],
+    link("https://github.com/dathra/dathra/issues/241")[#241],
     link("https://github.com/dathra/dathra/issues/242")[#242],
     link("https://github.com/dathra/dathra/blob/c1a30ed86fd2bd79e1c742362f552e9f62ff9f98/docs/index.html#L64-L67")[docs entry markup],
     link("https://github.com/dathra/dathra/blob/c1a30ed86fd2bd79e1c742362f552e9f62ff9f98/docs/src/entry-client.ts#L1-L16")[docs client entry],
@@ -103,10 +107,11 @@
   constraints: [
     - The decision must not cite #111 or #105 through #110 as a premise, accepted
       contract, or reason for selecting an option.
-    - The previous #241 text, PR #244, and other Dathomir Proposals are not
-      evidence for the comparison. The current source may be inspected as
-      repository evidence, even when its behavior was designed in an earlier
-      change.
+    - The previous #241 text and other Dathomir Proposals are not evidence for
+      the comparison. The current Proposal is the decision record, while its
+      publication and review artifacts are not technical evidence. The current
+      source may be inspected as repository evidence, even when its behavior was
+      designed in an earlier change.
     - Official documentation establishes what a model claims to provide; it does
       not establish that the model is best for Dathomir.
     - Existing Dathomir hydration or plan primitives establish current capability,
