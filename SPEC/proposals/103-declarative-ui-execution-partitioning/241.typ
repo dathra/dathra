@@ -145,7 +145,8 @@ the framework unable to express reactive browser behavior.
 === Why the current path creates a decision
 
 The current docs page always places `/src/entry-client.ts` in the HTML shell.
-That entry binds a store, imports `DocsAppRoot`, and calls `hydrate(document)`.
+That entry binds a store, dynamically imports `DocsAppRoot`, and calls
+`hydrate(document)`.
 `DocsAppRoot` statically imports the documentation page modules, while the server
 entry prepares syntax highlighting before rendering a route.
 
@@ -247,7 +248,7 @@ Every option is evaluated using the same criteria derived from Issue #241:
 - `C5 platform fit`: Web Components, DSD, Shadow DOM, repeated instances, and
   cleanup
 - `C6 state and lifetime`: reactive updates, disposal, late callbacks, and handoff
-- `C7 zero root`: server-only output without client bootstrap or client artifact
+- `C7 zero-root`: server-only output without client bootstrap or client artifact
 - `C8 authoring cost`: declarations, restrictions, and source ergonomics
 - `C9 implementation value`: complexity relative to the burden and consumers
 
@@ -269,7 +270,7 @@ means the criterion is outside the model's normal boundary.
 - *Reactivity and lifetime*: root-scoped effects and events can work, but discovery
   and failure scope remain broader than one behavior. A mismatch may require a
   framework-specific fallback.
-- *Compiler and zero root*: the compiler can optimize templates and markers, but
+- *Compiler and zero-root*: the compiler can optimize templates and markers, but
   need not prove server/client ownership. `C7` is weak for the current entry.
 - *Authoring and value*: authoring cost is low and platform fit is strong, but the
   model cannot establish the full #103 goal without a larger architectural change.
@@ -290,7 +291,7 @@ means the criterion is outside the model's normal boundary.
 - *Reactivity and lifetime*: the island usually owns reactive work for its subtree,
   which is useful for widgets but may be broader than a stable interaction's
   minimum closure. Nested Web Component lifetime needs an additional contract.
-- *Compiler and zero root*: the compiler can record boundaries and triggers. It
+- *Compiler and zero-root*: the compiler can record boundaries and triggers. It
   does not necessarily prove transitive server-only exclusion or a client-safe
   update closure. `C7` is strong only when the shell has no global entry.
 - *Authoring and value*: the directive is understandable and useful as scheduling
@@ -315,7 +316,7 @@ means the criterion is outside the model's normal boundary.
 - *Reactivity and lifetime*: stable interaction and client-reactive updates have
   separate closures and authorities. Each root owns its listeners, effects,
   timers, subscriptions, and retained handoff until disposal.
-- *Compiler and zero root*: the compiler must prove ownership and dependency
+- *Compiler and zero-root*: the compiler must prove ownership and dependency
   reachability, and must fail closed for opaque or contradictory input. A complete
   server-only plan emits no route-local client root.
 - *Authoring and value*: semantic declarations and a bounded supported subset add
@@ -339,7 +340,7 @@ means the criterion is outside the model's normal boundary.
 - *Reactivity and lifetime*: subscriptions and state can resume, but the model
   needs serialization, invalidation, ownership, and disposal rules for arbitrary
   continuations.
-- *Compiler and zero root*: a large compiler and serialization surface is needed;
+- *Compiler and zero-root*: a large compiler and serialization surface is needed;
   opaque closures and unsupported values are a primary constraint. Routes without
   resumable behavior can be zero-root, but the general model remains complex.
 - *Authoring and value*: the model can provide excellent startup behavior for
@@ -362,7 +363,7 @@ means the criterion is outside the model's normal boundary.
 - *Reactivity and lifetime*: client modules can own reactive state and a server can
   produce later output, but the revision authorities and disposal rules must be
   joined explicitly.
-- *Compiler and zero root*: module graph classification and serializability checks
+- *Compiler and zero-root*: module graph classification and serializability checks
   are strong. They do not by themselves compute DOM paths, nested Shadow DOM
   boundaries, or cleanup owners. `C7` is possible for server-only routes.
 - *Authoring and value*: server/client module boundaries are a substantial
@@ -384,7 +385,7 @@ means the criterion is outside the model's normal boundary.
 - *Reactivity and lifetime*: one handler can support one interaction, but reactive
   updates, repeated instances, asynchronous completion, timers, and disposal are
   left to each author.
-- *Compiler and zero root*: little compiler work is required, which also means
+- *Compiler and zero-root*: little compiler work is required, which also means
   server-only reachability and unsupported behavior are not proven before delivery.
   `C7` is strong only for pages with no enhancement.
 - *Authoring and value*: it is useful for simple controls, but it does not scale to
@@ -902,7 +903,7 @@ These thresholds are falsifiable gates for the first selected profile. They are
 not claims about the current baseline and do not authorize implementation by
 themselves.
 
-- `T0 zero root`: `F0` has zero route-local client script bytes, zero client
+- `T0 zero-root`: `F0` has zero route-local client script bytes, zero client
   requests, zero activation roots, zero listeners, zero effects, zero timers, and
   zero handoff records. The response contains no client bootstrap reference.
 - `T1 transfer`: for `F1`, candidate raw and gzip client JavaScript are each at
@@ -1180,7 +1181,7 @@ path is not part of this canonical record.
 - `decisionCriteria.4` source `{"kind":"issue-body","issue":241,"heading":"Decision criteria","line":36}` -> `C4 analysis boundary`, `Authoring and Compiler Contract`; `Satisfied`.
 - `decisionCriteria.5` source `{"kind":"issue-body","issue":241,"heading":"Decision criteria","line":37}` -> `C5 platform fit`, `Candidate Comparison`, `First Vertical Slice`; `Satisfied`.
 - `decisionCriteria.6` source `{"kind":"issue-body","issue":241,"heading":"Decision criteria","line":38}` -> `C6 state and lifetime`, `State and Lifetime`; `Satisfied`.
-- `decisionCriteria.7` source `{"kind":"issue-body","issue":241,"heading":"Decision criteria","line":39}` -> `C7 zero root`, `server-only profile`; `Satisfied`.
+- `decisionCriteria.7` source `{"kind":"issue-body","issue":241,"heading":"Decision criteria","line":39}` -> `C7 zero-root`, `server-only profile`; `Satisfied`.
 - `decisionCriteria.8` source `{"kind":"issue-body","issue":241,"heading":"Decision criteria","line":40}` -> `C8 authoring cost`, `Authoring and Compiler Contract`; `Satisfied`.
 - `decisionCriteria.9` source `{"kind":"issue-body","issue":241,"heading":"Decision criteria","line":41}` -> `C9 implementation value`, `Decision`, `Review thresholds`; `Satisfied`.
 
@@ -1217,8 +1218,7 @@ because the comparison is complete or the current workspace build passes.
 Before production implementation begins:
 
 - reviewers must confirm that the decision evidence does not rely on #111,
-  #105 through #110, the previous #241 draft, PR #244, or another Dathomir
-  Proposal
+  #105 through #110, the previous #241 draft, or another Dathomir Proposal
 - the behavior-equivalent `B0` control and selected `F0` and `F1` fixtures must
   be implemented and measured under the same environment
 - the package specifications and executable tests must be updated before their
