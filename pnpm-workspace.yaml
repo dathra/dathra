@@ -16,4 +16,4 @@ catalog:
   rlse.ts: 0.0.6
   tsdown: 0.22.0
   typescript: 6.0.3
-  vitest: 4.0.4
+  vitest: 4.1.11
