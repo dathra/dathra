@@ -10,7 +10,7 @@ Issue本文がTaskのscopeを所有し、この文書が候補比較、observabl
 
 == Evidence status
 
-この文書の公開状態とRequirements coverageは、Draft PR公開準備時点の記録である。
+Requirements coverageの既存行は、Draft PR公開準備時点の記録である。
 利用者は未承認事項を残したままcommit、push、Draft PR作成、Issue `#252` への記録を許可した。
 公開後のPR URL、commit SHA、検証結果、開始情報はIssue `#252` の公開コメントを参照する。
 この許可は受入条件の達成、設計の承認、merge、Issue closeを含まない。
@@ -19,7 +19,7 @@ Issue本文がTaskのscopeを所有し、この文書が候補比較、observabl
 別の補足測定でrenderer scriptのthread CPU time、bundle別のCPU sample、GC後のheapとDOM counter、正常系の限定したsource rangeの実行回数を追加した。
 個別moduleの厳密なCPU self-time、store別のretained bytes、禁止実行全体の保証、受入条件には未完了の項目がある。
 測定補助と文書への独立reviewは完了し、指摘されたverifierの2件の欠落を修正した。修正差分の再reviewでも両件の解消を確認した。
-performanceの許容差は未承認であり、Draft PRとIssueコメントは公開準備中、mergeは対象外である。
+performanceの許容差は未承認であり、#link("https://github.com/dathra/dathra/pull/255")[Draft PR `#255`]と#link("https://github.com/dathra/dathra/issues/252#issuecomment-5660080642")[Issue公開コメント]は2026-09-14に公開済みである。
 利用者は性能thresholdを未承認のまま引き継ぐ方針を選択した。
 これはthresholdの承認やIssueの受入条件変更ではない。
 
@@ -29,13 +29,21 @@ performanceの許容差は未承認であり、Draft PRとIssueコメントは�
 - branch：`docs/task-252-select-consumer-baseline`
 - lockfile SHA-256：`b9bd2b4e2e061437b8a1e7aae7c7f9c43d63ca7fc34e6ff6e9beaf6f4665c3c0`
 - worktree：`/home/kcatt/dev/dathomir-issue-252`
-- Issueのbranch、base、開始SHA：公開コメントへ記録予定
+- Issueのbranch、base、開始SHA：上記公開コメントへ記録済み
 
 == Selected consumer
+
+2026-09-14にIssue `#252` の更新本文と#link("https://github.com/dathra/dathra/issues/252#issuecomment-5660613142")[利用者の方針確認コメント]を再読した。
+`#245` と `#253` の更新本文も確認し、専用compilerとJSXの必要性は `#253` が独立に判断する未決事項として扱う。
+2026-09-14の委任はこの文書の説明修正だけであり、方式比較、prototype、production変更、再測定、consumerの選び直し、commit、push、GitHub書き込みは行わなかった。
+2026-09-20の委任では、この説明差分の検証、commit、push、PRとIssueの更新が許可された。
+固定SHAのbaseline、collector、raw JSON、thresholdと受入条件の承認状態は保持する。
 
 初回sliceのconsumerには、`@playground/e2e` の `/store-snapshot-roundtrip` を選ぶ。
 このrouteは、server側で作ったstore snapshotをDeclarative Shadow DOMへ出力し、browser側の既存custom elementがそのsnapshotを復元し、button操作で同じstateを更新する。
 この一つのconsumerで、server表示、client activation、反復操作、reactive state update、disposal後の残存を同じURLから観測できる。
+この選定は観測できる挙動と再現性に基づき、現行JSX、専用compilerによる自動分割、特定の生成artifactの維持を条件にしない。
+以下のDSD、snapshot script、内部API、生成物への参照は固定SHAの現行実装を特定するものであり、次方式へ同じ構造を要求するものではない。
 
 選定理由は、単に旧Proposalが参照していたからではない。
 `playgrounds/e2e/src/entry-server.tsx:20-50` がroute専用の`count: 7` と`theme: "snapshot-midnight"`を作り、`storeSnapshotSchema`を`renderDSD`へ渡す。
@@ -140,6 +148,9 @@ missingとshape mismatchのsilent defaultは成功、fallback同等、またはb
 *Expected*：complete accepted planがclient rootを持たないrouteは、client entry、bootstrap、activation resourceを出力しない。
 
 *Basis*：`#245` のzero-client-root completion criteria、`SPEC/proposals/103-declarative-ui-execution-partitioning/110.typ:219-231`。
+
+このhistorical記録の「complete accepted plan」と旧 `#103` 文書への参照は当時の説明として保持する。
+現在の必須条件の根拠は `#245` であり、次方式にcompilerによるplan生成や旧artifact構造を要求しない。
 
 *Observed*：`@playground/e2e`の`/`を取得すると、SSR HTMLに`/assets/main-y28fv6Un.js`のmodule scriptと`<e2e-ssr-app>`がある。
 browserで`/`を開くとhome titleが表示され、resourceは`main-y28fv6Un.js`と`appRoot-C_yo0zt-.js`の2件だった。
@@ -565,6 +576,8 @@ update区間で返されなかったfunctionを0として保存しておらず�
 対応sourceはrouteの`36-52`、`55-109`、componentsの`runSetup`、`preserveUnsupportedHydration`、`runUnsupportedHydrationFallback`である。
 
 この結果から、固定buildの正常系について、上記の実行箇所をproduction変更なしに計数する方法が実行可能だと確認できる。
+表の内部関数、generated planFactory、bundle rangeは現行実装固有の観測対象であり、次方式に同名の関数、同じrange、同じ生成物を要求しない。
+次方式の検証対象は採用契約の禁止実行に対応づける必要があり、この表の0回だけでその不在を保証しない。
 ただし、同じsource rangeの複数closureはinstance別に分離できず、全setup、tree reconciliation、動的生成関数、別isolateを網羅した分類ではない。
 fixtureのlocal `render`はactivation中に1回呼ばれて初期textを書き直している。
 component bodyの0回だけを根拠に「render再実行なし」やserver authorityへの適合を宣言しない。
@@ -602,6 +615,9 @@ URLはこのrunのlocalhost resourceだけであることを検査し、保存�
 
 この表のperformance thresholdは承認済みの製品契約ではない。
 実測のばらつきとconsumer要件だけでは削減率を正当化できないため、数値thresholdは未承認として残す。
+表のDSD、snapshotの形式、script名と計測hookは現行baselineの測定条件であり、候補の構文、compiler、自動分割、artifact形式の採用条件ではない。
+候補には `#245` のserver authority、no-reconstruction、no-fallback、zero-client-rootとconsumerの必要な挙動を要求し、具体的な方式の選択は `#253` に委ねる。
+禁止実行のcount `0`という条件は維持するが、現行source rangeとの一致を合格条件にはしない。
 
 #table(
   columns: (1.5fr, 1.4fr, 2.2fr, 2.4fr, 1.5fr),
@@ -623,10 +639,31 @@ bytesの単位はbyte、時間の単位はmsである。
 性能指標の候補合格値、許容差、承認根拠は未確定であり、この表はその要件を充足した評価表ではない。
 `#245` のno-reconstruction、no-fallback、zero-client-rootは必須条件として扱うが、現行routeの観測値を合格値へ読み替えない。
 
+=== Remaining owner decision
+
+評価表の時間とbytesは実測値であり、承認待ちの具体的な数値threshold案は提示していない。
+反復5 clickで`7 -> 12`となる期待値は検証仮説、disposal後の旧control無効化は未承認のconsumer仮説、failureのbounded outcomeは具体契約が未決の評価候補である。
+これらと性能合格値の扱いについて、Issue `#252` のAcceptance criteria第4項に必要な利用者承認または明示的なscope変更は記録されていない。
+2026-09-14の方針確認コメントはcompiler/JSXの前提を修正しただけで、この受入条件を変更していない。
+
+利用者への推奨確認案は次の一問であり、承認されるまでは適用しない。
+
+「`#252` のWork 7とAcceptance criteria第4項を、『このTaskはconsumer選定、再現可能なbaseline、必須原則と未承認の評価候補の区別、および後続ownerへの引継ぎをもって受入可能とする。性能合格値と許容差は未承認のまま `#251` のownerが候補実装の合否評価前に決め、反復操作、cleanup、failureの検証仮説は製品契約として採用せず `#253` の判断入力へ渡す。`#245` のserver authority、no-reconstruction、no-fallback、zero-client-rootは必須のまま維持する』という範囲へ明示的に変更してよいですか？」
+
+これはevidence提出の受入境界を確認する案であり、性能thresholdやfailure/cleanup契約を承認する案ではない。
+control fixtureの実装、module/store別の網羅測定、禁止実行全体の保証は後続検証であり、この確認の追加条件にはしない。
+
 == Requirements coverage
 
-各行はcollectorの`issueRequirements.*` candidateを一つだけ対応づける。
-SourceはIssue番号、heading、lineを保持する。
+WORK-11以外の各行は、2026-09-10T07:15:58.984Zのcollectorが取得したIssue本文snapshot（Issue updatedAt `2026-09-09T02:45:34Z`）の`issueRequirements.*` candidateを一つだけ対応づける。
+SourceのIssue番号、heading、lineと公開準備時のdispositionを保持し、更新本文の行番号や公開後の状態へ遡及して書き換えない。
+公開後の状態は#link("https://github.com/dathra/dathra/issues/252#issuecomment-5660080642")[PR `#255` 公開コメント]を参照する。
+
+2026-09-14T09:28:54.979Zに再収集した本文snapshot（Issue updatedAt `2026-09-14T07:37:00Z`）は5 source groupすべてcollected、warningsなしだった。
+更新本文ではWORK-01からWORK-10、VER、AC、DEP、NGのSource lineは従来値に5を加えた位置に対応し、PARENT、OUTCOME、PREの行番号は変わらない。
+PRE-04の現在の文言は「次方式の実装の完了待ちにはしない」であり、compiler実装の採用を前提にしない。
+追加されたWork冒頭の一段落はcollector上で一つのcandidateとなるため、WORK-11として現在のSourceと対応づける。
+2026-09-20T11:05:51.673Zの再収集でもIssue本文のupdatedAtは同じで、5 source groupすべてcollected、warningsなし、native parentは `#251` だった。
 
 #table(
   columns: (auto, 2.4fr, 6fr),
@@ -647,6 +684,7 @@ SourceはIssue番号、heading、lineを保持する。
   [WORK-08], [Issue `#252`, Work, line 27], [このTypst文書と同じディレクトリへ元collectorと検査補助、二cohort、補足collectorと検査補助、二profile JSONを保存した。historical raw traceや開発試行の一時パスは最終evidenceにしない。],
   [WORK-09], [Issue `#252`, Work, line 28], [`#253`と`#250`へ渡すconsumer、挙動、差分、未確定事項をこの文書に整理した。GitHub転記は未実施である。],
   [WORK-10], [Issue `#252`, Work, line 30], [変更はevidence文書と元4測定artifact、補足4測定artifactのみ。production code、package SPEC/tests、Accepted ADR、公開API、dependencies、旧Proposalは変更していない。補助の対象と理由はlocal-only指示に従い文書へ保持し、Issueコメントは未投稿。],
+  [WORK-11], [Issue `#252`, Work, line 20; 2026-09-14 snapshot], [追加段落とcomment `5660613142`に対応。Selected consumer、Execution counting feasibility、Evaluation criteriaで現行実装と次方式を区別した。固定baselineとconsumerを保持し、方式比較、書き換え、prototype、再測定を追加していない。未承認threshold、仮説、測定限界は未解決のままである。],
   [VER-01], [Issue `#252`, Verification, line 36], [e2e test、docs build/test、root test、typecheck、lint、format check、production artifact hashを記録した。],
   [VER-02], [Issue `#252`, Verification, line 37], [fresh二cohortで正常反復操作、failure、disposal、docsを実測した。補足の正常系でCPU、GC後の保持量、限定source range計数を追加した。module self-time、store帰属、厳密なactivation完了、failure時の計数は未測定。],
   [VER-03], [Issue `#252`, Verification, line 38], [clean detached同一SHAでinstall、build、既存test、browserを再実行した。8 artifactとbehaviorが一致し、異なる時間分布を省略せず比較した。時間の同等性や受入合格は主張しない。],
@@ -665,6 +703,45 @@ SourceはIssue番号、heading、lineを保持する。
   [NG-04], [Issue `#252`, Non-goals, line 61], [全consumer、全browser、全adapterの網羅測定とproduction readiness判定をしていない。],
   [NG-05], [Issue `#252`, Non-goals, line 62], [`#103`系列の結論、測定値、旧PRを再検証せず採用していない。],
 )
+
+== Clarification verification
+
+2026-09-14の説明修正では、`git diff --check`と次の二つのTypst compileが成功した。
+既存mise設定のdeprecation warningは出たが、compile errorはなかった。
+
+```sh
+mise exec typst@0.15.0 -- typst compile --root . SPEC/proposals/245/252/252.typ /tmp/opencode/task-252-clarification-evidence.pdf
+mise exec typst@0.15.0 -- typst compile --root . SPEC/SPEC.typ /tmp/opencode/task-252-clarification-umbrella.pdf
+```
+
+変更対象はこの文書だけであり、collector、verifier、raw JSON、baselineの測定値は変更していない。
+browser、build、package test、測定は再実行していない。
+この説明差分は別reviewer session `ses_f60bdf3abffeB4E5NlihLD2tlh`で最新のIssue本文と追加コメントに照らして確認し、指摘はなかった。
+このreviewは説明差分のみを対象とし、baseline計測の再検証を意味しない。
+
+2026-09-20の公開準備では公開済み状態の訂正とRemaining owner decisionを追加した。
+既存の独立reviewの対象は2026-09-14の説明差分までであり、この追記を同reviewで確認済みとは扱わない。
+次の検証を再実行し、すべて成功した。
+
+```sh
+node --check SPEC/proposals/245/252/collect.mjs
+node --check SPEC/proposals/245/252/verify.mjs
+node --check SPEC/proposals/245/252/profile.mjs
+node --check SPEC/proposals/245/252/verify-profile.mjs
+node SPEC/proposals/245/252/verify.mjs
+node SPEC/proposals/245/252/verify-profile.mjs "$PWD" SPEC/proposals/245/252/profile-a.json SPEC/proposals/245/252/profile-b.json
+pnpm --filter @playground/e2e exec oxfmt --check "$PWD/SPEC/proposals/245/252/collect.mjs" "$PWD/SPEC/proposals/245/252/verify.mjs" "$PWD/SPEC/proposals/245/252/profile.mjs" "$PWD/SPEC/proposals/245/252/verify-profile.mjs"
+pnpm --filter @dathra/components exec oxlint "$PWD/SPEC/proposals/245/252/verify.mjs" "$PWD/SPEC/proposals/245/252/profile.mjs" "$PWD/SPEC/proposals/245/252/verify-profile.mjs"
+pnpm fmt:check
+git diff --check
+mise exec typst@0.15.0 -- typst compile --root . SPEC/proposals/245/252/252.typ /tmp/opencode/task-252-ready-evidence.pdf
+mise exec typst@0.15.0 -- typst compile --root . SPEC/SPEC.typ /tmp/opencode/task-252-ready-umbrella.pdf
+```
+
+両verifierのnegative regressionと保存済みevidenceの検査を含む。
+browser測定、production build、package test/typecheckは再実行していない。
+GitHubのreviewとinline commentはこの確認時点では0件で、既存の方針コメントに説明差分を対応づけた。
+受入判断は未解決のためDraftを維持し、Issue本文の受入条件は変更していない。
 
 == Historical verification record
 
@@ -816,8 +893,9 @@ error refは`err_b529f3ba`と`err_856ef45b`であり、その試行からreview�
 
 未承認のperformance threshold、failure outcome、zero-client-root controlの代替案は、このTaskで決定済みとは扱わない。
 補足のCPU thread-time、GC control、source range coverageも`#253`と`#250`への引継ぎに含める。
-次のsessionは、module/store別の未測定項目と禁止実行全体の検証、failure contractの設計判断、zero-client-root controlの後続作業を残作業として扱う。
+module/store別の未測定項目と禁止実行全体の検証、zero-client-root controlの実装は後続の検証課題であり、網羅測定やcontrol実装を `#252` の追加完了条件にはしない。
+このTaskは測定限界とcontrol不在を明記することを許容しており、failure/cleanupの仮説と製品契約の判断は未解決として引き継ぐ。
 公開状態はIssue `#252` のコメントとDraft PRで確認する。
-これらはperformance thresholdの未承認と別の制約であり、Taskを完了扱いにしない。
+performance thresholdと評価表の仮説について利用者の承認またはIssue本文の明示的なscope変更が必要であり、Taskを完了扱いにしない。
 collectorによる再測定と二cohort比較は実行済みであり、次のsessionで過去の来歴を再構成する必要はない。
 性能thresholdは利用者の選択に従い未承認のまま引き継ぎ、Issueのscope変更や受入条件の達成を意味しない。
