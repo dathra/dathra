@@ -10,7 +10,7 @@ Issue本文がTaskのscopeを所有し、この文書が候補比較、observabl
 
 == Evidence status
 
-Requirements coverageの既存行は、Draft PR公開準備時点の記録である。
+Requirements coverageは公開準備時点の来歴と、利用者が承認した受入scopeへの現在の対応を区別する。
 利用者は未承認事項を残したままcommit、push、Draft PR作成、Issue `#252` への記録を許可した。
 公開後のPR URL、commit SHA、検証結果、開始情報はIssue `#252` の公開コメントを参照する。
 この許可は受入条件の達成、設計の承認、merge、Issue closeを含まない。
@@ -21,7 +21,10 @@ Requirements coverageの既存行は、Draft PR公開準備時点の記録であ
 測定補助と文書への独立reviewは完了し、指摘されたverifierの2件の欠落を修正した。修正差分の再reviewでも両件の解消を確認した。
 performanceの許容差は未承認であり、#link("https://github.com/dathra/dathra/pull/255")[Draft PR `#255`]と#link("https://github.com/dathra/dathra/issues/252#issuecomment-5660080642")[Issue公開コメント]は2026-09-14に公開済みである。
 利用者は性能thresholdを未承認のまま引き継ぐ方針を選択した。
-これはthresholdの承認やIssueの受入条件変更ではない。
+その時点ではthresholdの承認やIssueの受入条件変更ではなかった。
+その後、利用者が2026-09-20の構造化質問へ「変更して進める（推奨）」と明示回答し、evidence Taskの受入scope変更を承認した。
+#link("https://github.com/dathra/dathra/issues/252#issuecomment-5749435987")[承認記録]と更新後のIssue本文を現在の受入根拠とする。
+性能thresholdと製品契約の仮説は未承認のままであり、merge前のIssueはopenを維持する。
 
 - owning Issue：`#252`、type `Task`、parent `#251`
 - source SHA：`c1a30ed86fd2bd79e1c742362f552e9f62ff9f98`
@@ -636,26 +639,27 @@ URLはこのrunのlocalhost resourceだけであることを検査し、保存�
 
 No numerical performance threshold is adopted here.
 bytesの単位はbyte、時間の単位はmsである。
-性能指標の候補合格値、許容差、承認根拠は未確定であり、この表はその要件を充足した評価表ではない。
+性能指標の候補合格値、許容差、承認根拠は未確定であり、この表だけで候補実装の合否は判定できない。
+承認されたTask scopeでは、必須原則と未承認の評価候補を区別し、後続ownerへ渡すevidenceとしてこの表を提出する。
 `#245` のno-reconstruction、no-fallback、zero-client-rootは必須条件として扱うが、現行routeの観測値を合格値へ読み替えない。
 
-=== Remaining owner decision
+=== Approved evidence-task scope
 
 評価表の時間とbytesは実測値であり、承認待ちの具体的な数値threshold案は提示していない。
 反復5 clickで`7 -> 12`となる期待値は検証仮説、disposal後の旧control無効化は未承認のconsumer仮説、failureのbounded outcomeは具体契約が未決の評価候補である。
-これらと性能合格値の扱いについて、Issue `#252` のAcceptance criteria第4項に必要な利用者承認または明示的なscope変更は記録されていない。
-2026-09-14の方針確認コメントはcompiler/JSXの前提を修正しただけで、この受入条件を変更していない。
+利用者のin-session承認に基づき、Issue `#252` のWork 7とAcceptance criteria第4項だけを変更した。
+#link("https://github.com/dathra/dathra/issues/252#issuecomment-5749435987")[エージェントによる承認記録]は、#link("https://github.com/dathra/dathra/issues/252#issuecomment-5749424143")[確認案と理由]への回答を記録しており、利用者本人がGitHubコメントを投稿したという意味ではない。
 
-利用者への推奨確認案は次の一問であり、承認されるまでは適用しない。
+- consumer選定、再現可能なbaseline、必須条件と未承認仮説の区別、後続ownerへの引継ぎをもって、このevidence Taskを受入可能とする。
+- 性能合格値と許容差は未承認のまま、`#251` のownerが候補実装の合否評価前に決める。
+- 反復操作、cleanup、failureの検証仮説は製品契約として採用せず、`#253` の判断入力へ渡す。
+- `#245` のserver authority、no-reconstruction、no-fallback、zero-client-rootは必須のまま維持する。
 
-「`#252` のWork 7とAcceptance criteria第4項を、『このTaskはconsumer選定、再現可能なbaseline、必須原則と未承認の評価候補の区別、および後続ownerへの引継ぎをもって受入可能とする。性能合格値と許容差は未承認のまま `#251` のownerが候補実装の合否評価前に決め、反復操作、cleanup、failureの検証仮説は製品契約として採用せず `#253` の判断入力へ渡す。`#245` のserver authority、no-reconstruction、no-fallback、zero-client-rootは必須のまま維持する』という範囲へ明示的に変更してよいですか？」
-
-これはevidence提出の受入境界を確認する案であり、性能thresholdやfailure/cleanup契約を承認する案ではない。
-control fixtureの実装、module/store別の網羅測定、禁止実行全体の保証は後続検証であり、この確認の追加条件にはしない。
+control fixtureの実装、module/store別の網羅測定、禁止実行全体の保証は後続検証であり、このTaskの追加条件にはしない。
 
 == Requirements coverage
 
-WORK-11以外の各行は、2026-09-10T07:15:58.984Zのcollectorが取得したIssue本文snapshot（Issue updatedAt `2026-09-09T02:45:34Z`）の`issueRequirements.*` candidateを一つだけ対応づける。
+WORK-07、AC-04、WORK-11以外の各行は、2026-09-10T07:15:58.984Zのcollectorが取得したIssue本文snapshot（Issue updatedAt `2026-09-09T02:45:34Z`）の`issueRequirements.*` candidateを一つだけ対応づける。
 SourceのIssue番号、heading、lineと公開準備時のdispositionを保持し、更新本文の行番号や公開後の状態へ遡及して書き換えない。
 公開後の状態は#link("https://github.com/dathra/dathra/issues/252#issuecomment-5660080642")[PR `#255` 公開コメント]を参照する。
 
@@ -664,6 +668,10 @@ SourceのIssue番号、heading、lineと公開準備時のdispositionを保持�
 PRE-04の現在の文言は「次方式の実装の完了待ちにはしない」であり、compiler実装の採用を前提にしない。
 追加されたWork冒頭の一段落はcollector上で一つのcandidateとなるため、WORK-11として現在のSourceと対応づける。
 2026-09-20T11:05:51.673Zの再収集でもIssue本文のupdatedAtは同じで、5 source groupすべてcollected、warningsなし、native parentは `#251` だった。
+scope変更後のsnapshot（Issue updatedAt `2026-09-20T11:12:38Z`）では本文の行数を保持し、Work line 31とAcceptance criteria line 52の2行だけを更新した。
+WORK-07とAC-04はこのsnapshotへ対応を更新する。他のSource lineの対応は上記のままである。
+公開準備時の未投稿記録に対する現在の対応は、開始情報と補助の理由が初回公開コメントへ記録済み、独立reviewがPR本文へ記録済み、後続handoffが末尾の2コメントへ投稿済みである。
+AC-05のPRは公開済みで検証evidenceもあるが、mergeと完了記録は今回の提出後に残る。AC-06の公開とReady化は今回の利用者許可に基づく。
 
 #table(
   columns: (auto, 2.4fr, 6fr),
@@ -680,7 +688,7 @@ PRE-04の現在の文言は「次方式の実装の完了待ちにはしない�
   [WORK-04], [Issue `#252`, Work, line 23], [固定SHA、lockfile、環境、build、preview、URL、cache、throttling、観測区間をProduction baselineへ記録した。],
   [WORK-05], [Issue `#252`, Work, line 24], [fresh二cohortに加え、別の補足二runでthread CPU、leaf sample、post-GC heapとDOM counter、WeakRef controlを保存した。厳密なactivation完了、module self-time、store別retained bytesは未測定。],
   [WORK-06], [Issue `#252`, Work, line 25], [既存`/`を調査したが、global client bootstrapがあるためzero-client-root controlではない。不在と将来controlの入力を記録した。],
-  [WORK-07], [Issue `#252`, Work, line 26], [既存の必須条件と観測baselineを区別した。性能指標の候補合格値、許容差、承認根拠は未確定であり、この要件は未完了である。],
+  [WORK-07], [Issue `#252`, Work, line 31; 2026-09-20 approved snapshot], [Evaluation criteriaで必須原則、実測値、未承認仮説を区別した。性能合格値は `#251` のownerへ、反復操作/cleanup/failure仮説は `#253` へ引き継ぎ、承認記録をリンクした。改訂後のevidence要件を満たす。],
   [WORK-08], [Issue `#252`, Work, line 27], [このTypst文書と同じディレクトリへ元collectorと検査補助、二cohort、補足collectorと検査補助、二profile JSONを保存した。historical raw traceや開発試行の一時パスは最終evidenceにしない。],
   [WORK-09], [Issue `#252`, Work, line 28], [`#253`と`#250`へ渡すconsumer、挙動、差分、未確定事項をこの文書に整理した。GitHub転記は未実施である。],
   [WORK-10], [Issue `#252`, Work, line 30], [変更はevidence文書と元4測定artifact、補足4測定artifactのみ。production code、package SPEC/tests、Accepted ADR、公開API、dependencies、旧Proposalは変更していない。補助の対象と理由はlocal-only指示に従い文書へ保持し、Issueコメントは未投稿。],
@@ -693,7 +701,7 @@ PRE-04の現在の文言は「次方式の実装の完了待ちにはしない�
   [AC-01], [Issue `#252`, Acceptance criteria, line 44], [Selected consumer、候補比較、S-01からS-07を明記した。],
   [AC-02], [Issue `#252`, Acceptance criteria, line 45], [新collectorと全sample、固定SHA、buildコマンド、hash、環境、二cohort比較を永続化し、fresh checkout相当で実行した。historical collectorの来歴欠落は解消したことにせず保持する。],
   [AC-03], [Issue `#252`, Acceptance criteria, line 46], [S-04のcleanup gap、S-05のfailure outcomeと契約gap、JS self-timeとmemoryの限界を明記した。旧欠落を正解とは扱っていない。],
-  [AC-04], [Issue `#252`, Acceptance criteria, line 47], [performance thresholdとfailure outcomeは未承認として残した。利用者承認コメントまたはIssue scope変更が必要である。],
+  [AC-04], [Issue `#252`, Acceptance criteria, line 52; 2026-09-20 approved snapshot], [consumer、再現可能なbaseline、必須条件と未承認仮説の区別を記録し、`#253` と `#250` へhandoff済み。承認されたevidence受入境界を満たし、thresholdと製品契約は採用していない。],
   [AC-05], [Issue `#252`, Acceptance criteria, line 48], [文書と補助測定はあるが、PR、merge、完了コメントはまだないため未達である。],
   [AC-06], [Issue `#252`, Acceptance criteria, line 49], [このsessionではlocal evidenceのみを作成し、commit、push、PR、Issue metadata、Issue comment、merge、closeを自動実行していない。],
   [DEP-01], [Issue `#252`, Dependencies, line 53], [着手を妨げるdependencyはない。`#253`へ渡す入力を整理したが、`#253`の完了は待っていない。],
@@ -741,7 +749,9 @@ mise exec typst@0.15.0 -- typst compile --root . SPEC/SPEC.typ /tmp/opencode/tas
 両verifierのnegative regressionと保存済みevidenceの検査を含む。
 browser測定、production build、package test/typecheckは再実行していない。
 GitHubのreviewとinline commentはこの確認時点では0件で、既存の方針コメントに説明差分を対応づけた。
-受入判断は未解決のためDraftを維持し、Issue本文の受入条件は変更していない。
+この検証時点では受入判断が未解決だったためDraftを維持し、Issue本文の受入条件は変更しなかった。
+その後の明示承認でWork 7とAC4を更新し、本節の検証後に文書のscope反映とTypst compile、whitespace、要件coverage、両verifierを再確認した。
+独立reviewの記録は従前の差分を対象とするものであり、scope承認を新しい独立reviewと読み替えない。
 
 == Historical verification record
 
@@ -895,7 +905,9 @@ error refは`err_b529f3ba`と`err_856ef45b`であり、その試行からreview�
 補足のCPU thread-time、GC control、source range coverageも`#253`と`#250`への引継ぎに含める。
 module/store別の未測定項目と禁止実行全体の検証、zero-client-root controlの実装は後続の検証課題であり、網羅測定やcontrol実装を `#252` の追加完了条件にはしない。
 このTaskは測定限界とcontrol不在を明記することを許容しており、failure/cleanupの仮説と製品契約の判断は未解決として引き継ぐ。
-公開状態はIssue `#252` のコメントとDraft PRで確認する。
-performance thresholdと評価表の仮説について利用者の承認またはIssue本文の明示的なscope変更が必要であり、Taskを完了扱いにしない。
+`#253` への#link("https://github.com/dathra/dathra/issues/253#issuecomment-5749439212")[判断入力handoff]と、`#250` への#link("https://github.com/dathra/dathra/issues/250#issuecomment-5749439304")[slice計画handoff]を投稿した。
+両コメントは測定evidence revision `4e6b91eab9147222cbec2b22b53b257a7474b470`、固定source、承認状態を特定する。本追記は観測値を変更しない。
+公開状態はIssue `#252` のコメントとPR `#255` で確認する。
+承認されたscopeに対するmerge前のevidenceと引継ぎは揃った。AC-05のmergeと完了記録は未実施であり、Task全体はopenのままにする。
 collectorによる再測定と二cohort比較は実行済みであり、次のsessionで過去の来歴を再構成する必要はない。
-性能thresholdは利用者の選択に従い未承認のまま引き継ぎ、Issueのscope変更や受入条件の達成を意味しない。
+性能thresholdは未承認のまま引き継ぐ。evidence Taskの受入scope変更は上記の明示承認に基づくものであり、製品契約の承認とは区別する。
