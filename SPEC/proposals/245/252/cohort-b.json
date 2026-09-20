@@ -1,0 +1,1354 @@
+{
+  "schema": 1,
+  "startedAt": "2026-09-09T10:35:43.184Z",
+  "root": "/tmp/opencode/task-252-fresh",
+  "source": "c1a30ed86fd2bd79e1c742362f552e9f62ff9f98",
+  "collectorSha256": "3fa64b8c1296a805d0d247c45e359e4dd3744d17881db9843437467204f5c0c5",
+  "lockfileSha256": "b9bd2b4e2e061437b8a1e7aae7c7f9c43d63ca7fc34e6ff6e9beaf6f4665c3c0",
+  "environment": {
+    "node": "v24.19.0",
+    "pnpm": "10.17.1",
+    "os": "Linux 6.18.33.2-microsoft-standard-WSL2 x64",
+    "cpu": "13th Gen Intel(R) Core(TM) i5-13400F",
+    "logicalCpus": 8,
+    "viewport": {
+      "width": 1600,
+      "height": 1000
+    },
+    "deviceScaleFactor": 1,
+    "headless": true,
+    "cache": "new context per sample; CDP cache disabled; service workers blocked",
+    "throttling": "none; localhost HTTP; sequential cohorts; no host-load isolation",
+    "playwright": "1.56.1",
+    "browser": "141.0.7390.37",
+    "executable": "/home/kcatt/.cache/ms-playwright/chromium-1194/chrome-linux/chrome"
+  },
+  "procedure": {
+    "readiness": "Microtask after target click listener registration: initial count 7/theme verified, HTMLElement.click() yields 8; timestamp after observed update. Includes probe overhead, not exact activation completion.",
+    "repeat": "First readiness click is warm-up; four further HTMLElement.click() calls, each followed by rAF. Five total: 7 to 12. All samples retained; summary excludes only first click per navigation.",
+    "hooks": "addInitScript before app JS; native addEventListener and Element.remove delegate unchanged. ShadowRoot.querySelector injection is one-shot, exact selector and e2e-ssr-app owner only. Restore all three prototypes before remaining clicks and verify identities; close context in finally.",
+    "failure": "missing returns null without removing actual script; shape changes text to []; malformed changes text to not-json. Wait for injection plus target listener or hydrate diagnostic; then 100ms settling, snapshot, click, detach, microtask+rAF, late click.",
+    "disposal": "After five clicks save button/count references, remove fixture, await microtask and rAF, click detached button. Collector intentionally retains these nodes, so this is not a heap leak measurement.",
+    "observation": "goto load; readiness deadline 10s; browser API timing uses performance.now ms; next-rAF elapsed is not paint latency or INP. No navigation discarded."
+  },
+  "limitations": {
+    "cpu": "Not collected: no module self-time profiler. Resource duration and synchronous click wall time are not CPU self-time.",
+    "memory": "Not collected: retained-node probe roots objects; heap totals would include automation/hooks and cannot attribute retained stores. No zero or inferred heap value.",
+    "architecture": "No setup/render/fallback execution instrumentation; observed DOM identity does not prove no reconstruction."
+  },
+  "verification": [
+    {
+      "command": "pnpm install --frozen-lockfile --offline",
+      "exitCode": 0,
+      "elapsedMs": 1398,
+      "testSummary": []
+    },
+    {
+      "command": "pnpm --filter @playground/e2e test",
+      "exitCode": 0,
+      "elapsedMs": 55738,
+      "testSummary": [
+        "Test Files  15 passed (15)",
+        "Tests  15 passed (15)"
+      ]
+    },
+    {
+      "command": "pnpm --filter @dathra/docs build",
+      "exitCode": 0,
+      "elapsedMs": 2481,
+      "testSummary": []
+    },
+    {
+      "command": "pnpm --filter @dathra/docs test",
+      "exitCode": 0,
+      "elapsedMs": 1911,
+      "testSummary": [
+        "Test Files  1 passed (1)",
+        "Tests  1 passed (1)"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "playgrounds/e2e/dist/client/assets/appRoot-C_yo0zt-.js",
+      "bytes": 33428,
+      "sha256": "ad727a68b2ec2c68b04df6b972add372a9b6056ad5f542c999c0d43c6a2d91fd"
+    },
+    {
+      "path": "playgrounds/e2e/dist/client/assets/main-y28fv6Un.js",
+      "bytes": 52529,
+      "sha256": "055a73be9762faf69e16582c55eb6d46df4082abddbc6c6a1f0cfcb1541c59cc"
+    },
+    {
+      "path": "playgrounds/e2e/dist/client/index.html",
+      "bytes": 1378,
+      "sha256": "4c57b9149e99477036ac718faed29d23e49dccc080266d2a6a605f29cff1ae1e"
+    },
+    {
+      "path": "playgrounds/e2e/dist/server/entry-server.js",
+      "bytes": 130451,
+      "sha256": "a52b664c86203828ac802c00add856e65a1b8e4f5372ab9b2d4a004bba791181"
+    },
+    {
+      "path": "docs/dist/client/assets/DocsAppRoot-BRfkl5ir.js",
+      "bytes": 102441,
+      "sha256": "c36035c5ec17984c984d983122e9fab22b6a47eb99fa3757d32b38f9df8b6c3c"
+    },
+    {
+      "path": "docs/dist/client/assets/main-DoZ2D7Hc.js",
+      "bytes": 52156,
+      "sha256": "34a3b0de17a4aff580e79183c4f71c163df232643ca9a9ccefe842e232cbad81"
+    },
+    {
+      "path": "docs/dist/client/index.html",
+      "bytes": 1778,
+      "sha256": "12329a2aff1af3b02461acf8856879689f6b16e5b39d99d5f3376fd27b563ae9"
+    },
+    {
+      "path": "docs/dist/server/entry-server.js",
+      "bytes": 192400,
+      "sha256": "ff628ed433d5702d523db60a521eb10d6cc3e0b94243fdcfdd92ef76740ace54"
+    }
+  ],
+  "normal": [
+    {
+      "url": "http://127.0.0.1:34169/store-snapshot-roundtrip",
+      "html": {
+        "bytes": 2573,
+        "sha256": "0268538f09fbb83ce734a997a2c2907eb43fa5adfb39e0236b8fb349fe8ce9f8",
+        "scriptTags": [
+          "<script type=\"module\" crossorigin src=\"/assets/main-y28fv6Un.js\">",
+          "<script type=\"application/json\" data-dh-store>"
+        ],
+        "snapshot": "[{\"count\":1,\"theme\":2},7,\"snapshot-midnight\"]"
+      },
+      "index": 1,
+      "probe": {
+        "initial": {
+          "count": "Count: 7",
+          "theme": "Theme: snapshot-midnight"
+        },
+        "ready": 38.60000002384186,
+        "listenerRegistered": 37.90000003576279,
+        "snapshotRemoved": 37.80000001192093,
+        "first": {
+          "before": "Count: 7",
+          "after": "Count: 8",
+          "synchronousMs": 0.19999998807907104,
+          "nextFrameMs": 11.799999952316284
+        },
+        "restored": true
+      },
+      "active": {
+        "appHosts": 1,
+        "fixtureHosts": 1,
+        "count": "Count: 8",
+        "theme": "Theme: snapshot-midnight",
+        "scripts": 0,
+        "identityFromSnapshotRead": {
+          "fixture": true,
+          "shadow": true,
+          "count": true,
+          "button": true
+        }
+      },
+      "clicks": [
+        {
+          "before": "Count: 7",
+          "after": "Count: 8",
+          "synchronousMs": 0.19999998807907104,
+          "nextFrameMs": 11.799999952316284
+        },
+        {
+          "before": "Count: 8",
+          "after": "Count: 9",
+          "synchronousMs": 0.30000001192092896,
+          "nextFrameMs": 12.800000011920929
+        },
+        {
+          "before": "Count: 9",
+          "after": "Count: 10",
+          "synchronousMs": 0.09999996423721313,
+          "nextFrameMs": 10.699999988079071
+        },
+        {
+          "before": "Count: 10",
+          "after": "Count: 11",
+          "synchronousMs": 0.10000002384185791,
+          "nextFrameMs": 11
+        },
+        {
+          "before": "Count: 11",
+          "after": "Count: 12",
+          "synchronousMs": 0.10000002384185791,
+          "nextFrameMs": 17.69999998807907
+        }
+      ],
+      "disposal": {
+        "before": "Count: 12",
+        "afterRemoval": "Count: 12",
+        "afterLateClick": "Count: 13",
+        "connected": false
+      },
+      "navigation": {
+        "responseEnd": 5.5,
+        "duration": 13.300000011920929,
+        "encodedBodySize": 2573,
+        "decodedBodySize": 2573,
+        "transferSize": 2873,
+        "nextHopProtocol": "http/1.1",
+        "domContentLoadedEventEnd": 12.900000035762787,
+        "loadEventEnd": 13.300000011920929
+      },
+      "resources": [
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "initiatorType": "script",
+          "responseEnd": 9.600000023841858,
+          "duration": 2.100000023841858,
+          "encodedBodySize": 52529,
+          "decodedBodySize": 52529,
+          "transferSize": 52829,
+          "nextHopProtocol": "http/1.1"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "initiatorType": "script",
+          "responseEnd": 15.300000011920929,
+          "duration": 2.600000023841858,
+          "encodedBodySize": 33428,
+          "decodedBodySize": 33428,
+          "transferSize": 33728,
+          "nextHopProtocol": "http/1.1"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/store-snapshot-roundtrip",
+          "type": "document",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "type": "script",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "type": "script",
+          "method": "GET"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:34169/store-snapshot-roundtrip",
+      "html": {
+        "bytes": 2573,
+        "sha256": "0268538f09fbb83ce734a997a2c2907eb43fa5adfb39e0236b8fb349fe8ce9f8",
+        "scriptTags": [
+          "<script type=\"module\" crossorigin src=\"/assets/main-y28fv6Un.js\">",
+          "<script type=\"application/json\" data-dh-store>"
+        ],
+        "snapshot": "[{\"count\":1,\"theme\":2},7,\"snapshot-midnight\"]"
+      },
+      "index": 2,
+      "probe": {
+        "initial": {
+          "count": "Count: 7",
+          "theme": "Theme: snapshot-midnight"
+        },
+        "ready": 27.30000001192093,
+        "listenerRegistered": 26.80000001192093,
+        "snapshotRemoved": 26.599999964237213,
+        "first": {
+          "before": "Count: 7",
+          "after": "Count: 8",
+          "synchronousMs": 0.20000004768371582,
+          "nextFrameMs": 7.300000011920929
+        },
+        "restored": true
+      },
+      "active": {
+        "appHosts": 1,
+        "fixtureHosts": 1,
+        "count": "Count: 8",
+        "theme": "Theme: snapshot-midnight",
+        "scripts": 0,
+        "identityFromSnapshotRead": {
+          "fixture": true,
+          "shadow": true,
+          "count": true,
+          "button": true
+        }
+      },
+      "clicks": [
+        {
+          "before": "Count: 7",
+          "after": "Count: 8",
+          "synchronousMs": 0.20000004768371582,
+          "nextFrameMs": 7.300000011920929
+        },
+        {
+          "before": "Count: 8",
+          "after": "Count: 9",
+          "synchronousMs": 0.30000001192092896,
+          "nextFrameMs": 7.400000035762787
+        },
+        {
+          "before": "Count: 9",
+          "after": "Count: 10",
+          "synchronousMs": 0.09999996423721313,
+          "nextFrameMs": 9.699999988079071
+        },
+        {
+          "before": "Count: 10",
+          "after": "Count: 11",
+          "synchronousMs": 0,
+          "nextFrameMs": 10.400000035762787
+        },
+        {
+          "before": "Count: 11",
+          "after": "Count: 12",
+          "synchronousMs": 0.10000002384185791,
+          "nextFrameMs": 10.699999988079071
+        }
+      ],
+      "disposal": {
+        "before": "Count: 12",
+        "afterRemoval": "Count: 12",
+        "afterLateClick": "Count: 13",
+        "connected": false
+      },
+      "navigation": {
+        "responseEnd": 4,
+        "duration": 16.599999964237213,
+        "encodedBodySize": 2573,
+        "decodedBodySize": 2573,
+        "transferSize": 2873,
+        "nextHopProtocol": "http/1.1",
+        "domContentLoadedEventEnd": 16.5,
+        "loadEventEnd": 16.599999964237213
+      },
+      "resources": [
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "initiatorType": "script",
+          "responseEnd": 9.5,
+          "duration": 3.199999988079071,
+          "encodedBodySize": 52529,
+          "decodedBodySize": 52529,
+          "transferSize": 52829,
+          "nextHopProtocol": "http/1.1"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "initiatorType": "script",
+          "responseEnd": 20.30000001192093,
+          "duration": 3.900000035762787,
+          "encodedBodySize": 33428,
+          "decodedBodySize": 33428,
+          "transferSize": 33728,
+          "nextHopProtocol": "http/1.1"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/store-snapshot-roundtrip",
+          "type": "document",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "type": "script",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "type": "script",
+          "method": "GET"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:34169/store-snapshot-roundtrip",
+      "html": {
+        "bytes": 2573,
+        "sha256": "0268538f09fbb83ce734a997a2c2907eb43fa5adfb39e0236b8fb349fe8ce9f8",
+        "scriptTags": [
+          "<script type=\"module\" crossorigin src=\"/assets/main-y28fv6Un.js\">",
+          "<script type=\"application/json\" data-dh-store>"
+        ],
+        "snapshot": "[{\"count\":1,\"theme\":2},7,\"snapshot-midnight\"]"
+      },
+      "index": 3,
+      "probe": {
+        "initial": {
+          "count": "Count: 7",
+          "theme": "Theme: snapshot-midnight"
+        },
+        "ready": 26.30000001192093,
+        "listenerRegistered": 25.700000047683716,
+        "snapshotRemoved": 25.600000023841858,
+        "first": {
+          "before": "Count: 7",
+          "after": "Count: 8",
+          "synchronousMs": 0.09999996423721313,
+          "nextFrameMs": 7.5
+        },
+        "restored": true
+      },
+      "active": {
+        "appHosts": 1,
+        "fixtureHosts": 1,
+        "count": "Count: 8",
+        "theme": "Theme: snapshot-midnight",
+        "scripts": 0,
+        "identityFromSnapshotRead": {
+          "fixture": true,
+          "shadow": true,
+          "count": true,
+          "button": true
+        }
+      },
+      "clicks": [
+        {
+          "before": "Count: 7",
+          "after": "Count: 8",
+          "synchronousMs": 0.09999996423721313,
+          "nextFrameMs": 7.5
+        },
+        {
+          "before": "Count: 8",
+          "after": "Count: 9",
+          "synchronousMs": 0.2999999523162842,
+          "nextFrameMs": 0.5999999642372131
+        },
+        {
+          "before": "Count: 9",
+          "after": "Count: 10",
+          "synchronousMs": 0,
+          "nextFrameMs": 4.399999976158142
+        },
+        {
+          "before": "Count: 10",
+          "after": "Count: 11",
+          "synchronousMs": 0,
+          "nextFrameMs": 12.199999988079071
+        },
+        {
+          "before": "Count: 11",
+          "after": "Count: 12",
+          "synchronousMs": 0.09999996423721313,
+          "nextFrameMs": 0.3999999761581421
+        }
+      ],
+      "disposal": {
+        "before": "Count: 12",
+        "afterRemoval": "Count: 12",
+        "afterLateClick": "Count: 13",
+        "connected": false
+      },
+      "navigation": {
+        "responseEnd": 6.200000047683716,
+        "duration": 15.200000047683716,
+        "encodedBodySize": 2573,
+        "decodedBodySize": 2573,
+        "transferSize": 2873,
+        "nextHopProtocol": "http/1.1",
+        "domContentLoadedEventEnd": 14.900000035762787,
+        "loadEventEnd": 15.200000047683716
+      },
+      "resources": [
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "initiatorType": "script",
+          "responseEnd": 11.5,
+          "duration": 2.899999976158142,
+          "encodedBodySize": 52529,
+          "decodedBodySize": 52529,
+          "transferSize": 52829,
+          "nextHopProtocol": "http/1.1"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "initiatorType": "script",
+          "responseEnd": 17,
+          "duration": 2.199999988079071,
+          "encodedBodySize": 33428,
+          "decodedBodySize": 33428,
+          "transferSize": 33728,
+          "nextHopProtocol": "http/1.1"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/store-snapshot-roundtrip",
+          "type": "document",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "type": "script",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "type": "script",
+          "method": "GET"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:34169/store-snapshot-roundtrip",
+      "html": {
+        "bytes": 2573,
+        "sha256": "0268538f09fbb83ce734a997a2c2907eb43fa5adfb39e0236b8fb349fe8ce9f8",
+        "scriptTags": [
+          "<script type=\"module\" crossorigin src=\"/assets/main-y28fv6Un.js\">",
+          "<script type=\"application/json\" data-dh-store>"
+        ],
+        "snapshot": "[{\"count\":1,\"theme\":2},7,\"snapshot-midnight\"]"
+      },
+      "index": 4,
+      "probe": {
+        "initial": {
+          "count": "Count: 7",
+          "theme": "Theme: snapshot-midnight"
+        },
+        "ready": 48.39999997615814,
+        "listenerRegistered": 47.69999998807907,
+        "snapshotRemoved": 47.59999996423721,
+        "first": {
+          "before": "Count: 7",
+          "after": "Count: 8",
+          "synchronousMs": 0.10000002384185791,
+          "nextFrameMs": 16.100000023841858
+        },
+        "restored": true
+      },
+      "active": {
+        "appHosts": 1,
+        "fixtureHosts": 1,
+        "count": "Count: 8",
+        "theme": "Theme: snapshot-midnight",
+        "scripts": 0,
+        "identityFromSnapshotRead": {
+          "fixture": true,
+          "shadow": true,
+          "count": true,
+          "button": true
+        }
+      },
+      "clicks": [
+        {
+          "before": "Count: 7",
+          "after": "Count: 8",
+          "synchronousMs": 0.10000002384185791,
+          "nextFrameMs": 16.100000023841858
+        },
+        {
+          "before": "Count: 8",
+          "after": "Count: 9",
+          "synchronousMs": 0.3999999761581421,
+          "nextFrameMs": 4.300000011920929
+        },
+        {
+          "before": "Count: 9",
+          "after": "Count: 10",
+          "synchronousMs": 0.20000004768371582,
+          "nextFrameMs": 8.600000023841858
+        },
+        {
+          "before": "Count: 10",
+          "after": "Count: 11",
+          "synchronousMs": 0.19999998807907104,
+          "nextFrameMs": 10.199999988079071
+        },
+        {
+          "before": "Count: 11",
+          "after": "Count: 12",
+          "synchronousMs": 0.09999996423721313,
+          "nextFrameMs": 10.899999976158142
+        }
+      ],
+      "disposal": {
+        "before": "Count: 12",
+        "afterRemoval": "Count: 12",
+        "afterLateClick": "Count: 13",
+        "connected": false
+      },
+      "navigation": {
+        "responseEnd": 4,
+        "duration": 12.699999988079071,
+        "encodedBodySize": 2573,
+        "decodedBodySize": 2573,
+        "transferSize": 2873,
+        "nextHopProtocol": "http/1.1",
+        "domContentLoadedEventEnd": 12.199999988079071,
+        "loadEventEnd": 12.699999988079071
+      },
+      "resources": [
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "initiatorType": "script",
+          "responseEnd": 8.599999964237213,
+          "duration": 2.599999964237213,
+          "encodedBodySize": 52529,
+          "decodedBodySize": 52529,
+          "transferSize": 52829,
+          "nextHopProtocol": "http/1.1"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "initiatorType": "script",
+          "responseEnd": 14.299999952316284,
+          "duration": 2.299999952316284,
+          "encodedBodySize": 33428,
+          "decodedBodySize": 33428,
+          "transferSize": 33728,
+          "nextHopProtocol": "http/1.1"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/store-snapshot-roundtrip",
+          "type": "document",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "type": "script",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "type": "script",
+          "method": "GET"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:34169/store-snapshot-roundtrip",
+      "html": {
+        "bytes": 2573,
+        "sha256": "0268538f09fbb83ce734a997a2c2907eb43fa5adfb39e0236b8fb349fe8ce9f8",
+        "scriptTags": [
+          "<script type=\"module\" crossorigin src=\"/assets/main-y28fv6Un.js\">",
+          "<script type=\"application/json\" data-dh-store>"
+        ],
+        "snapshot": "[{\"count\":1,\"theme\":2},7,\"snapshot-midnight\"]"
+      },
+      "index": 5,
+      "probe": {
+        "initial": {
+          "count": "Count: 7",
+          "theme": "Theme: snapshot-midnight"
+        },
+        "ready": 29.399999976158142,
+        "listenerRegistered": 28.69999998807907,
+        "snapshotRemoved": 28.599999964237213,
+        "first": {
+          "before": "Count: 7",
+          "after": "Count: 8",
+          "synchronousMs": 0.19999998807907104,
+          "nextFrameMs": 7.600000023841858
+        },
+        "restored": true
+      },
+      "active": {
+        "appHosts": 1,
+        "fixtureHosts": 1,
+        "count": "Count: 8",
+        "theme": "Theme: snapshot-midnight",
+        "scripts": 0,
+        "identityFromSnapshotRead": {
+          "fixture": true,
+          "shadow": true,
+          "count": true,
+          "button": true
+        }
+      },
+      "clicks": [
+        {
+          "before": "Count: 7",
+          "after": "Count: 8",
+          "synchronousMs": 0.19999998807907104,
+          "nextFrameMs": 7.600000023841858
+        },
+        {
+          "before": "Count: 8",
+          "after": "Count: 9",
+          "synchronousMs": 0.30000001192092896,
+          "nextFrameMs": 0.9000000357627869
+        },
+        {
+          "before": "Count: 9",
+          "after": "Count: 10",
+          "synchronousMs": 0.10000002384185791,
+          "nextFrameMs": 8
+        },
+        {
+          "before": "Count: 10",
+          "after": "Count: 11",
+          "synchronousMs": 0.10000002384185791,
+          "nextFrameMs": 2.800000011920929
+        },
+        {
+          "before": "Count: 11",
+          "after": "Count: 12",
+          "synchronousMs": 0.10000002384185791,
+          "nextFrameMs": 10.300000011920929
+        }
+      ],
+      "disposal": {
+        "before": "Count: 12",
+        "afterRemoval": "Count: 12",
+        "afterLateClick": "Count: 13",
+        "connected": false
+      },
+      "navigation": {
+        "responseEnd": 4.300000011920929,
+        "duration": 14.5,
+        "encodedBodySize": 2573,
+        "decodedBodySize": 2573,
+        "transferSize": 2873,
+        "nextHopProtocol": "http/1.1",
+        "domContentLoadedEventEnd": 14,
+        "loadEventEnd": 14.5
+      },
+      "resources": [
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "initiatorType": "script",
+          "responseEnd": 9.899999976158142,
+          "duration": 2.899999976158142,
+          "encodedBodySize": 52529,
+          "decodedBodySize": 52529,
+          "transferSize": 52829,
+          "nextHopProtocol": "http/1.1"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "initiatorType": "script",
+          "responseEnd": 16.5,
+          "duration": 2.699999988079071,
+          "encodedBodySize": 33428,
+          "decodedBodySize": 33428,
+          "transferSize": 33728,
+          "nextHopProtocol": "http/1.1"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/store-snapshot-roundtrip",
+          "type": "document",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "type": "script",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "type": "script",
+          "method": "GET"
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "failures": [
+    {
+      "url": "http://127.0.0.1:34169/store-snapshot-roundtrip",
+      "html": {
+        "bytes": 2573,
+        "sha256": "0268538f09fbb83ce734a997a2c2907eb43fa5adfb39e0236b8fb349fe8ce9f8",
+        "scriptTags": [
+          "<script type=\"module\" crossorigin src=\"/assets/main-y28fv6Un.js\">",
+          "<script type=\"application/json\" data-dh-store>"
+        ],
+        "snapshot": "[{\"count\":1,\"theme\":2},7,\"snapshot-midnight\"]"
+      },
+      "mode": "missing",
+      "probe": {
+        "injected": 1,
+        "restored": true
+      },
+      "active": {
+        "appHosts": 1,
+        "fixtureHosts": 1,
+        "count": "Count: 0",
+        "theme": "Theme: client-default",
+        "scripts": 1,
+        "identityFromSnapshotRead": {
+          "fixture": true,
+          "shadow": true,
+          "count": true,
+          "button": true
+        }
+      },
+      "click": {
+        "before": "Count: 0",
+        "after": "Count: 1",
+        "synchronousMs": 0.40000003576278687,
+        "nextFrameMs": 0.800000011920929
+      },
+      "disposal": {
+        "before": "Count: 1",
+        "afterRemoval": "Count: 1",
+        "afterLateClick": "Count: 2",
+        "connected": false
+      },
+      "navigation": {
+        "responseEnd": 3.300000011920929,
+        "duration": 12.5,
+        "encodedBodySize": 2573,
+        "decodedBodySize": 2573,
+        "transferSize": 2873,
+        "nextHopProtocol": "http/1.1",
+        "domContentLoadedEventEnd": 12.100000023841858,
+        "loadEventEnd": 12.5
+      },
+      "resources": [
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "initiatorType": "script",
+          "responseEnd": 8.600000023841858,
+          "duration": 2.600000023841858,
+          "encodedBodySize": 52529,
+          "decodedBodySize": 52529,
+          "transferSize": 52829,
+          "nextHopProtocol": "http/1.1"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "initiatorType": "script",
+          "responseEnd": 14.900000035762787,
+          "duration": 2.800000011920929,
+          "encodedBodySize": 33428,
+          "decodedBodySize": 33428,
+          "transferSize": 33728,
+          "nextHopProtocol": "http/1.1"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/store-snapshot-roundtrip",
+          "type": "document",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "type": "script",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "type": "script",
+          "method": "GET"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:34169/store-snapshot-roundtrip",
+      "html": {
+        "bytes": 2573,
+        "sha256": "0268538f09fbb83ce734a997a2c2907eb43fa5adfb39e0236b8fb349fe8ce9f8",
+        "scriptTags": [
+          "<script type=\"module\" crossorigin src=\"/assets/main-y28fv6Un.js\">",
+          "<script type=\"application/json\" data-dh-store>"
+        ],
+        "snapshot": "[{\"count\":1,\"theme\":2},7,\"snapshot-midnight\"]"
+      },
+      "mode": "shape",
+      "probe": {
+        "injected": 1,
+        "restored": true
+      },
+      "active": {
+        "appHosts": 1,
+        "fixtureHosts": 1,
+        "count": "Count: 0",
+        "theme": "Theme: client-default",
+        "scripts": 0,
+        "identityFromSnapshotRead": {
+          "fixture": true,
+          "shadow": true,
+          "count": true,
+          "button": true
+        }
+      },
+      "click": {
+        "before": "Count: 0",
+        "after": "Count: 1",
+        "synchronousMs": 0.30000001192092896,
+        "nextFrameMs": 0.9000000357627869
+      },
+      "disposal": {
+        "before": "Count: 1",
+        "afterRemoval": "Count: 1",
+        "afterLateClick": "Count: 2",
+        "connected": false
+      },
+      "navigation": {
+        "responseEnd": 3.800000011920929,
+        "duration": 21.30000001192093,
+        "encodedBodySize": 2573,
+        "decodedBodySize": 2573,
+        "transferSize": 2873,
+        "nextHopProtocol": "http/1.1",
+        "domContentLoadedEventEnd": 21.19999998807907,
+        "loadEventEnd": 21.30000001192093
+      },
+      "resources": [
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "initiatorType": "script",
+          "responseEnd": 12.899999976158142,
+          "duration": 3.300000011920929,
+          "encodedBodySize": 52529,
+          "decodedBodySize": 52529,
+          "transferSize": 52829,
+          "nextHopProtocol": "http/1.1"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "initiatorType": "script",
+          "responseEnd": 23.80000001192093,
+          "duration": 2.700000047683716,
+          "encodedBodySize": 33428,
+          "decodedBodySize": 33428,
+          "transferSize": 33728,
+          "nextHopProtocol": "http/1.1"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/store-snapshot-roundtrip",
+          "type": "document",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "type": "script",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "type": "script",
+          "method": "GET"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:34169/store-snapshot-roundtrip",
+      "html": {
+        "bytes": 2573,
+        "sha256": "0268538f09fbb83ce734a997a2c2907eb43fa5adfb39e0236b8fb349fe8ce9f8",
+        "scriptTags": [
+          "<script type=\"module\" crossorigin src=\"/assets/main-y28fv6Un.js\">",
+          "<script type=\"application/json\" data-dh-store>"
+        ],
+        "snapshot": "[{\"count\":1,\"theme\":2},7,\"snapshot-midnight\"]"
+      },
+      "mode": "malformed",
+      "probe": {
+        "injected": 1,
+        "restored": true
+      },
+      "active": {
+        "appHosts": 1,
+        "fixtureHosts": 1,
+        "count": "Count:7",
+        "theme": "Theme:snapshot-midnight",
+        "scripts": 1,
+        "identityFromSnapshotRead": {
+          "fixture": true,
+          "shadow": true,
+          "count": true,
+          "button": true
+        }
+      },
+      "click": {
+        "before": "Count:7",
+        "after": "Count:7",
+        "synchronousMs": 0.10000002384185791,
+        "nextFrameMs": 0.40000003576278687
+      },
+      "disposal": {
+        "before": "Count:7",
+        "afterRemoval": "Count:7",
+        "afterLateClick": "Count:7",
+        "connected": false
+      },
+      "navigation": {
+        "responseEnd": 4.100000023841858,
+        "duration": 14.199999988079071,
+        "encodedBodySize": 2573,
+        "decodedBodySize": 2573,
+        "transferSize": 2873,
+        "nextHopProtocol": "http/1.1",
+        "domContentLoadedEventEnd": 13.800000011920929,
+        "loadEventEnd": 14.199999988079071
+      },
+      "resources": [
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "initiatorType": "script",
+          "responseEnd": 10.199999988079071,
+          "duration": 2.5,
+          "encodedBodySize": 52529,
+          "decodedBodySize": 52529,
+          "transferSize": 52829,
+          "nextHopProtocol": "http/1.1"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "initiatorType": "script",
+          "responseEnd": 16.399999976158142,
+          "duration": 2.699999988079071,
+          "encodedBodySize": 33428,
+          "decodedBodySize": 33428,
+          "transferSize": 33728,
+          "nextHopProtocol": "http/1.1"
+        }
+      ],
+      "requests": [
+        {
+          "path": "/store-snapshot-roundtrip",
+          "type": "document",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/main-y28fv6Un.js",
+          "type": "script",
+          "method": "GET"
+        },
+        {
+          "path": "/assets/appRoot-C_yo0zt-.js",
+          "type": "script",
+          "method": "GET"
+        }
+      ],
+      "errors": [
+        {
+          "kind": "console",
+          "text": "[dathra] Error in component hydrate: SyntaxError: Unexpected token 'o', \"not-json\" is not valid JSON\n    at JSON.parse (<anonymous>)\n    at xe (http://127.0.0.1:34169/assets/appRoot-C_yo0zt-.js:33:29353)\n    at hydrate (http://127.0.0.1:34169/assets/appRoot-C_yo0zt-.js:33:30388)\n    at http://127.0.0.1:34169/assets/main-y28fv6Un.js:5:19920\n    at de (http://127.0.0.1:34169/assets/main-y28fv6Un.js:1:7552)\n    at De (http://127.0.0.1:34169/assets/main-y28fv6Un.js:5:19912)\n    at p.connectedCallback (http://127.0.0.1:34169/assets/main-y28fv6Un.js:5:21673)\n    at Do (http://127.0.0.1:34169/assets/main-y28fv6Un.js:5:22489)\n    at Fo (http://127.0.0.1:34169/assets/main-y28fv6Un.js:5:22694)\n    at http://127.0.0.1:34169/assets/appRoot-C_yo0zt-.js:33:29562",
+          "url": "http://127.0.0.1:34169/assets/main-y28fv6Un.js"
+        }
+      ]
+    }
+  ],
+  "previews": {
+    "e2e": {
+      "url": "http://127.0.0.1:34169",
+      "command": "PORT=34169 pnpm --filter @playground/e2e preview"
+    },
+    "docs": {
+      "url": "http://127.0.0.1:39687",
+      "command": "PORT=39687 pnpm --filter @dathra/docs preview"
+    }
+  },
+  "uninstrumented": {
+    "url": "http://127.0.0.1:34169/store-snapshot-roundtrip",
+    "html": {
+      "bytes": 2573,
+      "sha256": "0268538f09fbb83ce734a997a2c2907eb43fa5adfb39e0236b8fb349fe8ce9f8",
+      "scriptTags": [
+        "<script type=\"module\" crossorigin src=\"/assets/main-y28fv6Un.js\">",
+        "<script type=\"application/json\" data-dh-store>"
+      ],
+      "snapshot": "[{\"count\":1,\"theme\":2},7,\"snapshot-midnight\"]"
+    },
+    "initial": {
+      "appHosts": 1,
+      "fixtureHosts": 1,
+      "count": "Count: 7",
+      "theme": "Theme: snapshot-midnight",
+      "scripts": 0,
+      "identityFromSnapshotRead": null
+    },
+    "counts": [
+      "Count: 8",
+      "Count: 9",
+      "Count: 10",
+      "Count: 11",
+      "Count: 12"
+    ],
+    "disposal": {
+      "before": "Count: 12",
+      "afterRemoval": "Count: 12",
+      "afterLateClick": "Count: 13",
+      "connected": false
+    },
+    "navigation": {
+      "responseEnd": 3.899999976158142,
+      "duration": 13.699999988079071,
+      "encodedBodySize": 2573,
+      "decodedBodySize": 2573,
+      "transferSize": 2873,
+      "nextHopProtocol": "http/1.1",
+      "domContentLoadedEventEnd": 13.299999952316284,
+      "loadEventEnd": 13.699999988079071
+    },
+    "resources": [
+      {
+        "path": "/assets/main-y28fv6Un.js",
+        "initiatorType": "script",
+        "responseEnd": 9.199999988079071,
+        "duration": 2.900000035762787,
+        "encodedBodySize": 52529,
+        "decodedBodySize": 52529,
+        "transferSize": 52829,
+        "nextHopProtocol": "http/1.1"
+      },
+      {
+        "path": "/assets/appRoot-C_yo0zt-.js",
+        "initiatorType": "script",
+        "responseEnd": 15.599999964237213,
+        "duration": 2.399999976158142,
+        "encodedBodySize": 33428,
+        "decodedBodySize": 33428,
+        "transferSize": 33728,
+        "nextHopProtocol": "http/1.1"
+      }
+    ],
+    "requests": [
+      {
+        "path": "/store-snapshot-roundtrip",
+        "type": "document",
+        "method": "GET"
+      },
+      {
+        "path": "/assets/main-y28fv6Un.js",
+        "type": "script",
+        "method": "GET"
+      },
+      {
+        "path": "/assets/appRoot-C_yo0zt-.js",
+        "type": "script",
+        "method": "GET"
+      }
+    ],
+    "errors": []
+  },
+  "home": {
+    "url": "http://127.0.0.1:34169",
+    "html": {
+      "bytes": 1653,
+      "sha256": "9091116ee7b866d123aec12841efe060baaa6d2ce45e8359711ad73fb933cbfe",
+      "scriptTags": [
+        "<script type=\"module\" crossorigin src=\"/assets/main-y28fv6Un.js\">"
+      ],
+      "snapshot": null
+    },
+    "observation": {
+      "title": "Dathra E2E SSR Fixtures",
+      "appPresent": true,
+      "moduleScripts": 1
+    },
+    "navigation": {
+      "responseEnd": 4.099999964237213,
+      "duration": 17.5,
+      "encodedBodySize": 1653,
+      "decodedBodySize": 1653,
+      "transferSize": 1953,
+      "nextHopProtocol": "http/1.1",
+      "domContentLoadedEventEnd": 17.5,
+      "loadEventEnd": 17.5
+    },
+    "resources": [
+      {
+        "path": "/assets/main-y28fv6Un.js",
+        "initiatorType": "script",
+        "responseEnd": 9.599999964237213,
+        "duration": 2.699999988079071,
+        "encodedBodySize": 52529,
+        "decodedBodySize": 52529,
+        "transferSize": 52829,
+        "nextHopProtocol": "http/1.1"
+      },
+      {
+        "path": "/assets/appRoot-C_yo0zt-.js",
+        "initiatorType": "script",
+        "responseEnd": 19.69999998807907,
+        "duration": 2.300000011920929,
+        "encodedBodySize": 33428,
+        "decodedBodySize": 33428,
+        "transferSize": 33728,
+        "nextHopProtocol": "http/1.1"
+      }
+    ],
+    "requests": [
+      {
+        "path": "/",
+        "type": "document",
+        "method": "GET"
+      },
+      {
+        "path": "/assets/main-y28fv6Un.js",
+        "type": "script",
+        "method": "GET"
+      },
+      {
+        "path": "/assets/appRoot-C_yo0zt-.js",
+        "type": "script",
+        "method": "GET"
+      }
+    ],
+    "errors": []
+  },
+  "docs": {
+    "url": "http://127.0.0.1:39687/reactivity",
+    "html": {
+      "bytes": 42155,
+      "sha256": "7d1b48331bdb1c27784a7d09359618905b41a402419036e7518b07f7911c4df3",
+      "scriptTags": [
+        "<script type=\"module\" crossorigin src=\"/assets/main-DoZ2D7Hc.js\">"
+      ],
+      "snapshot": null
+    },
+    "hosts": 5,
+    "highlighted": 5,
+    "buttons": 5,
+    "labels": [
+      "Copy",
+      "Copy",
+      "Copy",
+      "Copy",
+      "Copy"
+    ],
+    "after1900ms": "Copy",
+    "navigation": {
+      "responseEnd": 200.30000001192093,
+      "duration": 362.9000000357628,
+      "encodedBodySize": 42155,
+      "decodedBodySize": 42155,
+      "transferSize": 42455,
+      "nextHopProtocol": "http/1.1",
+      "domContentLoadedEventEnd": 317.10000002384186,
+      "loadEventEnd": 362.9000000357628
+    },
+    "resources": [
+      {
+        "path": "/css2",
+        "initiatorType": "link",
+        "responseEnd": 315,
+        "duration": 109.5,
+        "encodedBodySize": 965,
+        "decodedBodySize": 16604,
+        "transferSize": 1265,
+        "nextHopProtocol": "h2"
+      },
+      {
+        "path": "/assets/main-DoZ2D7Hc.js",
+        "initiatorType": "script",
+        "responseEnd": 208.70000004768372,
+        "duration": 2.900000035762787,
+        "encodedBodySize": 52156,
+        "decodedBodySize": 52156,
+        "transferSize": 52456,
+        "nextHopProtocol": "http/1.1"
+      },
+      {
+        "path": "/assets/DocsAppRoot-BRfkl5ir.js",
+        "initiatorType": "script",
+        "responseEnd": 320.4000000357628,
+        "duration": 3.5,
+        "encodedBodySize": 102441,
+        "decodedBodySize": 102441,
+        "transferSize": 102741,
+        "nextHopProtocol": "http/1.1"
+      }
+    ],
+    "requests": [
+      {
+        "path": "/reactivity",
+        "type": "document",
+        "method": "GET"
+      },
+      {
+        "path": "/css2",
+        "type": "stylesheet",
+        "method": "GET"
+      },
+      {
+        "path": "/assets/main-DoZ2D7Hc.js",
+        "type": "script",
+        "method": "GET"
+      },
+      {
+        "path": "/assets/DocsAppRoot-BRfkl5ir.js",
+        "type": "script",
+        "method": "GET"
+      },
+      {
+        "path": "/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+        "type": "font",
+        "method": "GET"
+      },
+      {
+        "path": "/s/intelonemono/v2/P5sWzZuLY8Lb_G1RikFkwPjBvuM8LXucmoHDSAMgofchmzVS.woff2",
+        "type": "font",
+        "method": "GET"
+      },
+      {
+        "path": "/s/intelonemono/v2/P5sWzZuLY8Lb_G1RikFkwPjBvuM8LXucmoHDSAMgRvAhmzVS.woff2",
+        "type": "font",
+        "method": "GET"
+      }
+    ],
+    "errors": []
+  },
+  "distributionsMs": {
+    "load": {
+      "n": 5,
+      "min": 12.699999988079071,
+      "q1": 13.300000011920929,
+      "median": 14.5,
+      "q3": 15.200000047683716,
+      "max": 16.599999964237213
+    },
+    "responseEndToObservedReady": {
+      "n": 5,
+      "min": 20.099999964237213,
+      "q1": 23.30000001192093,
+      "median": 25.099999964237213,
+      "q3": 33.10000002384186,
+      "max": 44.39999997615814
+    },
+    "responseEndToSnapshotRemovalProxy": {
+      "n": 5,
+      "min": 19.399999976158142,
+      "q1": 22.599999964237213,
+      "median": 24.299999952316284,
+      "q3": 32.30000001192093,
+      "max": 43.59999996423721
+    },
+    "postWarmupSynchronousClick": {
+      "n": 20,
+      "min": 0,
+      "q1": 0.09999996423721313,
+      "median": 0.10000002384185791,
+      "q3": 0.2250000238418579,
+      "max": 0.3999999761581421
+    },
+    "postWarmupNextFrame": {
+      "n": 20,
+      "min": 0.3999999761581421,
+      "q1": 4.374999985098839,
+      "median": 9.949999988079071,
+      "q3": 10.749999985098839,
+      "max": 17.69999998807907
+    }
+  },
+  "finishedAt": "2026-09-09T10:36:52.611Z",
+  "status": "complete"
+}
