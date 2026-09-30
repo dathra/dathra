@@ -48,7 +48,7 @@
 
 == 提案する公開面
 
-初期 DOM は server entry の #raw("render") が返す #raw("view") に、要素とテキストの宣言的な JS/TS call として書く。
+初期 DOM は server entry の #raw("render") が返す #raw("ServerView") 内に、要素とテキストの宣言的な JS/TS call として書く。
 #raw("el") と #raw("txt") は初期値を記述し、#raw("bind")、#raw("on")、#raw("creation") はその位置に明示的な client target を付ける。
 その結果、作者は selector、DOM path、marker、response identity を手書きせずに target の所属を指定できる。
 それらの API 名は本 Proposal の推奨名であり、#253 で使った #raw("element/text/renderMarkup/declareCapability") は採用済み名ではない。
@@ -59,14 +59,23 @@
     adapter は server module の任意関数を解析せず、宣言 entry だけを build graph に渡す。],
   format: [
     ```ts
-    // dathra.config.ts: only explicit entries are build inputs.
+    // dathra.config.ts
+    import { defineDelivery } from "@dathra/plugin";
+
     export default defineDelivery({
       routes: {
         "/store-snapshot-roundtrip": {
           server: "./snapshot.server.ts",
           client: "./snapshot.client.ts",
         },
-        // A server-only route omits client entirely.
+        "/store-snapshot-repeat": {
+          server: "./snapshot-repeated.server.ts",
+          client: "./snapshot.client.ts",
+        },
+        "/details": {
+          server: "./details.server.ts",
+          client: "./details.client.ts",
+        },
         "/static": { server: "./static.server.ts" },
       },
     });
@@ -87,7 +96,7 @@
   format: [
     ```ts
     // snapshot.server.ts
-    import { defineRoute, el, txt, bind, on } from "@dathra/core/server";
+    import { defineRoute, occurrence, el, txt, bind, on } from "@dathra/core/server";
     import { signal } from "@dathra/reactivity";
 
     export function createModel(initialCount = 7) {
@@ -99,36 +108,44 @@
     export type Model = ReturnType<typeof createModel>;
 
     export default defineRoute({
-      render(request) {
-        const state = createModel(); // once per occurrence in this request
-        return {
+      render(_request) {
+        const state = createModel();
+        return occurrence({
           state,
-          values: { locale: "ja-JP" }, // readonly boundary value
+          values: { locale: "ja-JP" },
           view: el("article", {},
             el("p", {}, txt(`Theme: ${state.theme.value}`, bind("themeText"))),
             el("p", {}, txt(`Count: ${state.count.value}`, bind("countText"))),
             el("button", { type: "button", on: on("click", "increment") },
               txt("Increment snapshot count")),
           ),
-        };
+        });
       },
     });
     ```
   ],
   constraints: [
     - #raw("state") の Signal は SSR 値を読むために一度生成する。client は同一 memory object を受け取らず、論理値から browser-local Signal を復元する。
-    - #raw("values") は変更権限を渡さない JSON-safe な boundary value である。任意の closure、DOM node、secret、非有限数値、循環参照は渡せない。
+    - #raw("values") は server が JSON-safe な plain data として検査して copy し、client が深く凍結した値として読む boundary value である。TypeScript の #raw("number") は非有限値も許すため、有限性、循環、prototype、secret 混入は server 側の検査と author の責任で扱う。
     - #raw("txt(initial, bind(exportName))") は初期テキストと明示 target を同じ場所に記述する。#raw("txt(state.count.value)") だけでは subscription を作らない。
     - #raw("on(event, exportName)") はその element の event target を宣言する。DOM の見た目から button 権限を推測しない。
     - #raw("view") の子配列と属性の詳細構文は上の入れ子 call を受ける。HTML escaping と属性許可は server renderer の検証対象となる。
   ],
 )
 
+一つの #raw("defineRoute.render") は #raw("ServerView") を返す。
+初期 state を持つ root は #raw("occurrence({state, view})") として返す。
+複数出現を含む route は #raw("el") が返す #raw("ServerView") の子へ #raw("occurrence") を並べる。
 同じ UI 宣言を繰り返す場合、#raw("occurrence") が各出現の state と view を囲む。
 一つの route response に #raw("renderCounter(7)") と #raw("renderCounter(40)") を置くと、server は二つの identity と association を発行する。
+この例の #raw("createModel") は server module からの value import であり、client には type-only な #raw("Model") だけが渡る。
 route の静的 client entry と export code は共有できるが、二つの Signal、target、owner は共有しない。
 
 ```ts
+// snapshot-repeated.server.ts
+import { defineRoute, occurrence, el, txt, bind, on } from "@dathra/core/server";
+import { createModel } from "./snapshot.server";
+
 function renderCounter(initialCount: number) {
   const state = createModel(initialCount);
   return occurrence({
@@ -140,7 +157,12 @@ function renderCounter(initialCount: number) {
     ),
   });
 }
-return el("main", {}, renderCounter(7), renderCounter(40));
+
+export default defineRoute({
+  render(_request) {
+    return el("main", {}, renderCounter(7), renderCounter(40));
+  },
+});
 ```
 
 #interface_spec(
@@ -166,8 +188,8 @@ return el("main", {}, renderCounter(7), renderCounter(40));
     ```
   ],
   constraints: [
-    - #raw("import type") は TypeScript の型検査にのみ使い、bundle から消える。client の value graph に server initializer、renderer、request secret は入れない。
-    - #raw("ClientContext<Model, Values>") は Signal の読み取りと #raw("set")、readonly boundary value、宣言 target と request のみを公開する。復元済み state は一つの SSR instance owner に閉じる。
+    - #raw("import type") は TypeScript の型検査にのみ使い、emit した client module から消える。client の value graph に server initializer、renderer、request secret は入れない。#raw("Model") は server 関数の戻り型だけを参照し、browser でその関数を呼ばない。
+    - #raw("ClientContext<Model, Values>") は Signal の読み取りと #raw("set")、deep-readonly な boundary value、宣言 target と request のみを公開する。復元済み state は一つの SSR instance owner に閉じる。
     - build は client module の export 存在と禁止 value import を検査する。adapter は route key と export inventory を server entry に渡し、render 中に選んだ export 名と target の一致を server response 作成時にも検査する。
     - TS 型は author の誤記を早く検出するが、cast、JS、外部入力の runtime 正当性まで証明しない。server と client preflight の値検査を省かない。
   ],
@@ -178,50 +200,46 @@ return el("main", {}, renderCounter(7), renderCounter(40));
 以下は候補 A の公開型を示す。
 #raw("Signal<T>") は既存 engine の型であり、#raw("Restored<S>") は server で宣言した state 名と値型を client で保持する。
 型だけの import は値 graph に含めず、JS 利用時と不正な payload は runtime validator が受け持つ。
+以下の型は設計用署名の抜粋である。
+完全な署名と各例を #raw("examples/stubs.d.ts") と隣接する例示 module に保存する。
+これらは production 実装や公開済み package API ではない。
 
 ```ts
-type JsonValue =
-  | null | boolean | number | string
-  | readonly JsonValue[]
-  | { readonly [name: string]: JsonValue };
+// The complete review-only signatures are in examples/stubs.d.ts.
+type JsonValue = null | boolean | number | string |
+  readonly JsonValue[] | { readonly [name: string]: JsonValue };
+type DeepReadonlyJson<T> =
+  T extends readonly (infer E)[] ? readonly DeepReadonlyJson<E>[] :
+  T extends object ? { readonly [K in keyof T]: DeepReadonlyJson<T[K]> } : T;
 type Restored<S> = {
   readonly [K in keyof S]: S[K] extends Signal<infer V> ? Signal<V> : never;
 };
-interface Validator<T extends JsonValue> { parse(value: unknown): T; }
-interface RequestSpec<I extends JsonValue, O extends JsonValue> {
-  input: Validator<I>;
-  output: Validator<O>;
-  handle(input: I, context: ServerRequestContext): O | Promise<O>;
-}
-type RequestInput<T> = T extends RequestSpec<infer I, infer O> ? I : never;
-type RequestOutput<T> = T extends RequestSpec<infer I, infer O> ? O : never;
-interface ClientContext<S, V extends JsonValue, R extends object = {}> {
+interface ClientContext<S, V, R extends object = {}, C extends string = never> {
   readonly state: Restored<S>;
-  readonly values: Readonly<V>;
+  readonly values: DeepReadonlyJson<V>;
   request<K extends Extract<keyof R, string>>(
     name: K, input: RequestInput<R[K]>
   ): Promise<RequestOutput<R[K]>>;
-  create(name: string, factory: () => View): void;
+  create<K extends C>(name: K, factory: () => ClientView): void;
 }
-declare function defineDelivery<const R extends Record<string, {
-  server: string; client?: string;
-}>>(config: { routes: R }): Delivery<R>;
-declare function defineRoute<S, V extends JsonValue>(config: {
-  render(request: RequestContext): Occurrence<S, V>;
-}): ServerRoute<S, V>;
-declare function occurrence<S, V extends JsonValue>(data: {
-  state: S; values?: V; view: View; requests?: RequestDeclarations;
-}): Occurrence<S, V>;
-declare function bind(exportName: string): TextBinding;
-declare function on(event: string, exportName: string): EventBinding;
-declare function creation(name: string): CreationBoundary;
-declare function request<I extends JsonValue, O extends JsonValue>(
-  spec: RequestSpec<I, O>
-): RequestSpec<I, O>;
+interface ServerView { readonly environment: "server" }
+interface Occurrence<S, V extends JsonValue, R extends object> extends ServerView {
+  readonly state: S;
+  readonly values?: V;
+  readonly requests?: R;
+}
+declare function defineRoute(configuration: {
+  render(request: RequestContext): ServerView;
+}): ServerRoute;
+declare function occurrence<S, V extends JsonValue, R extends object = {}>(data: {
+  state: S; values?: V; view: ServerView; requests?: R;
+}): Occurrence<S, V, R>;
 ```
 
+#raw("RequestInput/RequestOutput") は server の #raw("RequestSpec") の検査器から推論する。
 #raw("request") と #raw("create") の名前は server が宣言した集合に対して検査する。
-型付き利用では request の検査器から入出力型を推論し、未宣言名を TypeScript で拒否する。
+型付き利用では request の入出力型と creation 境界名を TypeScript で照合し、未宣言名を拒否する。
+#raw("ClientContext") の型引数に書く request/creation 名と server occurrence の宣言が一致するかは、型検査だけで証明できないため build と server の検査で照合する。
 JS 利用と動的な名前では server/client の実行時検査を必須とする。
 最初の slice の公開 binding は既存 text node を対象とする。
 属性と property の mutable target は同じ明示権限原則のもとで #247 の後続実装 scope に置き、最初の fixture の受入条件には追加しない。
@@ -233,6 +251,7 @@ user-created UI と明示 server request は、この最初の consumer では�
 factory は client module の明示 export または operation 内の JS 関数であり、ユーザー操作後の新しい child のみを作る。
 #raw("ctx.create") は既存 SSR subtree の置換権限を与えず、child scope と disposal は #249 が実装する。
 
+#raw("requests") は #raw("occurrence") の任意 field に置き、その instance の権限だけを定義する。
 server entry の #raw("requests") は name、入力と出力の検査器、server handler を宣言する。
 handler は #248 が定義する request-local context を受け、認証や request-scoped resource を参照できる。
 client operation は #raw("ctx.request(name, input)") でのみその handler を呼べる。
@@ -240,32 +259,88 @@ request 境界は外部入力を受けるため、ここだけ検査器を必須
 単なる state 引継ぎに public schema を要求しない一方、通信入力を無検証にしないためである。
 
 ```ts
-// Optional declarations on a route that actually needs these capabilities.
-return {
-  state,
-  view: el("section", {},
-    el("div", { create: creation("details") }),
-    el("button", { on: on("click", "loadDetails") }, txt("Load")),
-  ),
-  requests: {
-    details: request({ input: detailsInput, output: detailsOutput, handle }),
+// details.server.ts
+import { defineRoute, occurrence, el, txt, on, creation, request } from "@dathra/core/server";
+import { signal } from "@dathra/reactivity";
+
+function createDetailsState() { return { count: signal(7) }; }
+export type DetailsState = ReturnType<typeof createDetailsState>;
+
+const detailsInput = {
+  parse(value: unknown): { id: string } {
+    if (typeof value !== "object" || value === null || !("id" in value) || typeof value.id !== "string") {
+      throw new TypeError("details input requires a string id");
+    }
+    return { id: value.id };
   },
 };
+const detailsOutput = {
+  parse(value: unknown): { label: string } {
+    if (typeof value !== "object" || value === null || !("label" in value) || typeof value.label !== "string") {
+      throw new TypeError("details output requires a string label");
+    }
+    return { label: value.label };
+  },
+};
+export const detailsRequests = {
+  details: request({
+    input: detailsInput,
+    output: detailsOutput,
+    handle(input, context) { return { label: `${input.id} from ${context.request.url}` }; },
+  }),
+};
+export type DetailsRequests = typeof detailsRequests;
 
-// The client entry owns only the declared child creation/request operation.
-type DetailCtx = ClientContext<Model, { itemId: string }, {
-  details: RequestSpec<{ id: string }, { label: string }>;
-}>;
-export async function loadDetails(ctx: DetailCtx) {
+export default defineRoute({
+  render(_request) {
+    const state = createDetailsState();
+    return occurrence({
+      state,
+      values: { itemId: "item-1" },
+      requests: detailsRequests,
+      view: el("section", {},
+        el("div", { create: creation("details") }),
+        el("button", { on: on("click", "loadDetails") }, txt("Load")),
+      ),
+    });
+  },
+});
+```
+
+次の client entry は browser 用の #raw("el/txt") を import し、server entry は型だけで参照する。
+
+```ts
+// details.client.ts
+import { el, txt } from "@dathra/core/client";
+import type { ClientContext } from "@dathra/core/client";
+import type { DetailsState, DetailsRequests } from "./details.server";
+
+type DetailCtx = ClientContext<DetailsState, { itemId: string }, DetailsRequests, "details">;
+
+export async function loadDetails(ctx: DetailCtx): Promise<void> {
   const result = await ctx.request("details", { id: ctx.values.itemId });
   ctx.create("details", () => el("p", {}, txt(result.label)));
-  // #249 checks owner/generation before committing the child.
 }
 ```
 
-#raw("detailsInput/detailsOutput") は検査器の例であり、codec library や wire encoding の選択ではない。
+#raw("detailsInput/detailsOutput") は例示 module にある最小の #raw("parse") 実装であり、codec library や wire encoding の選択ではない。
+#raw("details") route は first-slice fixture への追加ではなく、採用済みの request と creation 能力の公開面を確認する設計用の例である。
+#raw("/store-snapshot-repeat") と #raw("/static") も契約を検査する例示 route であり、一次 consumer は #raw("/store-snapshot-roundtrip") である。
 server response の生成、commit/cancel と fresh identity の発行は #248、client の child lifetime、遅延応答の破棄と target write は #249 が所有する。
 本 API は明示 request の失敗を成功扱いせず、active instance を保ったまま operation の再試行を認める。
+
+== 例示 module と型検証の範囲
+
+上の候補 A の module は #raw("examples/") に全文を置く。
+Proposal 内の code block は先頭の file 名コメントを除き、対応する file の内容と一致させる。
+#raw("dathra.config.ts") は四 route の entry を固定し、#raw("snapshot.server.ts") と #raw("snapshot.client.ts") は一次 consumer の server/client 境界を示す。
+#raw("snapshot-repeated.server.ts") は二つの #raw("occurrence") を一つの #raw("ServerView") に含め、#raw("static.server.ts") は client entry のない route を示す。
+#raw("details.server.ts") と #raw("details.client.ts") は同一 occurrence 内の request 宣言、creation boundary、client 操作の型を示す。
+#raw("snapshot.client.ts") と #raw("details.client.ts") の server module 参照は #raw("import type") のみであり、emit 後の JavaScript にその import は残らない。
+#raw("typecheck.assertions.ts") は state の欠落、readonly boundary の書換え、未宣言 request/creation 名、誤った request 入力の拒否を検査する。
+#raw("examples/stubs.d.ts") は候補 API の review 用宣言であり、実 package の型や実行結果を表さない。
+厳密な TypeScript check は完全な例示 module とこの stub の内部整合性を示すだけで、runtime の値検査、bundle graph、SSR や activation の成立を証明しない。
+後述の選択肢 B の二表は比較用の擬似例であり、候補 A の型検証対象ではない。
 
 == Delivery と association
 
@@ -351,7 +426,7 @@ A は DOM builder の API、server/client runtime、plugin を実装する費用
   columns: (1.3fr, 3.05fr, 3.05fr),
   table.header([状態], [入場と遷移], [資源と表示]),
   [unadmitted], [SSR response があり owner は無い。検証開始で preflighting へ。], [server DOM と不変 association のみ。],
-  [preflighting], [identity、key、entry、値と root/host/control/target を取得前に照合。成功で staging、拒否で unadmitted。], [拒否は非終端。owner、Signal、listener、effect、timer はゼロで SSR は不変。修正された入力で再検証可。],
+  [preflighting], [identity、key、entry、値と root/host/control/target を取得前に照合。成功で staging、拒否で unadmitted。], [拒否は非終端。owner、Signal、listener、effect、timer はゼロで SSR は不変。外部の entry 読込などが回復した場合、同じ不変 association を再検証できる。],
   [staging], [単一 owner を予約し、state を復元、getter/effect/listener を取得。全部揃えば commit して active。取得または commit 失敗で failed-terminal。], [初期 DOM write は buffer。handler は commit まで inert。失敗時に全資源を逆順解放し SSR node/value を復元。],
   [active], [同一 identity の重複入場は同じ owner を返す。operation error は active のまま再操作可。], [宣言 target のみ書ける。effect、listener、timer、child、request generation は owner に登録。],
   [failed-terminal], [staging 後の失敗で入場。同じ identity は再試行不可。fresh response の新 identity で unadmitted から始める。], [資源はゼロ、SSR 表示を保持。新 response の取得、commit/cancel は #248/#249 が検証。],
@@ -360,6 +435,8 @@ A は DOM builder の API、server/client runtime、plugin を実装する費用
 
 同一 identity への並行 admission は一つの予約へ集約する。
 矛盾する payload、static key、target を伴う二番目の要求は拒否し、同じ owner を別 record へ流用しない。
+preflight 拒否後も association は書き換えず、同じ identity に別 payload、別 target、別 static key を差し込まない。
+元の association 自体が不正なら同じ identity の訂正はできず、server が新 response と新 identity を発行する必要がある。
 child removal はその child の listener、effect、timer と generation だけを止め、兄弟 owner は生かす。
 owner 終了後または古い generation の callback は state と DOM を変更しない。
 既存 reactivity engine の Signal、effect、batch、root cleanup を使い、subscription/DOM/lifetime の統合は #raw("@dathra/client") に置く。
@@ -406,7 +483,7 @@ owner 終了後または古い generation の callback は state と DOM を変�
     - 重複入場は listener、effect、timer、Store を増やさない。
   ],
   errors: [
-    - preflight 拒否は unadmitted に戻り、資源ゼロ、SSR 不変、同 identity の再検証が可能。
+    - preflight 拒否は unadmitted に戻り、資源ゼロ、SSR 不変。同じ不変 association は外部前提の回復後に再検証できるが、payload/target/static key を変更した再試行は拒否する。
     - staging/commit 失敗は failed-terminal。全資源を解放し SSR を保ち、同 identity を再利用しない。
     - hydration、CSR rerender、暗黙 network fallback を行わない。
   ],
@@ -421,7 +498,7 @@ owner 終了後または古い generation の callback は state と DOM を変�
   [二出現と反復更新], [一 static key から二 identity、二 owner。各 Count は独立して 7→8→9。], [二 registry record を正しく scope すれば同じ。], [#253/#260 の identity 契約。二出現の API 統合は未検証。],
   [欠落または矛盾した handoff], [root/host/control/target と値を preflight で拒否し SSR 不変。], [selector 不一致を同じ規則で拒否。], [#252 の silent default は不適合。public preflight は #249 未検証。],
   [重複入場], [予約を一 owner に集約し二重 listener を防ぐ。], [同じ owner 規則が必要。], [#253/#260 の共有契約。public path は #249 未検証。],
-  [preflight 拒否], [unadmitted のまま資源ゼロ。同 identity の有効 record を再検証できる。], [同じ非終端規則。], [#260 採用契約。A/B とも実装証拠なし。],
+  [preflight 拒否], [unadmitted のまま資源ゼロ。外部前提が回復すれば同じ不変 association を再検証。変更された payload/target/key は拒否し、元の record が不正なら新 response identity を要する。], [同じ非終端規則。], [#260 採用契約。A/B とも実装証拠なし。],
   [取得後の失敗], [buffer を破棄、資源逆順解放、failed-terminal。fresh SSR identity で復旧。], [同じ transaction が必要。], [#253/#260 の設計契約。一般的 DOM rollback と新 response は #248/#249 未検証。],
   [child/owner disposal と late callback], [child の資源だけ停止。全終了では child 先行、古い generation を無視。], [同じ owner 規則。], [#252 の detached listener は baseline defect。#249 public path 未検証。],
   [zero-client-root], [client entry 無し route を build で省略し、空 response は script と handoff を送らない。], [空 registry の整合検査が必要。], [#245/#260 必須。#252 に control route 不在。#251 が実測。],
