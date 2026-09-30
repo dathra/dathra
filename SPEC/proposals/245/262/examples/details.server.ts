@@ -33,6 +33,7 @@ export default defineRoute({
   render(_request) {
     const state = createDetailsState();
     return occurrence({
+      client: "details",
       state,
       values: { itemId: "item-1" },
       requests: detailsRequests,

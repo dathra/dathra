@@ -1,26 +1,36 @@
-import { defineRoute, occurrence, el, txt, bind, on } from "@dathra/core/server";
+import { defineRoute, occurrence, el, txt, clientExports } from "@dathra/core/server";
 import { signal } from "@dathra/reactivity";
+import { themeText, countText } from "./snapshot.display";
 
-export function createModel(initialCount = 7) {
+const { bind, on } = clientExports<typeof import("./snapshot.client")>();
+
+/** Initialize one server-owned counter for one occurrence. */
+function createModel(initialCount = 7) {
   return {
     count: signal(initialCount),
     theme: signal("snapshot-midnight"),
   };
 }
-export type Model = ReturnType<typeof createModel>;
+type Model = ReturnType<typeof createModel>;
+
+/** Declare a reusable counter occurrence; this function is never run on client. */
+function renderCounter(initialCount = 7, client = "counter") {
+  const state = createModel(initialCount);
+  return occurrence({
+    client,
+    state,
+    values: { locale: "ja-JP" },
+    view: el("article", {},
+      el("p", {}, txt(themeText({ state }), bind("themeText"))),
+      el("p", {}, txt(countText({ state }), bind("countText"))),
+      el("button", { type: "button", on: on("click", "increment") },
+        txt("Increment snapshot count")),
+    ),
+  });
+}
 
 export default defineRoute({
-  render(_request) {
-    const state = createModel();
-    return occurrence({
-      state,
-      values: { locale: "ja-JP" },
-      view: el("article", {},
-        el("p", {}, txt(`Theme: ${state.theme.value}`, bind("themeText"))),
-        el("p", {}, txt(`Count: ${state.count.value}`, bind("countText"))),
-        el("button", { type: "button", on: on("click", "increment") },
-          txt("Increment snapshot count")),
-      ),
-    });
-  },
+  render(_request) { return renderCounter(); },
 });
+export { createModel, renderCounter };
+export type { Model };

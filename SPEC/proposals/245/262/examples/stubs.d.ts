@@ -10,7 +10,7 @@ declare module "@dathra/reactivity" {
 declare module "@dathra/plugin" {
   export function defineDelivery<const R extends Record<string, {
     server: string;
-    client?: string;
+    clients?: Record<string, string>;
   }>>(configuration: { routes: R }): { readonly routes: R };
 }
 
@@ -21,6 +21,10 @@ declare module "@dathra/core/server" {
     | null | boolean | number | string
     | readonly JsonValue[]
     | { readonly [name: string]: JsonValue };
+  export type SignalState<S> = {
+    [K in keyof S]: S[K] extends Signal<infer T>
+      ? [T] extends [JsonValue] ? S[K] : never : never;
+  };
   export interface ServerView { readonly environment: "server" }
   export interface TextBinding { readonly kind: "text"; readonly exportName: string }
   export interface EventBinding { readonly kind: "event"; readonly event: string; readonly exportName: string }
@@ -34,6 +38,7 @@ declare module "@dathra/core/server" {
     handle(input: I, context: ServerRequestContext): O | Promise<O>;
   }
   export interface Occurrence<S, V extends JsonValue, R extends object> extends ServerView {
+    readonly client?: string;
     readonly state: S;
     readonly values?: V;
     readonly requests?: R;
@@ -41,7 +46,8 @@ declare module "@dathra/core/server" {
   export interface ServerRoute { render(request: RequestContext): ServerView }
   export function defineRoute(configuration: ServerRoute): ServerRoute;
   export function occurrence<S, V extends JsonValue, R extends object = {}>(data: {
-    state: S;
+    client?: string;
+    state: S & SignalState<S>;
     values?: V;
     view: ServerView;
     requests?: R;
@@ -52,6 +58,19 @@ declare module "@dathra/core/server" {
     ...children: ServerView[]
   ): ServerView;
   export function txt(initial: string, binding?: TextBinding): ServerView;
+  export type TextExportNames<M> = {
+    [K in Extract<keyof M, string>]: M[K] extends (...args: never[]) => infer R
+      ? [R] extends [string] ? K : never : never;
+  }[Extract<keyof M, string>];
+  export type OperationExportNames<M> = {
+    [K in Extract<keyof M, string>]: M[K] extends (...args: never[]) => infer R
+      ? [R] extends [void | Promise<void>] ? K : never : never;
+  }[Extract<keyof M, string>];
+  /** Optional static name/role checking; runtime validation remains required. */
+  export function clientExports<M>(): {
+    bind(name: TextExportNames<M>): TextBinding;
+    on(event: string, name: OperationExportNames<M>): EventBinding;
+  };
   export function bind(exportName: string): TextBinding;
   export function on(event: string, exportName: string): EventBinding;
   export function creation(name: string): CreationBoundary;
