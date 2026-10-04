@@ -1,0 +1,5 @@
+# Preserve exact captured diagnostics and historical snapshots as evidence.
+design-context/*.md whitespace=-blank-at-eof
+**/history/** whitespace=-blank-at-eof
+*.log -whitespace
+*.txt -whitespace

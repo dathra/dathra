@@ -1,0 +1,64 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir
+
+ ❯ tmp/dathomir-262-validation/dom-input/p05.test.mjs (15 tests | 2 failed) 945ms
+   ✓ adopts pre-admission Japanese edit while content automatically changes Count:7 to Count=7 83ms
+   ✓ recaptures edits after preflight and after capture listener registration 43ms
+   ✓ rechecks silent live value changes before commit even without an input event 44ms
+   ✓ rejects unstable revision within bounded staging and keeps the latest native edit 43ms
+   ✓ failed required commit keeps native edit, discards provisional model and removes listeners 42ms
+   × native and controlled draft both preserve preboot edit; only controlled installs a keystroke sink 87ms
+   ✓ holds unknown prebootstrap composition formatting until a native blur boundary 63ms
+   ✓ preserves caret and selection on equal-value refresh using actual keyboard selection 70ms
+   ✓ holds differing multi-control drafts and does not treat refresh or remote model change as resolution 60ms
+   ✓ explicit edit resolves a group only after all unprotected declared peers match 45ms
+   ✓ synthetic composition holds formatter writes and releases at synthetic compositionend 42ms
+   ✓ stale publication rejects a native revision change before writing 42ms
+   × native reset completion reaches controlled sink; canceled reset does not 141ms
+   ✓ same association duplicate admission creates one sink listener and disposal removes it 44ms
+   ✓ rejects sink resource acquisition during provisional model-only admission 40ms
+ ✓ tmp/dathomir-262-validation/dom-input/p04.test.mjs (15 tests) 744ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 28 passed (30)
+   Start at  05:47:07
+   Duration  2.29s (transform 38ms, setup 0ms, collect 418ms, tests 1.69s, environment 0ms, prepare 8ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tmp/dathomir-262-validation/dom-input/p05.test.mjs > native and controlled draft both preserve preboot edit; only controlled installs a keystroke sink
+AssertionError: expected 4 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 4
+
+ ❯ tmp/dathomir-262-validation/dom-input/p05.test.mjs:85:23
+     83|   });
+     84|   expect(r.native).toBe('draftx'); expect(r.controlled).toBe('draftx')…
+     85|   expect(r.sinkCalls).toBe(2); expect(r.reasons).toEqual(['adopt', 'in…
+       |                       ^
+     86| });
+     87| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tmp/dathomir-262-validation/dom-input/p05.test.mjs > native reset completion reaches controlled sink; canceled reset does not
+AssertionError: expected 'dirty' to be 'a' // Object.is equality
+
+Expected: "a"
+Received: "dirty"
+
+ ❯ tmp/dathomir-262-validation/dom-input/p05.test.mjs:181:58
+    179|     return { reset, canceled };
+    180|   });
+    181|   expect(r.reset.value).toBe('a'); expect(r.reset.model).toBe('a'); ex…
+       |                                                          ^
+    182|   expect(r.canceled.value).toBe('keep'); expect(r.canceled.model).toBe…
+    183| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

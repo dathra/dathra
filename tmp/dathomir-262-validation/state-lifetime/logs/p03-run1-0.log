@@ -1,0 +1,17 @@
+{
+  "esbuild": "0.25.10",
+  "inputs": [
+    "node_modules/.pnpm/alien-signals@3.2.0/node_modules/alien-signals/esm/system.mjs",
+    "packages/reactivity/src/internal/system.ts",
+    "packages/reactivity/src/batch/implementation.ts",
+    "packages/reactivity/src/internal/helpers.ts",
+    "packages/reactivity/src/computed/implementation.ts",
+    "packages/reactivity/src/internal/state.ts",
+    "packages/reactivity/src/createRoot/implementation.ts",
+    "packages/reactivity/src/effect/implementation.ts",
+    "packages/reactivity/src/onCleanup/implementation.ts",
+    "packages/reactivity/src/signal/implementation.ts",
+    "packages/reactivity/src/templateEffect/implementation.ts",
+    "packages/reactivity/src/index.ts"
+  ]
+}

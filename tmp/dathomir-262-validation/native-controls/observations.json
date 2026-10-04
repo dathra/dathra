@@ -1,0 +1,165 @@
+{
+  "timestamp": "2026-10-04T21:27:18.933Z",
+  "browser": "141.0.7390.37",
+  "observations": [
+    {
+      "name": "submitter",
+      "result": {
+        "without": [
+          [
+            "title",
+            "draft"
+          ]
+        ],
+        "with": [
+          [
+            "title",
+            "draft"
+          ],
+          [
+            "command",
+            "publish"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "validation",
+      "result": {
+        "invalidCount": 0,
+        "submissions": [
+          {
+            "id": "preview",
+            "values": [
+              [
+                "title",
+                ""
+              ],
+              [
+                "command",
+                "preview"
+              ]
+            ]
+          },
+          {
+            "id": "save",
+            "values": [
+              [
+                "title",
+                "Ready"
+              ],
+              [
+                "command",
+                "save"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "radio-cross-region",
+      "result": {
+        "a": false,
+        "b": true,
+        "data": [
+          [
+            "shipping",
+            "express"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "radio-form-owner",
+      "result": [
+        false,
+        true,
+        true
+      ]
+    },
+    {
+      "name": "default-value",
+      "result": {
+        "before": {
+          "value": "native draft",
+          "defaultValue": "new baseline"
+        },
+        "after": "new baseline"
+      }
+    },
+    {
+      "name": "reset-order",
+      "result": {
+        "trace": [
+          [
+            "event",
+            "draft"
+          ],
+          [
+            "after-call",
+            "server"
+          ],
+          [
+            "microtask",
+            "server"
+          ],
+          [
+            "event",
+            "keep"
+          ],
+          [
+            "microtask",
+            "keep"
+          ]
+        ],
+        "afterCanceled": "keep"
+      }
+    },
+    {
+      "name": "successful-controls",
+      "result": {
+        "entries": [
+          [
+            "tags",
+            "a"
+          ],
+          [
+            "tags",
+            "b"
+          ],
+          [
+            "checked",
+            "yes"
+          ]
+        ],
+        "lossyRecord": {
+          "tags": "b",
+          "checked": "yes"
+        },
+        "selectedAfterFakeProperty": [
+          "a",
+          "b"
+        ]
+      }
+    },
+    {
+      "name": "file-boundary",
+      "result": {
+        "name": "draft.txt",
+        "content": "draft content",
+        "json": "{}",
+        "restoreError": "InvalidStateError",
+        "size": 1
+      }
+    },
+    {
+      "name": "number-incomplete",
+      "result": {
+        "value": "",
+        "badInput": true,
+        "numberIsNaN": true
+      }
+    }
+  ]
+}

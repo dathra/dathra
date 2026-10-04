@@ -1,0 +1,9 @@
+{
+  "resultsPath": "results.json",
+  "sha256": "ab26a7dc3ca84931a0583946d8e1c9366a6c3ef46425168a6590e174e0583945",
+  "tests": 50,
+  "checks": [
+    "strict noEmit",
+    "Vitest"
+  ]
+}

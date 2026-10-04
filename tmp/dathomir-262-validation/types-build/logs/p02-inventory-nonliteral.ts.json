@@ -1,0 +1,8 @@
+[
+  {
+    "code": "E_CLIENT_LINK_LITERAL",
+    "file": "graph/negative/nonliteral.ts",
+    "line": 3,
+    "detail": "Use a literal relative specifier and import.meta.url at the declaration site."
+  }
+]

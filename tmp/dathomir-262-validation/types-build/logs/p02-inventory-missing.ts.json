@@ -1,0 +1,8 @@
+[
+  {
+    "code": "E_MODULE_MISSING",
+    "file": "graph/negative/missing.ts",
+    "line": 2,
+    "detail": "Cannot resolve ./absent.client.js; use a real client module relative to /home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/graph/negative/missing.ts."
+  }
+]

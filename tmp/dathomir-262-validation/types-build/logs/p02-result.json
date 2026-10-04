@@ -1,0 +1,259 @@
+{
+  "node": "v24.15.0",
+  "typescript": "6.0.3",
+  "esbuild": "0.25.10",
+  "adapter": "Explicit TS symbol inventory + metadata-only base URL rewrite + real esbuild bundles. No function extraction.",
+  "cases": [
+    {
+      "name": "file-url-space-unicode",
+      "decodedDirectory": "/tmp/日本語 component",
+      "roundTrip": true,
+      "scope": "URL unit only on Linux; no alternate checkout or Windows run."
+    },
+    {
+      "name": "missing.ts",
+      "rejectedByInventory": "E_MODULE_MISSING"
+    },
+    {
+      "name": "no-default.ts",
+      "rejectedByInventory": "E_DEFAULT_MISSING"
+    },
+    {
+      "name": "local-alias.ts",
+      "rejectedByInventory": "E_CLIENT_LINK_INDIRECTION"
+    },
+    {
+      "name": "nonliteral.ts",
+      "rejectedByInventory": "E_CLIENT_LINK_LITERAL"
+    },
+    {
+      "name": "same-shape.ts",
+      "rejectedByInventory": "E_TYPE_RUNTIME_SOURCE_MISMATCH",
+      "typeScriptAloneAccepts": true
+    },
+    {
+      "name": "invalid-default.ts",
+      "rejectedByInventory": "E_DEFAULT_PROFILE"
+    },
+    {
+      "name": "parser-identity.ts",
+      "rejectedByInventory": "E_CREATE_INPUT_SOURCE_MISMATCH"
+    },
+    {
+      "name": "type-only-namespace-default-alias",
+      "finiteDefaultSymbolComparisonPasses": true,
+      "form": "typeof Browser.default"
+    },
+    {
+      "name": "shadowed-function",
+      "unrelatedSameNameNotCollectedOrRewritten": true
+    },
+    {
+      "name": "creation-profile",
+      "actualDeclaredTypeRejectsPlainClient": true,
+      "diagnostics": [
+        {
+          "code": 2345,
+          "message": "Argument of type 'ClientDefinition<{ readonly label: () => string; }>' is not assignable to parameter of type 'CreatedClientDefinition<{ readonly label: () => string; }, unknown, unknown>'.   Property 'create' is missing in type 'ClientDefinition<{ readonly label: () => string; }>' but required in type 'CreatedClientDefinition<{ readonly label: () => string; }, unknown, unknown>'."
+        }
+      ]
+    },
+    {
+      "name": "naive-source-vs-emitted-import-meta",
+      "actualRenderFails": "Error: E_MODULE_LOOKUP: file:///home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/out/build/naive/server/counter.client.js",
+      "referencedOutputFileExists": false
+    },
+    {
+      "name": "emitted-graphs-and-ssr",
+      "realEsbuildBundles": true,
+      "treeShaking": false,
+      "serverContainsSecretAndNoBrowserTopLevel": true,
+      "browserHasNoServerInputsOrSecret": true,
+      "actualServerExecutionDidNotLoadBrowser": true,
+      "renamedImportAndNamespaceSupported": true,
+      "distinctSameBasenameReferences": 2,
+      "activatedModules": 3
+    },
+    {
+      "name": "dynamic-zero-response",
+      "response": {
+        "html": "<article>server-only response</article>",
+        "modules": [],
+        "bootstrap": "",
+        "payload": null
+      },
+      "potentialBrowserArtifactsStillExist": 3,
+      "boundary": "Response omissions; not removal of available build artifacts."
+    },
+    {
+      "name": "declared-client-zero-marker-occurrence",
+      "serverAndUnifiedSignalRecordWerePrepared": true,
+      "response": {
+        "html": "<span>declared association without client markers</span>",
+        "modules": [],
+        "bootstrap": "",
+        "payload": null
+      },
+      "potentialBrowserArtifactsStillExist": 3,
+      "limits": "Fixture activation collector only; not production state codec/transport or zero-root admission proof."
+    },
+    {
+      "name": "static-route-build-omission",
+      "selectedBrowserEntries": 0,
+      "generatedBrowserFiles": 0,
+      "response": {
+        "html": "<article>static-only route</article>",
+        "modules": [],
+        "bootstrap": "",
+        "payload": null
+      }
+    },
+    {
+      "name": "actual-relocated-lookup",
+      "originalOutputAndSourceUnavailable": true,
+      "serverSSRWorks": true,
+      "actualImports": [
+        {
+          "relative": "/proof/non-root/assets/client-0.mjs",
+          "actualURL": "file:///home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/out/build/relocated/deployment/browser/client-0.mjs",
+          "exists": true,
+          "names": [
+            "countText",
+            "increment"
+          ]
+        },
+        {
+          "relative": "/proof/non-root/assets/client-1.mjs",
+          "actualURL": "file:///home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/out/build/relocated/deployment/browser/client-1.mjs",
+          "exists": true,
+          "names": [
+            "label"
+          ]
+        },
+        {
+          "relative": "/proof/non-root/assets/client-2.mjs",
+          "actualURL": "file:///home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/out/build/relocated/deployment/browser/client-2.mjs",
+          "exists": true,
+          "names": [
+            "label"
+          ]
+        }
+      ],
+      "browserTopLevelSentinelExecutedOnlyInBrowserSmoke": true,
+      "host": "Node with a minimal window sentinel; no DOM/admission browser proof."
+    },
+    {
+      "name": "js-runtime-invalid-name",
+      "rejectBeforeResponseActivation": true,
+      "diagnostic": "E_FUNCTION_NAME: misspelled; available label"
+    },
+    {
+      "name": "ordinary-client-runtime-import",
+      "actualServerEvaluationFailsSentinel": true,
+      "typeOnlyImportAvoidsThis": true
+    },
+    {
+      "name": "browser-import-server-dependency",
+      "actualBundlerRejects": "Could not resolve \"node:crypto\""
+    },
+    {
+      "name": "optional-creation-profile-real-engine",
+      "sameNeutralParserSourceValidated": true,
+      "SSRNeverExecutedBrowserInitializer": true,
+      "lazyDescriptionDidNotInitialize": true,
+      "explicitFreshInitializationActualSignalWorks": true,
+      "invalidInputRejected": true,
+      "limits": "No SSR DOM adoption, receive scheduling, placement authority or reconciliation proof."
+    },
+    {
+      "name": "boolean-placement",
+      "positiveCheckedAndDefaultChecked": true,
+      "truePresenceFalseOmission": true,
+      "ariaFalseIsStringNotAbsence": true,
+      "booleanContent": "empty",
+      "emptyMarkerStillActivates": true,
+      "html": "<form><input checked></input><input></input><input checked></input><button disabled>disabled</button><button aria-busy=\"false\">enabled</button><!--bind:checked--><!--/bind--></form>",
+      "policyStatus": "New unadopted content-boolean policy; serializer is experimental, no DOM control/admission proof."
+    },
+    {
+      "name": "pure-compatible-server-dependency-leak",
+      "rawEsbuildSuccessfullyLeaks": true,
+      "explicitInventoryGuardRejects": true,
+      "guardAlsoAppliedToNormalBuildPath": true,
+      "diagnostic": "E_BROWSER_POLICY_INPUT; remove runtime import or use an explicitly public DTO module",
+      "scope": "Only declared experimental server-only resources; no arbitrary suffix-based classification."
+    },
+    {
+      "name": "http-non-root-public-mount",
+      "actualHTTPRequests": true,
+      "publicPrefix": "/proof/non-root/",
+      "opaqueIDs": [
+        "module-0",
+        "module-1",
+        "module-2"
+      ],
+      "noSourceFilesystemPathsInResponse": true,
+      "fetchedAssets": [
+        {
+          "publicPath": "/proof/non-root/assets/client-0.mjs",
+          "status": 200,
+          "bytes": 1292
+        },
+        {
+          "publicPath": "/proof/non-root/assets/client-1.mjs",
+          "status": 200,
+          "bytes": 1007
+        },
+        {
+          "publicPath": "/proof/non-root/assets/client-2.mjs",
+          "status": 200,
+          "bytes": 1007
+        }
+      ],
+      "bootstrapFetched": true,
+      "zeroResponseHasNoModuleMapOrScript": true,
+      "requestPaths": [
+        "/proof/non-root/page",
+        "/proof/non-root/assets/bootstrap.mjs",
+        "/proof/non-root/assets/client-0.mjs",
+        "/proof/non-root/assets/client-1.mjs",
+        "/proof/non-root/assets/client-2.mjs",
+        "/proof/non-root/page-static"
+      ],
+      "limits": "Bootstrap source served but no real browser executes it; fetched self-contained ESM executed via Node data URL with window shim. No production transport/admission proof."
+    },
+    {
+      "name": "independent-emitted-browser-engine-negative",
+      "sameActualSourceInBothGraphs": true,
+      "constructorsEqual": false,
+      "sameEngineComputed": [
+        2,
+        4
+      ],
+      "crossEngineComputed": [
+        2,
+        2
+      ],
+      "consequence": "Per-entry self-contained bundles do not establish browser tracking ABI; normal computed reads may remain stale."
+    },
+    {
+      "name": "shared-emitted-browser-engine-positive",
+      "oneOrdinaryMultiEntrySplitBuild": true,
+      "constructorsEqual": true,
+      "computedEqual": true,
+      "crossEntryComputed": [
+        2,
+        4
+      ],
+      "emittedChunks": [
+        "tmp/dathomir-262-validation/types-build/out/build/engine-shared/shared/chunk-SNABSXTY.mjs"
+      ],
+      "gate": "Production loader and every admitted client entry must resolve the same browser engine URL/runtime instance, including later delivered modules. This adapter still builds author entries separately and has not met that gate.",
+      "serverSnapshotCopies": "Distinct server snapshot producers are allowed; this is a browser tracking ABI requirement."
+    },
+    {
+      "name": "js-runtime-profile-validation",
+      "noCreationProfileAndNonCallableRegistryRejected": true
+    }
+  ]
+}

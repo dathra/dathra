@@ -1,0 +1,10 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir-task-264-authoring-evidence
+
+ ✓ tmp/dathomir-262-validation/native-history/history.test.mjs (3 tests) 205ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  06:27:19
+   Duration  496ms (transform 17ms, setup 0ms, collect 199ms, tests 205ms, environment 0ms, prepare 4ms)
+

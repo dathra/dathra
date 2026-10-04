@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-10-04T21:27:20.840Z",
+  "node": "v24.15.0",
+  "inputs": {
+    "docs/src/components/DocCodeBlock/DocCodeBlock.tsx": "13e296a482be59a31861d44859b5467d809e62ac6a014269f9d137767d536a69",
+    "docs/vite.config.ts": "e5b86d4ada765c766f2fb57a07ef3a3aae86c667f13bb1309e3153c1abc48899",
+    "pnpm-lock.yaml": "b9bd2b4e2e061437b8a1e7aae7c7f9c43d63ca7fc34e6ff6e9beaf6f4665c3c0",
+    "packages/plugin/dist/index.mjs": "bdd3bf224829d297ef9ff64e7a775e024f9db3c20612aa9f1f8c148eed8bc820",
+    "packages/components/dist/index.mjs": "8aa0c5f147104fc02c968021856a570e1ba956cbd80850a9b82a6170f731cac8",
+    "packages/reactivity/dist/index.mjs": "6a844dc3827522c33165a61db7ef242895d98d0eb65425d567fbd31d65baced6"
+  },
+  "limitation": "This script rebuilds Docs and consumes hashed workspace artifacts. Run the documented build:deps prerequisite separately to rebuild those artifacts from this checkout."
+}

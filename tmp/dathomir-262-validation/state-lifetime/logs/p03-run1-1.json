@@ -1,0 +1,10 @@
+{
+  "command": [
+    "packages/reactivity/node_modules/.bin/tsx",
+    "--test",
+    "tmp/dathomir-262-validation/state-lifetime/p03.test.ts"
+  ],
+  "exit_code": 0,
+  "stdout": "\u2714 P03.01 one-peek aliases; captured template and JSON handoff use one isolated snapshot (2.275836ms)\n\u2714 P03.02 same-valued distinct Signals remain separate slots (0.406267ms)\n\u2714 P03.03 inherited protocol; first shadowing accessor wins without executing (0.26502ms)\n\u2714 P03.04 tag-only data, computed, trusted full fake, throwing peek and malformed payload (1.131137ms)\n\u2714 P03.05 actual bundled second engine copy is accepted structurally (2.478623ms)\n\u2714 P03.06 identity/no-op matrix with actual effect notifications (0.940793ms)\n\u2714 P03.07 nested alias updater; external nested mutation reused across distinct roots (0.345483ms)\n\u2714 P03.08 field-order insensitive; array order and negative zero retained through wire (0.658629ms)\n\u2714 P03.09 no raw payload escape via peek/updater; caller remains mutable (0.431951ms)\n\u2714 P03.10 revoked cached setters/updaters and disposed caller aliases cannot write (0.383304ms)\n\u2714 P03.11 actual tracking, peek, computed, batch and stop through readonly projection (0.378365ms)\n\u2714 P03.12 trusted side-effectful peek disproves a global instantaneous cut (0.372253ms)\n\u2714 P03.13 finite domain diagnostics never execute ordinary getters (0.380555ms)\n\u2139 tests 13\n\u2139 suites 0\n\u2139 pass 13\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 213.583297\n",
+  "stderr": ""
+}

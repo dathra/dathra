@@ -1,0 +1,112 @@
+[
+  {
+    "code": 2345,
+    "file": "fixtures/actual-types.ts",
+    "message": "Argument of type 'string' is not assignable to parameter of type 'SignalUpdate<number>'."
+  },
+  {
+    "code": 2540,
+    "file": "fixtures/counter.client.ts",
+    "message": "Cannot assign to 'title' because it is a read-only property."
+  },
+  {
+    "code": 2540,
+    "file": "fixtures/counter.client.ts",
+    "message": "Cannot assign to 'value' because it is a read-only property."
+  },
+  {
+    "code": 2345,
+    "file": "fixtures/counter.client.ts",
+    "message": "Argument of type 'string' is not assignable to parameter of type 'number | ((previous: number) => number)'."
+  },
+  {
+    "code": 2540,
+    "file": "fixtures/counter.client.ts",
+    "message": "Cannot assign to 'count' because it is a read-only property."
+  },
+  {
+    "code": 2540,
+    "file": "fixtures/counter.client.ts",
+    "message": "Cannot assign to 'n' because it is a read-only property."
+  },
+  {
+    "code": 2540,
+    "file": "fixtures/counter.client.ts",
+    "message": "Cannot assign to 'label' because it is a read-only property."
+  },
+  {
+    "code": 2540,
+    "file": "fixtures/counter.client.ts",
+    "message": "Cannot assign to 'n' because it is a read-only property."
+  },
+  {
+    "code": 2345,
+    "file": "fixtures/counter.client.ts",
+    "message": "Argument of type '() => Promise<number>' is not assignable to parameter of type 'never'."
+  },
+  {
+    "code": 2540,
+    "file": "fixtures/creation.ts",
+    "message": "Cannot assign to 'label' because it is a read-only property."
+  },
+  {
+    "code": 2345,
+    "file": "fixtures/creation.ts",
+    "message": "Argument of type '\"misspelled\"' is not assignable to parameter of type '\"receive\" | \"draftText\" | \"setDraft\"'."
+  },
+  {
+    "code": 2322,
+    "file": "fixtures/creation.ts",
+    "message": "Type '\"missing\"' is not assignable to type '\"receive\" | \"draftText\" | \"setDraft\"'."
+  },
+  {
+    "code": 2353,
+    "file": "fixtures/creation.ts",
+    "message": "Object literal may only specify known properties, and 'kind' does not exist in type 'BindingOptions<\"receive\" | \"draftText\" | \"setDraft\">'."
+  },
+  {
+    "code": 2322,
+    "file": "fixtures/creation.ts",
+    "message": "Type 'number' is not assignable to type 'string'."
+  },
+  {
+    "code": 2345,
+    "file": "fixtures/creation.ts",
+    "message": "Argument of type 'ClientDefinition<{ readonly draftText: (ctx: Ctx) => string; }>' is not assignable to parameter of type 'CreatedClientDefinition<{ readonly draftText: (ctx: Ctx) => string; }, unknown, unknown>'.   Property 'create' is missing in type 'ClientDefinition<{ readonly draftText: (ctx: Ctx) => string; }>' but required in type 'CreatedClientDefinition<{ readonly draftText: (ctx: Ctx) => string; }, unknown, unknown>'."
+  },
+  {
+    "code": 2345,
+    "file": "fixtures/inferred-registry-names.ts",
+    "message": "Argument of type '\"missing\"' is not assignable to parameter of type '\"countText\" | \"increment\"'."
+  },
+  {
+    "code": 2345,
+    "file": "fixtures/name-assertions.ts",
+    "message": "Argument of type '\"unknown\"' is not assignable to parameter of type '\"countText\" | \"increment\" | \"typeAssertions\"'."
+  },
+  {
+    "code": 2345,
+    "file": "fixtures/name-assertions.ts",
+    "message": "Argument of type '\"unknown\"' is not assignable to parameter of type '\"countText\" | \"increment\" | \"typeAssertions\"'."
+  },
+  {
+    "code": 2554,
+    "file": "fixtures/name-assertions.ts",
+    "message": "Expected 2 arguments, but got 1."
+  },
+  {
+    "code": 2339,
+    "file": "fixtures/snapshot-assertions.ts",
+    "message": "Property 'set' does not exist on type '{ readonly value: number; peek(): number; }'."
+  },
+  {
+    "code": 2540,
+    "file": "fixtures/snapshot-assertions.ts",
+    "message": "Cannot assign to 'title' because it is a read-only property."
+  },
+  {
+    "code": 2345,
+    "file": "fixtures/typed-client-names.ts",
+    "message": "Argument of type '\"typo\"' is not assignable to parameter of type 'keyof Registry'."
+  }
+]

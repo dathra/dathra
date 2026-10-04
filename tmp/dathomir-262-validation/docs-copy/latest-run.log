@@ -1,0 +1,14 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir-task-264-authoring-evidence
+
+ ✓ tmp/dathomir-262-validation/docs-copy/baseline.test.mjs (4 tests) 3401ms
+     ✓ records the known SSR activation gap independently from CSR behavior  1014ms
+     ✓ records false success with clipboard missing  747ms
+     ✓ records false success with clipboard reject  772ms
+     ✓ clears the old reset timer on repeated click and on host removal  779ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  06:27:21
+   Duration  4.04s (transform 265ms, setup 0ms, collect 540ms, tests 3.40s, environment 0ms, prepare 4ms)
+

@@ -1,0 +1,8 @@
+[
+  {
+    "code": "E_CLIENT_LINK_INDIRECTION",
+    "file": "graph/negative/local-alias.ts",
+    "line": 4,
+    "detail": "Use import {clientModule as link} or namespace.clientModule directly; local variable aliases are not in this adapter inventory."
+  }
+]

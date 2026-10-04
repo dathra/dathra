@@ -1,0 +1,55 @@
+{
+  "typescript": "6.0.3",
+  "actualSignalOrigins": [
+    "packages/reactivity/src/types/index.ts"
+  ],
+  "strict": {
+    "pass": true,
+    "expectedErrorDirectives": 22
+  },
+  "negative": [
+    {
+      "name": "state-mismatch.server.ts",
+      "codes": [
+        2769,
+        2349
+      ],
+      "rejected": true
+    },
+    {
+      "name": "unannotated.client.ts",
+      "codes": [
+        7006
+      ],
+      "rejected": true
+    },
+    {
+      "name": "kind.option.ts",
+      "codes": [
+        2353
+      ],
+      "rejected": true
+    },
+    {
+      "name": "received-mismatch.ts",
+      "codes": [
+        2345
+      ],
+      "rejected": true
+    },
+    {
+      "name": "received-other-function.ts",
+      "codes": [
+        2345
+      ],
+      "rejected": true
+    }
+  ],
+  "unsuppressedErrors": 22,
+  "declarationEmit": true,
+  "knownLimits": [
+    "ClientContext<V> defaults ui names to string; later defineClient cannot retroactively contextual-type independent functions.",
+    "Type-only clientModule witness cannot prove runtime specifier correspondence.",
+    "Proposed public declarations, not production API types or a runtime ownership proof."
+  ]
+}

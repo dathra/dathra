@@ -1,0 +1,35 @@
+2026-10-04T21:04:39.250104+00:00
+node --check tmp/dathomir-262-validation/dom-input/browser-harness.mjs -> exit 0
+
+node --check tmp/dathomir-262-validation/dom-input/browser.mjs -> exit 0
+
+node --check tmp/dathomir-262-validation/dom-input/counter-kernel.mjs -> exit 0
+
+node --check tmp/dathomir-262-validation/dom-input/counter.test.mjs -> exit 0
+
+node --check tmp/dathomir-262-validation/dom-input/counterexamples.test.mjs -> exit 0
+
+node --check tmp/dathomir-262-validation/dom-input/p04-kernel.mjs -> exit 0
+
+node --check tmp/dathomir-262-validation/dom-input/p04.test.mjs -> exit 0
+
+node --check tmp/dathomir-262-validation/dom-input/p05-kernel.mjs -> exit 0
+
+node --check tmp/dathomir-262-validation/dom-input/p05.test.mjs -> exit 0
+
+node --check tmp/dathomir-262-validation/dom-input/run.mjs -> exit 0
+
+node --check tmp/dathomir-262-validation/dom-input/vitest.config.mjs -> exit 0
+
+packages/reactivity/node_modules/.bin/oxlint --deny-warnings tmp/dathomir-262-validation/dom-input/browser-harness.mjs tmp/dathomir-262-validation/dom-input/browser.mjs tmp/dathomir-262-validation/dom-input/counter-kernel.mjs tmp/dathomir-262-validation/dom-input/counter.test.mjs tmp/dathomir-262-validation/dom-input/counterexamples.test.mjs tmp/dathomir-262-validation/dom-input/p04-kernel.mjs tmp/dathomir-262-validation/dom-input/p04.test.mjs tmp/dathomir-262-validation/dom-input/p05-kernel.mjs tmp/dathomir-262-validation/dom-input/p05.test.mjs tmp/dathomir-262-validation/dom-input/run.mjs tmp/dathomir-262-validation/dom-input/vitest.config.mjs
+Found 0 warnings and 0 errors.
+Finished in 19ms on 11 files with 93 rules using 8 threads.
+
+exit 0
+All bundled source SHA-256 values still match build-provenance.json.
+All README links resolve on this workspace.
+p04: 21 browser observations, Chromium 141.0.7390.37
+p05: 17 browser observations, Chromium 141.0.7390.37
+counterexamples: 8 browser observations, Chromium 141.0.7390.37
+counter: 1 browser observations, Chromium 141.0.7390.37
+latest-run.log: 4 files and 47 tests passed; 8 are retained-counterexample assertions.

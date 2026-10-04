@@ -1,0 +1,26 @@
+[
+  {
+    "source": "/home/kcatt/dev/dathomir/tmp/dathomir-262-three-concerns-review.md",
+    "file": "dathomir-262-three-concerns-review.md",
+    "sha256": "a5f2e079476b50316a080d1d4d35862cda3d502c624367753b4057b2fabb867e",
+    "status": "Unadopted discussion snapshot; current validation may supersede individual feasibility claims."
+  },
+  {
+    "source": "/home/kcatt/dev/dathomir/tmp/dathomir-262-section1-review-status.md",
+    "file": "dathomir-262-section1-review-status.md",
+    "sha256": "561c269b8f6638dcdab7600e76219076ec9fd422621a430856e7e91e0898199a",
+    "status": "Unadopted discussion snapshot; current validation may supersede individual feasibility claims."
+  },
+  {
+    "source": "/home/kcatt/dev/dathomir/tmp/dathomir-262-full-authoring-review.md",
+    "file": "dathomir-262-full-authoring-review.md",
+    "sha256": "141a7b06754f6d4747aa5caf7fc2b6c181e1a4f763cda05e2f84cc673db29a15",
+    "status": "Unadopted discussion snapshot; current validation may supersede individual feasibility claims."
+  },
+  {
+    "source": "/home/kcatt/dev/dathomir/tmp/dathomir-262-signal-and-feasibility-review.md",
+    "file": "dathomir-262-signal-and-feasibility-review.md",
+    "sha256": "f1e6689a4d5c83c92f4afc74c7f02b7af951919bedba03292e3672ad3b5fe782",
+    "status": "Unadopted discussion snapshot; current validation may supersede individual feasibility claims."
+  }
+]

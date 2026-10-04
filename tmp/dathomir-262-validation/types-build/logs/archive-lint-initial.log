@@ -1,0 +1,60 @@
+
+  ! eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+    ,-[tmp/dathomir-262-validation/types-build/fixtures/boolean-placement.ts:32:39]
+ 31 | const emptyBooleanChild: Content = false;
+ 32 | const conditionallyVisible: Content = false && el("span", {}, "conditional");
+    :                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 33 | export { nativeControls, emptyBooleanChild, conditionallyVisible };
+    `----
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ! eslint(no-self-assign): this expression is assigned to itself
+    ,-[tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts:26:22]
+ 25 |   // @ts-expect-error Slot cannot be replaced.
+ 26 |   ctx.values.count = ctx.values.count;
+    :                      ^^^^^^^^^^^^^^^^
+ 27 |   // @ts-expect-error Owned payload mutation is not the proposed context contract.
+    `----
+  help: Remove the self-assignment or assign to a different variable.
+
+  ! eslint(no-unused-vars): Variable 'R' is declared but never used. Unused variables should start with a '_'.
+    ,-[tmp/dathomir-262-validation/types-build/runtime/contracts.ts:84:28]
+ 83 | }
+ 84 | interface ClientContext<V, R = unknown, D = unknown, I = unknown, N extends string = string> {
+    :                            |
+    :                            `-- 'R' is declared here
+ 85 |   readonly values: OwnedValues<V>;
+    `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Variable 'D' is declared but never used. Unused variables should start with a '_'.
+    ,-[tmp/dathomir-262-validation/types-build/runtime/contracts.ts:84:41]
+ 83 | }
+ 84 | interface ClientContext<V, R = unknown, D = unknown, I = unknown, N extends string = string> {
+    :                                         |
+    :                                         `-- 'D' is declared here
+ 85 |   readonly values: OwnedValues<V>;
+    `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Identifier 'fs' is imported but never used.
+   ,-[tmp/dathomir-262-validation/types-build/collector.mjs:1:8]
+ 1 | import fs from "node:fs";
+   :        ^|
+   :         `-- 'fs' is imported here
+ 2 | import path from "node:path";
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Variable 'inputs' is declared but never used. Unused variables should start with a '_'.
+     ,-[tmp/dathomir-262-validation/types-build/run-build.mjs:156:11]
+ 155 |     const br = await bundle(r.clientFile, path.join(dir, "server", file), "browser");
+ 156 |     const inputs = Object.keys(br.metafile.inputs);
+     :           ^^^|^^
+     :              `-- 'inputs' is declared here
+ 157 |     enforceBrowserInventory(br.metafile);
+     `----
+  help: Consider removing this declaration.
+
+Found 6 warnings and 0 errors.
+Finished in 25ms on 49 files with 93 rules using 8 threads.

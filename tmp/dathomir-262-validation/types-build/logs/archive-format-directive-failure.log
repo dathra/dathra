@@ -1,0 +1,88 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: [96mtmp/dathomir-262-validation/types-build/fixtures/counter.client.ts[0m:[93m32[0m:[93m3[0m - [91merror[0m[90m TS2578: [0mUnused '@ts-expect-error' directive.
+
+[7m32[0m   // @ts-expect-error Updater previous is readonly.
+[7m  [0m [91m  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtmp/dathomir-262-validation/types-build/fixtures/counter.client.ts[0m:[93m34[0m:[93m14[0m - [91merror[0m[90m TS2540: [0mCannot assign to 'n' because it is a read-only property.
+
+[7m34[0m     previous.n++;
+[7m  [0m [91m             ~[0m
+
+
+2 !== 0
+
+    at file:///home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/run-types.mjs:26:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async node:internal/modules/esm/loader:639:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.15.0
+ ❯ verification.test.ts (3 tests | 1 failed) 7750ms
+     × P01 uses native Signal declarations, rejects mismatches and emits finite declarations 1174ms
+     ✓ P02 preserves real counterexamples and validates actual relocated bundles  5109ms
+     ✓ P02b resolves preserved modules without framework source rewriting and shares the browser engine  1466ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  verification.test.ts > bounded #262 actual-type and emitted-graph evidence > P01 uses native Signal declarations, rejects mismatches and emits finite declarations
+Error: Command failed: /home/kcatt/.local/share/mise/installs/node/24.15.0/bin/node run-types.mjs
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: [96mtmp/dathomir-262-validation/types-build/fixtures/counter.client.ts[0m:[93m32[0m:[93m3[0m - [91merror[0m[90m TS2578: [0mUnused '@ts-expect-error' directive.
+
+[7m32[0m   // @ts-expect-error Updater previous is readonly.
+[7m  [0m [91m  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtmp/dathomir-262-validation/types-build/fixtures/counter.client.ts[0m:[93m34[0m:[93m14[0m - [91merror[0m[90m TS2540: [0mCannot assign to 'n' because it is a read-only property.
+
+[7m34[0m     previous.n++;
+[7m  [0m [91m             ~[0m
+
+
+2 !== 0
+
+    at file:///home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/run-types.mjs:26:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async node:internal/modules/esm/loader:639:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.15.0
+
+ ❯ run-types.mjs:26:8
+ ❯ verification.test.ts:8:5
+      6| describe("bounded #262 actual-type and emitted-graph evidence", () => {
+      7|   it("P01 uses native Signal declarations, rejects mismatches and emit…
+      8|     execFileSync(process.execPath, ["run-types.mjs"], { cwd: root, tim…
+       |     ^
+      9|     const result = JSON.parse(
+     10|       readFileSync(new URL("logs/p01-result.json", import.meta.url), "…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  06:25:35
+   Duration  7.87s (transform 21ms, setup 0ms, collect 30ms, tests 7.75s, environment 0ms, prepare 4ms)
+

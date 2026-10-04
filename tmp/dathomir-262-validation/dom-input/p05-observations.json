@@ -1,0 +1,308 @@
+{
+  "timestamp": "2026-10-04T21:27:15.948Z",
+  "browser": "141.0.7390.37",
+  "engine": "bundled unmodified packages/reactivity/src/index.ts",
+  "nativeIME": false,
+  "observations": [
+    {
+      "name": "preboot edit and automatic refresh",
+      "result": {
+        "draft": "あ",
+        "value": "あ",
+        "defaultValue": "a",
+        "propertyWrites": 0,
+        "sameControl": true,
+        "sameText": true,
+        "content": "Count = 7",
+        "trace": [
+          {
+            "phase": "preflight",
+            "reason": "read",
+            "values": [
+              {
+                "value": "あ",
+                "revision": 0
+              }
+            ]
+          },
+          {
+            "phase": "staging",
+            "reason": "adopt",
+            "ref": "a",
+            "value": "あ",
+            "revision": 0
+          },
+          {
+            "phase": "active",
+            "reason": "commit"
+          }
+        ],
+        "snapshot": "a",
+        "log": [
+          {
+            "ref": "a",
+            "value": "あ",
+            "revision": 0,
+            "selectionStart": 1,
+            "selectionEnd": 1,
+            "composition": "unknown",
+            "reason": "adopt"
+          }
+        ]
+      }
+    },
+    {
+      "name": "listener registration gap",
+      "result": {
+        "model": "listener-gap",
+        "value": "listener-gap",
+        "revision": 1,
+        "writes": 0,
+        "trace": [
+          {
+            "phase": "preflight",
+            "reason": "read",
+            "values": [
+              {
+                "value": "a",
+                "revision": 0
+              }
+            ]
+          },
+          {
+            "phase": "staging",
+            "reason": "adopt",
+            "ref": "a",
+            "value": "listener-gap",
+            "revision": 1
+          },
+          {
+            "phase": "active",
+            "reason": "commit"
+          }
+        ]
+      }
+    },
+    {
+      "name": "silent revision gap",
+      "result": {
+        "model": "silent-new",
+        "value": "silent-new",
+        "revision": 0,
+        "adopted": [
+          "a",
+          "silent-new"
+        ]
+      }
+    },
+    {
+      "name": "unstable native admission",
+      "result": {
+        "error": "UNSTABLE_NATIVE_REVISION: form-response",
+        "retry": "ADMISSION_TERMINAL: form-response",
+        "value": "edit-2",
+        "defaultValue": "a"
+      }
+    },
+    {
+      "name": "failed admission native preservation",
+      "result": {
+        "error": "REQUIRED_COMMIT_FAILURE: form-response",
+        "value": "late",
+        "atFailure": "あい",
+        "calls": 2,
+        "callsAfterLate": 2,
+        "snapshot": "a"
+      }
+    },
+    {
+      "name": "native versus controlled",
+      "result": {
+        "native": "draftx",
+        "baseline": "a",
+        "controlled": "draftx",
+        "current": "draftx",
+        "sinkCalls": 4,
+        "reasons": [
+          "adopt",
+          "change",
+          "blur",
+          "input"
+        ]
+      }
+    },
+    {
+      "name": "unknown composition hold",
+      "result": {
+        "before": {
+          "value": "draft",
+          "model": "draft",
+          "pending": "composition-or-unknown",
+          "writes": 0
+        },
+        "after": {
+          "value": "DRAFT",
+          "pending": null,
+          "writes": 1
+        }
+      }
+    },
+    {
+      "name": "same-value caret",
+      "result": {
+        "before": [
+          1,
+          2
+        ],
+        "after": {
+          "selection": [
+            1,
+            2
+          ],
+          "writes": 0,
+          "focused": true
+        }
+      }
+    },
+    {
+      "name": "multi-control conflict",
+      "result": {
+        "conflict": true,
+        "pending": "conflicting-native-drafts",
+        "model": "remote",
+        "values": [
+          "first",
+          "second"
+        ],
+        "writes": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "explicit group resolution",
+      "result": {
+        "conflict": false,
+        "pending": null,
+        "model": "chosen",
+        "values": [
+          "chosen",
+          "chosen"
+        ],
+        "writes": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "name": "synthetic composition state only",
+      "result": {
+        "during": {
+          "value": "あ",
+          "model": "あ",
+          "pending": "composition-or-unknown",
+          "writes": 0
+        },
+        "after": {
+          "value": "[あ]",
+          "pending": null,
+          "writes": 1
+        },
+        "trust": [
+          false
+        ],
+        "nativeIME": false
+      }
+    },
+    {
+      "name": "active revision guard",
+      "result": {
+        "value": "newer",
+        "model": "newer",
+        "revision": 1,
+        "writes": 0,
+        "staleRejects": 1
+      }
+    },
+    {
+      "name": "controlled reset adapter",
+      "result": {
+        "reset": {
+          "value": "a",
+          "model": "a",
+          "reasons": [
+            "adopt",
+            "change",
+            "blur",
+            "reset"
+          ]
+        },
+        "canceled": {
+          "value": "keep",
+          "model": "keep",
+          "reasons": [
+            "adopt",
+            "change",
+            "blur",
+            "reset",
+            "input",
+            "change",
+            "blur"
+          ]
+        }
+      }
+    },
+    {
+      "name": "one owner and listener",
+      "result": {
+        "sameOwner": true,
+        "activeCalls": 2,
+        "afterDispose": 2,
+        "model": "edit"
+      }
+    },
+    {
+      "name": "reset revision gap",
+      "result": {
+        "value": "newer",
+        "model": "newer",
+        "reasons": [
+          "adopt",
+          "input"
+        ],
+        "resetTask": {
+          "phase": "active",
+          "reason": "reset-task",
+          "canceled": false,
+          "captured": [
+            0
+          ],
+          "current": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "reset timer disposal",
+      "result": {
+        "value": "a",
+        "model": "dirty",
+        "state": "disposed",
+        "reasons": [
+          "adopt"
+        ],
+        "resetTasks": 0
+      }
+    },
+    {
+      "name": "model-only sink phase",
+      "result": {
+        "error": "MODEL_ONLY_PHASE: setDraft",
+        "value": "draft"
+      }
+    }
+  ]
+}

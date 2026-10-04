@@ -1,0 +1,5 @@
+Checking formatting...
+
+All matched files use the correct format.
+Finished in 40ms on 90 files using 8 threads.
+No config found, using defaults. Please add a config file or try `oxfmt --init` if needed.

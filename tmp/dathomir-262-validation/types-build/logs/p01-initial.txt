@@ -1,0 +1,2 @@
+tmp/dathomir-262-validation/types-build/runtime/contracts.ts(92,3): error TS1128: Declaration or statement expected.
+tmp/dathomir-262-validation/types-build/runtime/contracts.ts(92,35): error TS1109: Expression expected.

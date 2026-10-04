@@ -1,0 +1,14 @@
+[96mtmp/dathomir-262-validation/types-build/negative/received-mismatch.ts[0m:[93m10[0m:[93m42[0m - [91merror[0m[90m TS2345: [0mArgument of type '{ create: { input: (raw: unknown) => { label: number; }; initialize: (input: { label: number; }) => { count: Signal<number>; }; receive: "receive"; template(values: { readonly count: { readonly value: number; peek(): number; }; }): string; }; }' is not assignable to parameter of type '{ create: CreationProfile<NoInfer<{ readonly receive: (ctx: ClientContext<{ count: Signal<number>; }, unknown, unknown, { label: string; }, string>) => void; }>, { label: number; }, { ...; }>; } & { ...; }'.
+  Property 'INPUT_TYPE_MISMATCH' is missing in type '{ create: { input: (raw: unknown) => { label: number; }; initialize: (input: { label: number; }) => { count: Signal<number>; }; receive: "receive"; template(values: { readonly count: { readonly value: number; peek(): number; }; }): string; }; }' but required in type '{ readonly INPUT_TYPE_MISMATCH: never; }'.
+
+[7m10[0m const Broken = defineClient({ receive }, { create: {
+[7m  [0m [91m                                         ~~~~~~~~~~~[0m
+[7m11[0m   input: parse, initialize, receive: 'receive', template(values) { return String(values.count.value); },
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m12[0m } });
+[7m  [0m [91m~~~[0m
+
+  [96mtmp/dathomir-262-validation/types-build/runtime/contracts.ts[0m:[93m129[0m:[93m18[0m
+    [7m129[0m     : { readonly INPUT_TYPE_MISMATCH: never };
+    [7m   [0m [96m                 ~~~~~~~~~~~~~~~~~~~[0m
+    'INPUT_TYPE_MISMATCH' is declared here.

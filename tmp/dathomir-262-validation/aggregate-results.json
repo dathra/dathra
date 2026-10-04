@@ -1,0 +1,97 @@
+{
+  "node": "v24.15.0",
+  "scope": "Independent proof kernels and observations; not a joint production integration test.",
+  "results": [
+    {
+      "name": "types-build",
+      "started": "2026-10-04T21:26:58.675Z",
+      "completed": "2026-10-04T21:27:10.980Z",
+      "executable": "/home/kcatt/.local/share/mise/installs/node/24.15.0/bin/node",
+      "args": [
+        "/home/kcatt/dev/dathomir-task-264-authoring-evidence/node_modules/.pnpm/vitest@4.0.4_@types+node@24.2.0_@vitest+browser-playwright@4.0.4_happy-dom@20.5.3_jiti@_5b2fbcf6b35be44455bd90449248f87a/node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "/home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/vitest.config.mjs"
+      ],
+      "exitCode": 0,
+      "error": null
+    },
+    {
+      "name": "state-lifetime",
+      "started": "2026-10-04T21:27:10.981Z",
+      "completed": "2026-10-04T21:27:12.908Z",
+      "executable": "/home/kcatt/.local/share/mise/installs/node/24.15.0/bin/node",
+      "args": [
+        "tmp/dathomir-262-validation/state-lifetime/run.mjs"
+      ],
+      "exitCode": 0,
+      "error": null
+    },
+    {
+      "name": "dom-input",
+      "started": "2026-10-04T21:27:12.908Z",
+      "completed": "2026-10-04T21:27:17.568Z",
+      "executable": "/home/kcatt/.local/share/mise/installs/node/24.15.0/bin/node",
+      "args": [
+        "tmp/dathomir-262-validation/dom-input/run.mjs"
+      ],
+      "exitCode": 0,
+      "error": null
+    },
+    {
+      "name": "delivery-races",
+      "started": "2026-10-04T21:27:17.568Z",
+      "completed": "2026-10-04T21:27:17.944Z",
+      "executable": "/home/kcatt/.local/share/mise/installs/node/24.15.0/bin/node",
+      "args": [
+        "tmp/dathomir-262-validation/delivery-races/run.mjs"
+      ],
+      "exitCode": 0,
+      "error": null
+    },
+    {
+      "name": "native-controls",
+      "started": "2026-10-04T21:27:17.944Z",
+      "completed": "2026-10-04T21:27:18.994Z",
+      "executable": "/home/kcatt/.local/share/mise/installs/node/24.15.0/bin/node",
+      "args": [
+        "tmp/dathomir-262-validation/native-controls/run.mjs"
+      ],
+      "exitCode": 0,
+      "error": null
+    },
+    {
+      "name": "native-history",
+      "started": "2026-10-04T21:27:18.994Z",
+      "completed": "2026-10-04T21:27:19.708Z",
+      "executable": "/home/kcatt/.local/share/mise/installs/node/24.15.0/bin/node",
+      "args": [
+        "tmp/dathomir-262-validation/native-history/run.mjs"
+      ],
+      "exitCode": 0,
+      "error": null
+    },
+    {
+      "name": "docs-build",
+      "started": "2026-10-04T21:27:19.709Z",
+      "completed": "2026-10-04T21:27:20.863Z",
+      "executable": "/home/kcatt/.local/share/mise/installs/node/24.15.0/bin/node",
+      "args": [
+        "tmp/dathomir-262-validation/docs-copy/build.mjs"
+      ],
+      "exitCode": 0,
+      "error": null
+    },
+    {
+      "name": "docs-copy",
+      "started": "2026-10-04T21:27:20.863Z",
+      "completed": "2026-10-04T21:27:25.145Z",
+      "executable": "/home/kcatt/.local/share/mise/installs/node/24.15.0/bin/node",
+      "args": [
+        "tmp/dathomir-262-validation/docs-copy/run.mjs"
+      ],
+      "exitCode": 0,
+      "error": null
+    }
+  ]
+}

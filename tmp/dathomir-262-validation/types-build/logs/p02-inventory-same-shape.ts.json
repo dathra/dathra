@@ -1,0 +1,8 @@
+[
+  {
+    "code": "E_TYPE_RUNTIME_SOURCE_MISMATCH",
+    "file": "graph/negative/same-shape.ts",
+    "line": 3,
+    "detail": "Type witness and runtime specifier resolve to different default symbols. Align the imported type and ../two/widget.client.js. This is an explicit TS-source inventory rule, not erased-generic validation."
+  }
+]

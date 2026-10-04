@@ -1,0 +1,10 @@
+{
+  "command": [
+    "packages/reactivity/node_modules/.bin/tsx",
+    "--test",
+    "tmp/dathomir-262-validation/state-lifetime/p03.test.ts"
+  ],
+  "exit_code": 0,
+  "stdout": "\u2714 P03.01 one-peek aliases; captured template and JSON handoff use one isolated snapshot (2.246226ms)\n\u2714 P03.02 same-valued distinct Signals remain separate slots (0.421586ms)\n\u2714 P03.03 inherited protocol; first shadowing accessor wins without executing (0.268974ms)\n\u2714 P03.04 tag-only data, computed, trusted full fake, throwing peek and malformed payload (1.10932ms)\n\u2714 P03.05 actual bundled second engine copy is accepted structurally (2.331764ms)\n\u2714 P03.06 identity/no-op matrix with actual effect notifications (0.804356ms)\n\u2714 P03.07 nested alias updater; external nested mutation reused across distinct roots (0.374272ms)\n\u2714 P03.08 field-order insensitive; array order and negative zero retained through wire (0.494846ms)\n\u2714 P03.09 no raw payload escape via peek/updater; caller remains mutable (0.319647ms)\n\u2714 P03.10 revoked cached setters/updaters and disposed caller aliases cannot write (0.367905ms)\n\u2714 P03.11 actual tracking, peek, computed, batch and stop through readonly projection (0.440532ms)\n\u2714 P03.12 trusted side-effectful peek disproves a global instantaneous cut (0.378764ms)\n\u2714 P03.13 finite domain diagnostics never execute ordinary getters (0.441749ms)\n\u2714 P03.14 all-name bind rejects increment writes before mutation or return validation (0.472833ms)\n\u2714 P03.15 arbitrary captured native side effect is outside binding capability enforcement (0.90608ms)\n\u2139 tests 15\n\u2139 suites 0\n\u2139 pass 15\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 257.564086\n",
+  "stderr": ""
+}

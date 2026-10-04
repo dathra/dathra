@@ -1,0 +1,40 @@
+{
+  "browser": "141.0.7390.37",
+  "observations": [
+    {
+      "name": "same-document-back",
+      "result": {
+        "state": {
+          "route": "a",
+          "draft": "A"
+        },
+        "path": "/a",
+        "content": "B content",
+        "draft": "B unfinished draft"
+      }
+    },
+    {
+      "name": "checkpoint-clone",
+      "result": {
+        "state": {
+          "draft": {
+            "text": "saved"
+          },
+          "revision": 1
+        },
+        "sameRoot": false,
+        "sameDraft": false
+      }
+    },
+    {
+      "name": "non-cloneable-state",
+      "result": {
+        "failure": "DataCloneError",
+        "path": "/a",
+        "state": {
+          "draft": "safe"
+        }
+      }
+    }
+  ]
+}

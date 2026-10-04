@@ -1,0 +1,21 @@
+missing.ts {"rejectedByInventory":"E_MODULE_MISSING"}
+no-default.ts {"rejectedByInventory":"E_DEFAULT_MISSING"}
+local-alias.ts {"rejectedByInventory":"E_CLIENT_LINK_INDIRECTION"}
+nonliteral.ts {"rejectedByInventory":"E_CLIENT_LINK_LITERAL"}
+same-shape.ts {"rejectedByInventory":"E_TYPE_RUNTIME_SOURCE_MISMATCH","typeScriptAloneAccepts":true}
+shadowed-function {"unrelatedSameNameNotCollectedOrRewritten":true}
+creation-profile {"actualDeclaredTypeRejectsPlainClient":true,"diagnostics":[{"code":2345,"message":"Argument of type 'ClientDefinition<{ readonly label: () => string; }>' is not assignable to parameter of type 'CreatedClientDefinition<{ readonly label: () => string; }, unknown, unknown>'.   Property 'create' is missing in type 'ClientDefinition<{ readonly label: () => string; }>' but required in type 'CreatedClientDefinition<{ readonly label: () => string; }, unknown, unknown>'."}]}
+naive-source-vs-emitted-import-meta {"actualRenderFails":"Error: E_MODULE_LOOKUP: file:///home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build/out/build/naive/server/counter.client.js","referencedOutputFileExists":false}
+emitted-graphs-and-ssr {"realEsbuildBundles":true,"treeShaking":false,"serverContainsSecretAndNoBrowserTopLevel":true,"browserHasNoServerInputsOrSecret":true,"actualServerExecutionDidNotLoadBrowser":true,"renamedImportAndNamespaceSupported":true,"distinctSameBasenameReferences":2,"activatedModules":3}
+dynamic-zero-response {"response":{"html":"<article>server-only response</article>","modules":[],"bootstrap":"","payload":null},"potentialBrowserArtifactsStillExist":3,"boundary":"Response omissions; not removal of available build artifacts."}
+static-route-build-omission {"selectedBrowserEntries":0,"generatedBrowserFiles":0,"response":{"html":"<article>static-only route</article>","modules":[],"bootstrap":"","payload":null}}
+actual-relocated-lookup {"originalOutputAndSourceUnavailable":true,"serverSSRWorks":true,"actualImports":[{"relative":"../browser/client-0.mjs","actualURL":"file:///home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build/out/build/relocated/deployment/browser/client-0.mjs","exists":true,"names":["countText","increment"]},{"relative":"../browser/client-1.mjs","actualURL":"file:///home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build/out/build/relocated/deployment/browser/client-1.mjs","exists":true,"names":["label"]},{"relative":"../browser/client-2.mjs","actualURL":"file:///home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build/out/build/relocated/deployment/browser/client-2.mjs","exists":true,"names":["label"]}],"browserTopLevelSentinelExecutedOnlyInBrowserSmoke":true,"host":"Node with a minimal window sentinel; no DOM/admission browser proof."}
+js-runtime-invalid-name {"rejectBeforeResponseActivation":true,"diagnostic":"E_FUNCTION_NAME: misspelled; available label"}
+ordinary-client-runtime-import {"actualServerEvaluationFailsSentinel":true,"typeOnlyImportAvoidsThis":true}
+browser-import-server-dependency {"actualBundlerRejects":"Could not resolve \"node:crypto\""}
+js-runtime-profile-validation {"noCreationProfileAndNonCallableRegistryRejected":true}
+P02 complete 16 cases
+(node:283976) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build/runtime/client.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/kcatt/dev/dathomir/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)

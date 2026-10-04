@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noImplicitAny": true,
+    "skipLibCheck": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "allowJs": true,
+    "checkJs": true,
+    "rootDir": "../../../",
+    "outDir": "./out/declarations",
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "types": [],
+    "paths": {
+      "@dathra/reactivity": [
+        "../../../packages/reactivity/src/index.ts"
+      ],
+      "@dathra/core/client": [
+        "./runtime/client.d.ts"
+      ],
+      "@dathra/core/server": [
+        "./runtime/server.d.ts"
+      ]
+    }
+  },
+  "include": [
+    "fixtures/**/*",
+    "runtime/*.ts"
+  ]
+}

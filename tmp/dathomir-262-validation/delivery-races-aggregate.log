@@ -1,0 +1,10 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir-task-264-authoring-evidence
+
+ ✓ tmp/dathomir-262-validation/delivery-races/model.test.mjs (39 tests) 10ms
+
+ Test Files  1 passed (1)
+      Tests  39 passed (39)
+   Start at  06:27:17
+   Duration  133ms (transform 22ms, setup 0ms, collect 32ms, tests 10ms, environment 0ms, prepare 4ms)
+

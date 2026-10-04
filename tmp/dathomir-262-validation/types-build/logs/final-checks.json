@@ -1,0 +1,8 @@
+{
+  "p02Cases": 27,
+  "preservedHashCount": 10,
+  "preserved": true,
+  "whitespaceFiles": 125,
+  "whitespacePass": true,
+  "publicEngineGate": "not met by per-entry author adapter; standalone shared-chunk positive only"
+}

@@ -1,0 +1,311 @@
+
+> @playground/e2e@0.0.0 build:deps /home/kcatt/dev/dathomir-task-264-authoring-evidence/playgrounds/e2e
+> pnpm -r --filter @dathra/shared --filter @dathra/reactivity --filter @dathra/store --filter @dathra/runtime --filter @dathra/components --filter @dathra/core --filter @dathra/transformer --filter @dathra/plugin build
+
+Scope: 8 of 16 workspace projects
+../../packages/shared build$ tsdown
+../../packages/reactivity build$ tsdown
+../../packages/reactivity build: ℹ tsdown v0.22.0 powered by rolldown v1.0.0
+../../packages/shared build: ℹ tsdown v0.22.0 powered by rolldown v1.0.0
+../../packages/reactivity build: ℹ config file: /home/kcatt/dev/dathomir-task-264-authoring-evidence/packages/reactivity/tsdown.config.ts
+../../packages/shared build: ℹ config file: /home/kcatt/dev/dathomir-task-264-authoring-evidence/packages/shared/tsdown.config.ts
+../../packages/reactivity build: ℹ entry: src/index.ts
+../../packages/reactivity build: ℹ tsconfig: tsconfig.json
+../../packages/shared build: ℹ entry: src/index.ts
+../../packages/shared build: ℹ tsconfig: tsconfig.json
+../../packages/reactivity build: ℹ Build start
+../../packages/shared build: ℹ Build start
+../../packages/shared build: ℹ [CJS] dist/index.cjs       5.70 kB │ gzip: 1.61 kB
+../../packages/shared build: ℹ [CJS] dist/index.cjs.map  17.95 kB │ gzip: 3.98 kB
+../../packages/shared build: ℹ [CJS] 2 files, total: 23.65 kB
+../../packages/reactivity build: ℹ [CJS] dist/index.cjs       4.81 kB │ gzip:  1.66 kB
+../../packages/reactivity build: ℹ [CJS] dist/index.cjs.map  38.99 kB │ gzip: 10.19 kB
+../../packages/reactivity build: ℹ [CJS] 2 files, total: 43.80 kB
+../../packages/reactivity build: ℹ [CJS] dist/index.d.cts  6.62 kB │ gzip: 2.22 kB
+../../packages/reactivity build: ℹ [CJS] 1 files, total: 6.62 kB
+../../packages/reactivity build: ✔ Build complete in 929ms
+../../packages/reactivity build: ℹ [ESM] dist/index.mjs       4.32 kB │ gzip:  1.62 kB
+../../packages/reactivity build: ℹ [ESM] dist/index.mjs.map  38.74 kB │ gzip: 10.18 kB
+../../packages/reactivity build: ℹ [ESM] dist/index.d.mts     6.62 kB │ gzip:  2.22 kB
+../../packages/reactivity build: ℹ [ESM] 3 files, total: 49.68 kB
+../../packages/reactivity build: ✔ Build complete in 933ms
+../../packages/reactivity build: Done
+../../packages/shared build: ℹ [CJS] dist/index.d.cts  8.14 kB │ gzip: 1.71 kB
+../../packages/shared build: ℹ [CJS] 1 files, total: 8.14 kB
+../../packages/shared build: ℹ [ESM] dist/index.mjs       4.94 kB │ gzip: 1.47 kB
+../../packages/shared build: ℹ [ESM] dist/index.mjs.map  17.95 kB │ gzip: 3.98 kB
+../../packages/shared build: ℹ [ESM] dist/index.d.mts     8.14 kB │ gzip: 1.71 kB
+../../packages/shared build: ℹ [ESM] 3 files, total: 31.03 kB
+../../packages/shared build: ✔ Build complete in 969ms
+../../packages/shared build: ✔ Build complete in 969ms
+../../packages/shared build: Done
+../../packages/store build$ tsdown
+../../packages/transformer build$ tsdown
+../../packages/store build: ℹ tsdown v0.22.0 powered by rolldown v1.0.0
+../../packages/transformer build: ℹ tsdown v0.22.0 powered by rolldown v1.0.0
+../../packages/transformer build: ℹ config file: /home/kcatt/dev/dathomir-task-264-authoring-evidence/packages/transformer/tsdown.config.ts
+../../packages/store build: ℹ config file: /home/kcatt/dev/dathomir-task-264-authoring-evidence/packages/store/tsdown.config.ts
+../../packages/transformer build: ℹ entry: src/index.ts
+../../packages/transformer build: ℹ tsconfig: tsconfig.json
+../../packages/transformer build: ℹ Build start
+../../packages/store build: ℹ entry: src/index.ts, src/internal.ts
+../../packages/store build: ℹ tsconfig: tsconfig.json
+../../packages/store build: ℹ entry: src/index.ts, src/internal.ts
+../../packages/store build: ℹ tsconfig: tsconfig.json
+../../packages/store build: ℹ Build start
+../../packages/store build: ℹ [CJS] dist/index.cjs                   6.22 kB │ gzip: 1.91 kB
+../../packages/store build: ℹ [CJS] dist/internal.cjs                0.19 kB │ gzip: 0.16 kB
+../../packages/store build: ℹ [CJS] dist/index.cjs.map              15.04 kB │ gzip: 4.11 kB
+../../packages/store build: ℹ [CJS] dist/internal-DH_wIht6.cjs.map   2.00 kB │ gzip: 1.01 kB
+../../packages/store build: ℹ [CJS] dist/internal-DH_wIht6.cjs       1.54 kB │ gzip: 0.77 kB
+../../packages/store build: ℹ [CJS] 5 files, total: 25.00 kB
+../../packages/store build: ℹ [CJS] dist/index.node.cjs                   6.25 kB │ gzip: 1.92 kB
+../../packages/store build: ℹ [CJS] dist/internal.node.cjs                0.21 kB │ gzip: 0.17 kB
+../../packages/store build: ℹ [CJS] dist/index.node.cjs.map              15.04 kB │ gzip: 4.12 kB
+../../packages/store build: ℹ [CJS] dist/internal.node-D5M6AQ42.cjs.map   2.05 kB │ gzip: 0.95 kB
+../../packages/store build: ℹ [CJS] dist/internal.node-D5M6AQ42.cjs       1.72 kB │ gzip: 0.79 kB
+../../packages/store build: ℹ [CJS] 5 files, total: 25.26 kB
+../../packages/store build: ℹ [CJS] dist/index.node.d.cts               2.35 kB │ gzip: 0.93 kB
+../../packages/store build: ℹ [CJS] dist/internal.node.d.cts            0.62 kB │ gzip: 0.39 kB
+../../packages/store build: ℹ [CJS] dist/implementation-BtFRKZGC.d.cts  1.83 kB │ gzip: 0.64 kB
+../../packages/store build: ℹ [CJS] 3 files, total: 4.80 kB
+../../packages/store build: ✔ Build complete in 844ms
+../../packages/store build: ℹ [CJS] dist/index.d.cts                    2.35 kB │ gzip: 0.93 kB
+../../packages/store build: ℹ [CJS] dist/internal.d.cts                 0.62 kB │ gzip: 0.39 kB
+../../packages/store build: ℹ [CJS] dist/implementation-BtFRKZGC.d.cts  1.83 kB │ gzip: 0.64 kB
+../../packages/store build: ℹ [CJS] 3 files, total: 4.79 kB
+../../packages/store build: ✔ Build complete in 846ms
+../../packages/store build: ℹ [ESM] dist/index.mjs                       5.94 kB │ gzip: 1.84 kB
+../../packages/store build: ℹ [ESM] dist/internal.mjs                    0.09 kB │ gzip: 0.09 kB
+../../packages/store build: ℹ [ESM] dist/index.mjs.map                  15.03 kB │ gzip: 4.10 kB
+../../packages/store build: ℹ [ESM] dist/internal-hhqtBvGX.mjs.map       2.00 kB │ gzip: 1.00 kB
+../../packages/store build: ℹ [ESM] dist/internal-hhqtBvGX.mjs           1.33 kB │ gzip: 0.71 kB
+../../packages/store build: ℹ [ESM] dist/index.d.mts                     2.35 kB │ gzip: 0.93 kB
+../../packages/store build: ℹ [ESM] dist/internal.d.mts                  0.62 kB │ gzip: 0.39 kB
+../../packages/store build: ℹ [ESM] dist/implementation-BRPaHA5o.d.mts   1.83 kB │ gzip: 0.64 kB
+../../packages/store build: ℹ [ESM] 8 files, total: 29.19 kB
+../../packages/store build: ℹ [ESM] dist/index.node.mjs                   5.95 kB │ gzip: 1.84 kB
+../../packages/store build: ℹ [ESM] dist/internal.node.mjs                0.10 kB │ gzip: 0.10 kB
+../../packages/store build: ℹ [ESM] dist/index.node.mjs.map              15.03 kB │ gzip: 4.11 kB
+../../packages/store build: ℹ [ESM] dist/internal.node-DiqCZpRg.mjs.map   2.03 kB │ gzip: 0.94 kB
+../../packages/store build: ℹ [ESM] dist/internal.node-DiqCZpRg.mjs       1.49 kB │ gzip: 0.72 kB
+../../packages/store build: ℹ [ESM] dist/index.node.d.mts                 2.35 kB │ gzip: 0.93 kB
+../../packages/store build: ℹ [ESM] dist/internal.node.d.mts              0.62 kB │ gzip: 0.39 kB
+../../packages/store build: ℹ [ESM] dist/implementation-BRPaHA5o.d.mts    1.83 kB │ gzip: 0.64 kB
+../../packages/store build: ℹ [ESM] 8 files, total: 29.41 kB
+../../packages/store build: ✔ Build complete in 847ms
+../../packages/store build: ✔ Build complete in 847ms
+../../packages/store build: Done
+../../packages/transformer build: ℹ [CJS] dist/index.cjs      117.12 kB │ gzip: 23.43 kB
+../../packages/transformer build: ℹ [CJS] dist/index.cjs.map  238.37 kB │ gzip: 46.79 kB
+../../packages/transformer build: ℹ [CJS] 2 files, total: 355.49 kB
+../../packages/transformer build: ℹ [CJS] dist/index.d.cts  2.10 kB │ gzip: 0.88 kB
+../../packages/transformer build: ℹ [CJS] 1 files, total: 2.10 kB
+../../packages/transformer build: ✔ Build complete in 927ms
+../../packages/transformer build: ℹ [ESM] dist/index.mjs      115.66 kB │ gzip: 22.89 kB
+../../packages/transformer build: ℹ [ESM] dist/index.mjs.map  238.02 kB │ gzip: 46.71 kB
+../../packages/transformer build: ℹ [ESM] dist/index.d.mts      2.10 kB │ gzip:  0.88 kB
+../../packages/transformer build: ℹ [ESM] 3 files, total: 355.77 kB
+../../packages/transformer build: ✔ Build complete in 936ms
+../../packages/transformer build: Done
+../../packages/runtime build$ tsdown
+../../packages/plugin build$ tsdown
+../../packages/runtime build: ℹ tsdown v0.22.0 powered by rolldown v1.0.0
+../../packages/plugin build: ℹ tsdown v0.22.0 powered by rolldown v1.0.0
+../../packages/plugin build: ℹ config file: /home/kcatt/dev/dathomir-task-264-authoring-evidence/packages/plugin/tsdown.config.ts
+../../packages/runtime build: ℹ config file: /home/kcatt/dev/dathomir-task-264-authoring-evidence/packages/runtime/tsdown.config.ts
+../../packages/plugin build: ℹ entry: src/index.ts
+../../packages/plugin build: ℹ tsconfig: tsconfig.json
+../../packages/runtime build: ℹ entry: src/index.ts, src/ssr/index.ts, src/hydration/index.ts
+../../packages/runtime build: ℹ tsconfig: tsconfig.json
+../../packages/plugin build: ℹ Build start
+../../packages/runtime build: ℹ Build start
+../../packages/plugin build: ℹ [CJS] dist/index.cjs      13.98 kB │ gzip: 4.24 kB
+../../packages/plugin build: ℹ [CJS] dist/index.cjs.map  26.95 kB │ gzip: 7.84 kB
+../../packages/plugin build: ℹ [CJS] 2 files, total: 40.93 kB
+../../packages/plugin build: [33m[MIXED_EXPORTS] Warning:[0m Entry module "src/index.ts" is using named (including "dathra", "dathraEsbuildPlugin", "dathraRollupPlugin", "dathraVitePlugin", "dathraWebpackPlugin", "default") and default exports together. Consumers of your bundle will have to use `chunk.default` to access the default export, which may not be what you want. Use `output.exports: "named"` to disable this warning.
+../../packages/runtime build: ℹ [CJS] dist/index.cjs                         6.91 kB │ gzip:  2.45 kB
+../../packages/runtime build: ℹ [CJS] dist/hydration/index.cjs               0.70 kB │ gzip:  0.35 kB
+../../packages/runtime build: ℹ [CJS] dist/ssr/index.cjs                     0.46 kB │ gzip:  0.25 kB
+../../packages/runtime build: ℹ [CJS] dist/implementation-DckOR54o.cjs.map  72.06 kB │ gzip: 16.89 kB
+../../packages/runtime build: ℹ [CJS] dist/index.cjs.map                    24.14 kB │ gzip:  7.02 kB
+../../packages/runtime build: ℹ [CJS] dist/implementation-D8pCClKV.cjs.map  21.33 kB │ gzip:  6.24 kB
+../../packages/runtime build: ℹ [CJS] dist/implementation-DckOR54o.cjs      17.78 kB │ gzip:  5.09 kB
+../../packages/runtime build: ℹ [CJS] dist/implementation-D8pCClKV.cjs       5.02 kB │ gzip:  1.80 kB
+../../packages/runtime build: ℹ [CJS] 8 files, total: 148.40 kB
+../../packages/plugin build: ℹ Hint: consider adding deps.onlyBundle option to avoid unintended bundling of dependencies, or set deps.onlyBundle: false to disable this hint.
+../../packages/plugin build: See more at https://tsdown.dev/options/dependencies#deps-onlybundle
+../../packages/plugin build: Detected dependencies in bundle:
+../../packages/plugin build: - @types/estree
+../../packages/plugin build: - rollup
+../../packages/plugin build: ℹ Hint: consider adding deps.onlyBundle option to avoid unintended bundling of dependencies, or set deps.onlyBundle: false to disable this hint.
+../../packages/plugin build: See more at https://tsdown.dev/options/dependencies#deps-onlybundle
+../../packages/plugin build: Detected dependencies in bundle:
+../../packages/plugin build: - @types/estree
+../../packages/plugin build: - rollup
+../../packages/plugin build: ℹ [CJS] dist/index.d.cts  50.78 kB │ gzip: 11.17 kB
+../../packages/plugin build: ℹ [CJS] 1 files, total: 50.78 kB
+../../packages/plugin build: ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts (2:56) [33m[IMPORT_IS_UNDEFINED] Warning:[0m Import `Decorator` will always be undefined because there is no matching export in '../../node_modules/.pnpm/@types+estree@1.0.8/node_modules/@types/estree/index.d.ts'
+../../packages/plugin build:    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts:2:57 [38;5;246m][0m
+../../packages/plugin build:    [38;5;246m│[0m
+../../packages/plugin build:  [38;5;246m2 │[0m [38;5;249mv[0m[38;5;249ma[0m[38;5;249mr[0m[38;5;249m [0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m9[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m([0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m>[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mE[0m[38;5;249mx[0m[38;5;249mp[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mB[0m[38;5;249ma[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249mN[0m[38;5;249mo[0m[38;5;249md[0m[38;5;249me[0m[38;5;249m,[0m[38;5;249m [0mestree.Decorator[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249md[0m[38;5;249me[0m[38;5;249mE[0m[38;5;249mf[0m[38;5;249mf[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mt[0m[38;5;249m([0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m)[0m[38;5;249m][0m[38;5;249m;[0m
+../../packages/plugin build:  [38;5;240m  │[0m                                                         ────────┬───────
+../../packages/plugin build:  [38;5;240m  │[0m                                                                 ╰─────────
+../../packages/plugin build: [38;5;246m───╯[0m
+../../packages/plugin build: ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts (2:74) [33m[IMPORT_IS_UNDEFINED] Warning:[0m Import `Decorator` will always be undefined because there is no matching export in '../../node_modules/.pnpm/@types+estree@1.0.8/node_modules/@types/estree/index.d.ts'
+../../packages/plugin build:    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts:2:75 [38;5;246m][0m
+../../packages/plugin build:    [38;5;246m│[0m
+../../packages/plugin build:  [38;5;246m2 │[0m [38;5;249mv[0m[38;5;249ma[0m[38;5;249mr[0m[38;5;249m [0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m9[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m([0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m>[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mE[0m[38;5;249mx[0m[38;5;249mp[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mB[0m[38;5;249ma[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249mN[0m[38;5;249mo[0m[38;5;249md[0m[38;5;249me[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m,[0m[38;5;249m [0mestree.Decorator[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249md[0m[38;5;249me[0m[38;5;249mE[0m[38;5;249mf[0m[38;5;249mf[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mt[0m[38;5;249m([0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m)[0m[38;5;249m][0m[38;5;249m;[0m
+../../packages/plugin build:  [38;5;240m  │[0m                                                                           ────────┬───────
+../../packages/plugin build:  [38;5;240m  │[0m                                                                                   ╰─────────
+../../packages/plugin build: [38;5;246m───╯[0m
+../../packages/plugin build: ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts (2:92) [33m[IMPORT_IS_UNDEFINED] Warning:[0m Import `Decorator` will always be undefined because there is no matching export in '../../node_modules/.pnpm/@types+estree@1.0.8/node_modules/@types/estree/index.d.ts'
+../../packages/plugin build:    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts:2:93 [38;5;246m][0m
+../../packages/plugin build:    [38;5;246m│[0m
+../../packages/plugin build:  [38;5;246m2 │[0m [38;5;249mv[0m[38;5;249ma[0m[38;5;249mr[0m[38;5;249m [0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m9[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m([0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m>[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mE[0m[38;5;249mx[0m[38;5;249mp[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mB[0m[38;5;249ma[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249mN[0m[38;5;249mo[0m[38;5;249md[0m[38;5;249me[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m,[0m[38;5;249m [0mestree.Decorator[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249md[0m[38;5;249me[0m[38;5;249mE[0m[38;5;249mf[0m[38;5;249mf[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mt[0m[38;5;249m([0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m)[0m[38;5;249m][0m[38;5;249m;[0m
+../../packages/plugin build:  [38;5;240m  │[0m                                                                                             ────────┬───────
+../../packages/plugin build:  [38;5;240m  │[0m                                                                                                     ╰─────────
+../../packages/plugin build: [38;5;246m───╯[0m
+../../packages/plugin build: ✔ Build complete in 1071ms
+../../packages/plugin build: ℹ [ESM] dist/index.mjs      12.29 kB │ gzip:  3.70 kB
+../../packages/plugin build: ℹ [ESM] dist/index.mjs.map  26.89 kB │ gzip:  7.80 kB
+../../packages/plugin build: ℹ [ESM] dist/index.d.mts    50.78 kB │ gzip: 11.17 kB
+../../packages/plugin build: ℹ [ESM] 3 files, total: 89.95 kB
+../../packages/plugin build: ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts (2:56) [33m[IMPORT_IS_UNDEFINED] Warning:[0m Import `Decorator` will always be undefined because there is no matching export in '../../node_modules/.pnpm/@types+estree@1.0.8/node_modules/@types/estree/index.d.ts'
+../../packages/plugin build:    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts:2:57 [38;5;246m][0m
+../../packages/plugin build:    [38;5;246m│[0m
+../../packages/plugin build:  [38;5;246m2 │[0m [38;5;249mv[0m[38;5;249ma[0m[38;5;249mr[0m[38;5;249m [0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m9[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m([0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m>[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mE[0m[38;5;249mx[0m[38;5;249mp[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mB[0m[38;5;249ma[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249mN[0m[38;5;249mo[0m[38;5;249md[0m[38;5;249me[0m[38;5;249m,[0m[38;5;249m [0mestree.Decorator[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249md[0m[38;5;249me[0m[38;5;249mE[0m[38;5;249mf[0m[38;5;249mf[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mt[0m[38;5;249m([0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m)[0m[38;5;249m][0m[38;5;249m;[0m
+../../packages/plugin build:  [38;5;240m  │[0m                                                         ────────┬───────
+../../packages/plugin build:  [38;5;240m  │[0m                                                                 ╰─────────
+../../packages/plugin build: [38;5;246m───╯[0m
+../../packages/plugin build: ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts (2:74) [33m[IMPORT_IS_UNDEFINED] Warning:[0m Import `Decorator` will always be undefined because there is no matching export in '../../node_modules/.pnpm/@types+estree@1.0.8/node_modules/@types/estree/index.d.ts'
+../../packages/plugin build:    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts:2:75 [38;5;246m][0m
+../../packages/plugin build:    [38;5;246m│[0m
+../../packages/plugin build:  [38;5;246m2 │[0m [38;5;249mv[0m[38;5;249ma[0m[38;5;249mr[0m[38;5;249m [0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m9[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m([0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m>[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mE[0m[38;5;249mx[0m[38;5;249mp[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mB[0m[38;5;249ma[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249mN[0m[38;5;249mo[0m[38;5;249md[0m[38;5;249me[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m,[0m[38;5;249m [0mestree.Decorator[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249md[0m[38;5;249me[0m[38;5;249mE[0m[38;5;249mf[0m[38;5;249mf[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mt[0m[38;5;249m([0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m)[0m[38;5;249m][0m[38;5;249m;[0m
+../../packages/plugin build:  [38;5;240m  │[0m                                                                           ────────┬───────
+../../packages/plugin build:  [38;5;240m  │[0m                                                                                   ╰─────────
+../../packages/plugin build: [38;5;246m───╯[0m
+../../packages/plugin build: ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts (2:92) [33m[IMPORT_IS_UNDEFINED] Warning:[0m Import `Decorator` will always be undefined because there is no matching export in '../../node_modules/.pnpm/@types+estree@1.0.8/node_modules/@types/estree/index.d.ts'
+../../packages/plugin build:    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m ../../node_modules/.pnpm/rollup@4.57.1/node_modules/rollup/dist/rollup.d.ts:2:93 [38;5;246m][0m
+../../packages/plugin build:    [38;5;246m│[0m
+../../packages/plugin build:  [38;5;246m2 │[0m [38;5;249mv[0m[38;5;249ma[0m[38;5;249mr[0m[38;5;249m [0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m9[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m([0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m>[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mE[0m[38;5;249mx[0m[38;5;249mp[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249ms[0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mB[0m[38;5;249ma[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249mN[0m[38;5;249mo[0m[38;5;249md[0m[38;5;249me[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249me[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249me[0m[38;5;249m.[0m[38;5;249mD[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249m,[0m[38;5;249m [0mestree.Decorator[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m[[0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m,[0m[38;5;249m [0m[38;5;249m"[0m[38;5;249m"[0m[38;5;249m][0m[38;5;249m,[0m[38;5;249m [0m[38;5;249ms[0m[38;5;249mi[0m[38;5;249md[0m[38;5;249me[0m[38;5;249mE[0m[38;5;249mf[0m[38;5;249mf[0m[38;5;249me[0m[38;5;249mc[0m[38;5;249mt[0m[38;5;249m([0m[38;5;249m_[0m[38;5;249m0[0m[38;5;249m)[0m[38;5;249m][0m[38;5;249m;[0m
+../../packages/plugin build:  [38;5;240m  │[0m                                                                                             ────────┬───────
+../../packages/plugin build:  [38;5;240m  │[0m                                                                                                     ╰─────────
+../../packages/plugin build: [38;5;246m───╯[0m
+../../packages/plugin build: ✔ Build complete in 1073ms
+../../packages/plugin build: Done
+../../packages/runtime build: ℹ [CJS] dist/index.d.cts                    101.72 kB │ gzip: 18.61 kB
+../../packages/runtime build: ℹ [CJS] dist/hydration/index.d.cts            2.02 kB │ gzip:  0.72 kB
+../../packages/runtime build: ℹ [CJS] dist/ssr/index.d.cts                  1.62 kB │ gzip:  0.69 kB
+../../packages/runtime build: ℹ [CJS] dist/implementation-BvBy84QC.d.cts    8.13 kB │ gzip:  2.61 kB
+../../packages/runtime build: ℹ [CJS] dist/implementation-D8Oif4b9.d.cts    4.12 kB │ gzip:  1.42 kB
+../../packages/runtime build: ℹ [CJS] dist/implementation-EFvhITck.d.cts    1.10 kB │ gzip:  0.59 kB
+../../packages/runtime build: ℹ [CJS] 6 files, total: 118.70 kB
+../../packages/runtime build: ✔ Build complete in 1240ms
+../../packages/runtime build: ℹ [ESM] dist/index.mjs                          6.17 kB │ gzip:  2.46 kB
+../../packages/runtime build: ℹ [ESM] dist/hydration/index.mjs                0.62 kB │ gzip:  0.34 kB
+../../packages/runtime build: ℹ [ESM] dist/ssr/index.mjs                      0.39 kB │ gzip:  0.23 kB
+../../packages/runtime build: ℹ [ESM] dist/implementation-kfeeIvqG.mjs.map   71.70 kB │ gzip: 16.82 kB
+../../packages/runtime build: ℹ [ESM] dist/index.mjs.map                     24.14 kB │ gzip:  7.02 kB
+../../packages/runtime build: ℹ [ESM] dist/implementation-CQ_7mp0v.mjs.map   21.30 kB │ gzip:  6.23 kB
+../../packages/runtime build: ℹ [ESM] dist/implementation-kfeeIvqG.mjs       15.82 kB │ gzip:  5.01 kB
+../../packages/runtime build: ℹ [ESM] dist/implementation-CQ_7mp0v.mjs        4.20 kB │ gzip:  1.74 kB
+../../packages/runtime build: ℹ [ESM] dist/index.d.mts                      101.72 kB │ gzip: 18.60 kB
+../../packages/runtime build: ℹ [ESM] dist/hydration/index.d.mts              2.02 kB │ gzip:  0.72 kB
+../../packages/runtime build: ℹ [ESM] dist/ssr/index.d.mts                    1.62 kB │ gzip:  0.69 kB
+../../packages/runtime build: ℹ [ESM] dist/implementation-BiCzsIQe.d.mts      8.13 kB │ gzip:  2.61 kB
+../../packages/runtime build: ℹ [ESM] dist/implementation--hv9lxgp.d.mts      4.12 kB │ gzip:  1.42 kB
+../../packages/runtime build: ℹ [ESM] dist/implementation-hNtQw-56.d.mts      1.10 kB │ gzip:  0.59 kB
+../../packages/runtime build: ℹ [ESM] 14 files, total: 263.03 kB
+../../packages/runtime build: ✔ Build complete in 1253ms
+../../packages/runtime build: Done
+../../packages/components build$ tsdown
+../../packages/components build: ℹ tsdown v0.22.0 powered by rolldown v1.0.0
+../../packages/components build: ℹ config file: /home/kcatt/dev/dathomir-task-264-authoring-evidence/packages/components/tsdown.config.ts
+../../packages/components build: ℹ entry: src/index.ts, src/internal.ts, src/ssr/index.ts
+../../packages/components build: ℹ tsconfig: tsconfig.json
+../../packages/components build: ℹ Build start
+../../packages/components build: ℹ [CJS] dist/index.cjs                        11.95 kB │ gzip:  4.18 kB
+../../packages/components build: ℹ [CJS] dist/ssr/index.cjs                     0.20 kB │ gzip:  0.17 kB
+../../packages/components build: ℹ [CJS] dist/internal.cjs                      0.18 kB │ gzip:  0.16 kB
+../../packages/components build: ℹ [CJS] dist/index.cjs.map                    57.16 kB │ gzip: 13.58 kB
+../../packages/components build: ℹ [CJS] dist/implementation-vd2tbHVs.cjs.map  26.40 kB │ gzip:  7.35 kB
+../../packages/components build: ℹ [CJS] dist/implementation-vd2tbHVs.cjs       5.56 kB │ gzip:  1.95 kB
+../../packages/components build: ℹ [CJS] dist/internal-Cad15PZF.cjs.map         3.21 kB │ gzip:  1.11 kB
+../../packages/components build: ℹ [CJS] dist/internal-Cad15PZF.cjs             1.25 kB │ gzip:  0.48 kB
+../../packages/components build: ℹ [CJS] 8 files, total: 105.92 kB
+../../packages/components build: ℹ [CJS] dist/index.d.cts                    4.21 kB │ gzip: 1.42 kB
+../../packages/components build: ℹ [CJS] dist/ssr/index.d.cts                3.05 kB │ gzip: 1.12 kB
+../../packages/components build: ℹ [CJS] dist/internal.d.cts                 0.15 kB │ gzip: 0.12 kB
+../../packages/components build: ℹ [CJS] dist/implementation-CSg83dtd.d.cts  6.65 kB │ gzip: 2.09 kB
+../../packages/components build: ℹ [CJS] dist/internal-DRftU7GJ.d.cts        0.43 kB │ gzip: 0.28 kB
+../../packages/components build: ℹ [CJS] 5 files, total: 14.49 kB
+../../packages/components build: ✔ Build complete in 829ms
+../../packages/components build: ℹ [ESM] dist/index.mjs                        11.19 kB │ gzip:  4.17 kB
+../../packages/components build: ℹ [ESM] dist/ssr/index.mjs                     0.14 kB │ gzip:  0.13 kB
+../../packages/components build: ℹ [ESM] dist/internal.mjs                      0.11 kB │ gzip:  0.11 kB
+../../packages/components build: ℹ [ESM] dist/index.mjs.map                    56.18 kB │ gzip: 13.37 kB
+../../packages/components build: ℹ [ESM] dist/implementation-D3_N2zmm.mjs.map  26.34 kB │ gzip:  7.33 kB
+../../packages/components build: ℹ [ESM] dist/implementation-D3_N2zmm.mjs       4.61 kB │ gzip:  1.89 kB
+../../packages/components build: ℹ [ESM] dist/internal-Cdr_7k0-.mjs.map         3.19 kB │ gzip:  1.10 kB
+../../packages/components build: ℹ [ESM] dist/internal-Cdr_7k0-.mjs             0.81 kB │ gzip:  0.42 kB
+../../packages/components build: ℹ [ESM] dist/index.d.mts                       4.21 kB │ gzip:  1.42 kB
+../../packages/components build: ℹ [ESM] dist/ssr/index.d.mts                   3.05 kB │ gzip:  1.12 kB
+../../packages/components build: ℹ [ESM] dist/internal.d.mts                    0.15 kB │ gzip:  0.12 kB
+../../packages/components build: ℹ [ESM] dist/implementation-D00GVxgb.d.mts     6.65 kB │ gzip:  2.09 kB
+../../packages/components build: ℹ [ESM] dist/internal-DJx_wNJH.d.mts           0.43 kB │ gzip:  0.28 kB
+../../packages/components build: ℹ [ESM] 13 files, total: 117.05 kB
+../../packages/components build: ✔ Build complete in 836ms
+../../packages/components build: Done
+../../packages/core build$ tsdown
+../../packages/core build: ℹ tsdown v0.22.0 powered by rolldown v1.0.0
+../../packages/core build: ℹ config file: /home/kcatt/dev/dathomir-task-264-authoring-evidence/packages/core/tsdown.config.ts
+../../packages/core build: ℹ entry: src/index.ts, src/hydration/index.ts, src/jsx-runtime/index.ts, src/reactivity/index.ts, src/runtime/index.ts, src/ssr/index.ts, src/store/index.ts, src/shared/index.ts
+../../packages/core build: ℹ tsconfig: tsconfig.json
+../../packages/core build: ℹ Build start
+../../packages/core build: ℹ [CJS] dist/index.cjs                   7.07 kB │ gzip: 0.91 kB
+../../packages/core build: ℹ [CJS] dist/runtime/index.cjs           5.47 kB │ gzip: 0.66 kB
+../../packages/core build: ℹ [CJS] dist/jsx-runtime/index.cjs       5.20 kB │ gzip: 1.75 kB
+../../packages/core build: ℹ [CJS] dist/reactivity/index.cjs        1.07 kB │ gzip: 0.26 kB
+../../packages/core build: ℹ [CJS] dist/ssr/index.cjs               0.57 kB │ gzip: 0.35 kB
+../../packages/core build: ℹ [CJS] dist/hydration/index.cjs         0.42 kB │ gzip: 0.28 kB
+../../packages/core build: ℹ [CJS] dist/shared/index.cjs            0.35 kB │ gzip: 0.25 kB
+../../packages/core build: ℹ [CJS] dist/store/index.cjs             0.35 kB │ gzip: 0.24 kB
+../../packages/core build: ℹ [CJS] dist/jsx-runtime/index.cjs.map  11.84 kB │ gzip: 3.67 kB
+../../packages/core build: ℹ [CJS] dist/chunk-nwXcranS.cjs          1.35 kB │ gzip: 0.59 kB
+../../packages/core build: ℹ [CJS] dist/ssr/index.cjs.map           1.12 kB │ gzip: 0.57 kB
+../../packages/core build: ℹ [CJS] dist/hydration/index.cjs.map     0.62 kB │ gzip: 0.37 kB
+../../packages/core build: ℹ [CJS] 12 files, total: 35.44 kB
+../../packages/core build: ℹ [CJS] dist/jsx-runtime/index.d.cts  2.54 kB │ gzip: 0.88 kB
+../../packages/core build: ℹ [CJS] dist/index.d.cts              1.93 kB │ gzip: 0.58 kB
+../../packages/core build: ℹ [CJS] dist/runtime/index.d.cts      1.82 kB │ gzip: 0.60 kB
+../../packages/core build: ℹ [CJS] dist/ssr/index.d.cts          0.87 kB │ gzip: 0.45 kB
+../../packages/core build: ℹ [CJS] dist/hydration/index.d.cts    0.46 kB │ gzip: 0.29 kB
+../../packages/core build: ℹ [CJS] dist/reactivity/index.d.cts   0.35 kB │ gzip: 0.18 kB
+../../packages/core build: ℹ [CJS] dist/shared/index.d.cts       0.03 kB │ gzip: 0.05 kB
+../../packages/core build: ℹ [CJS] dist/store/index.d.cts        0.03 kB │ gzip: 0.05 kB
+../../packages/core build: ℹ [CJS] 8 files, total: 8.04 kB
+../../packages/core build: ✔ Build complete in 770ms
+../../packages/core build: ℹ [ESM] dist/jsx-runtime/index.mjs       4.87 kB │ gzip: 1.68 kB
+../../packages/core build: ℹ [ESM] dist/index.mjs                   1.40 kB │ gzip: 0.46 kB
+../../packages/core build: ℹ [ESM] dist/runtime/index.mjs           1.17 kB │ gzip: 0.39 kB
+../../packages/core build: ℹ [ESM] dist/ssr/index.mjs               0.42 kB │ gzip: 0.27 kB
+../../packages/core build: ℹ [ESM] dist/hydration/index.mjs         0.30 kB │ gzip: 0.21 kB
+../../packages/core build: ℹ [ESM] dist/reactivity/index.mjs        0.19 kB │ gzip: 0.12 kB
+../../packages/core build: ℹ [ESM] dist/shared/index.mjs            0.12 kB │ gzip: 0.11 kB
+../../packages/core build: ℹ [ESM] dist/store/index.mjs             0.12 kB │ gzip: 0.11 kB
+../../packages/core build: ℹ [ESM] dist/jsx-runtime/index.mjs.map  11.85 kB │ gzip: 3.66 kB
+../../packages/core build: ℹ [ESM] dist/chunk-CtajNgzt.mjs          1.16 kB │ gzip: 0.55 kB
+../../packages/core build: ℹ [ESM] dist/ssr/index.mjs.map           1.12 kB │ gzip: 0.57 kB
+../../packages/core build: ℹ [ESM] dist/hydration/index.mjs.map     0.62 kB │ gzip: 0.37 kB
+../../packages/core build: ℹ [ESM] dist/jsx-runtime/index.d.mts     2.54 kB │ gzip: 0.88 kB
+../../packages/core build: ℹ [ESM] dist/index.d.mts                 1.93 kB │ gzip: 0.58 kB
+../../packages/core build: ℹ [ESM] dist/runtime/index.d.mts         1.82 kB │ gzip: 0.59 kB
+../../packages/core build: ℹ [ESM] dist/ssr/index.d.mts             0.87 kB │ gzip: 0.45 kB
+../../packages/core build: ℹ [ESM] dist/hydration/index.d.mts       0.46 kB │ gzip: 0.29 kB
+../../packages/core build: ℹ [ESM] dist/reactivity/index.d.mts      0.35 kB │ gzip: 0.18 kB
+../../packages/core build: ℹ [ESM] dist/shared/index.d.mts          0.03 kB │ gzip: 0.05 kB
+../../packages/core build: ℹ [ESM] dist/store/index.d.mts           0.03 kB │ gzip: 0.05 kB
+../../packages/core build: ℹ [ESM] 20 files, total: 31.38 kB
+../../packages/core build: ✔ Build complete in 775ms
+../../packages/core build: Done

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "packages/reactivity/node_modules/.bin/vitest",
+    "run",
+    "--config",
+    "tmp/dathomir-262-validation/state-lifetime/vitest.config.ts",
+    "gates-followup.test.ts",
+    "-t",
+    "G08"
+  ],
+  "status": 1,
+  "stdout": "\n RUN  v4.0.4 /home/kcatt/dev/dathomir/tmp/dathomir-262-validation/state-lifetime\n\n \u276f gates-followup.test.ts (11 tests | 1 failed | 10 skipped) 8ms\n   \u2193 G01 foreign async binding rejects write/capability before mutation and observes rejection\n   \u2193 G02 foreign async binding remains immutable after await both live and disposed\n   \u2193 G03 trusted binding thenables are observed after content rejection without granting operation authority\n   \u2193 G04 foreign receive stays synchronous and cached setters/capabilities expire before continuation\n   \u2193 G05 trusted receive thenables observe throwing/rejecting callbacks after invocation has ended\n   \u2193 G06 rejected foreign receive is contained after disposal and cannot publish success\n   \u2193 G07 receive scope ends before native batch flush effects can reuse a captured writer\n   \u00d7 G08 replace revokes old sibling B before A cleanup invokes B cached writer 8ms\n   \u2193 G09 sibling source and lease authority are revoked before any abort listener or provider stop\n   \u2193 G10 revoke-all cleanup still lets the last reentrant replace admission win\n   \u2193 G11 disposal reentrancy during replace closes reserved admission and all prior siblings\n\n Test Files  1 failed (1)\n      Tests  1 failed | 10 skipped (11)\n   Start at  05:56:22\n   Duration  248ms (transform 108ms, setup 0ms, collect 138ms, tests 8ms, environment 0ms, prepare 4ms)\n\n",
+  "stderr": "\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 1 \u23af\u23af\u23af\u23af\u23af\u23af\u23af\n\n FAIL  gates-followup.test.ts > G08 replace revokes old sibling B before A cleanup invokes B cached writer\nAssertionError: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n+   1,\n    0,\n    1,\n-   0\n  ]\n\n\n- Expected\n+ Received\n\n  [\n-   0,\n    1,\n    0,\n+   1,\n  ]\n\n \u276f gates-followup.test.ts:168:10\n    166|   a.onDispose(() => { assert.throws(() => writeB(1), /stale-write/); d\u2026\n    167|   const next = channels.begin(\"query\", \"replace\");\n    168|   assert.deepEqual([slot.peek(), denied, a.cleanupErrors.length], [0, \u2026\n       |          ^\n    169|   assert.equal(denied, 1);\n    170|   assert.equal(a.cleanupErrors.length, 0);\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/1]\u23af\n\n"
+}

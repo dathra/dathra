@@ -1,0 +1,32 @@
+[
+  {
+    "file": "tmp/dathomir-262-full-authoring-review.md",
+    "expected": "141a7b06754f6d4747aa5caf7fc2b6c181e1a4f763cda05e2f84cc673db29a15",
+    "actual": "141a7b06754f6d4747aa5caf7fc2b6c181e1a4f763cda05e2f84cc673db29a15",
+    "unchanged": true
+  },
+  {
+    "file": "tmp/dathomir-262-section1-review-status.md",
+    "expected": "561c269b8f6638dcdab7600e76219076ec9fd422621a430856e7e91e0898199a",
+    "actual": "561c269b8f6638dcdab7600e76219076ec9fd422621a430856e7e91e0898199a",
+    "unchanged": true
+  },
+  {
+    "file": ".opencode/plugins/format-lint.ts",
+    "expected": "4dc26b907d6870dce1fca37998c41aabf26e622f965f3a16a52ad6bc9f07ad1e",
+    "actual": "4dc26b907d6870dce1fca37998c41aabf26e622f965f3a16a52ad6bc9f07ad1e",
+    "unchanged": true
+  },
+  {
+    "file": "AGENTS.md",
+    "expected": "d75ff4f51f286db981e53c19de53c9e70ccba2a07ee09feb1a11829a225ab347",
+    "actual": "d75ff4f51f286db981e53c19de53c9e70ccba2a07ee09feb1a11829a225ab347",
+    "unchanged": true
+  },
+  {
+    "file": "mise.toml",
+    "expected": "a5a59d1bc4e8bfc53052eb1527a2e7029f62cee59ce3cb978a0addb0f445d2bd",
+    "actual": "a5a59d1bc4e8bfc53052eb1527a2e7029f62cee59ce3cb978a0addb0f445d2bd",
+    "unchanged": true
+  }
+]

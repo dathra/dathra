@@ -1,0 +1,18 @@
+{
+  "sourceSha256": {
+    "run-p02b.mjs": "3ae59d1d7c00a400cc59c768332721f2b8e344fa773e11aec245bf58135116cd",
+    "source/counter.client.ts": "8b5b0e4f253f200d4f19aa4eed0798b4db0cab6ba5cee5ca37085fdffbc3406f",
+    "source/counter.server.ts": "ffdffca3016613b61676b566dfa5bdcb9973c1c8f76f9937f8aca8d16d87931d",
+    "source/leak.client.ts": "539df921921c38730f216629b14429a434ce5d4a3e6856ed678e6160fc1fa9a6",
+    "source/other.client.ts": "5cb4733951494e0b3cde442f53b157bb9384d4ee13323ade6cdc280deb6516f0",
+    "source/owner.browser.ts": "9a7d0cbd500f05225e2a1db8fc748ef96d900e855d31548455d893e2b54969c4",
+    "source/private-data.ts": "7f3cbf08b6db2ba12f124cb38cb02b3b5d3d7ef3fae1a35849b22c47afefddb4",
+    "source/route.ts": "1f667fa38b800e061c6f79aadc00c78f03cb59dd85996e5abf5f0badd9424af5",
+    "source/static.route.ts": "20a53c37d85b85bedc01eb4eabf2dede5d4a02d78c90a5a8976e2f2a4ef737f3",
+    "source/wrong.server.ts": "2ae3ea312c68bfea7138b9f81a76376a6f37497e45180c84942d66784ec06954"
+  },
+  "baselineResultSha256": "9099bd9dbb96a2d8a332b12d6a8e82c88e35a96d98d2e4fe6822711e5589c281",
+  "rootHead": "49b1adf502dad7de0b4709c1595d87529f0d2ebd",
+  "canonicalProposalHead": "0ad07bffd601fef7cd708276942b187883ea787e",
+  "note": "Proposed facade declarations/runtime are inherited experimental assets, actual engine source comes from repository; no production proof."
+}

@@ -1,0 +1,8 @@
+[
+  {
+    "code": "E_DEFAULT_MISSING",
+    "file": "graph/negative/no-default.ts",
+    "line": 2,
+    "detail": "Export default defineClient({...}) from the client module."
+  }
+]

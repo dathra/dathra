@@ -1,0 +1,13 @@
+{
+  "command": [
+    "packages/reactivity/node_modules/.bin/vitest",
+    "run",
+    "--config",
+    "tmp/dathomir-262-validation/state-lifetime/vitest.config.ts",
+    "p03.test.ts",
+    "p06.test.ts"
+  ],
+  "exit_code": 0,
+  "stdout": "\n RUN  v4.0.4 /home/kcatt/dev/dathomir/tmp/dathomir-262-validation/state-lifetime\n\n \u2713 p06.test.ts (7 tests) 17ms\n \u2713 p03.test.ts (17 tests) 22ms\n\n Test Files  2 passed (2)\n      Tests  24 passed (24)\n   Start at  05:21:55\n   Duration  581ms (transform 142ms, setup 0ms, collect 361ms, tests 39ms, environment 0ms, prepare 8ms)\n\n",
+  "stderr": ""
+}

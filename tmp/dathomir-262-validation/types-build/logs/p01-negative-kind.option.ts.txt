@@ -1,0 +1,4 @@
+[96mtmp/dathomir-262-validation/types-build/negative/kind.option.ts[0m:[93m3[0m:[93m42[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'kind' does not exist in type 'BindingOptions<"countText" | "increment"> & { server: Content; }'.
+
+[7m3[0m   tools.bind("countText", { server: "7", kind: "text" });
+[7m [0m [91m                                         ~~~~[0m
