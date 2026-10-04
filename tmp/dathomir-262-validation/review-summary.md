@@ -20,6 +20,202 @@ Accepted #253/#260 と production source は変更していない。
 以下の推奨は新しい契約の採用ではない。
 実験の合格も、フレームワークの実装完了を意味しない。
 
+## コードで見る基本の書き方
+
+以下は、選んだ書き方と検討中の契約を読むためのコード例である。
+`@dathra/core/server` と `@dathra/core/client` の公開APIは提案段階であり、このまま現行production packageで動く完成例ではない。
+[設計比較の例](design-context/dathomir-262-three-concerns-review.md) と [型検証のcounter](types-build/fixtures/counter.server.ts) をもとに、レビューに必要な部分へ絞った。
+型検証、DOM検証、build検証は別々のfixtureで行っており、以下を一つのアプリとして実行したとは扱わない。
+
+### 1. サーバーで値と初期DOMを定義する
+
+`count` はブラウザで更新するSignal、`title` はサーバーで決めて渡す通常値である。
+`states` と `values` に分けず、同じ戻り値に置く。
+
+```ts
+// counter.server.ts
+import { defineComponent, clientModule, el } from "@dathra/core/server";
+import { signal } from "@dathra/reactivity";
+import type { Signal } from "@dathra/reactivity";
+import type CounterClient from "./counter.client.js";
+
+type CounterValues = {
+  count: Signal<number>;
+  title: string;
+};
+
+const Counter = defineComponent({
+  client: clientModule<typeof CounterClient>(
+    "./counter.client.js",
+    import.meta.url,
+  ),
+  server(input: { start: number; title: string }): CounterValues {
+    return { count: signal(input.start), title: input.title };
+  },
+  template(values, { bind, on }) {
+    return el(
+      "section",
+      {},
+      el("p", {}, bind("countText", {
+        server: `${values.title}: ${values.count.value}`,
+      })),
+      el("button", {
+        type: "button",
+        on: [on("click", "increment")],
+      }, "+1"),
+    );
+  },
+});
+
+export type { CounterValues };
+export { Counter };
+```
+
+`bind("countText", { server: ... })` は、初期表示を持つ更新位置を宣言する。
+`on("click", "increment")` は、クリック時に呼ぶクライアント関数を対応付ける。
+`import type` は補完のための型参照、`clientModule` の文字列は実行時の参照であり、二つの記載を許すという選択を反映している。
+同じ型を持つ別ファイルを文字列に指定した誤りまで、型検査で検出できるとは約束しない。
+
+### 2. ブラウザの関数を一つの一覧に登録する
+
+ブラウザ側では表示を返す関数と状態を変える関数を、同じ `defineClient` に並べる。
+`bindings` や `operations` という分類用の項目は置かない。
+
+```ts
+// counter.client.ts
+import { defineClient } from "@dathra/core/client";
+import type { ClientContext } from "@dathra/core/client";
+import type { CounterValues } from "./counter.server.js";
+
+function countText(ctx: ClientContext<CounterValues>) {
+  return `${ctx.values.title}: ${ctx.values.count.value}`;
+}
+
+function increment(ctx: ClientContext<CounterValues>) {
+  ctx.values.count.set(previous => previous + 1);
+}
+
+export default defineClient({ countText, increment });
+```
+
+`CounterValues` は型だけのimportなので、サーバーの関数をブラウザで実行する依存にはならない。
+`bind` と `on` にはどちらの関数名も補完する。
+ただし `bind("increment")` を選んだ場合、候補kernelでは状態変更前に拒否する。
+名前を候補に出すことと、その呼出し位置で状態変更を許すことは別の契約になる。
+
+`start: 7, title: "Count"` なら、表示の流れは次のようになる。
+
+```text
+SSR                  Count: 7
+既存DOMへの接続       server/templateを再実行せず、値と更新位置を接続
+接続のcommit成功      countTextを一度自動評価 → Count: 7
+「+1」をクリック      incrementで7→8 → countTextを再評価 → Count: 8
+```
+
+初期接続に必須の書込みが失敗した場合と、接続成功後の自動更新が失敗した場合は分ける。
+前者を後者へ移して、元のSSR表示の保持やidentityのterminal化を回避する案にはしない。
+
+### 3. 同じbindで文字列と子DOMを切り替える
+
+次は、上のcounterへ `rich: Signal<boolean>` を追加した場合のクライアント関数の差分である。
+`el` は `@dathra/core/client` からimportし、`toggleRich` もflat registryに追加する。
+サーバーでは `rich: signal(false)` を返し、切替ボタンを `on("click", "toggleRich")` へ対応付ける。
+
+```ts
+function countText(ctx: ClientContext<CounterValues>) {
+  const text = `${ctx.values.title}: ${ctx.values.count.value}`;
+  return ctx.values.rich.value ? el("strong", {}, text) : text;
+}
+
+function toggleRich(ctx: ClientContext<CounterValues>) {
+  ctx.values.rich.set(previous => !previous);
+}
+```
+
+同じ `bind("countText", ...)` の場所が、文字列から `<strong>`、再び文字列へ変わる。
+`kind` や `child` で場所の内容を固定しない。
+この差分の `CounterValues` には `rich` の型追加が必要になる。
+サーバーの `template` をブラウザへ持ち込まず、ブラウザで必要なDOMの記述はクライアント関数が返す。
+
+### 4. 普通の一覧は_keyで保持条件を書く
+
+一覧では `rows: Signal<readonly { id: string; label: string }[]>` を返す例を考える。
+サーバーの `template` 内では、実際の初期行を `server` に渡す。
+
+```ts
+const serverRows = values.rows.value.map(item =>
+  el("li", { _key: item.id }, item.label),
+);
+return el("ul", {}, bind("rows", { server: serverRows }));
+```
+
+ブラウザには一覧の更新結果を返す関数と、並び順を変える関数を置く。
+以下は `ListContext` に一覧の値の型を指定した場合の抜粋である。
+`el` はクライアント用をimportし、両関数を `defineClient({ rows, reverse })` に登録する。
+
+```ts
+function rows(ctx: ListContext) {
+  return ctx.values.rows.value.map(item =>
+    el("li", { _key: item.id }, item.label),
+  );
+}
+
+function reverse(ctx: ListContext) {
+  ctx.values.rows.set(previous => [...previous].reverse());
+}
+```
+
+同じ保持範囲で互換性のある要素なら、`a, b` から `b, a` への変更は既存行の並べ替えになる。
+削除した `a` を後で追加する場合は、新しい寿命として作成する。
+`_key` だけでfocusや入力中の選択範囲まで保持できるとは限らず、その反例は後述する。
+独自の状態やresourceを持つ自律子コンポーネントの作成契約は、この単純な一覧とは別に残る。
+
+### 5. 入力の書き戻し先は追加提案として明示する
+
+次はcontrolled inputの提案中の抜粋である。
+`props.value` に置く `bind` と `input.sink` は、まだ採用していない追加表記になる。
+
+```ts
+// Inside the server template.
+el("input", {
+  type: "text",
+  props: {
+    value: bind("draftText", {
+      server: values.draft.value,
+      input: { sink: "setDraft", group: "name-draft" },
+    }),
+  },
+});
+
+// Inside the client module; register both functions in defineClient.
+function draftText(ctx: FormContext) {
+  return ctx.values.draft.value;
+}
+function setDraft(ctx: FormContext) {
+  ctx.values.draft.set(ctx.input.value);
+}
+```
+
+`draftText` は表示する値を読み、`setDraft` はブラウザの入力を状態へ書き戻す。
+接続前に入力された値もsinkへ渡す候補だが、IME中の更新、複数controlの衝突、resetの扱いは追加の判断が必要になる。
+通常のnative formを使い、送信時にFormDataを読む方法も残す。
+
+### 6. objectの更新ではowned payloadの差分を確認する
+
+次は `payload` がobjectを持つSignalの場合の操作の抜粋である。
+readonlyなowned payloadを採る案では、更新結果を `set` へ渡す。
+
+```ts
+ctx.values.payload.set(previous => ({
+  ...previous,
+  n: previous.n + 1,
+}));
+```
+
+`ctx.values.payload.value.n++` のような直接変更は、その案では許さない。
+外部objectのalias隔離も伴うため、単なる型のreadonly追加より強い契約になる。
+この差分は未採用であり、native Signalと通知やidentityが全面的に同じだと説明しない。
+
 ## 証拠が答える問い
 
 | 証拠 | 答えられること | 答えられないこと |
