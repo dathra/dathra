@@ -1,0 +1,10 @@
+{
+  "command": [
+    "node_modules/.bin/tsc",
+    "-p",
+    "tmp/dathomir-262-validation/state-lifetime/tsconfig.json"
+  ],
+  "exit_code": 2,
+  "stdout": "tmp/dathomir-262-validation/state-lifetime/p03.test.ts(17,44): error TS18046: 'value' is of type 'unknown'.\ntmp/dathomir-262-validation/state-lifetime/p03.test.ts(17,72): error TS18046: 'value' is of type 'unknown'.\ntmp/dathomir-262-validation/state-lifetime/p03.test.ts(18,51): error TS18046: 'value' is of type 'unknown'.\ntmp/dathomir-262-validation/state-lifetime/p03.test.ts(18,77): error TS18046: 'value' is of type 'unknown'.\n",
+  "stderr": ""
+}

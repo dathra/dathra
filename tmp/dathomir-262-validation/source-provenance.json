@@ -1,0 +1,138 @@
+{
+  "originalSourceRevision": "49b1adf502dad7de0b4709c1595d87529f0d2ebd",
+  "archiveBaseRevision": "7a3fde1949a25809cfb8d616886c112e005a8ecf",
+  "proposalRevision": "0ad07bffd601fef7cd708276942b187883ea787e",
+  "proposalURL": "https://github.com/dathra/dathra/blob/0ad07bffd601fef7cd708276942b187883ea787e/SPEC/proposals/245/262/262.typ",
+  "acceptedDecisions": [
+    "https://github.com/dathra/dathra/pull/259",
+    "https://github.com/dathra/dathra/pull/261"
+  ],
+  "scope": "Hashes compare the listed source inputs only; different checkouts are not claimed identical in full. Production source is not modified.",
+  "files": [
+    {
+      "path": "packages/reactivity/src/signal/SPEC.typ",
+      "sha256": "ab6e66e0c953aeac00a1aab3c8bd5aef3c29506ce6aed084be2e64414b5e0858",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/signal/implementation.test.ts",
+      "sha256": "cd257caf3043cea117b4eb18422672b4acfac7832c7923ca8ead0eb386f84a96",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/signal/implementation.ts",
+      "sha256": "0bd4b450fa78fa1f75cf36b98a9a439a5acfe78b98671398a1886a347c2b570b",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/computed/SPEC.typ",
+      "sha256": "71c24d80d282fbeb15f5dcb8f602de7abeb87bec3ebe999897a7cc18812ee970",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/computed/implementation.test.ts",
+      "sha256": "4ba34d470340ee0959c85ac8eb148fa2a245b70a484f03c1ff49f99f28f85c22",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/computed/implementation.ts",
+      "sha256": "ab1d08e54187c6723ef8b63adeea0ae790bf37b3c74086920f29e49e75fb51d5",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/effect/SPEC.typ",
+      "sha256": "7d42c0d460ec056e638e23f5179e1753564097fbe192bce8c7ee3603565bdae8",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/effect/implementation.test.ts",
+      "sha256": "903a4c9e827dd3cce0abd05fbc3584fa03d8b29467873745d417bbf973330b84",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/effect/implementation.ts",
+      "sha256": "77e2bf7e48a8258cb23e3a2a5faed007952561555e1594091b4ede090175d40f",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/batch/SPEC.typ",
+      "sha256": "b9e2424b8ddba96165dbad5518af1ffec21c81c29abf040dfeb9cd84a0d9ed41",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/batch/implementation.test.ts",
+      "sha256": "5fa86c9a1c6b3233eb44a1b49423f3d699c59471f6c2b4eb4bc4a2e520b29732",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/batch/implementation.ts",
+      "sha256": "308ce5245292c8f682ab56ecb5cf33ab928e792711bac3ce5ff60c84a11e3606",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/createRoot/SPEC.typ",
+      "sha256": "49a33c3abce7639888f07f5f99f2bf0b1e5dcebb59d79c8ce22b231a4e9a4475",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/createRoot/implementation.test.ts",
+      "sha256": "37abba1d29dfa9c37f5ada98a629677ce72739121f4808fbc6d377d29059089b",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/createRoot/implementation.ts",
+      "sha256": "9a2f77bc9551b8d4c400d7a856a8f92dd2e3115241ff4a59dd3302327a367b55",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/onCleanup/SPEC.typ",
+      "sha256": "39474baa831c157315b5b5d090e40aaaa97461a50fdef92c48e71111bc035815",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/onCleanup/implementation.test.ts",
+      "sha256": "84c5c6c255c7446b8ce322fa66723edb8af5db89829c2fa1e38bcb6aebcc7a77",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/onCleanup/implementation.ts",
+      "sha256": "4537234008eb9087802f3ab6e94794b8d019499393e30ebb75bf1e873cb4e583",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/templateEffect/SPEC.typ",
+      "sha256": "6f4fd5516b4094fe70cadfd059c927d522fca79c8f235b2c84f049bbb8769423",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/templateEffect/implementation.test.ts",
+      "sha256": "e5af67467e901a10baa343dacdd2871d576a680b6fd6bc25ed9a962d8199c4e8",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/templateEffect/implementation.ts",
+      "sha256": "562e0bea3760a4363116eee62a3fb758553e5e621e41d4b4a8ff3ce97ee007fd",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/types/index.ts",
+      "sha256": "d9a8d903f6324c579557a92f56a259a3620dfeeca7e48c7a45f98fe6b0e31f39",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "packages/reactivity/src/index.ts",
+      "sha256": "c0268479d5e4e843a6706ecacd37240487bcc6dd897872e2021608e4b8cc71be",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "docs/src/components/DocCodeBlock/DocCodeBlock.tsx",
+      "sha256": "13e296a482be59a31861d44859b5467d809e62ac6a014269f9d137767d536a69",
+      "sameInOriginalAndArchive": true
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "b9bd2b4e2e061437b8a1e7aae7c7f9c43d63ca7fc34e6ff6e9beaf6f4665c3c0",
+      "sameInOriginalAndArchive": true
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+# Generated artifacts are reproducible from the retained scripts.
+**/build/
+**/out/
+**/dist/
+**/temp/
+**/.cache/
+**/node_modules/
+**/engine-copy.mjs
+**/engine-copy.mjs.map
+
+# Selected experiment logs are review evidence.
+!**/logs/
+!**/logs/**
+!**/*.log

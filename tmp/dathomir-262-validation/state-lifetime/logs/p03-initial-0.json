@@ -1,0 +1,9 @@
+{
+  "command": [
+    "node",
+    "tmp/dathomir-262-validation/state-lifetime/build-copy.mjs"
+  ],
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "node:internal/modules/cjs/loader:1476\n  const err = new Error(message);\n              ^\n\nError: Cannot find module 'esbuild'\nRequire stack:\n- /home/kcatt/dev/node_modules/.pnpm/tsx@4.20.6/node_modules/tsx/package.json\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1476:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)\n    at Module._load (node:internal/modules/cjs/loader:1262:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.require (node:internal/modules/cjs/loader:1576:12)\n    at require (node:internal/modules/helpers:153:16)\n    at file:///home/kcatt/dev/dathomir/tmp/dathomir-262-validation/state-lifetime/build-copy.mjs:6:28\n    at ModuleJob.run (node:internal/modules/esm/module_job:437:25) {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: [\n    '/home/kcatt/dev/node_modules/.pnpm/tsx@4.20.6/node_modules/tsx/package.json'\n  ]\n}\n\nNode.js v24.15.0\n"
+}

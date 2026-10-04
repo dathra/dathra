@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-10-04T21:11:57.638Z",
+  "browser": "141.0.7390.37",
+  "observations": [
+    {
+      "case": "SSR-activation",
+      "observed": "Copy / no clipboard call",
+      "productCriterion": "FAIL; known in #252 S-07",
+      "errors": []
+    },
+    {
+      "case": "missing-after-click",
+      "observed": "Copied!",
+      "calls": 0,
+      "host": "<button class=\"copy-btn copied\">Copied!<!--{insert}--></button>",
+      "errors": []
+    },
+    {
+      "case": "missing",
+      "observed": "Copied!",
+      "expectedProductBehavior": "failure/recovery feedback",
+      "productCriterion": "FAIL",
+      "calls": 0,
+      "errors": []
+    },
+    {
+      "case": "reject-after-click",
+      "observed": "Copied!",
+      "calls": 1,
+      "host": "<button class=\"copy-btn copied\">Copied!<!--{insert}--></button>",
+      "errors": []
+    },
+    {
+      "case": "reject",
+      "observed": "Copied!",
+      "expectedProductBehavior": "failure/recovery feedback",
+      "productCriterion": "FAIL",
+      "calls": 1,
+      "errors": []
+    },
+    {
+      "case": "resolve-after-click",
+      "observed": "Copied!",
+      "calls": 1,
+      "errors": []
+    },
+    {
+      "case": "repeat-and-remove",
+      "observedClears": 2,
+      "productCriterion": "PASS within instrumentation",
+      "errors": []
+    }
+  ]
+}

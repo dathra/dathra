@@ -1,0 +1,9 @@
+{
+  "command": [
+    "node",
+    "tmp/dathomir-262-validation/state-lifetime/build-copy.mjs"
+  ],
+  "exit_code": 0,
+  "stdout": "{\n  \"esbuild\": \"0.25.10\",\n  \"inputs\": [\n    \"node_modules/.pnpm/alien-signals@3.2.0/node_modules/alien-signals/esm/system.mjs\",\n    \"packages/reactivity/src/internal/system.ts\",\n    \"packages/reactivity/src/batch/implementation.ts\",\n    \"packages/reactivity/src/internal/helpers.ts\",\n    \"packages/reactivity/src/computed/implementation.ts\",\n    \"packages/reactivity/src/internal/state.ts\",\n    \"packages/reactivity/src/createRoot/implementation.ts\",\n    \"packages/reactivity/src/effect/implementation.ts\",\n    \"packages/reactivity/src/onCleanup/implementation.ts\",\n    \"packages/reactivity/src/signal/implementation.ts\",\n    \"packages/reactivity/src/templateEffect/implementation.ts\",\n    \"packages/reactivity/src/index.ts\"\n  ]\n}\n",
+  "stderr": ""
+}

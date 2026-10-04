@@ -1,0 +1,13 @@
+{
+  "command": [
+    "packages/reactivity/node_modules/.bin/vitest",
+    "run",
+    "--config",
+    "tmp/dathomir-262-validation/state-lifetime/vitest.config.ts",
+    "p03.test.ts",
+    "p06.test.ts"
+  ],
+  "exit_code": 1,
+  "stdout": "\n RUN  v4.0.4 /home/kcatt/dev/dathomir/tmp/dathomir-262-validation/state-lifetime\n\n \u2713 p03.test.ts (17 tests) 21ms\n \u276f p06.test.ts (7 tests | 1 failed) 21ms\n   \u2713 P06.01 Accepted260 known batch-throw constraint: actual partial model and DOM writes 6ms\n   \u2713 P06.02 failed causal publication discarded; model and external native effects are not rolled back 3ms\n   \u2713 P06.03 later healthy event may publish failed attempt's partial model 1ms\n   \u00d7 P06.04 seed no-op, latest coalesce, failed input suppress and explicit retry 7ms\n   \u2713 P06.05 pending changed input then latest baseline must cancel outdated receive 0ms\n   \u2713 P06.06 receive outside parent effect avoids leaking child read dependencies 0ms\n   \u2713 P06.07 disposed child cannot receive, publish queued plan, or use captured invocation setter 2ms\n\n Test Files  1 failed | 1 passed (2)\n      Tests  1 failed | 23 passed (24)\n   Start at  05:21:02\n   Duration  555ms (transform 129ms, setup 0ms, collect 332ms, tests 42ms, environment 0ms, prepare 7ms)\n\n",
+  "stderr": "\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 1 \u23af\u23af\u23af\u23af\u23af\u23af\u23af\n\n FAIL  p06.test.ts > P06.04 seed no-op, latest coalesce, failed input suppress and explicit retry\nAssertionError: Expected values to be strictly equal:\n\n'Gamma' !== 'Delta'\n\n\nExpected: \"Delta\"\nReceived: \"Gamma\"\n\n \u276f p06.test.ts:103:10\n    101|   assert.equal(queue.flush(), \"success\");\n    102|   // Retry must reprepare even if the partially changed native state i\u2026\n    103|   assert.equal(node.textContent, \"Delta\");\n       |          ^\n    104|   assert.equal(incoming.peek(), \"Delta\");\n    105|   stop();\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/1]\u23af\n\n"
+}

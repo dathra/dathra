@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-04T21:11:53.158Z",
+  "completed": "2026-10-04T21:11:57.701Z",
+  "exitCode": 0,
+  "buildProvenanceSha256": "6a35767a4e38e7b229881291fca3384d3994838942b0a44294d625b9d0c5157d",
+  "outputs": {
+    "client/assets/DocsAppRoot-BRfkl5ir.js": "c36035c5ec17984c984d983122e9fab22b6a47eb99fa3757d32b38f9df8b6c3c",
+    "client/assets/main-DoZ2D7Hc.js": "34a3b0de17a4aff580e79183c4f71c163df232643ca9a9ccefe842e232cbad81",
+    "client/index.html": "12329a2aff1af3b02461acf8856879689f6b16e5b39d99d5f3376fd27b563ae9",
+    "server/entry-server.js": "769f298f42ef569d4e976404966820bf4a57135725520a668cd3389a21530a08"
+  },
+  "observationsSha256": "696e69c52542d24114f9d93058a7c15dca1f5aababb50387159e833342696898",
+  "logSha256": "86a10bf6682d5f659ca523007a40c8b7016235cb55d30b24ed7be5f4f9124e38"
+}
