@@ -254,4 +254,6 @@ PR #263 の旧案を、この実験の合格だけを理由にmerge可能とは�
 
 各担当の最終結果を受領し、archiveで再実行する手順を一本化した。
 独立レビューの指摘と修正は [レビュー記録](coordinator-review.md) と [対応記録](review-resolution.md) に残した。
+全資料の統合後に行った [最終レビュー](final-integration-review.md) では、指定範囲で新しい修正要求はなかった。
+required initial writeをactive refreshへ移して初期失敗の保証を回避しないこと、異なるbuild方式の保証を合算しないことを、後続の条件として再確認した。
 各実験を一括実行しても、一つの公開APIからのjoint integrationを証明したことにはならない。

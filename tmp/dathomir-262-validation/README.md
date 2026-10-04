@@ -8,7 +8,8 @@ ProposalとAccepted ADRの正本は変更していない。
 
 1. [レビュー用の全体像](review-summary.md) と [最初のsliceの採用範囲](first-slice-review.md) を読む。
 2. [58項目の対応表](coverage.md) と各READMEで、証拠と未証明範囲を見る。
-3. コードと実行ログを確認し、必要なら同じコマンドを再実行する。
+3. [最終統合レビュー](final-integration-review.md) で、採用済み判断と証拠の境界の再確認を見る。
+4. コードと実行ログを確認し、必要なら同じコマンドを再実行する。
 
 ## 検証の区別
 
