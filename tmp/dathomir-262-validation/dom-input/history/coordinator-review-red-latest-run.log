@@ -1,0 +1,129 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir
+
+ ❯ tmp/dathomir-262-validation/dom-input/p04.test.mjs (24 tests | 2 failed) 1174ms
+   ✓ adopts two SSR rows without initializer, server/browser template, factory, or DOM writes 65ms
+   ✓ counts a genuinely new first-refresh key only after successful SSR admission 44ms
+   ✓ retains edited draft and both fragment nodes on reorder; remove/re-add creates fresh lifetime 70ms
+   ✓ retains bind markers through text -> two DOM nodes -> empty -> text 45ms
+   ✓ rejects duplicate keys before factory and keeps exact committed nodes 43ms
+   ✓ keeps numeric 1 and string 1 distinct within one sibling extent 45ms
+   ✓ rejects SSR profileId mismatch before acquisition or reconstruction 42ms
+   ✓ rejects SSR defaultId mismatch before acquisition or reconstruction 42ms
+   ✓ rejects SSR parserId mismatch before acquisition or reconstruction 42ms
+   ✓ explicit active tag replacement ends the old lifetime 46ms
+   ✓ explicit active namespace replacement ends the old lifetime 42ms
+   ✓ explicit active default replacement ends the old lifetime 43ms
+   ✓ failed new-child preparation stops only its provisional lifetime while independent sibling updates remain 44ms
+   ✓ failed parent publication does not undo an independent child write during its preparation 46ms
+   ✓ fences foreign nodes instead of inferring or adopting their ownership 42ms
+   ✓ failed enclosing parent admission cleans only parent acquisitions while its explicitly contained active child continues 41ms
+   ✓ rejects initial overlap containment before any child acquisition 42ms
+   ✓ rejects initial foreign containment before any child acquisition 41ms
+   ✓ profile preflight rejection permits a corrected catalog without consuming acquisition 45ms
+   ✓ required admission failure disposes restored acquisitions once and forbids replay of that association 41ms
+   ✓ duplicate active association shares one owner and disposed association cannot acquire again 43ms
+   × staged input cannot execute the framework edit operation; its native draft survives until active input 46ms
+   ✓ trusted pre-admission native edit is preserved without invoking the staged framework operation 60ms
+   × partial owned DOM commit rolls back two real setters without reverting native drafts or an independent active child 42ms
+ ✓ tmp/dathomir-262-validation/dom-input/p05.test.mjs (17 tests) 1079ms
+ ✓ tmp/dathomir-262-validation/dom-input/counterexamples.test.mjs (8 tests) 564ms
+ ❯ tmp/dathomir-262-validation/dom-input/counter.test.mjs (4 tests | 3 failed) 449ms
+   ✓ restores SSR 7, refreshes automatically, increments through actual engine, and blocks writes after disposal 248ms
+   × counter acquisition failure is terminal for its association and removes staged operations 46ms
+   × duplicate counter admission after disposal cannot reactivate that identity 43ms
+   × automatic postcommit refresh failure is an active operation failure, with explicit retry and no admission replay 45ms
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  5 failed | 48 passed (53)
+   Start at  06:17:26
+   Duration  4.41s (transform 50ms, setup 0ms, collect 792ms, tests 3.27s, environment 0ms, prepare 15ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tmp/dathomir-262-validation/dom-input/counter.test.mjs > counter acquisition failure is terminal for its association and removes staged operations
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ tmp/dathomir-262-validation/dom-input/counter.test.mjs:57:82
+     55|     return { failure, retry, getterCalls, operations, text: text.data,…
+     56|   }));
+     57|   expect(r.failure).toBe('required counter acquisition failed'); expec…
+       |                                                                                  ^
+     58|   expect(r.getterCalls).toBe(1); expect(r.operations).toBe(0); expect(…
+     59| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tmp/dathomir-262-validation/dom-input/counter.test.mjs > duplicate counter admission after disposal cannot reactivate that identity
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ tmp/dathomir-262-validation/dom-input/counter.test.mjs:71:19
+     69|     return { retry, getters, operations, text: text.data, count: owner…
+     70|   }));
+     71|   expect(r.retry).toMatch(/^COUNTER_ADMISSION_TERMINAL/); expect(r.get…
+       |                   ^
+     72|   expect(r.text).toBe('Count = 7'); expect(r.count).toBe(99);
+     73| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tmp/dathomir-262-validation/dom-input/counter.test.mjs > automatic postcommit refresh failure is an active operation failure, with explicit retry and no admission replay
+Error: page.evaluate: Error: active refresh setter failed
+    at Text.set (eval at evaluate (:290:30), <anonymous>:5:117)
+    at Object.counterBaseline (<anonymous>:1092:70)
+    at eval (eval at evaluate (:290:30), <anonymous>:7:25)
+    at UtilityScript.evaluate (<anonymous>:292:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+ ❯ tmp/dathomir-262-validation/dom-input/counter.test.mjs:76:155
+     74| 
+     75| it('automatic postcommit refresh failure is an active operation failur…
+     76|   const r = await h.observe('counter first active refresh failure', '<…
+       |                                                                                                                                                           ^
+     77|     const text = document.getElementById('counter').firstChild, button…
+     78|     const association = Object.freeze({ count: 7, initialText: 'Count:…
+ ❯ Object.observe tmp/dathomir-262-validation/dom-input/browser-harness.mjs:22:30
+ ❯ tmp/dathomir-262-validation/dom-input/counter.test.mjs:76:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tmp/dathomir-262-validation/dom-input/p04.test.mjs > staged input cannot execute the framework edit operation; its native draft survives until active input
+AssertionError: expected { draft: 'native staged draft', …(2) } to deeply equal { draft: 'Alpha', …(2) }
+
+- Expected
++ Received
+
+  {
+    "display": "Alpha",
+-   "draft": "Alpha",
++   "draft": "native staged draft",
+    "native": "native staged draft",
+  }
+
+ ❯ tmp/dathomir-262-validation/dom-input/p04.test.mjs:277:20
+    275|   }));
+    276|   const staged = { draft: 'Alpha', native: 'native staged draft', disp…
+    277|   expect(r.during).toEqual(staged); expect(r.committed).toEqual(staged…
+       |                    ^
+    278|   expect(r.active).toEqual({ draft: 'native staged draft', native: 'na…
+    279| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tmp/dathomir-262-validation/dom-input/p04.test.mjs > partial owned DOM commit rolls back two real setters without reverting native drafts or an independent active child
+AssertionError: expected undefined to be 'second native DOM setter failed' // Object.is equality
+
+- Expected: 
+"second native DOM setter failed"
+
++ Received: 
+undefined
+
+ ❯ tmp/dathomir-262-validation/dom-input/p04.test.mjs:325:21
+    323|       independent: { count: independent.count.peek(), text: independen…
+    324|   }));
+    325|   expect(r.failure).toBe('second native DOM setter failed'); expect(r.…
+       |                     ^
+    326|   expect(r.atSecond).toEqual({ first: 'first committed write', second:…
+    327|   expect(r.writes).toEqual([['first', 'first committed write'], ['seco…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+

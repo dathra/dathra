@@ -1,0 +1,76 @@
+{
+  "timestamp": "2026-10-04T21:27:12.954Z",
+  "esbuild": "0.25.10",
+  "node": "v24.15.0",
+  "inputs": [
+    {
+      "path": "node_modules/.pnpm/alien-signals@3.2.0/node_modules/alien-signals/esm/system.mjs",
+      "sha256": "d6861e6d706a1f5c6de3446353e5424c8e82dd3576e6aac03b850edf51e9a8c5"
+    },
+    {
+      "path": "packages/reactivity/src/internal/system.ts",
+      "sha256": "48e5fd621515908da99c6901586e6a037143e0c8f0befd681a76bd21a16910bd"
+    },
+    {
+      "path": "packages/reactivity/src/batch/implementation.ts",
+      "sha256": "308ce5245292c8f682ab56ecb5cf33ab928e792711bac3ce5ff60c84a11e3606"
+    },
+    {
+      "path": "packages/reactivity/src/internal/helpers.ts",
+      "sha256": "2d8a98dc81df8a4fe0fe94e1723b721f3ccb1c4ac4f95aa7059bb5b2b4de594f"
+    },
+    {
+      "path": "packages/reactivity/src/computed/implementation.ts",
+      "sha256": "ab1d08e54187c6723ef8b63adeea0ae790bf37b3c74086920f29e49e75fb51d5"
+    },
+    {
+      "path": "packages/reactivity/src/internal/state.ts",
+      "sha256": "3bf2d6d0d0f24f17ba545a1ea318f3b4dac0d9f2e90d77650003d06952903390"
+    },
+    {
+      "path": "packages/reactivity/src/createRoot/implementation.ts",
+      "sha256": "9a2f77bc9551b8d4c400d7a856a8f92dd2e3115241ff4a59dd3302327a367b55"
+    },
+    {
+      "path": "packages/reactivity/src/effect/implementation.ts",
+      "sha256": "77e2bf7e48a8258cb23e3a2a5faed007952561555e1594091b4ede090175d40f"
+    },
+    {
+      "path": "packages/reactivity/src/onCleanup/implementation.ts",
+      "sha256": "4537234008eb9087802f3ab6e94794b8d019499393e30ebb75bf1e873cb4e583"
+    },
+    {
+      "path": "packages/reactivity/src/signal/implementation.ts",
+      "sha256": "0bd4b450fa78fa1f75cf36b98a9a439a5acfe78b98671398a1886a347c2b570b"
+    },
+    {
+      "path": "packages/reactivity/src/templateEffect/implementation.ts",
+      "sha256": "562e0bea3760a4363116eee62a3fb758553e5e621e41d4b4a8ff3ce97ee007fd"
+    },
+    {
+      "path": "packages/reactivity/src/index.ts",
+      "sha256": "c0268479d5e4e843a6706ecacd37240487bcc6dd897872e2021608e4b8cc71be"
+    },
+    {
+      "path": "tmp/dathomir-262-validation/dom-input/p04-kernel.mjs",
+      "sha256": "1638adcc0fe40d40ea52a93d99b8fc5eff28b61ff0e78f40d69ecac07a59446f"
+    },
+    {
+      "path": "tmp/dathomir-262-validation/dom-input/p05-kernel.mjs",
+      "sha256": "aa0ada6708b09d2a4d43998482c6d408b6b8ef5330df04ac0f83f58b28bd9e42"
+    },
+    {
+      "path": "tmp/dathomir-262-validation/dom-input/counter-kernel.mjs",
+      "sha256": "f0b7ea85715e1404e865abe00c2498696d5905dca414b75d98ee5571bee92818"
+    },
+    {
+      "path": "packages/runtime/src/reconcile/implementation.ts",
+      "sha256": "3895ee9b25d1f3445f4c9a0495dc3c03e6212cb0f1c1300dede44dc6065fb1a7"
+    },
+    {
+      "path": "tmp/dathomir-262-validation/dom-input/browser.mjs",
+      "sha256": "cbeedc6574617cb7d3d73568e33bdb0eef4f62434b0901bf6232117380b48156"
+    }
+  ],
+  "command": "node tmp/dathomir-262-validation/dom-input/run.mjs"
+}

@@ -1,0 +1,12 @@
+{
+  "AGENTS.md": "d75ff4f51f286db981e53c19de53c9e70ccba2a07ee09feb1a11829a225ab347",
+  ".opencode/plugins/format-lint.ts": "4dc26b907d6870dce1fca37998c41aabf26e622f965f3a16a52ad6bc9f07ad1e",
+  "mise.toml": "a5a59d1bc4e8bfc53052eb1527a2e7029f62cee59ce3cb978a0addb0f445d2bd",
+  "package.json": "e5b064908e6a3efa7ef8ba256b059dcb0bc92d22efc4d65bcf952651de61b0d0",
+  "pnpm-lock.yaml": "b9bd2b4e2e061437b8a1e7aae7c7f9c43d63ca7fc34e6ff6e9beaf6f4665c3c0",
+  "packages/core/package.json": "26d14317f4b009063eabeef73bcb5f99f86400b0ed09788cab04f0bdd63561f0",
+  "packages/reactivity/package.json": "22bec724af13a998305d3b7df4ef2900f77903f531d9b323802aaf93b8cd9076",
+  "packages/plugin/package.json": "5d46044cb8bb4900a7a005d78eda18af269a83efed02036e37c6ba2e71e27060",
+  "tmp/dathomir-262-three-concerns-review.md": "a5f2e079476b50316a080d1d4d35862cda3d502c624367753b4057b2fabb867e",
+  "tmp/dathomir-262-signal-and-feasibility-review.md": "f1e6689a4d5c83c92f4afc74c7f02b7af951919bedba03292e3672ad3b5fe782"
+}

@@ -1,0 +1,380 @@
+{
+  "inputs": {
+    "tmp/dathomir-262-validation/types-build/runtime/server.mjs": {
+      "bytes": 5092,
+      "imports": [],
+      "format": "esm"
+    },
+    "node_modules/.pnpm/alien-signals@3.2.0/node_modules/alien-signals/esm/system.mjs": {
+      "bytes": 6620,
+      "imports": [],
+      "format": "esm"
+    },
+    "packages/reactivity/src/internal/system.ts": {
+      "bytes": 10600,
+      "imports": [
+        {
+          "path": "node_modules/.pnpm/alien-signals@3.2.0/node_modules/alien-signals/esm/system.mjs",
+          "kind": "import-statement",
+          "original": "alien-signals/system"
+        }
+      ],
+      "format": "esm"
+    },
+    "packages/reactivity/src/batch/implementation.ts": {
+      "bytes": 795,
+      "imports": [
+        {
+          "path": "packages/reactivity/src/internal/system.ts",
+          "kind": "import-statement",
+          "original": "../internal/system"
+        }
+      ],
+      "format": "esm"
+    },
+    "packages/reactivity/src/internal/helpers.ts": {
+      "bytes": 3062,
+      "imports": [
+        {
+          "path": "node_modules/.pnpm/alien-signals@3.2.0/node_modules/alien-signals/esm/system.mjs",
+          "kind": "import-statement",
+          "original": "alien-signals/system"
+        },
+        {
+          "path": "packages/reactivity/src/internal/system.ts",
+          "kind": "import-statement",
+          "original": "./system"
+        }
+      ],
+      "format": "esm"
+    },
+    "packages/reactivity/src/computed/implementation.ts": {
+      "bytes": 3413,
+      "imports": [
+        {
+          "path": "node_modules/.pnpm/alien-signals@3.2.0/node_modules/alien-signals/esm/system.mjs",
+          "kind": "import-statement",
+          "original": "alien-signals/system"
+        },
+        {
+          "path": "packages/reactivity/src/internal/helpers.ts",
+          "kind": "import-statement",
+          "original": "../internal/helpers"
+        },
+        {
+          "path": "packages/reactivity/src/internal/system.ts",
+          "kind": "import-statement",
+          "original": "../internal/system"
+        }
+      ],
+      "format": "esm"
+    },
+    "packages/reactivity/src/internal/state.ts": {
+      "bytes": 2499,
+      "imports": [],
+      "format": "esm"
+    },
+    "packages/reactivity/src/createRoot/implementation.ts": {
+      "bytes": 1891,
+      "imports": [
+        {
+          "path": "packages/reactivity/src/internal/state.ts",
+          "kind": "import-statement",
+          "original": "../internal/state"
+        }
+      ],
+      "format": "esm"
+    },
+    "packages/reactivity/src/effect/implementation.ts": {
+      "bytes": 2740,
+      "imports": [
+        {
+          "path": "packages/reactivity/src/internal/helpers.ts",
+          "kind": "import-statement",
+          "original": "../internal/helpers"
+        },
+        {
+          "path": "packages/reactivity/src/internal/state.ts",
+          "kind": "import-statement",
+          "original": "../internal/state"
+        },
+        {
+          "path": "packages/reactivity/src/internal/system.ts",
+          "kind": "import-statement",
+          "original": "../internal/system"
+        }
+      ],
+      "format": "esm"
+    },
+    "packages/reactivity/src/onCleanup/implementation.ts": {
+      "bytes": 1158,
+      "imports": [
+        {
+          "path": "packages/reactivity/src/internal/state.ts",
+          "kind": "import-statement",
+          "original": "../internal/state"
+        }
+      ],
+      "format": "esm"
+    },
+    "packages/reactivity/src/signal/implementation.ts": {
+      "bytes": 3734,
+      "imports": [
+        {
+          "path": "node_modules/.pnpm/alien-signals@3.2.0/node_modules/alien-signals/esm/system.mjs",
+          "kind": "import-statement",
+          "original": "alien-signals/system"
+        },
+        {
+          "path": "packages/reactivity/src/internal/helpers.ts",
+          "kind": "import-statement",
+          "original": "../internal/helpers"
+        },
+        {
+          "path": "packages/reactivity/src/internal/system.ts",
+          "kind": "import-statement",
+          "original": "../internal/system"
+        }
+      ],
+      "format": "esm"
+    },
+    "packages/reactivity/src/templateEffect/implementation.ts": {
+      "bytes": 1015,
+      "imports": [
+        {
+          "path": "packages/reactivity/src/effect/implementation.ts",
+          "kind": "import-statement",
+          "original": "../effect/implementation"
+        },
+        {
+          "path": "packages/reactivity/src/internal/state.ts",
+          "kind": "import-statement",
+          "original": "../internal/state"
+        }
+      ],
+      "format": "esm"
+    },
+    "packages/reactivity/src/index.ts": {
+      "bytes": 688,
+      "imports": [
+        {
+          "path": "packages/reactivity/src/batch/implementation.ts",
+          "kind": "import-statement",
+          "original": "./batch/implementation"
+        },
+        {
+          "path": "packages/reactivity/src/computed/implementation.ts",
+          "kind": "import-statement",
+          "original": "./computed/implementation"
+        },
+        {
+          "path": "packages/reactivity/src/createRoot/implementation.ts",
+          "kind": "import-statement",
+          "original": "./createRoot/implementation"
+        },
+        {
+          "path": "packages/reactivity/src/effect/implementation.ts",
+          "kind": "import-statement",
+          "original": "./effect/implementation"
+        },
+        {
+          "path": "packages/reactivity/src/onCleanup/implementation.ts",
+          "kind": "import-statement",
+          "original": "./onCleanup/implementation"
+        },
+        {
+          "path": "packages/reactivity/src/signal/implementation.ts",
+          "kind": "import-statement",
+          "original": "./signal/implementation"
+        },
+        {
+          "path": "packages/reactivity/src/templateEffect/implementation.ts",
+          "kind": "import-statement",
+          "original": "./templateEffect/implementation"
+        }
+      ],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/graph/private.server.ts": {
+      "bytes": 198,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/graph/counter.server.ts": {
+      "bytes": 1014,
+      "imports": [
+        {
+          "path": "tmp/dathomir-262-validation/types-build/runtime/server.mjs",
+          "kind": "import-statement",
+          "original": "@dathra/core/server"
+        },
+        {
+          "path": "packages/reactivity/src/index.ts",
+          "kind": "import-statement",
+          "original": "@dathra/reactivity"
+        },
+        {
+          "path": "tmp/dathomir-262-validation/types-build/graph/private.server.ts",
+          "kind": "import-statement",
+          "original": "./private.server.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/graph/one/widget.server.ts": {
+      "bytes": 380,
+      "imports": [
+        {
+          "path": "tmp/dathomir-262-validation/types-build/runtime/server.mjs",
+          "kind": "import-statement",
+          "original": "@dathra/core/server"
+        }
+      ],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/graph/two/widget.server.ts": {
+      "bytes": 388,
+      "imports": [
+        {
+          "path": "tmp/dathomir-262-validation/types-build/runtime/server.mjs",
+          "kind": "import-statement",
+          "original": "@dathra/core/server"
+        }
+      ],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/graph/route.ts": {
+      "bytes": 748,
+      "imports": [
+        {
+          "path": "tmp/dathomir-262-validation/types-build/runtime/server.mjs",
+          "kind": "import-statement",
+          "original": "@dathra/core/server"
+        },
+        {
+          "path": "tmp/dathomir-262-validation/types-build/graph/counter.server.ts",
+          "kind": "import-statement",
+          "original": "./counter.server.js"
+        },
+        {
+          "path": "tmp/dathomir-262-validation/types-build/graph/one/widget.server.ts",
+          "kind": "import-statement",
+          "original": "./one/widget.server.js"
+        },
+        {
+          "path": "tmp/dathomir-262-validation/types-build/graph/two/widget.server.ts",
+          "kind": "import-statement",
+          "original": "./two/widget.server.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/out/build/naive/source-entry.mjs": {
+      "bytes": 547,
+      "imports": [
+        {
+          "path": "tmp/dathomir-262-validation/types-build/graph/route.ts",
+          "kind": "import-statement",
+          "original": "/home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/graph/route.ts"
+        },
+        {
+          "path": "tmp/dathomir-262-validation/types-build/runtime/server.mjs",
+          "kind": "import-statement",
+          "original": "/home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/runtime/server.mjs"
+        },
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "tmp/dathomir-262-validation/types-build/out/build/naive/server/entry.mjs": {
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [
+        "response"
+      ],
+      "entryPoint": "tmp/dathomir-262-validation/types-build/out/build/naive/source-entry.mjs",
+      "inputs": {
+        "tmp/dathomir-262-validation/types-build/runtime/server.mjs": {
+          "bytesInOutput": 4621
+        },
+        "node_modules/.pnpm/alien-signals@3.2.0/node_modules/alien-signals/esm/system.mjs": {
+          "bytesInOutput": 5142
+        },
+        "packages/reactivity/src/internal/system.ts": {
+          "bytesInOutput": 4477
+        },
+        "packages/reactivity/src/batch/implementation.ts": {
+          "bytesInOutput": 98
+        },
+        "packages/reactivity/src/internal/helpers.ts": {
+          "bytesInOutput": 856
+        },
+        "packages/reactivity/src/computed/implementation.ts": {
+          "bytesInOutput": 1425
+        },
+        "packages/reactivity/src/internal/state.ts": {
+          "bytesInOutput": 428
+        },
+        "packages/reactivity/src/createRoot/implementation.ts": {
+          "bytesInOutput": 687
+        },
+        "packages/reactivity/src/effect/implementation.ts": {
+          "bytesInOutput": 955
+        },
+        "packages/reactivity/src/onCleanup/implementation.ts": {
+          "bytesInOutput": 254
+        },
+        "packages/reactivity/src/signal/implementation.ts": {
+          "bytesInOutput": 1536
+        },
+        "packages/reactivity/src/templateEffect/implementation.ts": {
+          "bytesInOutput": 160
+        },
+        "packages/reactivity/src/index.ts": {
+          "bytesInOutput": 0
+        },
+        "tmp/dathomir-262-validation/types-build/graph/private.server.ts": {
+          "bytesInOutput": 178
+        },
+        "tmp/dathomir-262-validation/types-build/graph/counter.server.ts": {
+          "bytesInOutput": 556
+        },
+        "tmp/dathomir-262-validation/types-build/graph/one/widget.server.ts": {
+          "bytesInOutput": 236
+        },
+        "tmp/dathomir-262-validation/types-build/graph/two/widget.server.ts": {
+          "bytesInOutput": 237
+        },
+        "tmp/dathomir-262-validation/types-build/graph/route.ts": {
+          "bytesInOutput": 504
+        },
+        "tmp/dathomir-262-validation/types-build/out/build/naive/source-entry.mjs": {
+          "bytesInOutput": 264
+        }
+      },
+      "bytes": 23726
+    }
+  }
+}

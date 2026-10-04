@@ -1,0 +1,77 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir
+
+ ❯ tmp/dathomir-262-validation/dom-input/p05.test.mjs (15 tests | 1 failed) 984ms
+   ✓ adopts pre-admission Japanese edit while content automatically changes Count:7 to Count=7 83ms
+   ✓ recaptures edits after preflight and after capture listener registration 44ms
+   ✓ rechecks silent live value changes before commit even without an input event 45ms
+   ✓ rejects unstable revision within bounded staging and keeps the latest native edit 44ms
+   ✓ failed required commit keeps native edit, discards provisional model and removes listeners 43ms
+   ✓ native and controlled draft both preserve preboot edit; only controlled installs a keystroke sink 86ms
+   ✓ holds unknown prebootstrap composition formatting until a native blur boundary 65ms
+   ✓ preserves caret and selection on equal-value refresh using actual keyboard selection 71ms
+   ✓ holds differing multi-control drafts and does not treat refresh or remote model change as resolution 59ms
+   ✓ explicit edit resolves a group only after all unprotected declared peers match 43ms
+   ✓ synthetic composition holds formatter writes and releases at synthetic compositionend 44ms
+   ✓ stale publication rejects a native revision change before writing 42ms
+   × native reset completion reaches controlled sink; canceled reset does not 147ms
+   ✓ same association duplicate admission creates one sink listener and disposal removes it 44ms
+   ✓ rejects sink resource acquisition during provisional model-only admission 43ms
+ ✓ tmp/dathomir-262-validation/dom-input/p04.test.mjs (15 tests) 769ms
+ ❯ tmp/dathomir-262-validation/dom-input/counterexamples.test.mjs (7 tests | 1 failed) 530ms
+   ✓ current low-level reconcile is not an SSR-adoption kernel 67ms
+   ✓ a bare DocumentFragment empties on insertion and cannot represent a retained extent 44ms
+   ✓ same Node identity via insertBefore still disconnects/reconnects a Web Component and loses focused input 48ms
+   × records optional moveBefore behavior separately from insertBefore guarantees 52ms
+   ✓ naive initial property refresh destroys the preboot edit 57ms
+   ✓ real reset click runs a listener microtask before default reset and before later cancellation 141ms
+   ✓ non-idempotent formatting at compositionend can reformat again on a following synthetic input 43ms
+ ✓ tmp/dathomir-262-validation/dom-input/counter.test.mjs (1 test) 314ms
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  2 failed | 36 passed (38)
+   Start at  05:50:44
+   Duration  3.76s (transform 43ms, setup 0ms, collect 802ms, tests 2.60s, environment 0ms, prepare 15ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tmp/dathomir-262-validation/dom-input/counterexamples.test.mjs > records optional moveBefore behavior separately from insertBefore guarantees
+AssertionError: expected [ +0, +0 ] to deeply equal [ 1, 2 ]
+
+- Expected
++ Received
+
+  [
+-   1,
+-   2,
++   0,
++   0,
+  ]
+
+ ❯ tmp/dathomir-262-validation/dom-input/counterexamples.test.mjs:63:92
+     61|   }));
+     62|   if (r.available) {
+     63|     expect(r.focusRetained).toBe(true); expect(r.sameNode).toBe(true);…
+       |                                                                                            ^
+     64|   } else expect(r).toEqual({ available: false });
+     65| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tmp/dathomir-262-validation/dom-input/p05.test.mjs > native reset completion reaches controlled sink; canceled reset does not
+AssertionError: expected 'dirty' to be 'a' // Object.is equality
+
+Expected: "a"
+Received: "dirty"
+
+ ❯ tmp/dathomir-262-validation/dom-input/p05.test.mjs:182:58
+    180|     return { reset, canceled };
+    181|   });
+    182|   expect(r.reset.value).toBe('a'); expect(r.reset.model).toBe('a'); ex…
+       |                                                          ^
+    183|   expect(r.canceled.value).toBe('keep'); expect(r.canceled.model).toBe…
+    184| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

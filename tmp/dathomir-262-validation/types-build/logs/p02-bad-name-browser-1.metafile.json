@@ -1,0 +1,38 @@
+{
+  "inputs": {
+    "tmp/dathomir-262-validation/types-build/runtime/client.mjs": {
+      "bytes": 1346,
+      "imports": [],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/graph/one/widget.client.ts": {
+      "bytes": 129,
+      "imports": [
+        {
+          "path": "tmp/dathomir-262-validation/types-build/runtime/client.mjs",
+          "kind": "import-statement",
+          "original": "@dathra/core/client"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "tmp/dathomir-262-validation/types-build/out/build/bad-name/browser/client-0.mjs": {
+      "imports": [],
+      "exports": [
+        "default"
+      ],
+      "entryPoint": "tmp/dathomir-262-validation/types-build/graph/one/widget.client.ts",
+      "inputs": {
+        "tmp/dathomir-262-validation/types-build/runtime/client.mjs": {
+          "bytesInOutput": 888
+        },
+        "tmp/dathomir-262-validation/types-build/graph/one/widget.client.ts": {
+          "bytesInOutput": 77
+        }
+      },
+      "bytes": 1007
+    }
+  }
+}

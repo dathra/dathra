@@ -1,0 +1,64 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Missing expected exception.
+    at file:///home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build/run-build.mjs:222:8
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: /E_BROWSER_POLICY_INPUT/,
+  operator: 'throws',
+  diff: 'simple'
+}
+
+Node.js v24.15.0
+ ❯ verification.test.ts (2 tests | 1 failed) 10468ms
+     ✓ P01 uses native Signal declarations, rejects mismatches and emits finite declarations  5532ms
+     × P02 preserves real counterexamples and validates actual relocated bundles 4935ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  verification.test.ts > bounded #262 actual-type and emitted-graph evidence > P02 preserves real counterexamples and validates actual relocated bundles
+Error: Command failed: /home/kcatt/.local/share/mise/installs/node/24.15.0/bin/node run-build.mjs
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Missing expected exception.
+    at file:///home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build/run-build.mjs:222:8
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: /E_BROWSER_POLICY_INPUT/,
+  operator: 'throws',
+  diff: 'simple'
+}
+
+Node.js v24.15.0
+
+ ❯ run-build.mjs:222:8
+ ❯ verification.test.ts:17:5
+     15|   });
+     16|   it('P02 preserves real counterexamples and validates actual relocate…
+     17|     execFileSync(process.execPath, ['run-build.mjs'], { cwd: root, tim…
+       |     ^
+     18|     const result = JSON.parse(readFileSync(new URL('logs/p02-result.js…
+     19|     expect(result.cases.find(c => c.name === 'same-shape.ts').typeScri…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  05:45:46
+   Duration  10.59s (transform 21ms, setup 0ms, collect 29ms, tests 10.47s, environment 0ms, prepare 4ms)
+
+undefined
+/home/kcatt/dev/dathomir/packages/reactivity:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: vitest run --config /home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build/vitest.config.mjs

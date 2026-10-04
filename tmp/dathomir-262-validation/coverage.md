@@ -4,7 +4,7 @@
 58件の機能が合格したという表ではない。
 元の問いと判断の経緯は [検証前の比較資料](design-context/dathomir-262-three-concerns-review.md) に保存した。
 個別suiteの件数と実行環境は各READMEを参照する。
-型/buildおよびDOM/inputの行は担当の最終受領後に確定する。
+P01/P02/P02bとP03–P07の最終報告を反映した。
 
 | 項目 | 問い | 証拠の種類 | 範囲と限界 |
 |---|---|---|---|
@@ -18,19 +18,19 @@
 | R2-A08 | bind/on の候補は役割別か | [型と限定kernel](types-build/README.md) | all-name候補と書込みphase拒否は別の責務として検査。 |
 | R2-A09 | client parameter はどう型付けするか | [型実験](types-build/README.md) | 独立関数が後から宣言されるregistry全名を自動推論する保証はない。 |
 | R2-A10 | type/runtime path を二度書くか | [型とbuild実験](types-build/README.md) | 二重記載を維持。型の一致だけで実module同一性を保証しない。 |
-| R2-A11 | type witness と actual module をどう照合するか | [build実験](types-build/README.md) | 明示inventoryの範囲とsource rewriteの採用判断を分ける。 |
-| R2-A12 | deployment 後の reference はどう解決するか | [build実験](types-build/README.md) | file配置の移動とHTTP public pathを区別。adapter全般の証明ではない。 |
-| R2-A13 | package/graph と再現性は何を保証するか | [source比較と反例](source-provenance.json) | source hash一致とbrowser engine実体の共有は別。独立engineのcomputed staleを再現。 |
+| R2-A11 | type witness と actual module をどう照合するか | [build実験](types-build/README.md) | manual inventoryでは同じshapeの誤参照を受理する反例。source分析は未採用の別判断。 |
+| R2-A12 | deployment 後の reference はどう解決するか | [build実験](types-build/README.md) | preserve-moduleと手書きinventoryで移設後のlookup、実Chromiumの非root HTTPを確認。adapter全般ではない。 |
+| R2-A13 | package/graph と再現性は何を保証するか | [source比較と反例](source-provenance.json) | source hash一致とbrowser engine実体の共有は別。独立engineのcomputed staleを再現。全adapterのbit再現性は未証明。 |
 | R2-A14 | bind の content category は固定か | [DOM実験の範囲](dom-input/README.md) | text/DOM切替と保持を検査。全content grammarは別。 |
-| R2-A15 | 接続直後の異なる結果はいつ出すか | [DOM実験の範囲](dom-input/README.md) | admissionとpost-commit初回refreshを分離。全failure pathの保証ではない。 |
+| R2-A15 | 接続直後の異なる結果はいつ出すか | [DOM実験の範囲](dom-input/README.md) | admissionとpost-commit初回refreshを分離。二つ目のText setter失敗をrollback。逆setter失敗や全DOM操作は未証明。 |
 | R2-A16 | preflight/producer/operation の違いは何か | [複数の限定実験](review-summary.md) | preflight、acquisition、active updateの結果を一つのrollback保証にまとめない。 |
 | R2-A17 | event は何を読み取るか | [部分観測](native-controls/README.md) | native submitterは観測。提案event snapshotの全propertyとsource権限は未証明。 |
 | R2-A18 | event options と scheduling は何か | [一部kernel](state-lifetime/README.md) | parallel/replaceとleaseの一部。join/queue、全event optionの実装は未証明。 |
 | R2-A19 | attribute と property はどう分けるか | [型とnative観測](types-build/README.md) | boolean placementとnative value/defaultの差。全property serializerは未証明。 |
 | R2-A20 | 接続前 input の書き戻しはどこか | [input実験の範囲](dom-input/README.md) | native editとsink/revisionの限定経路。全controlの統合ではない。 |
 | R2-A21 | IME の不明な開始状態はどう扱うか | [input実験の範囲](dom-input/README.md) | 合成eventを実OSのIME実証へ読み替えない。bootstrap前履歴は未知。 |
-| R2-A22 | caret/selection は何を保つか | [input実験の範囲](dom-input/README.md) | same-valueとselectionの限定観測。任意formatterのcaret mappingは未証明。 |
-| R2-A23 | native form/reset は何を残すか | [native観測](native-controls/README.md) | submitter、validation、reset/defaultを観測。提案form adapterの完成ではない。 |
+| R2-A22 | caret/selection は何を保つか | [input実験の範囲](dom-input/README.md) | 同値更新は保持。moveBeforeでもselection消失の反例。任意formatterのcaret mappingは未証明。 |
+| R2-A23 | native form/reset は何を残すか | [native観測](native-controls/README.md) | submitter等を観測。reset microtaskと異なるdefaultのscalar groupには反例。全adapterは未完成。 |
 | R2-A24 | accessibility と focus はどう指定するか | [設計と部分観測](dom-input/README.md) | focus保持の限定経路。読み上げ、全keyboard操作、a11y全体は未証明。 |
 | R2-A25 | numeric draft を domain state にいつ変えるか | [native観測](native-controls/README.md) | numberの途中入力はvalueだけでは復元できない。domain parse policyは未採用。 |
 | R2-A26 | checkbox/radio/select は文字列だけか | [native観測](native-controls/README.md) | radioのcross-region作用、select複数entryを確認。専用adapterは未実装。 |

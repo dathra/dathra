@@ -58,7 +58,7 @@
         "gates-followup.test.ts"
       ],
       "status": 0,
-      "stdout": "\n RUN  v4.0.4 /home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/state-lifetime\n\n ✓ p03.test.ts (21 tests) 22ms\n ✓ p06.test.ts (7 tests) 16ms\n ✓ p07.test.ts (22 tests) 14ms\n ✓ gates-followup.test.ts (11 tests) 10ms\n\n Test Files  4 passed (4)\n      Tests  61 passed (61)\n   Start at  06:01:57\n   Duration  850ms (transform 177ms, setup 0ms, collect 434ms, tests 62ms, environment 0ms, prepare 15ms)\n\n",
+      "stdout": "\n RUN  v4.0.4 /home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/state-lifetime\n\n ✓ p03.test.ts (21 tests) 23ms\n ✓ p06.test.ts (7 tests) 17ms\n ✓ p07.test.ts (22 tests) 15ms\n ✓ gates-followup.test.ts (11 tests) 10ms\n\n Test Files  4 passed (4)\n      Tests  61 passed (61)\n   Start at  06:27:12\n   Duration  843ms (transform 171ms, setup 0ms, collect 431ms, tests 65ms, environment 0ms, prepare 15ms)\n\n",
       "stderr": ""
     }
   ]

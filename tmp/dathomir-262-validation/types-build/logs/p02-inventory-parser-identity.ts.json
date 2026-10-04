@@ -1,0 +1,8 @@
+[
+  {
+    "code": "E_CREATE_INPUT_SOURCE_MISMATCH",
+    "file": "graph/negative/parser-identity.ts",
+    "line": 6,
+    "detail": "For SSR/created pairing, use the same explicit neutral input parser symbol in defineComponent.input and default create.input; indirect profile declarations require an explicit inventory rule."
+  }
+]

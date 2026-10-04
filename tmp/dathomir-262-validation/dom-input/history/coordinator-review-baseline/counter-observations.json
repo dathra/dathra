@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-10-04T21:01:28.764Z",
+  "browser": "141.0.7390.37",
+  "engine": "bundled unmodified packages/reactivity/src/index.ts",
+  "nativeIME": false,
+  "observations": [
+    {
+      "name": "complete browser counter baseline",
+      "result": {
+        "admitted": {
+          "atAdmissionCommit": "Count: 7",
+          "afterAutomaticRefresh": "Count = 7",
+          "restored": 7,
+          "sameText": true,
+          "forbidden": {
+            "initializer": 0,
+            "template": 0
+          },
+          "trace": [
+            {
+              "phase": "staging",
+              "candidate": "Count = 7"
+            },
+            {
+              "phase": "active",
+              "commit": true
+            }
+          ]
+        },
+        "first": {
+          "count": 8,
+          "text": "Count = 8"
+        },
+        "last": {
+          "count": 12,
+          "display": "Count = 12",
+          "afterLateClick": 12,
+          "afterRawEngineWrite": "Count = 12",
+          "sameText": true,
+          "sameOwner": true,
+          "forbidden": {
+            "initializer": 0,
+            "template": 0
+          }
+        }
+      }
+    }
+  ]
+}

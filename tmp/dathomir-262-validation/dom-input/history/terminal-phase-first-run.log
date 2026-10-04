@@ -1,0 +1,53 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir
+
+ ✓ tmp/dathomir-262-validation/dom-input/p05.test.mjs (17 tests) 1113ms
+ ❯ tmp/dathomir-262-validation/dom-input/p04.test.mjs (21 tests | 1 failed) 1017ms
+   ✓ adopts two SSR rows without initializer, server/browser template, factory, or DOM writes 67ms
+   ✓ counts a genuinely new first-refresh key only after successful SSR admission 43ms
+   ✓ retains edited draft and both fragment nodes on reorder; remove/re-add creates fresh lifetime 67ms
+   ✓ retains bind markers through text -> two DOM nodes -> empty -> text 42ms
+   ✓ rejects duplicate keys before factory and keeps exact committed nodes 44ms
+   ✓ keeps numeric 1 and string 1 distinct within one sibling extent 43ms
+   ✓ rejects SSR profileId mismatch before acquisition or reconstruction 41ms
+   ✓ rejects SSR defaultId mismatch before acquisition or reconstruction 40ms
+   ✓ rejects SSR parserId mismatch before acquisition or reconstruction 42ms
+   ✓ explicit active tag replacement ends the old lifetime 43ms
+   ✓ explicit active namespace replacement ends the old lifetime 42ms
+   ✓ explicit active default replacement ends the old lifetime 41ms
+   ✓ failed new-child preparation stops only its provisional lifetime while independent sibling updates remain 43ms
+   ✓ failed parent publication does not undo an independent child write during its preparation 43ms
+   ✓ fences foreign nodes instead of inferring or adopting their ownership 43ms
+   ✓ failed enclosing parent admission cleans only parent acquisitions while its explicitly contained active child continues 42ms
+   ✓ rejects initial overlap containment before any child acquisition 41ms
+   ✓ rejects initial foreign containment before any child acquisition 42ms
+   ✓ profile preflight rejection permits a corrected catalog without consuming acquisition 44ms
+   × required admission failure disposes restored acquisitions once and forbids replay of that association 44ms
+   ✓ duplicate active association shares one owner and disposed association cannot acquire again 41ms
+ ✓ tmp/dathomir-262-validation/dom-input/counterexamples.test.mjs (8 tests) 558ms
+ ✓ tmp/dathomir-262-validation/dom-input/counter.test.mjs (1 test) 314ms
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 46 passed (47)
+   Start at  06:00:42
+   Duration  4.14s (transform 51ms, setup 0ms, collect 790ms, tests 3.00s, environment 0ms, prepare 14ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tmp/dathomir-262-validation/dom-input/p04.test.mjs > required admission failure disposes restored acquisitions once and forbids replay of that association
+AssertionError: expected 'Beta' to be 'Alpha' // Object.is equality
+
+Expected: "Alpha"
+Received: "Beta"
+
+ ❯ tmp/dathomir-262-validation/dom-input/p04.test.mjs:249:22
+    247|   expect(r.failure).toMatch(/^REQUIRED_COMMIT_FAILURE/); expect(r.retr…
+    248|   expect(r.atFailure.stop).toBe(2); expect(r.counts).toEqual(r.atFailu…
+    249|   expect(r.oldDraft).toBe('Alpha'); expect(r.sameNodes).toBe(true);
+       |                      ^
+    250| });
+    251| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

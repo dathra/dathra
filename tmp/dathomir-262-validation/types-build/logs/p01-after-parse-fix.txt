@@ -1,0 +1,33 @@
+tmp/dathomir-262-validation/types-build/fixtures/actual-types.ts(1,24): error TS2307: Cannot find module '@dathra/reactivity' or its corresponding type declarations.
+tmp/dathomir-262-validation/types-build/fixtures/actual-types.ts(2,29): error TS2307: Cannot find module '@dathra/reactivity' or its corresponding type declarations.
+tmp/dathomir-262-validation/types-build/fixtures/actual-types.ts(10,12): error TS7006: Parameter 'previous' implicitly has an 'any' type.
+tmp/dathomir-262-validation/types-build/fixtures/actual-types.ts(11,1): error TS2578: Unused '@ts-expect-error' directive.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(5,64): error TS2339: Property 'title' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(5,85): error TS2339: Property 'count' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(6,54): error TS2339: Property 'count' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(6,64): error TS7006: Parameter 'previous' implicitly has an 'any' type.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(8,32): error TS2339: Property 'count' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(9,14): error TS2339: Property 'count' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(9,24): error TS7006: Parameter 'previous' implicitly has an 'any' type.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(10,14): error TS2339: Property 'payload' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(10,26): error TS7006: Parameter 'previous' implicitly has an 'any' type.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(11,14): error TS2339: Property 'payload' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(11,26): error TS7006: Parameter 'previous' implicitly has an 'any' type.
+tmp/dathomir-262-validation/types-build/fixtures/counter.client.ts(28,28): error TS2339: Property 'count' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/counter.server.ts(1,24): error TS2307: Cannot find module '@dathra/reactivity' or its corresponding type declarations.
+tmp/dathomir-262-validation/types-build/fixtures/counter.server.ts(2,29): error TS2307: Cannot find module '@dathra/reactivity' or its corresponding type declarations.
+tmp/dathomir-262-validation/types-build/fixtures/counter.server.ts(14,34): error TS2339: Property 'count' does not exist on type '{ readonly value: {}; peek(): {}; }'.
+tmp/dathomir-262-validation/types-build/fixtures/counter.server.ts(22,45): error TS2339: Property 'title' does not exist on type '{ readonly value: {}; peek(): {}; }'.
+tmp/dathomir-262-validation/types-build/fixtures/creation.ts(1,24): error TS2307: Cannot find module '@dathra/reactivity' or its corresponding type declarations.
+tmp/dathomir-262-validation/types-build/fixtures/creation.ts(14,50): error TS2339: Property 'draft' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/creation.ts(15,42): error TS2339: Property 'draft' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/creation.ts(16,41): error TS2339: Property 'draft' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/creation.ts(20,36): error TS2339: Property 'draft' does not exist on type '{ readonly value: {}; peek(): {}; }'.
+tmp/dathomir-262-validation/types-build/fixtures/plain.client.js(3,45): error TS2339: Property 'title' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/plain.client.js(3,64): error TS2339: Property 'count' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/plain.client.js(5,38): error TS2339: Property 'count' does not exist on type 'OwnedSignal<unknown>'.
+tmp/dathomir-262-validation/types-build/fixtures/plain.client.js(5,48): error TS7006: Parameter 'previous' implicitly has an 'any' type.
+tmp/dathomir-262-validation/types-build/fixtures/plain.server.js(1,24): error TS2307: Cannot find module '@dathra/reactivity' or its corresponding type declarations.
+tmp/dathomir-262-validation/types-build/fixtures/plain.server.js(8,42): error TS2339: Property 'title' does not exist on type '{ readonly value: {}; peek(): {}; }'.
+tmp/dathomir-262-validation/types-build/fixtures/plain.server.js(8,57): error TS2339: Property 'count' does not exist on type '{ readonly value: {}; peek(): {}; }'.
+tmp/dathomir-262-validation/types-build/runtime/contracts.ts(1,29): error TS2307: Cannot find module '@dathra/reactivity' or its corresponding type declarations.

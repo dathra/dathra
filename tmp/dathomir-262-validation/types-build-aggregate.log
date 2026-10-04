@@ -1,0 +1,13 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build
+
+ ✓ verification.test.ts (3 tests) 11981ms
+     ✓ P01 uses native Signal declarations, rejects mismatches and emits finite declarations  5416ms
+     ✓ P02 preserves real counterexamples and validates actual relocated bundles  5095ms
+     ✓ P02b resolves preserved modules without framework source rewriting and shares the browser engine  1469ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  06:26:58
+   Duration  12.11s (transform 22ms, setup 0ms, collect 31ms, tests 11.98s, environment 0ms, prepare 3ms)
+

@@ -1,0 +1,13 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir-task-264-authoring-evidence
+
+ ✓ tmp/dathomir-262-validation/dom-input/p04.test.mjs (24 tests) 1176ms
+ ✓ tmp/dathomir-262-validation/dom-input/p05.test.mjs (17 tests) 1099ms
+ ✓ tmp/dathomir-262-validation/dom-input/counterexamples.test.mjs (8 tests) 574ms
+ ✓ tmp/dathomir-262-validation/dom-input/counter.test.mjs (4 tests) 441ms
+
+ Test Files  4 passed (4)
+      Tests  53 passed (53)
+   Start at  06:27:13
+   Duration  4.42s (transform 53ms, setup 0ms, collect 785ms, tests 3.29s, environment 0ms, prepare 15ms)
+

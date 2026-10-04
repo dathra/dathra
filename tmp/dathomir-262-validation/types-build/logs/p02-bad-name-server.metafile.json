@@ -1,0 +1,68 @@
+{
+  "inputs": {
+    "tmp/dathomir-262-validation/types-build/runtime/server.mjs": {
+      "bytes": 5092,
+      "imports": [],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/graph/negative/name.route.js": {
+      "bytes": 523,
+      "imports": [
+        {
+          "path": "tmp/dathomir-262-validation/types-build/runtime/server.mjs",
+          "kind": "import-statement",
+          "original": "@dathra/core/server"
+        }
+      ],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/out/build/bad-name/source-entry.mjs": {
+      "bytes": 561,
+      "imports": [
+        {
+          "path": "tmp/dathomir-262-validation/types-build/graph/negative/name.route.js",
+          "kind": "import-statement",
+          "original": "/home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/graph/negative/name.route.js"
+        },
+        {
+          "path": "tmp/dathomir-262-validation/types-build/runtime/server.mjs",
+          "kind": "import-statement",
+          "original": "/home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/runtime/server.mjs"
+        },
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "tmp/dathomir-262-validation/types-build/out/build/bad-name/server/entry.mjs": {
+      "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [
+        "response"
+      ],
+      "entryPoint": "tmp/dathomir-262-validation/types-build/out/build/bad-name/source-entry.mjs",
+      "inputs": {
+        "tmp/dathomir-262-validation/types-build/runtime/server.mjs": {
+          "bytesInOutput": 4621
+        },
+        "tmp/dathomir-262-validation/types-build/graph/negative/name.route.js": {
+          "bytesInOutput": 429
+        },
+        "tmp/dathomir-262-validation/types-build/out/build/bad-name/source-entry.mjs": {
+          "bytesInOutput": 264
+        }
+      },
+      "bytes": 5552
+    }
+  }
+}

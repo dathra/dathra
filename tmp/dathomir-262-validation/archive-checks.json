@@ -1,0 +1,19 @@
+{
+  "files": 346,
+  "bytes": 1485994,
+  "largeFiles": [],
+  "brokenActiveMarkdownLinks": [],
+  "sourceMismatches": [],
+  "coverage58": true,
+  "docsBuildRunHashLink": true,
+  "scope": "Archive evidence only; raw logs and historical snapshot whitespace handled by local gitattributes.",
+  "nativeParent": 247,
+  "issueType": "Task",
+  "issue252": "closed/completed",
+  "trackedAndStagedWhitespace": "pass; raw diagnostics and snapshot EOF preserved by documented attributes",
+  "activeFormatFiles": 90,
+  "activeLintWarnings": 0,
+  "activeLintErrors": 0,
+  "taskCoverageRows": 19,
+  "aggregateStepsPassed": 8
+}

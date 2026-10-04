@@ -1,0 +1,8 @@
+[
+  {
+    "code": "E_DEFAULT_PROFILE",
+    "file": "graph/negative/invalid-default.ts",
+    "line": 2,
+    "detail": "Default export must be a flat defineClient registry."
+  }
+]

@@ -1,0 +1,4 @@
+Retained diagnostic before exporting BindingMarker/EventMarker:
+TS4058: Return type of exported function registryIndependent has or is using name BindingMarker from runtime/contracts but cannot be named.
+Original full diagnostic was logs/p01-context-names.txt before rerun; this transcription records it without claiming the overwritten file is original.
+Smallest fix: export result marker types from contracts and public client declaration.

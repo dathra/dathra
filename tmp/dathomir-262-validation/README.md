@@ -14,9 +14,9 @@ ProposalとAccepted ADRの正本は変更していない。
 
 | 場所 | 対象 | 証拠の種類 |
 |---|---|---|
-| `types-build/` | P01 型、P02 module graph | GPT-6.1 Sol highに検証を割当済み。結果の報告とレビュー後に確定 |
+| [types-build](types-build/README.md) | P01 型、P02 module graph | strict/checkJs、22 expected-error、5負例。P02の27件とP02bの8件、実browserの共有engine |
 | [state-lifetime](state-lifetime/README.md) | P03 capture、P06 receive、P07 lease | 実engineを使った61件とstrict TypeScript。archiveでも再実行済み |
-| `dom-input/` | P04 DOM、P05 input | GPT-6.1 Sol highの別Dispatchに検証を割当済み。結果の報告とレビュー後に確定 |
+| [dom-input](dom-input/README.md) | P04 DOM、P05 input | 実Chromiumで53件。初期commit失敗とcounterを含む限定kernel |
 | [delivery-races](delivery-races/README.md) | 同一表示先への通信競合 | 状態モデル39件。channelだけでは不足する反例を含む |
 | [docs-copy](docs-copy/README.md) | 実Docs Copy | Chromiumの4観測。SSR接続不足とCSR成功誤表示を記録 |
 | [native-controls](native-controls/README.md) | native form | Chromiumの9観測。submitter、radio、reset、Fileなどの基準 |
@@ -53,3 +53,16 @@ Docsだけは各READMEの `build:deps` とbuildも先に実行する。
 
 保存済みのraw logと診断は出力の空白を保持する。
 `.gitattributes` はその証拠ファイルとsnapshot末尾の空行だけをwhitespace検査から区別し、実行するsourceの検査は維持する。
+
+## 全体の再実行
+
+共通前提とDocs dependency buildの後に実行する。
+
+```sh
+pnpm --filter @playground/e2e build:deps
+node tmp/dathomir-262-validation/run-all.mjs
+```
+
+`aggregate-results.json` に各runnerのexit statusと実行時刻を記録する。
+個別の観測、負例、環境、未証明範囲は各ディレクトリに保持する。
+この一括runnerは独立した実験の再実行であり、production統合testではない。

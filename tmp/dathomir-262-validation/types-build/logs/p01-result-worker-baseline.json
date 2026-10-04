@@ -1,0 +1,64 @@
+{
+  "typescript": "6.0.3",
+  "actualSignalOrigins": [
+    "packages/reactivity/src/types/index.ts"
+  ],
+  "strict": {
+    "pass": true,
+    "expectedErrorDirectives": 22
+  },
+  "negative": [
+    {
+      "name": "state-mismatch.server.ts",
+      "codes": [
+        2769,
+        2349
+      ],
+      "rejected": true
+    },
+    {
+      "name": "unannotated.client.ts",
+      "codes": [
+        7006
+      ],
+      "rejected": true
+    },
+    {
+      "name": "kind.option.ts",
+      "codes": [
+        2353
+      ],
+      "rejected": true
+    },
+    {
+      "name": "received-mismatch.ts",
+      "codes": [
+        2345
+      ],
+      "rejected": true
+    },
+    {
+      "name": "received-other-function.ts",
+      "codes": [
+        2345
+      ],
+      "rejected": true
+    }
+  ],
+  "unsuppressedErrors": 22,
+  "declarationEmit": true,
+  "compileAcceptanceCounterexamples": [
+    "ClientContext default UI names permit a typo",
+    "OwnedSignal<{n:number}> assigns to actual Signal<{n:number}> and native.value.n++ compiles"
+  ],
+  "knownLimits": [
+    "ClientContext<V> defaults ui names to string; later defineClient cannot retroactively contextual-type independent functions.",
+    "Type-only clientModule witness cannot prove runtime specifier correspondence.",
+    "Readonly projection does not prevent structurally compatible native Signal consumers from typing mutable access; runtime freeze/isolation remains necessary and those consumers may throw.",
+    "Type-only keyof typeof functions names work with explicit function context/return annotations and one flat runtime registration.",
+    "CompatibleReceived checks parser I against every registered function parameter received type, not only selected receive.",
+    "input.value remains text-only; request/delivery generics R/D are unused. Checkbox sinks, DTO requests/delivery/leases are excluded from this bounded declaration proof.",
+    "Content boolean=empty is a new unadopted policy; checked/defaultChecked/presence bind server booleans are positive typing evidence only.",
+    "Proposed public declarations, not production API types or a runtime ownership proof."
+  ]
+}

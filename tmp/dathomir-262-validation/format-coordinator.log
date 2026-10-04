@@ -1,7 +1,5 @@
 Checking formatting...
 
-tmp/dathomir-262-validation/native-controls/native.test.mjs (0ms)
-
-Format issues found in above 1 files. Run without `--check` to fix.
-Finished in 38ms on 30 files using 8 threads.
+All matched files use the correct format.
+Finished in 34ms on 30 files using 8 threads.
 No config found, using defaults. Please add a config file or try `oxfmt --init` if needed.

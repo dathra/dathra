@@ -1,0 +1,13 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir
+
+ ✓ tmp/dathomir-262-validation/dom-input/p04.test.mjs (21 tests) 1026ms
+ ✓ tmp/dathomir-262-validation/dom-input/p05.test.mjs (17 tests) 1106ms
+ ✓ tmp/dathomir-262-validation/dom-input/counterexamples.test.mjs (8 tests) 548ms
+ ✓ tmp/dathomir-262-validation/dom-input/counter.test.mjs (1 test) 337ms
+
+ Test Files  4 passed (4)
+      Tests  47 passed (47)
+   Start at  06:01:24
+   Duration  4.14s (transform 45ms, setup 0ms, collect 771ms, tests 3.02s, environment 0ms, prepare 14ms)
+

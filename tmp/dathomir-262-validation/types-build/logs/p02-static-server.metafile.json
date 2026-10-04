@@ -1,0 +1,68 @@
+{
+  "inputs": {
+    "tmp/dathomir-262-validation/types-build/runtime/server.mjs": {
+      "bytes": 5092,
+      "imports": [],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/graph/static.route.ts": {
+      "bytes": 174,
+      "imports": [
+        {
+          "path": "tmp/dathomir-262-validation/types-build/runtime/server.mjs",
+          "kind": "import-statement",
+          "original": "@dathra/core/server"
+        }
+      ],
+      "format": "esm"
+    },
+    "tmp/dathomir-262-validation/types-build/out/build/static/source-entry.mjs": {
+      "bytes": 554,
+      "imports": [
+        {
+          "path": "tmp/dathomir-262-validation/types-build/graph/static.route.ts",
+          "kind": "import-statement",
+          "original": "/home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/graph/static.route.ts"
+        },
+        {
+          "path": "tmp/dathomir-262-validation/types-build/runtime/server.mjs",
+          "kind": "import-statement",
+          "original": "/home/kcatt/dev/dathomir-task-264-authoring-evidence/tmp/dathomir-262-validation/types-build/runtime/server.mjs"
+        },
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "tmp/dathomir-262-validation/types-build/out/build/static/server/entry.mjs": {
+      "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [
+        "response"
+      ],
+      "entryPoint": "tmp/dathomir-262-validation/types-build/out/build/static/source-entry.mjs",
+      "inputs": {
+        "tmp/dathomir-262-validation/types-build/runtime/server.mjs": {
+          "bytesInOutput": 4621
+        },
+        "tmp/dathomir-262-validation/types-build/graph/static.route.ts": {
+          "bytesInOutput": 98
+        },
+        "tmp/dathomir-262-validation/types-build/out/build/static/source-entry.mjs": {
+          "bytesInOutput": 264
+        }
+      },
+      "bytes": 5212
+    }
+  }
+}

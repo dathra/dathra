@@ -1,0 +1,12 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build
+
+ ✓ verification.test.ts (2 tests) 10738ms
+     ✓ P01 uses native Signal declarations, rejects mismatches and emits finite declarations  5571ms
+     ✓ P02 preserves real counterexamples and validates actual relocated bundles  5165ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  05:49:22
+   Duration  10.86s (transform 21ms, setup 0ms, collect 30ms, tests 10.74s, environment 0ms, prepare 4ms)
+

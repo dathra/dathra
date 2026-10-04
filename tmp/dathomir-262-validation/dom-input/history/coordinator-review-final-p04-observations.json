@@ -1,0 +1,480 @@
+{
+  "timestamp": "2026-10-04T21:20:46.718Z",
+  "browser": "141.0.7390.37",
+  "engine": "bundled unmodified packages/reactivity/src/index.ts",
+  "nativeIME": false,
+  "observations": [
+    {
+      "name": "SSR attachment zero replay",
+      "result": {
+        "afterAdmission": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "afterRefresh": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "writes": 0,
+        "sameNodes": true,
+        "restored": [
+          "Alpha",
+          "Beta"
+        ],
+        "state": "active"
+      }
+    },
+    {
+      "name": "first active refresh creates c",
+      "result": {
+        "atCommit": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "afterRefresh": {
+          "factory": 1,
+          "initialize": 1,
+          "template": 1,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "keys": [
+          "a",
+          "b",
+          "c"
+        ]
+      }
+    },
+    {
+      "name": "edit reorder remove readd",
+      "result": {
+        "reorder": {
+          "sameControl": true,
+          "sameLabel": true,
+          "sameToken": true,
+          "draft": "編集中",
+          "native": "編集中",
+          "label": "編集中",
+          "keys": [
+            "b",
+            "a"
+          ]
+        },
+        "afterRemove": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 1
+        },
+        "afterReadd": {
+          "factory": 1,
+          "initialize": 1,
+          "template": 1,
+          "serverTemplate": 0,
+          "stop": 1
+        },
+        "oldDraftAfterLateEvent": "編集中",
+        "freshToken": true,
+        "freshControl": true,
+        "freshDraft": "Fresh",
+        "siblingAlive": true,
+        "nodes": [
+          "input",
+          "span",
+          "input",
+          "span"
+        ]
+      }
+    },
+    {
+      "name": "dynamic marker",
+      "result": {
+        "sameText": true,
+        "dom": [
+          "strong",
+          "em"
+        ],
+        "empty": 2,
+        "sameMarkers": true,
+        "text": "Back"
+      }
+    },
+    {
+      "name": "duplicate prepublication error",
+      "result": {
+        "error": "DUPLICATE_KEY: s:c",
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "same": true
+      }
+    },
+    {
+      "name": "typed keys",
+      "result": {
+        "keys": [
+          "n:1",
+          "s:1"
+        ],
+        "drafts": [
+          "numeric",
+          "string"
+        ],
+        "counts": {
+          "factory": 2,
+          "initialize": 2,
+          "template": 2,
+          "serverTemplate": 0,
+          "stop": 2
+        }
+      }
+    },
+    {
+      "name": "admission mismatch profileId",
+      "result": {
+        "error": "ADMISSION_PROFILE_MISMATCH: s:a",
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "same": true
+      }
+    },
+    {
+      "name": "admission mismatch defaultId",
+      "result": {
+        "error": "ADMISSION_PROFILE_MISMATCH: s:a",
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "same": true
+      }
+    },
+    {
+      "name": "admission mismatch parserId",
+      "result": {
+        "error": "ADMISSION_PROFILE_MISMATCH: s:a",
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "same": true
+      }
+    },
+    {
+      "name": "active replacement tag",
+      "result": {
+        "oldActive": false,
+        "fresh": true,
+        "counts": {
+          "factory": 1,
+          "initialize": 1,
+          "template": 1,
+          "serverTemplate": 0,
+          "stop": 1
+        },
+        "tag": "textarea",
+        "ns": "http://www.w3.org/1999/xhtml"
+      }
+    },
+    {
+      "name": "active replacement namespace",
+      "result": {
+        "oldActive": false,
+        "fresh": true,
+        "counts": {
+          "factory": 1,
+          "initialize": 1,
+          "template": 1,
+          "serverTemplate": 0,
+          "stop": 1
+        },
+        "tag": "input",
+        "ns": "http://www.w3.org/2000/svg"
+      }
+    },
+    {
+      "name": "active replacement default",
+      "result": {
+        "oldActive": false,
+        "fresh": true,
+        "counts": {
+          "factory": 1,
+          "initialize": 1,
+          "template": 1,
+          "serverTemplate": 0,
+          "stop": 1
+        },
+        "tag": "input",
+        "ns": "http://www.w3.org/1999/xhtml"
+      }
+    },
+    {
+      "name": "independent child outside failed parent plan",
+      "result": {
+        "error": "TEMPLATE_FAILURE: broken",
+        "counts": {
+          "factory": 1,
+          "initialize": 1,
+          "template": 1,
+          "serverTemplate": 0,
+          "stop": 1
+        },
+        "active": [
+          true,
+          true
+        ],
+        "sameNodes": true,
+        "label": "Independent after",
+        "draft": "Independent after"
+      }
+    },
+    {
+      "name": "no blanket model rollback",
+      "result": {
+        "error": "parent prepare failed",
+        "counts": {
+          "factory": 1,
+          "initialize": 1,
+          "template": 1,
+          "serverTemplate": 0,
+          "stop": 1
+        },
+        "active": true,
+        "label": "Independent during",
+        "keys": [
+          "a",
+          "b"
+        ]
+      }
+    },
+    {
+      "name": "foreign node containment",
+      "result": {
+        "error": "FOREIGN_NODE: response:list:1",
+        "text": "Foreign",
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "stillPresent": true
+      }
+    },
+    {
+      "name": "independent child during enclosing parent admission",
+      "result": {
+        "failure": "parent required resource failed",
+        "atFailure": "Independent during admission",
+        "parentCalls": 0,
+        "parentStops": 1,
+        "after": {
+          "childActive": true,
+          "label": "Independent after admission",
+          "draft": "Independent after admission",
+          "childStops": 0
+        },
+        "afterExplicitRemoval": 2
+      }
+    },
+    {
+      "name": "initial containment overlap",
+      "result": {
+        "error": "CONTAINMENT_OVERLAP: s:b",
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "sameNodes": true
+      }
+    },
+    {
+      "name": "initial containment foreign",
+      "result": {
+        "error": "FOREIGN_NODE: response:list:1",
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "sameNodes": true
+      }
+    },
+    {
+      "name": "profile rejection nonterminal",
+      "result": {
+        "error": "ADMISSION_PROFILE_MISMATCH: s:a",
+        "afterReject": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 0
+        },
+        "state": "active"
+      }
+    },
+    {
+      "name": "required acquisition terminal",
+      "result": {
+        "failure": "REQUIRED_COMMIT_FAILURE: response:list:1",
+        "retry": "ADMISSION_TERMINAL: response:list:1",
+        "atFailure": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 2
+        },
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 2
+        },
+        "oldDraft": "Alpha",
+        "active": [
+          false,
+          false
+        ],
+        "sameNodes": true
+      }
+    },
+    {
+      "name": "one keyed owner per association object",
+      "result": {
+        "same": true,
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 2
+        },
+        "retry": "ADMISSION_TERMINAL: response:list:1"
+      }
+    },
+    {
+      "name": "precommit framework event gate",
+      "result": {
+        "during": {
+          "draft": "Alpha",
+          "native": "native staged draft",
+          "display": "Alpha"
+        },
+        "committed": {
+          "draft": "Alpha",
+          "native": "native staged draft",
+          "display": "Alpha"
+        },
+        "active": {
+          "draft": "native staged draft",
+          "native": "native staged draft",
+          "display": "native staged draft"
+        }
+      }
+    },
+    {
+      "name": "trusted native draft versus staging operation",
+      "result": {
+        "trust": [
+          true
+        ],
+        "draft": "Alpha",
+        "native": "trusted preboot",
+        "display": "Alpha"
+      }
+    },
+    {
+      "name": "partial DOM commit inverse journal",
+      "result": {
+        "failure": "second native DOM setter failed",
+        "retry": "ADMISSION_TERMINAL: response:list:1",
+        "atSecond": {
+          "first": "first committed write",
+          "second": "fail after native setter"
+        },
+        "writes": [
+          [
+            "first",
+            "first committed write"
+          ],
+          [
+            "second",
+            "fail after native setter"
+          ],
+          [
+            "second",
+            "Beta"
+          ],
+          [
+            "first",
+            "Alpha"
+          ]
+        ],
+        "display": [
+          "Alpha",
+          "Beta"
+        ],
+        "counts": {
+          "factory": 0,
+          "initialize": 0,
+          "template": 0,
+          "serverTemplate": 0,
+          "stop": 2
+        },
+        "sameNodes": true,
+        "sameText": true,
+        "childActive": [
+          false,
+          false
+        ],
+        "stagedDraft": "Alpha",
+        "nativeDraft": "native during failed commit",
+        "independent": {
+          "count": 8,
+          "text": "Count = 8"
+        }
+      }
+    }
+  ]
+}

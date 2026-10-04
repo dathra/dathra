@@ -46,6 +46,31 @@ serverで複数copyのSignalをcaptureできることは、browserで複数engin
 ownerとbehaviorが同じengine実体を使うbuild上の条件か、明示したbridgeが必要になる。
 この結果はengineの既存SPEC違反ではなく、統合側が守る境界の証拠である。
 
+## 作者の表記とbuildの境界
+
+[P01/P02の資料](types-build/README.md) では、実Signal型を使ったstrict/checkJsとdeclaration emitが通り、22個のexpected-errorを外して個別に拒否されることも確認した。
+五つの独立した負例も拒否された。
+flat registryと全関数名の候補は維持できる。
+ただし、先に独立定義した関数のcontext型へ、後から登録した名前が自動で伝わるとは限らない。
+必要な場合は `keyof typeof functions` を型だけで使う案が通っており、実行時の登録を二重にする必要はない。
+
+create parserの出力は、選択されたreceiveだけでなく、同じinputを読む全登録関数のcontextと照合する必要がある。
+元の宣言はnumberとstringの不一致を受理したため、反例を保存して実験宣言を修正した。
+booleanのproperty/presence attributeも型として通したが、contentのbooleanを空内容とする規則は未採用の追加提案である。
+
+初期P02の27件は実bundler、配置移動、非rootのHTTP URL、server-only依存のguardを調べた。
+純粋なbrowser互換moduleに置いた秘密のsentinelは通常bundleへ混入でき、明示inventory guardで拒否した。
+普通にbundleできることだけではserver-only境界を守れない。
+
+一方、明示callのsource解析と `import.meta.url` の書換えを使ったadapterは、Accepted #253 で選択済みの仕組みとは扱わない。
+[P02bの8件](types-build/p02b/REPORT.md) では、通常のmodule構造を保つserver出力と、手書きのentry/inventoryを使う案も実行できた。
+sourceと元outputを参照できない状態で配置移動後のSSR lookupが成功し、実Chromiumで共有engineのcomputedが2から4へ更新した。
+この案を #253 の既定境界を維持する候補として推奨する。
+代わりにdeployment側が宣言file、client specifier、公開asset、関数名、entry setを維持する負担が残る。
+型参照とruntime pathの同一性も、erased typeだけでは保証できない。
+実際に、同じ型と関数名を持つ別moduleへの誤参照は手書きinventoryでも受理され、browserの表示結果が異なった。
+source同一性の分析を追加しない限り、この誤りを自動検出できるとは約束しない。
+
 ## readonly型だけでは閉じられない経路
 
 提案の `OwnedSignal<{ n: number }>` を既存の `Signal<{ n: number }>` 型の変数へ代入し、その変数から `value.n++` を実行するコードはstrict TypeScriptで受理された。
@@ -95,6 +120,30 @@ replace中に再入した操作は最後のadmissionを優先し、外側へ返�
 任意のthenable、外部native handle、無限再入、全schedulerをsandboxできるとは扱わない。
 codecのfinite number制限、NaNの拒否、record列挙順の正規化も実験上の選択であり、native-equivalentなreadonly化と呼ばない。
 標準JSの列挙順を保持する案はproduction側の有効な代案として残す。
+
+## DOMと入力で一般化できなかったこと
+
+[P04/P05の53件](dom-input/README.md) は実Chromiumと実engineを使った。
+最初の47件に、coordinatorの指摘から初期接続の失敗に関する6件を追加した。
+SSRの既存rowをinitializer/template/factoryの呼出しなしで接続し、keyに応じて保持、削除、新しい寿命での再追加を検査した。
+SSRの `Count: 7` を元のText nodeへ接続し、初回更新、click、disposeまで通すbaselineも含む。
+これは公開server/build/state APIをつないだ統合試験ではない。
+
+| 反例 | 推奨への影響 |
+|---|---|
+| 同じNodeを `insertBefore` で移動してもfocusを失い、Web Componentのdisconnect/connectが起きた | logical keyの保持とnative stateの保持を別に検証する |
+| Chromiumの `moveBefore` でもfixtureのselectionが `[1,2]` から `[0,0]` になった | state-preserving moveだけでcaret保持を約束しない |
+| trusted resetのlistener内microtaskが、default actionと後続cancellationより先に走った | 次taskでcancellationと入力revisionを再確認する候補を使う |
+| 同じscalarに結び付けた二controlの異なるreset defaultが、一方の値へ揃ってしまった | reset後のconflict holdか明示解決を決めるまで、scalar groupの一般契約を確定しない |
+| compositionend後のfinal inputで非冪等formatterが二重適用された | event終端とcaret mappingが定まるまで、任意formatterの即時公開を一般化しない |
+
+同値propertyへの再代入を避けること、接続前のnative draftを明示sinkへ渡すことには限定した成立証拠がある。
+compositionの試験はsynthetic eventであり、OSの日本語IMEを操作した証拠ではない。
+追加検証では、接続完了前のevent operationを拒否し、native draft自体は保持した。
+二つ目のText setterが変更後にthrowする実browserのfixtureで、元のText nodeと表示を戻し、取得resourceを終了し、同じassociationの再利用を拒否した。
+独立counterの更新は戻さなかった。
+このrollback証拠は逆操作できるText setterに限り、逆setterまで失敗する場合や全DOM操作を保証しない。
+counterではacquisition failureとdispose後のidentityをterminalにし、admission成功後の初回refresh失敗を別に観測するよう修正した。
 
 ## native formから追加する条件
 
@@ -201,8 +250,8 @@ counterの最初のsliceを、全consumerや全browserの検証が終わるま�
 どの契約を最初のcounter sliceに必要とするかを切り分け、残るuse caseの要件を保持したまま段階的にProposalへ反映する。
 PR #263 の旧案を、この実験の合格だけを理由にmerge可能とは扱わない。
 
-## 統合作業中の結果
+## 検証の保存とレビュー
 
-P03/P06/P07は最終結果を受領し、archiveで再検証した。
-P01/P02とP04/P05は担当Solの最終結果を受領してから、この文書と索引に追加する。
-途中の結果を最終合格と扱わない。
+各担当の最終結果を受領し、archiveで再実行する手順を一本化した。
+独立レビューの指摘と修正は [レビュー記録](coordinator-review.md) と [対応記録](review-resolution.md) に残した。
+各実験を一括実行しても、一つの公開APIからのjoint integrationを証明したことにはならない。

@@ -1,0 +1,19 @@
+[96mtmp/dathomir-262-validation/types-build/negative/state-mismatch.server.ts[0m:[93m4[0m:[93m15[0m - [91merror[0m[90m TS2769: [0mNo overload matches this call.
+  Overload 1 of 2, '(spec: ComponentSpec<ClientDefinition<{ readonly text: (ctx: ClientContext<{ count: Signal<string>; }, unknown, unknown, unknown, string>) => string; }>, unknown, { count: Signal<number>; }> & { ...; }): Component<...>', gave the following error.
+    Argument of type '{ client: ClientModule<ClientDefinition<{ readonly text: (ctx: ClientContext<{ count: Signal<string>; }, unknown, unknown, unknown, string>) => string; }>>; server(): { ...; }; template(_values: { ...; }, { bind }: never): ElementDescription; }' is not assignable to parameter of type 'ComponentSpec<ClientDefinition<{ readonly text: (ctx: ClientContext<{ count: Signal<string>; }, unknown, unknown, unknown, string>) => string; }>, unknown, { count: Signal<number>; }> & { ...; }'.
+      Property 'STATE_TYPE_MISMATCH' is missing in type '{ client: ClientModule<ClientDefinition<{ readonly text: (ctx: ClientContext<{ count: Signal<string>; }, unknown, unknown, unknown, string>) => string; }>>; server(): { ...; }; template(_values: { ...; }, { bind }: never): ElementDescription; }' but required in type '{ readonly STATE_TYPE_MISMATCH: never; }'.
+  Overload 2 of 2, '(spec: { server(input: unknown, request: Request): { count: Signal<number>; } | Promise<{ count: Signal<number>; }>; template(values: { readonly count: { readonly value: number; peek(): number; }; }, tools: never, request: Request): Content | Promise<...>; }): Component<...>', gave the following error.
+    Object literal may only specify known properties, and 'client' does not exist in type '{ server(input: unknown, request: Request): { count: Signal<number>; } | Promise<{ count: Signal<number>; }>; template(values: { readonly count: { readonly value: number; peek(): number; }; }, tools: never, request: Request): Content | Promise<...>; }'.
+
+[7m4[0m const Wrong = defineComponent({
+[7m [0m [91m              ~~~~~~~~~~~~~~~[0m
+
+  [96mtmp/dathomir-262-validation/types-build/runtime/contracts.ts[0m:[93m141[0m:[93m70[0m
+    [7m141[0m   OwnedValues<V> extends AllRequiredValues<F> ? unknown : { readonly STATE_TYPE_MISMATCH: never };
+    [7m   [0m [96m                                                                     ~~~~~~~~~~~~~~~~~~~[0m
+    'STATE_TYPE_MISMATCH' is declared here.
+[96mtmp/dathomir-262-validation/types-build/negative/state-mismatch.server.ts[0m:[93m7[0m:[93m52[0m - [91merror[0m[90m TS2349: [0mThis expression is not callable.
+  Type 'never' has no call signatures.
+
+[7m7[0m   template(_values, { bind }) { return el("p", {}, bind("text", { server: "7" })); },
+[7m [0m [91m                                                   ~~~~[0m

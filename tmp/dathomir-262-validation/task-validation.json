@@ -1,0 +1,344 @@
+{
+  "issue": "https://github.com/dathra/dathra/issues/264",
+  "collectedAt": "2026-10-04T20:23:20.957Z",
+  "purpose": "Evidence coverage at Draft handoff; canonical scope remains on the Issue.",
+  "branch": "task-264-authoring-evidence",
+  "base": "integration/245-server-authoritative-execution",
+  "baseRevision": "7a3fde1949a25809cfb8d616886c112e005a8ecf",
+  "sourceGroups": {
+    "comments": {
+      "missingSources": [],
+      "status": "collected"
+    },
+    "issue": {
+      "duplicateRequiredSections": [],
+      "issueType": "Task",
+      "missingRequiredFields": [],
+      "missingSources": [],
+      "requiredFields": [
+        "Parent issue",
+        "Outcome",
+        "Preconditions",
+        "Work",
+        "Verification",
+        "Acceptance criteria",
+        "Non-goals"
+      ],
+      "status": "collected"
+    },
+    "nativeRelationships": {
+      "missingSources": [],
+      "status": "collected"
+    },
+    "proposal": {
+      "missingSources": [],
+      "status": "absent"
+    },
+    "references": {
+      "missingSources": [],
+      "status": "collected"
+    }
+  },
+  "warningDisposition": "No Proposal file named 264.typ is expected: #264 is a Task; design owner is #262.",
+  "dependencies": "No collected textual dependency candidates; native parent #247 verified.",
+  "coverage": [
+    {
+      "id": "acceptanceCriteria.1",
+      "source": {
+        "heading": "Acceptance criteria",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 30
+      },
+      "requirement": "選択した実験と結果がreview用branchとDraft PRから追跡でき、再実行手順と依存条件が明確である。",
+      "disposition": "ready-for-draft-handoff",
+      "evidence": [
+        "README.md",
+        "aggregate-results.json",
+        "source-provenance.json"
+      ],
+      "note": "Publication URL and commit are recorded in the final canonical Task comment; no API adoption."
+    },
+    {
+      "id": "acceptanceCriteria.2",
+      "source": {
+        "heading": "Acceptance criteria",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 31
+      },
+      "requirement": "各実験の問い、期待値、観測、判断への影響、未証明範囲が記録されている。失敗した案は失敗証拠を残す。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "review-summary.md",
+        "coverage.md",
+        "types-build/REPORT.md",
+        "state-lifetime/README.md",
+        "dom-input/README.md"
+      ]
+    },
+    {
+      "id": "acceptanceCriteria.3",
+      "source": {
+        "heading": "Acceptance criteria",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 32
+      },
+      "requirement": "新たなcaller-visible契約は #262 の未採用提案として区別され、Accepted ADRとproductionを変更しない。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "review-summary.md",
+        "first-slice-review.md"
+      ]
+    },
+    {
+      "id": "acceptanceCriteria.4",
+      "source": {
+        "heading": "Acceptance criteria",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 33
+      },
+      "requirement": "review用PRが意図したintegration branchへmergeされた後に本Taskをcloseする。#262、#247、関連Epicの完了は意味しない。",
+      "disposition": "pending-merge",
+      "evidence": [
+        "https://github.com/dathra/dathra/issues/264"
+      ],
+      "note": "No merge authorized or performed. Task remains open; Draft handoff is not Issue completion."
+    },
+    {
+      "id": "nonGoals.1",
+      "source": {
+        "heading": "Non-goals",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 37
+      },
+      "requirement": "APIの採用、①完了の宣言、PR #263 のmerge、Epicのclose。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "review-summary.md"
+      ]
+    },
+    {
+      "id": "nonGoals.2",
+      "source": {
+        "heading": "Non-goals",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 38
+      },
+      "requirement": "production実装、既存package SPEC/testsの変更、engine内部変更。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "source-provenance.json",
+        "archive-checks.json"
+      ]
+    },
+    {
+      "id": "nonGoals.3",
+      "source": {
+        "heading": "Non-goals",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 39
+      },
+      "requirement": "全browser/adapter/IME/transportの保証、性能閾値の採用。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "coverage.md"
+      ]
+    },
+    {
+      "id": "outcome.1",
+      "source": {
+        "heading": "Outcome",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 7
+      },
+      "requirement": "#262 の未採用authoring案について、再実行できる限定実験、失敗反例、検証環境、設計への影響をreview用branchとDraft PRに保存する。設計判断の正本は #262 に残し、本Taskの完了をAPI採用またはproduction完成と扱わない。",
+      "disposition": "ready-for-draft-handoff",
+      "evidence": [
+        "README.md",
+        "review-summary.md",
+        "aggregate-results.json"
+      ],
+      "note": "Publication URL and commit are recorded in the final canonical Task comment; no API adoption."
+    },
+    {
+      "id": "parentIssue.1",
+      "source": {
+        "heading": "Parent issue",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 3
+      },
+      "requirement": "#247",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "https://github.com/dathra/dathra/issues/247"
+      ]
+    },
+    {
+      "id": "preconditions.1",
+      "source": {
+        "heading": "Preconditions",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 11
+      },
+      "requirement": "#253/#260 は採用済み、#252 は完了済み。#262/PR #263 はProposedとしてレビュー中。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "https://github.com/dathra/dathra/pull/259",
+        "https://github.com/dathra/dathra/pull/261",
+        "https://github.com/dathra/dathra/pull/263",
+        "https://github.com/dathra/dathra/issues/252"
+      ]
+    },
+    {
+      "id": "preconditions.2",
+      "source": {
+        "heading": "Preconditions",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 12
+      },
+      "requirement": "利用者は2026-10-05 06:50 JSTまで追加検討、検証、親の関連作業を許可し、後からレビュー可能な成果物を求めた。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "preconditions.3",
+      "source": {
+        "heading": "Preconditions",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 13
+      },
+      "requirement": "既存dirty checkoutとAccepted判断を保持し、実験は隔離する。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "root-preservation.json",
+        "source-provenance.json"
+      ]
+    },
+    {
+      "id": "verification.1",
+      "source": {
+        "heading": "Verification",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 24
+      },
+      "requirement": "各runnerの再実行コマンドと結果、型検査、browser/Node/tool versionを記録する。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "aggregate-results.json",
+        "README.md"
+      ]
+    },
+    {
+      "id": "verification.2",
+      "source": {
+        "heading": "Verification",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 25
+      },
+      "requirement": "意図的な反例suiteと正常な回帰suiteを分け、観測テストの成功を製品合格と誤記しない。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "state-lifetime/logs/archive-counterexamples.json",
+        "dom-input/README.md",
+        "docs-copy/README.md"
+      ]
+    },
+    {
+      "id": "verification.3",
+      "source": {
+        "heading": "Verification",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 26
+      },
+      "requirement": "archiveのリンク、ファイル範囲、whitespaceと既存dirty filesの保全を確認する。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "archive-checks.json",
+        "root-preservation.json"
+      ]
+    },
+    {
+      "id": "work.1",
+      "source": {
+        "heading": "Work",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 17
+      },
+      "requirement": "P01/P02の型とbuild graph、P03のcapture/owned payload、P04/P05のDOM/input、P06/P07のreceive/leaseについて、実行した範囲と未証明範囲を区別して保存する。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "types-build/REPORT.md",
+        "state-lifetime/README.md",
+        "dom-input/README.md"
+      ]
+    },
+    {
+      "id": "work.2",
+      "source": {
+        "heading": "Work",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 18
+      },
+      "requirement": "実Docs Copyの比較観測、native formの基準、delivery競合の状態モデルを独立した証拠として保存する。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "docs-copy/README.md",
+        "native-controls/README.md",
+        "native-history/README.md",
+        "delivery-races/README.md"
+      ]
+    },
+    {
+      "id": "work.3",
+      "source": {
+        "heading": "Work",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 19
+      },
+      "requirement": "coordinatorレビューで見つかった反例と修正の経緯を残し、#262/#248/#249/#250/#251へ渡す判断と証拠を整理する。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        "coordinator-review.md",
+        "review-resolution.md",
+        "review-summary.md",
+        "first-slice-review.md"
+      ]
+    },
+    {
+      "id": "work.4",
+      "source": {
+        "heading": "Work",
+        "issue": 264,
+        "kind": "issue-body",
+        "line": 20
+      },
+      "requirement": "生成cacheや巨大なbundleを除き、source、runner、必要なログ、source revision/hash、READMEをレビュー用branchへ収録する。",
+      "disposition": "verified-with-stated-proof-limits",
+      "evidence": [
+        ".gitignore",
+        "README.md",
+        "source-provenance.json"
+      ]
+    }
+  ],
+  "recordedAt": "2026-10-04T21:28:01.026795+00:00"
+}

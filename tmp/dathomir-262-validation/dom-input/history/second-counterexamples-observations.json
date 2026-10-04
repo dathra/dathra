@@ -1,0 +1,94 @@
+{
+  "timestamp": "2026-10-04T20:50:47.977Z",
+  "browser": "141.0.7390.37",
+  "engine": "bundled unmodified packages/reactivity/src/index.ts",
+  "nativeIME": false,
+  "observations": [
+    {
+      "name": "existing reconcile SSR duplication",
+      "result": {
+        "factory": 2,
+        "children": 4,
+        "text": "AlphaBetaAlphaBeta",
+        "originalStillPresent": true,
+        "firstIsOriginal": false
+      }
+    },
+    {
+      "name": "DocumentFragment counterexample",
+      "result": {
+        "fragmentChildren": 0,
+        "rootChildren": 2
+      }
+    },
+    {
+      "name": "physical insertBefore lifecycle",
+      "result": {
+        "sameNode": true,
+        "sameInput": true,
+        "focusRetained": false,
+        "selection": [
+          1,
+          2
+        ],
+        "log": [
+          "disconnect:b",
+          "connect:b"
+        ],
+        "constructors": 2
+      }
+    },
+    {
+      "name": "optional moveBefore host adapter",
+      "result": {
+        "available": true,
+        "sameNode": true,
+        "focusRetained": true,
+        "selection": [
+          0,
+          0
+        ],
+        "log": [
+          "move:b"
+        ]
+      }
+    },
+    {
+      "name": "naive property overwrite",
+      "result": {
+        "before": "あ",
+        "after": "a"
+      }
+    },
+    {
+      "name": "trusted reset microtask counterexample",
+      "result": {
+        "normal": {
+          "value": "a",
+          "observed": {
+            "value": "dirty",
+            "prevented": false,
+            "trusted": true
+          }
+        },
+        "canceled": {
+          "value": "keep",
+          "observed": {
+            "value": "keep",
+            "prevented": false,
+            "trusted": true
+          }
+        }
+      }
+    },
+    {
+      "name": "composition final-event gap",
+      "result": {
+        "atEnd": "[あ]",
+        "afterFinal": "[[あ]]",
+        "model": "[あ]",
+        "nativeIME": false
+      }
+    }
+  ]
+}

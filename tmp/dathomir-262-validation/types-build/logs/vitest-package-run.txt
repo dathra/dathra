@@ -1,0 +1,23 @@
+
+ RUN  v4.0.4 /home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  verification.test.ts [ verification.test.ts ]
+Error: Vitest cannot be imported in a CommonJS module using require(). Please use "import" instead.
+
+If you are using "import" in your source code, then it's possible it was bundled into require() automatically by your bundler. In that case, do not bundle CommonJS output since it will never work with Vitest, or use dynamic import() which is available in all CommonJS modules.
+ ❯ Object.<anonymous> ../../../node_modules/.pnpm/vitest@4.0.4_@types+node@24.2.0_@vitest+browser-playwright@4.0.4_happy-dom@20.5.3_jiti@_df642d0252cd08080a9ef54a0d16353b/node_modules/vitest/index.cjs:1:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  05:31:56
+   Duration  136ms (transform 25ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 4ms)
+
+undefined
+/home/kcatt/dev/dathomir/packages/reactivity:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: vitest run --config /home/kcatt/dev/dathomir/tmp/dathomir-262-validation/types-build/vitest.config.mjs

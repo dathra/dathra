@@ -1,0 +1,4 @@
+[96mtmp/dathomir-262-validation/types-build/negative/unannotated.client.ts[0m:[93m2[0m:[93m20[0m - [91merror[0m[90m TS7006: [0mParameter 'ctx' implicitly has an 'any' type.
+
+[7m2[0m function countText(ctx) { return String(ctx.values.count.value); }
+[7m [0m [91m                   ~~~[0m

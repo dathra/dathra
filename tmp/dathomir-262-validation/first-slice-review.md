@@ -19,7 +19,7 @@ clientは同じcountを復元し、既存の表示位置へ接続する。
 | 境界 | 必要な決定 | 検証で見ること |
 |---|---|---|
 | author | server/templateとflat client registry、bind/on、clientModuleの対応 | 全関数名の補完、誤った名前の診断、通常JSでも実行時検証できること |
-| build | 明示module参照を配置先のclient assetへ対応付ける方法 | server-only依存の混入拒否、実URLの解決、型参照とruntime参照の区別 |
+| build | 明示module参照を配置先のclient assetへ対応付ける方法 | server-only依存の混入拒否、実URLの解決、型参照とruntime参照の区別、固定inputと環境での提供結果の再現性 |
 | server | 一度のcaptureからtemplateとhandoffを作る方法 | request-localな初期値、same-slot alias、fresh response identity |
 | client | immutable associationのpreflight、復元、resource取得、commit | preflight拒否のSSR維持、取得途中とcommit時のDOM失敗で元のSSR nodeと表示を保持、commit前のwrite bufferとevent gate、owned resourceのcleanup、取得後失敗のidentity terminal化 |
 | binding | 読取り専用phaseと自動初回更新 | 書込み前の拒否、既存text node保持、初回更新をclick待ちにしないこと |
@@ -39,6 +39,17 @@ counterの採用に、自律childの入力更新、controlled formの全adapter�
 最初のcounterは数値を扱うため、複雑なobjectのowned payload差分を全て使うconsumerではない。
 ただし、後でobject stateを支える際にreadonly、alias隔離、既存Signalとの違いが必要になる事実は隠さない。
 最初のSPECには、そのsliceが実際に扱う値と未採用の拡張範囲を明記する。
+
+## このsliceで発見したときに戻す判断
+
+- 型とruntime pathが食い違う場合は、名前を増やして回避せず、build inventoryの保証範囲へ戻す。
+- 復元したSignalを別entryのcomputedが追跡できない場合は、browser engineの共有配置を修正する。serverのcapture元copyを一律禁止しない。
+- 接続失敗で元SSRを戻せない場合は、初期admissionのwrite planと資源取得の境界を見直す。active updateのdamaged policyで代用しない。
+- counterを成立させるためにserver/templateのbrowser再実行が必要になった場合は、そのcandidateを不合格とする。
+- native inputの保存に成功しても、synthetic composition試験だけでIME対応済みと判定しない。対象controlの実browserと実IMEの検証を別に残す。
+
+これらは後から人手で表示を補修すればよいという受入条件ではない。
+失敗したcandidateと変更する判断を対応付け、次の小さい実験かProposalの修正へ戻す。
 
 ## 同時に進められる作業
 

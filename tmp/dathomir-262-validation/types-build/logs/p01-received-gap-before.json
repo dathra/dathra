@@ -1,0 +1,10 @@
+[
+  {
+    "file": "received-mismatch.ts",
+    "diagnostics": []
+  },
+  {
+    "file": "received-other-function.ts",
+    "diagnostics": []
+  }
+]
