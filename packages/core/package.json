@@ -93,7 +93,7 @@
     "@dathra/config": "workspace:*",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "happy-dom": "^20.5.3",
+    "happy-dom": "^21.0.4",
     "rlse.ts": "catalog:",
     "vitest": "catalog:"
   },
